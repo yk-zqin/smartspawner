@@ -1,0 +1,27 @@
+name: SmartSpawner
+version: '1.0.1'
+main: me.nighter.smartSpawner.SmartSpawner
+api-version: '1.21'
+author: Nighter
+softdepend: [floodgate]
+
+commands:
+  smartspawner:
+    description: Main command for SmartSpawner plugin
+    usage: /smartspawner reload
+    aliases: [ss, spawner]
+    permission: smartspawner.reload
+
+permissions:
+  smartspawner.reload:
+    description: Permission to reload SmartSpawner plugin
+    default: op
+  smartspawner.stack:
+    description: Allow stacking spawners
+    default: true
+  smartspawner.changetype:
+    description: Allow changing spawner type with spawn egg
+    default: true
+  smartspawner.break:
+    description: Allow breaking spawners
+    default: true
