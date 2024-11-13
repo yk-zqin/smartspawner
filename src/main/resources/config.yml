@@ -31,6 +31,9 @@ spawner:
   # Allow players to repair items with mending using stored exp
   allow-exp-mending: true
 
+  # Allow entities like creepers and tnt to explode activated spawners
+  allow-grief: false
+
   # Spawn Control Settings
   # ---------------------
   # Minimum number of mobs to spawn for loot/exp (must be >= 1)

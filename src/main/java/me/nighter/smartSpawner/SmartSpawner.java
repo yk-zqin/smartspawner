@@ -1,5 +1,8 @@
 package me.nighter.smartSpawner;
 
+import me.nighter.smartSpawner.commands.ReloadCommand;
+import me.nighter.smartSpawner.listeners.*;
+import me.nighter.smartSpawner.managers.*;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.geysermc.floodgate.api.FloodgateApi;
@@ -17,6 +20,7 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerStackHandler spawnerStackHandler;
     private SpawnerBreakHandler spawnerBreakHandler;
     private GUIClickHandler guiClickHandler;
+    private SpawnerExplosionListener spawnerExplosionListener;
 
     @Override
     public void onEnable() {
@@ -61,6 +65,7 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(new SpawnerRangeChecker(this), this);
         pm.registerEvents(new SpawnerBreakHandler(this), this);
         pm.registerEvents(new GUIClickHandler(this), this);
+        pm.registerEvents(new SpawnerExplosionListener(this), this);
     }
 
     @Override

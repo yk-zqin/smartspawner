@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SmartSpawner.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SmartSpawner.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SmartSpawner.test.iml" filepath="$PROJECT_DIR$/.idea/modules/SmartSpawner.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/me.nighter.SmartSpawner.main.iml" filepath="$PROJECT_DIR$/.idea/modules/me.nighter.SmartSpawner.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/me.nighter.SmartSpawner.test.iml" filepath="$PROJECT_DIR$/.idea/modules/me.nighter.SmartSpawner.test.iml" />
     </modules>
   </component>
 </project>
