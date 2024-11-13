@@ -67,10 +67,16 @@ spawner-name: "&6Lồng Spawn %entity%"
 #---------------------------------------------------
 messages:
   activated:
-    message: "&#d6e7edĐã kích hoạt lồng spawn! Quái vật sẽ không xuất hiện tự nhiên, thay vào đó hãy thu thập vật phẩm và điểm kinh nghiệm thông qua giao diện."
+    message: "&#d6e7edĐã &#3287A9kích hoạt&#d6e7ed lồng spawn! Quái vật sẽ không xuất hiện tự nhiên, thay vào đó hãy thu thập vật phẩm và điểm kinh nghiệm thông qua giao diện."
     prefix: true
     type: CHAT
     sound: block.beacon.activate
+
+  entity-spawner-placed:
+    message: "&#d6e7edLồng spawn này &#3287A9chưa được kích hoạt&#d6e7ed! Mobs sẽ xuất hiện tự nhiên."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
 
   changed:
     message: "&#d6e7edĐã chuyển lồng spawn thành &#3287A9%type%&#d6e7ed!"

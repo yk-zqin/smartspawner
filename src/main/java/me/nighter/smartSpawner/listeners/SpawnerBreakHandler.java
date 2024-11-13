@@ -304,7 +304,7 @@ public class SpawnerBreakHandler implements Listener {
         CreatureSpawner placedSpawner = (CreatureSpawner) placedBlock.getState();
         placedSpawner.setSpawnedType(storedEntity);
         placedSpawner.update();
-
+        languageManager.sendMessage(player, "messages.entity-spawner-placed");
         // Debug message
         configManager.debug("Player " + player.getName() + " placed " + storedEntity + " spawner at " + block.getLocation());
     }

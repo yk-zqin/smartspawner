@@ -24,18 +24,12 @@ spawner:
   # Default entity type when creating new spawners
   default-entity: PIG
 
-  # Experience points configuration
-  # Maximum amount of exp points that can be stored in a spawner
-  max-stored-exp: 1000
-
   # Allow players to repair items with mending using stored exp
   allow-exp-mending: true
 
   # Allow entities like creepers and tnt to explode activated spawners
   allow-grief: false
 
-  # Spawn Control Settings
-  # ---------------------
   # Minimum number of mobs to spawn for loot/exp (must be >= 1)
   min-mobs: 1
 
@@ -48,7 +42,10 @@ spawner:
   # Base spawn delay in ticks (default: 600 ticks = 30 seconds)
   delay: 600
 
-  # Maximum number of entities that can be stacked in one spawner
+  # Maximum amount of exp points that can be stored in one spawner
+  max-stored-exp: 1000
+
+  # Maximum number of spawner that can be stacked in one spawner
   max-stack-size: 1000
 
   # Allow toggling of equipment items drop on spawned mobs
@@ -95,7 +92,7 @@ performance:
   # Batch processing size for mob loot/exp drops
   # Lower values = more random but higher resource usage
   # Higher values = more consistent but lower resource usage
-  # Recommended range: 1-5
+  # If you experience lag, try increasing this value
   batch-size: 3
 
 # ===================

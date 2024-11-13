@@ -2,7 +2,7 @@ name: SmartSpawner
 version: '${version}'
 main: me.nighter.smartSpawner.SmartSpawner
 api-version: '1.21'
-author: Nighter
+authors: [Nighter, Samarth Sharma]
 softdepend: [floodgate]
 
 commands:

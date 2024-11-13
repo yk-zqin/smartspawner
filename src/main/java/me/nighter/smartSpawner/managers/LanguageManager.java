@@ -39,10 +39,10 @@ public class LanguageManager {
         put("prefix", "&8[&#3287A9&lSmartSpawner&8]&r");
 
         // Format Numbers
-        put("format-number.thousand", "%sK");
-        put("format-number.million", "%sM");
-        put("format-number.billion", "%sB");
-        put("format-number.trillion", "%sT");
+        put("format-number.thousand", "%sk");
+        put("format-number.million", "%sm");
+        put("format-number.billion", "%sb");
+        put("format-number.trillion", "%st");
         put("format-number.default", "%s");
 
         // Mob Names
@@ -56,7 +56,7 @@ public class LanguageManager {
         put("spawner-name", "%entity% Spawner");
 
         // Spawner Interaction Messages
-        put("messages.activated.message", "&#d6e7edSpawner activated! Mobs won't spawn naturally, collect loot and XP through the GUI instead.");
+        put("messages.activated.message", "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead.");
         put("messages.activated.prefix", "true");
         put("messages.activated.type", "CHAT");
         put("messages.activated.sound", "entity.experience_orb.pickup");
@@ -84,6 +84,11 @@ public class LanguageManager {
         put("messages.silk-touch-required.prefix", "false");
         put("messages.silk-touch-required.type", "ACTION_BAR");
         put("messages.silk-touch-required.sound", "block.note_block.pling");
+
+        put("messages.entity-spawner-placed.message", "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally.");
+        put("messages.entity-spawner-placed.prefix", "true");
+        put("messages.entity-spawner-placed.type", "CHAT");
+        put("messages.entity-spawner-placed.sound", "block.note_block.pling");
 
         // Spawner Stacking/Unstacking Messages
         put("messages.hand-stack.message", "&#00E689Successfully stacked &6%amount%&#00E689 spawners!");

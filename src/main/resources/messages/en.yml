@@ -68,10 +68,16 @@ spawner-name: "&6%entity% Spawner"
 #---------------------------------------------------
 messages:
   activated:
-    message: "&#d6e7edSpawner activated! Mobs won’t spawn naturally, collect loot and XP through the GUI instead."
+    message: "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead."
     prefix: true
     type: CHAT
     sound: block.beacon.activate
+
+  entity-spawner-placed:
+    message: "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
 
   changed:
     message: "&#d6e7edSpawner changed to &#3287A9%type%&#d6e7ed!"
