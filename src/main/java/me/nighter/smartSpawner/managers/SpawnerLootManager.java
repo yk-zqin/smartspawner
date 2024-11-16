@@ -5,12 +5,15 @@ import me.nighter.smartSpawner.utils.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +40,7 @@ public class SpawnerLootManager {
         Inventory pageInv = Bukkit.createInventory(
                 new PagedSpawnerLootHolder(spawner, page, totalPages),
                 INVENTORY_SIZE,
-                title
+                title + " - [" + page + "/" + totalPages + "]"
         );
 
         // Update inventory with current items
@@ -82,23 +85,28 @@ public class SpawnerLootManager {
             inventory.setItem(NAVIGATION_ROW * 9 + 5, null);
         }
 
-        ItemStack pageIndicator = createPageIndicator(page, totalPages, totalSlots);
+        // Page indicator
+        ItemStack pageIndicator;
+        pageIndicator = createPageIndicator(page, totalPages, totalSlots, virtualInv, spawner.getMaxSpawnerLootSlots());
         inventory.setItem(NAVIGATION_ROW * 9 + 4, pageIndicator);
 
         ItemStack returnButton = createReturnButton();
         inventory.setItem(NAVIGATION_ROW * 9 + 8, returnButton);
 
+        // Take all button
         ItemStack takeAllButton = new ItemStack(Material.CHEST);
         ItemMeta meta = takeAllButton.getItemMeta();
         meta.setDisplayName(languageManager.getMessage("take-all-button.name"));
         takeAllButton.setItemMeta(meta);
         inventory.setItem(NAVIGATION_ROW * 9 + 0, takeAllButton);
 
+        // Allow equipment items toggle button
         if (configManager.isAllowToggleEquipmentItems()) {
             ItemStack durabilityToggle = createAllowEquipmentToggleButton(spawner.isAllowEquipmentItems());
             inventory.setItem(NAVIGATION_ROW * 9 + 1, durabilityToggle);
         }
-//        configManager.debug("Is allow equipment items: " + configManager.isAllowToggleEquipmentItems());
+        configManager.debug("Is allow equipment items: " + configManager.isAllowToggleEquipmentItems());
+
     }
 
     // Method to update inventory for all viewers
@@ -180,17 +188,50 @@ public class SpawnerLootManager {
         return createItemStack(material, buttonName, buttonLore);
     }
 
-    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalSlots) {
-        String indicatorName = languageManager.getMessage("page-indicator.name")
-                .replace("%current_page%", String.valueOf(currentPage))
-                .replace("%total_pages%", String.valueOf(totalPages));
+    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalSlots, VirtualInventory virtualInventory, int maxSlots) {
+        Material material;
+        String itemName;
+        List<String> itemLore = new ArrayList<>();
 
-        List<String> indicatorLore = Arrays.asList(
-                languageManager.getMessage("page-indicator.lore")
-                        .replace("%total_slots%", String.valueOf(totalSlots))
-        );
+        int currentItems = virtualInventory.getAllItems().size();
 
-        return createItemStack(Material.PAPER, indicatorName, indicatorLore);
+        if (plugin.isEconomyShopGUI()) {
+            material = Material.GOLD_INGOT;
+            itemName = languageManager.getMessage("shop-page-indicator.name")
+                    .replace("%current_page%", String.valueOf(currentPage))
+                    .replace("%total_pages%", String.valueOf(totalPages));
+
+            int percentStorage = (int) ((double) currentItems / maxSlots * 100);
+
+            String loreMessage = languageManager.getMessage("shop-page-indicator.lore")
+                    .replace("%total_slots%", String.valueOf(totalSlots))
+                    .replace("%max_slots%", String.valueOf(maxSlots))
+                    .replace("%current_items%", String.valueOf(currentItems))
+                    .replace("%percent_storage%", String.valueOf(percentStorage));
+
+            itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
+        } else {
+            material = Material.PAPER;
+            itemName = languageManager.getMessage("page-indicator.name")
+                    .replace("%current_page%", String.valueOf(currentPage))
+                    .replace("%total_pages%", String.valueOf(totalPages));
+
+            String loreMessage = languageManager.getMessage("page-indicator.lore")
+                    .replace("%total_slots%", String.valueOf(totalSlots))
+                    .replace("%max_slots%", String.valueOf(maxSlots))
+                    .replace("%current_items%", String.valueOf(currentItems));
+
+            itemLore.addAll(Arrays.asList(loreMessage.split("\n")));
+        }
+
+        // Tạo ItemStack
+        ItemStack itemStack = new ItemStack(material);
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.setDisplayName(itemName);
+        itemMeta.setLore(itemLore);
+        itemStack.setItemMeta(itemMeta);
+
+        return itemStack;
     }
 
     public ItemStack createReturnButton() {

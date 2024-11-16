@@ -87,6 +87,18 @@ public class GUIClickHandler implements Listener {
         else if (slot == 50 && holder.getCurrentPage() < holder.getTotalPages()) {
             openLootPage(player, spawner, holder.getCurrentPage() + 1, false);
         }
+        else if (slot == 49 && plugin.isEconomyShopGUI()) {
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+
+            if (!player.hasPermission("smartspawner.sellall")) {
+                player.sendMessage(languageManager.getMessage("no-permission"));
+                return;
+            }
+
+            if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
+                openLootPage(player, spawner, holder.getCurrentPage(), true);
+            }
+        }
         else if (slot == 53) {
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             openSpawnerMenu(player, spawner);

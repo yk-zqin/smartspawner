@@ -4,7 +4,6 @@ import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerManager;
-import me.nighter.smartSpawner.utils.MenuTitleValidator;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.SpawnerMenuHolder;
 import org.bukkit.Bukkit;
@@ -82,10 +81,9 @@ public class SpawnerGuiListener implements Listener {
         if (event.getInventory().getHolder() instanceof SpawnerMenuHolder ) {
             SpawnerMenuHolder holder = (SpawnerMenuHolder) event.getInventory().getHolder();
             spawnerManager.trackOpenGui(event.getPlayer().getUniqueId(), holder.getSpawnerData());
-            MenuTitleValidator validator = new MenuTitleValidator(languageManager);
 
             // Chỉ start task khi GUI đầu tiên được mở
-            if (!isTaskRunning && validator.isValidSpawnerMenu(event, holder.getSpawnerData())) {
+            if (!isTaskRunning) {
                 startUpdateTask();
             }
         }

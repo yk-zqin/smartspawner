@@ -16,6 +16,10 @@ settings:
   # Default: 6000 ticks (5 minutes)
   save-interval: 6000
 
+  # Shop integration settings used for selling items in spawner storage GUI
+  # Available options: disabled, EconomyShopGUI, EconomyShopGUI-Premium
+  shop-integration: EconomyShopGUI
+
 # ===================
 # Spawner Settings
 # ===================
@@ -24,19 +28,13 @@ spawner:
   # Default entity type when creating new spawners
   default-entity: PIG
 
-  # Allow players to repair items with mending using stored exp
-  allow-exp-mending: true
-
-  # Allow entities like creepers and tnt to explode activated spawners
-  allow-grief: false
-
   # Minimum number of mobs to spawn for loot/exp (must be >= 1)
   min-mobs: 1
 
   # Maximum number of mobs to spawn for loot/exp (must be > min-mobs)
   max-mobs: 4
 
-  # Required player proximity (in blocks) for spawner activation
+  # Required player proximity (in blocks) for spawner to be active generating loot/exp
   range: 16
 
   # Base spawn delay in ticks (default: 600 ticks = 30 seconds)
@@ -48,8 +46,17 @@ spawner:
   # Maximum number of spawner that can be stacked in one spawner
   max-stack-size: 1000
 
+  # Allow players to repair items with mending using stored exp
+  allow-exp-mending: true
+
   # Allow toggling of equipment items drop on spawned mobs
   allow-toggle-equipment-items: true
+
+  # Allow entities like creepers and tnt to explode activated spawners
+  allow-grief: false
+
+  # Allow spawners to be activated immediately when placed
+  activate-on-place: false
 
 # ===================
 # Breaking Settings

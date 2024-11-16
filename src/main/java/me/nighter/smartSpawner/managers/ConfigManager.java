@@ -23,8 +23,6 @@ public class ConfigManager {
     private File configFile;
     private File lootConfigFile;
     private boolean debug;
-
-    // Cache cho các giá trị config thường xuyên sử dụng
     private Map<String, Object> configCache;
 
     public ConfigManager(SmartSpawner plugin) {
@@ -44,16 +42,27 @@ public class ConfigManager {
         config = plugin.getConfig();
         configFile = new File(plugin.getDataFolder(), "config.yml");
 
-        // Thêm các cấu hình mặc định cho update checker nếu chưa có
-        if (!config.contains("update-checker")) {
-            config.set("update-checker.enabled", true);
-            config.set("update-checker.check-interval", 24); // hours
-            config.set("update-checker.notify-ops", true);
-            config.set("update-checker.notify-on-join", true);
-            saveMainConfig();
-        }
+        // Set default values if not present
+        addDefaultConfigs();
 
         debug = config.getBoolean("settings.debug", false);
+    }
+
+    private void addDefaultConfigs() {
+        // Update checker configs
+        if (!config.contains("update-checker")) {
+            config.set("update-checker.enabled", true);
+            config.set("update-checker.check-interval", 24);
+            config.set("update-checker.notify-ops", true);
+            config.set("update-checker.notify-on-join", true);
+        }
+
+        // Shop integration config
+        if (!config.contains("settings.shop-integration")) {
+            config.set("settings.shop-integration.type", "disabled"); // disabled, EconomyShopGUI, EconomyShopGUI-Premium
+        }
+
+        saveMainConfig();
     }
 
     public void loadLootConfig() {
@@ -90,6 +99,9 @@ public class ConfigManager {
     private void initializeCache() {
         configCache.clear();
 
+        // Cache shop config
+        configCache.put("settings.shop-integration", config.getString("settings.shop-integration"));
+
         // Cache spawner settings
         configCache.put("spawner.default-entity", config.getString("spawner.default-entity"));
         configCache.put("spawner.max-stored-exp", config.getInt("spawner.max-stored-exp"));
@@ -101,6 +113,7 @@ public class ConfigManager {
         configCache.put("spawner.delay", config.getInt("spawner.delay"));
         configCache.put("spawner.max-stack-size", config.getInt("spawner.max-stack-size"));
         configCache.put("spawner.allow-grief", config.getBoolean("spawner.allow-grief"));
+        configCache.put("spawner.activate-on-place", config.getBoolean("spawner.activate-on-place"));
 
         // Cache break settings
         configCache.put("spawner-break.enabled", config.getBoolean("spawner-break.enabled"));
@@ -211,8 +224,8 @@ public class ConfigManager {
     }
 
     public int getBatchSize() {
-        return (int) configCache.computeIfAbsent("spawner.batch-size", key -> {
-            int defaultValue = 5;
+        return (int) configCache.computeIfAbsent("performance.batch-size", key -> {
+            int defaultValue = 3;
             setDefaultIfNotExists(key, defaultValue);
             return config.getInt(key, defaultValue);
         });
@@ -243,17 +256,31 @@ public class ConfigManager {
     }
 
     public EntityType getDefaultEntityType() {
-        return (EntityType) configCache.computeIfAbsent("spawner.default-entity", key -> {
-            String defaultValue = "PIG";
-            setDefaultIfNotExists(key, defaultValue);
-            String entityName = config.getString(key, defaultValue).toUpperCase();
-            try {
-                return EntityType.valueOf(entityName);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid default entity type: " + entityName);
-                return EntityType.PIG;
-            }
-        });
+        Object cachedValue = configCache.get("spawner.default-entity");
+
+        if (cachedValue instanceof EntityType) {
+            return (EntityType) cachedValue;
+        }
+
+        String defaultValue = "PIG";
+        String entityName;
+
+        if (cachedValue instanceof String) {
+            entityName = ((String) cachedValue).toUpperCase();
+        } else {
+            setDefaultIfNotExists("spawner.default-entity", defaultValue);
+            entityName = config.getString("spawner.default-entity", defaultValue).toUpperCase();
+        }
+
+        EntityType entityType;
+        try {
+            entityType = EntityType.valueOf(entityName);
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Invalid default entity type: " + entityName);
+            entityType = EntityType.PIG;
+        }
+        configCache.put("spawner.default-entity", entityType);
+        return entityType;
     }
 
     public int getMaxStackSize() {
@@ -325,5 +352,41 @@ public class ConfigManager {
             setDefaultIfNotExists(key, defaultValue);
             return config.getInt(key, defaultValue);
         });
+    }
+
+    public boolean getActivateOnPlace() {
+        return (boolean) configCache.computeIfAbsent("spawner.activate-on-place", key -> {
+            boolean defaultValue = false;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getBoolean(key, defaultValue);
+        });
+    }
+
+    // Enum for shop integration type
+    public enum ShopType {
+        DISABLED,
+        ECONOMY_SHOP_GUI,
+        ECONOMY_SHOP_GUI_PREMIUM;
+
+        public static ShopType fromString(String value) {
+            if (value == null) return DISABLED;
+
+            switch (value.toLowerCase()) {
+                case "economyshopgui":
+                    return ECONOMY_SHOP_GUI;
+                case "economyshopgui-premium":
+                    return ECONOMY_SHOP_GUI_PREMIUM;
+                case "disabled":
+                default:
+                    return DISABLED;
+            }
+        }
+    }
+
+    // Get shop integration type
+    public ShopType getShopType() {
+        String shopType = (String) configCache.computeIfAbsent("settings.shop-integration",
+                key -> config.getString(key, "disabled"));
+        return ShopType.fromString(shopType);
     }
 }

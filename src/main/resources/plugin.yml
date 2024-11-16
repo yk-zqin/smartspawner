@@ -3,7 +3,7 @@ version: '${version}'
 main: me.nighter.smartSpawner.SmartSpawner
 api-version: '1.21'
 authors: [Nighter, Samarth Sharma]
-softdepend: [floodgate]
+softdepend: [floodgate, EconomyShopGUI, EconomyShopGUI-Premium]
 
 commands:
   smartspawner:
@@ -24,4 +24,7 @@ permissions:
     default: true
   smartspawner.break:
     description: Allow breaking spawners
+    default: true
+  smartspawner.sellall:
+    description: Allow selling items in spawner storage GUI
     default: true

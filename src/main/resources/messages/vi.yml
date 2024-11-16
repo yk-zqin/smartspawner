@@ -108,6 +108,27 @@ messages:
     sound: block.note_block.pling
 
   #---------------------------------------------------
+  # Bán vật phẩm từ Spawner
+  #---------------------------------------------------
+  sell-all:
+    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a%price%$&#d6e7ed!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
+  no-items:
+    message: "&cKhông có vật phẩm nào trong spawner để bán."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  no-sellable-items:
+    message: "&cKhông có vật phẩm nào có thể bán từ spawner này."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  #---------------------------------------------------
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
   hand-stack:
@@ -262,11 +283,11 @@ button:
   lore:
     remove: |
       &7Nhấn để giảm %amount% lồng
-      &7khỏi chồng
+      &7khỏi stack
       &7Hiện tại: &e%stack_size%
     add: |
       &7Nhấn để thêm %amount% lồng
-      &7vào chồng
+      &7vào stack
       &7Hiện tại: &e%stack_size%
     spawner: |
       
@@ -290,9 +311,18 @@ navigation-button:
       &#81d4faNhấn để đến trang %target_page%
 
 page-indicator:
-  name: "&#f4d842Trang %current_page%/&#f4d842%total_pages%"
+  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &#f4d842Tổng số ô: %total_slots%
+    &7Vật phẩm: &f%current_items%&7/&f%max_slots%
+
+shop-page-indicator:
+  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
+  lore: |
+
+    &8▪ &#ffd700Vật phẩm: &f%current_items%&7/&f%max_slots%
+    &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
+
+    &#ffd700➜ &7Nhấn để bán tất cả
 
 return-button:
   name: "&#ff6b6b Quay Lại Menu Chính"

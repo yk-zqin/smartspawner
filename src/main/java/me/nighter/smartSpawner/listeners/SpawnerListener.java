@@ -2,10 +2,7 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.managers.*;
-import me.nighter.smartSpawner.utils.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.SpawnerMenuHolder;
-import me.nighter.smartSpawner.utils.VirtualInventory;
+import me.nighter.smartSpawner.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -22,6 +19,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
+import me.nighter.smartSpawner.utils.SpawnerStackerHolder;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.UUID;
@@ -33,15 +31,6 @@ public class SpawnerListener implements Listener {
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerStackHandler stackHandler;
-    private static final Set<Material> VALID_MATERIALS = EnumSet.of(
-            Material.PLAYER_HEAD,
-            Material.SPAWNER,
-            Material.ZOMBIE_HEAD,
-            Material.SKELETON_SKULL,
-            Material.WITHER_SKELETON_SKULL,
-            Material.CREEPER_HEAD,
-            Material.PIGLIN_HEAD
-    );
 
     public SpawnerListener(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -72,23 +61,17 @@ public class SpawnerListener implements Listener {
 
         // Handle null entityType
         if (entityType == null || entityType == EntityType.UNKNOWN) {
-            entityType = EntityType.PIG;
-            creatureSpawner.setSpawnedType(EntityType.PIG);
-            creatureSpawner.update();
-            Location loc = block.getLocation();
-            loc.getWorld().spawnParticle(
-                    Particle.WITCH,
-                    loc.clone().add(0.5, 0.5, 0.5),
-                    50, 0.5, 0.5, 0.5, 0
-            );
-        } else {
-            Location loc = block.getLocation();
-            loc.getWorld().spawnParticle(
-                    Particle.WITCH,
-                    loc.clone().add(0.5, 0.5, 0.5),
-                    50, 0.5, 0.5, 0.5, 0
-            );
+            entityType = configManager.getDefaultEntityType();
         }
+
+        creatureSpawner.setSpawnedType(entityType);
+        creatureSpawner.update();
+        Location loc = block.getLocation();
+        loc.getWorld().spawnParticle(
+                Particle.WITCH,
+                loc.clone().add(0.5, 0.5, 0.5),
+                50, 0.5, 0.5, 0.5, 0
+        );
 
         // Create new spawner with default config values
         SpawnerData spawner = new SpawnerData(newSpawnerId, block.getLocation(), entityType, plugin);
@@ -294,22 +277,12 @@ public class SpawnerListener implements Listener {
 
             case PLAYER_HEAD, SPAWNER, ZOMBIE_HEAD, SKELETON_SKULL, WITHER_SKELETON_SKULL, CREEPER_HEAD, PIGLIN_HEAD:
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                if(event.getView().getTitle().equals(languageManager.getGuiTitle("gui-title.stacker-menu"))){
-                    openSpawnerMenu(player, spawner, true);
-                    break;
-                } else {
-                    handleSpawnerInfoClick(player, spawner);
-                    break;
-                }
+                handleSpawnerInfoClick(player, spawner);
+                break;
             case EXPERIENCE_BOTTLE:
                 handleExpBottleClick(player, spawner);
                 break;
         }
-
-        // Update the GUI with a slight delay to ensure all inventory changes are processed
-//        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-//            openSpawnerMenu(player, spawner, true);
-//        }, 20L);
     }
 
     // Helper method to create buttons
@@ -327,7 +300,7 @@ public class SpawnerListener implements Listener {
     private void handleSpawnerInfoClick(Player player, SpawnerData spawner) {
         // Create new inventory with 27 slots
         String title = languageManager.getMessage("gui-title.stacker-menu");
-        Inventory gui = Bukkit.createInventory(new SpawnerMenuHolder(spawner), 27, title);
+        Inventory gui = Bukkit.createInventory(new SpawnerStackerHolder(spawner), 27, title);
 
         // Create decrease buttons
         ItemStack decreaseBy64 = createButton(Material.RED_STAINED_GLASS_PANE,
@@ -403,19 +376,19 @@ public class SpawnerListener implements Listener {
     @EventHandler
     public void onStackControlClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        if (!(event.getInventory().getHolder() instanceof SpawnerMenuHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder)) return;
 
         event.setCancelled(true);
         Player player = (Player) event.getWhoClicked();
 
-        SpawnerMenuHolder holder = (SpawnerMenuHolder) event.getInventory().getHolder();
+        SpawnerStackerHolder holder = (SpawnerStackerHolder) event.getInventory().getHolder();
         SpawnerData spawner = holder.getSpawnerData();
 
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || !clicked.hasItemMeta()) return;
 
         // Return to main menu if spawner is clicked
-        if (VALID_MATERIALS.contains(clicked.getType())) {
+        if (clicked.getType() == Material.SPAWNER) {
             openSpawnerMenu(player, spawner, true);
             return;
         }

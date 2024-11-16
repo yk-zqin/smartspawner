@@ -27,6 +27,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 public class SpawnerBreakHandler implements Listener {
     private final SmartSpawner plugin;
@@ -304,9 +305,48 @@ public class SpawnerBreakHandler implements Listener {
         CreatureSpawner placedSpawner = (CreatureSpawner) placedBlock.getState();
         placedSpawner.setSpawnedType(storedEntity);
         placedSpawner.update();
-        languageManager.sendMessage(player, "messages.entity-spawner-placed");
+
+        // Handle spawner activation
+        if (configManager.getActivateOnPlace()) {
+            createNewSpawnerWithType(block, player, storedEntity);
+        } else {
+            languageManager.sendMessage(player, "messages.entity-spawner-placed");
+        }
+
         // Debug message
         configManager.debug("Player " + player.getName() + " placed " + storedEntity + " spawner at " + block.getLocation());
+    }
+
+    private void createNewSpawnerWithType(Block block, Player player, EntityType entityType) {
+        String newSpawnerId = UUID.randomUUID().toString().substring(0, 8);
+
+        // Use placed entity type or fall back to default if null
+        EntityType finalEntityType = (entityType != null && entityType != EntityType.UNKNOWN)
+                ? entityType
+                : configManager.getDefaultEntityType();
+
+        // Create new spawner with specific entity type
+        SpawnerData spawner = new SpawnerData(newSpawnerId, block.getLocation(), finalEntityType, plugin);
+        spawner.setSpawnerActive(true);
+
+        // Creature spawner block
+        CreatureSpawner cs = (CreatureSpawner) block.getState();
+        cs.setSpawnedType(finalEntityType);
+        cs.update();
+
+        // Add to manager and save
+        spawnerManager.addSpawner(newSpawnerId, spawner);
+        spawnerManager.saveSpawnerData();
+
+        // Visual effect
+        block.getWorld().spawnParticle(
+                Particle.WITCH,
+                block.getLocation().clone().add(0.5, 0.5, 0.5),
+                50, 0.5, 0.5, 0.5, 0
+        );
+
+        languageManager.sendMessage(player, "messages.activated");
+        configManager.debug("Created new spawner with ID: " + newSpawnerId + " at " + block.getLocation());
     }
 
     private void cleanupSpawner(Block block, SpawnerData spawner, Player player) {

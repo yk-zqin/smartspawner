@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 
 public class SpawnerData {
     private final SmartSpawner plugin;
-    private String spawnerId;
+    private final String spawnerId;
     private Location spawnerLocation;
     private Integer spawnerExp;
     private Boolean spawnerActive;
