@@ -129,6 +129,12 @@ public class ConfigManager {
         configCache.put("settings.language", config.getString("settings.language"));
         configCache.put("settings.debug", config.getBoolean("settings.debug"));
         configCache.put("settings.save-interval", config.getInt("settings.save-interval"));
+
+        // Cache hopper settings
+        configCache.put("hopper.enabled", config.getBoolean("hopper.enabled"));
+        configCache.put("hopper.transfer-cooldown", config.getInt("hopper.transfer-cooldown"));
+        configCache.put("hopper.items-per-transfer", config.getInt("hopper.items-per-transfer"));
+        configCache.put("hopper.check-interval", config.getInt("hopper.check-interval"));
     }
 
     public void reloadConfigs() {
@@ -389,4 +395,38 @@ public class ConfigManager {
                 key -> config.getString(key, "disabled"));
         return ShopType.fromString(shopType);
     }
+
+    // Hopper settings
+    public boolean isHopperEnabled() {
+        return (boolean) configCache.computeIfAbsent("hopper.enabled", key -> {
+            boolean defaultValue = true;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getBoolean(key, defaultValue);
+        });
+    }
+
+    public int getHopperTransferCooldown() {
+        return (int) configCache.computeIfAbsent("hopper.transfer-cooldown", key -> {
+            int defaultValue = 20;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getInt(key, defaultValue);
+        });
+    }
+
+    public int getHopperItemsPerTransfer() {
+        return (int) configCache.computeIfAbsent("hopper.items-per-transfer", key -> {
+            int defaultValue = 64;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getInt(key, defaultValue);
+        });
+    }
+
+    public int getHopperCheckInterval() {
+        return (int) configCache.computeIfAbsent("hopper.check-interval", key -> {
+            int defaultValue = 20;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getInt(key, defaultValue);
+        });
+    }
+
 }

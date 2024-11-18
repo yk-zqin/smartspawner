@@ -128,6 +128,27 @@ public class LanguageManager {
         put("messages.stack-full.type", "CHAT");
         put("messages.stack-full.sound", "block.note_block.pling");
 
+        put("messages.invalid-spawner.message", "&cInvalid spawner type!");
+        put("messages.invalid-spawner.prefix", "true");
+        put("messages.invalid-spawner.type", "CHAT");
+        put("messages.invalid-spawner.sound", "block.note_block.pling");
+
+        put("messages.different-type.message", "&cYou can only stack spawners of the same type!");
+        put("messages.different-type.prefix", "true");
+        put("messages.different-type.type", "CHAT");
+        put("messages.different-type.sound", "block.note_block.pling");
+
+        put("messages.hopper-paused.message", "&cHopper has been paused while interacting with the spawner!");
+        put("messages.hopper-paused.prefix", "true");
+        put("messages.hopper-paused.type", "CHAT");
+        put("messages.hopper-paused.sound", "block.note_block.pling");
+
+        put("messages.hopper-resumed.message", "&aHopper has been resumed!");
+        put("messages.hopper-resumed.prefix", "true");
+        put("messages.hopper-resumed.type", "CHAT");
+        put("messages.hopper-resumed.sound", "block.note_block.chime");
+
+
         // GUI Titles
         put("gui-title.menu", "%entity% Spawner");
         put("gui-title.stacked-menu", "%amount% %entity% Spawner");

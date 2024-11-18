@@ -7,6 +7,7 @@ import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
@@ -34,12 +35,14 @@ public class SpawnerBreakHandler implements Listener {
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
+    private final HopperHandler hopperHandler;
 
     public SpawnerBreakHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerManager = plugin.getSpawnerManager();
+        this.hopperHandler = plugin.getHopperHandler();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -76,6 +79,13 @@ public class SpawnerBreakHandler implements Listener {
         } else {
             handleSpawnerBreak(block, spawner, player);
             event.setCancelled(true);
+        }
+
+        Block blockBelow = event.getBlock().getRelative(BlockFace.DOWN);
+        if (blockBelow.getType() == Material.HOPPER) {
+            if (hopperHandler != null) {
+                hopperHandler.stopHopperTask(blockBelow.getLocation());
+            }
         }
     }
 
@@ -311,6 +321,16 @@ public class SpawnerBreakHandler implements Listener {
             createNewSpawnerWithType(block, player, storedEntity);
         } else {
             languageManager.sendMessage(player, "messages.entity-spawner-placed");
+        }
+
+        if (configManager.isHopperEnabled()) {
+            // Check for hopper below and start hopper task
+            Block blockBelow = block.getRelative(BlockFace.DOWN);
+            if (blockBelow.getType() == Material.HOPPER) {
+                if (hopperHandler != null) {
+                    hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
+                }
+            }
         }
 
         // Debug message

@@ -173,6 +173,18 @@ messages:
     type: CHAT
     sound: block.note_block.pling
 
+  invalid-spawner:
+    message: "&cSpawner không hợp lệ!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  different-type:
+    message: "&cBạn chỉ có thể stack các spawner cùng loại!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Thu thập kinh nghiệm
   #---------------------------------------------------
@@ -214,6 +226,21 @@ messages:
 
   take-all-items:
     message: "&#d6e7edĐã lấy thành công &#3287A9%amount%&#d6e7ed vật phẩm!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.chime
+
+  #---------------------------------------------------
+  # Hopper Interaction
+  #---------------------------------------------------
+  hopper-paused:
+    message: "&cHopper đã bị tạm dừng! Do đang tương tác với kho chứa."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  hopper-resumed:
+    message: "&aHopper đã được khôi phục!"
     prefix: true
     type: CHAT
     sound: block.note_block.chime
@@ -343,7 +370,7 @@ equipment-toggle:
 #---------------------------------------------------
 command:
   reload:
-    usage: "&cSử dụng: /smartspawner reload [loot]"
+    usage: "&cSử dụng: /smartspawner reload"
     success: "&aĐã tải lại plugin thành công!"
     loot-success: "&aĐã tải lại cấu hình vật phẩm thành công!"
     error: "&cLỗi khi tải lại plugin. Kiểm tra console để biết chi tiết."

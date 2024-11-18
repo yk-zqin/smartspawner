@@ -105,7 +105,7 @@ public class SpawnerLootManager {
             ItemStack durabilityToggle = createAllowEquipmentToggleButton(spawner.isAllowEquipmentItems());
             inventory.setItem(NAVIGATION_ROW * 9 + 1, durabilityToggle);
         }
-        configManager.debug("Is allow equipment items: " + configManager.isAllowToggleEquipmentItems());
+        //configManager.debug("Is allow equipment items: " + configManager.isAllowToggleEquipmentItems());
 
     }
 

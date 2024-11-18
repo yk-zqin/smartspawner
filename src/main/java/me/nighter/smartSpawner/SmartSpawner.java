@@ -27,6 +27,7 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerExplosionListener spawnerExplosionListener;
     private EconomyShopGUI shopIntegration;
     private boolean isEconomyShopGUI = false;
+    private HopperHandler hopperHandler;
 
     @Override
     public void onEnable() {
@@ -41,10 +42,18 @@ public class SmartSpawner extends JavaPlugin {
         spawnerBreakHandler = new SpawnerBreakHandler(this);
         spawnerStackHandler = new SpawnerStackHandler(this);
         guiClickHandler = new GUIClickHandler(this);
+        if (configManager.isHopperEnabled())
+        {
+            hopperHandler = new HopperHandler(this);
+            hopperHandler.checkAllHoppers();
+        } else {
+            getLogger().info("Hopper integration is disabled by configuration");
+            hopperHandler = null;
+        }
         updateChecker = new UpdateChecker(this, 120743);
         checkDependencies();
 
-            // Load configs
+        // Load configs
         spawnerManager.loadSpawnerData();
         updateChecker.initialize();
 
@@ -130,6 +139,9 @@ public class SmartSpawner extends JavaPlugin {
         if (updateChecker != null) {
             updateChecker.shutdown();
         }
+        if (hopperHandler != null) {
+            hopperHandler.cleanup();
+        }
 
         SpawnerHeadManager.clearCache();
         getLogger().info("SmartSpawner has been disabled!");
@@ -183,6 +195,14 @@ public class SmartSpawner extends JavaPlugin {
         if (updateChecker.hasUpdate()) {
             getLogger().info("New version available: " + updateChecker.getLatestVersion());
         }
+    }
+
+    public HopperHandler getHopperHandler() {
+        return hopperHandler;
+    }
+
+    public SpawnerLootManager getSpawnerLootManager() {
+        return lootManager;
     }
 
     public EconomyShopGUI getShopIntegration() {

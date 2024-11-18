@@ -56,7 +56,7 @@ spawner:
   allow-grief: false
 
   # Allow spawners to be activated immediately when placed
-  activate-on-place: false
+  activate-on-place: true
 
 # ===================
 # Breaking Settings
@@ -90,6 +90,24 @@ spawner-break:
     # Maximum stack size that will drop as a single item
     # If stack size is smaller, entire stack will drop
     amount: 64
+
+# ===================
+# Hopper Settings (Experimental) Not recommended for large servers
+# ===================
+
+# Hopper settings for transferring items from spawner storage to other containers
+hopper:
+  # Enable/disable hopper transfer functionality
+  enabled: false
+
+  # Cooldown in ticks between item transfers
+  transfer-cooldown: 20
+
+  # Maximum number of items transferred per hopper
+  items-per-transfer: 1
+
+  # Time for checking hoppers for item transfer (in ticks)
+  check-interval: 20
 
 # ===================
 # Performance Settings

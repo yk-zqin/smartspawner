@@ -3,8 +3,12 @@ package me.nighter.smartSpawner.managers;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.*;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class SpawnerStackHandler {
     private final SmartSpawner plugin;
@@ -26,6 +30,31 @@ public class SpawnerStackHandler {
 
         if (!player.hasPermission("smartspawner.stack")) {
             languageManager.sendMessage(player, "no-permission");
+            return false;
+        }
+
+        // Check spawner type from item in hand
+        ItemMeta meta = itemInHand.getItemMeta();
+        if (!(meta instanceof BlockStateMeta)) {
+            languageManager.sendMessage(player, "messages.invalid-spawner");
+            return false;
+        }
+
+        BlockStateMeta blockMeta = (BlockStateMeta) meta;
+        CreatureSpawner handSpawner = (CreatureSpawner) blockMeta.getBlockState();
+        EntityType handEntityType = handSpawner.getSpawnedType();
+
+        // Get target spawner's entity type
+        EntityType targetEntityType = targetSpawner.getEntityType();
+
+        // Check if two spawners are the same type
+        if (handEntityType != targetEntityType) {
+            languageManager.sendMessage(player, "messages.different-type");
+            return false;
+        }
+
+        if (maxStackSize <= 1) {
+            languageManager.sendMessage(player, "messages.stack-full");
             return false;
         }
 

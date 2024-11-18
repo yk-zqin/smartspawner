@@ -367,10 +367,10 @@ public class SpawnerLootGenerator {
         int newExp = Math.min(oldExp + lootResult.getExperience(), spawner.getMaxStoredExp());
         spawner.setSpawnerExp(newExp);
 
-//        configManager.debug("Loot addition complete: " +
-//                "Added items: " + addedItems +
-//                ", Skipped items: " + skippedItems +
-//                ", XP change: " + oldExp + " -> " + newExp);
+        configManager.debug("Loot addition complete: " +
+                "Added items: " + addedItems +
+                ", Skipped items: " + skippedItems +
+                ", XP change: " + oldExp + " -> " + newExp);
     }
 
     public void reloadConfigurations() {
