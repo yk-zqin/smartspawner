@@ -301,9 +301,10 @@ public class SpawnerBreakHandler implements Listener {
 
         // Skip if item doesn't have meta
         ItemMeta meta = item.getItemMeta();
-        if (!(meta instanceof BlockStateMeta)) {
-            return;
-        }
+//        if (!(meta instanceof BlockStateMeta)) {
+//            return;
+//        }
+
 
         BlockStateMeta blockMeta = (BlockStateMeta) meta;
         // Get the stored spawner state
@@ -313,7 +314,28 @@ public class SpawnerBreakHandler implements Listener {
         // Apply the stored entity type to the placed spawner
         Block placedBlock = event.getBlock();
         CreatureSpawner placedSpawner = (CreatureSpawner) placedBlock.getState();
-        placedSpawner.setSpawnedType(storedEntity);
+
+        // Support for spawners without stored meta entity type from EconomyShopGUI
+        if (storedEntity == null) {
+            String displayName = meta.getDisplayName();
+            if (displayName.matches("§9§l[A-Za-z]+(?: [A-Za-z]+)? §rSpawner")) {
+                String entityName = displayName
+                        .replaceAll("§9§l", "")
+                        .replaceAll(" §rSpawner", "")
+                        .replace(" ", "_")
+                        .toUpperCase();
+                configManager.debug("Found entity name: " + entityName);
+                try {
+                    storedEntity = EntityType.valueOf(entityName.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    configManager.debug("Could not find entity type: " + entityName);
+                    return;
+                }
+            }
+        } else {
+            placedSpawner.setSpawnedType(storedEntity);
+        }
+        // placedSpawner.setSpawnedType(storedEntity);
         placedSpawner.update();
 
         // Handle spawner activation

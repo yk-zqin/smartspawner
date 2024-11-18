@@ -399,7 +399,7 @@ public class ConfigManager {
     // Hopper settings
     public boolean isHopperEnabled() {
         return (boolean) configCache.computeIfAbsent("hopper.enabled", key -> {
-            boolean defaultValue = true;
+            boolean defaultValue = false;
             setDefaultIfNotExists(key, defaultValue);
             return config.getBoolean(key, defaultValue);
         });

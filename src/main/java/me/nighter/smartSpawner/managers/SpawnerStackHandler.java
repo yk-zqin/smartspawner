@@ -12,7 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class SpawnerStackHandler {
     private final SmartSpawner plugin;
-    private final int maxStackSize;
     private ConfigManager configManager;
     private LanguageManager languageManager;
 
@@ -20,7 +19,6 @@ public class SpawnerStackHandler {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
-        this.maxStackSize = configManager.getMaxStackSize();
     }
 
     public boolean handleSpawnerStack(Player player, SpawnerData targetSpawner, ItemStack itemInHand, boolean stackAll) {
@@ -47,17 +45,26 @@ public class SpawnerStackHandler {
         // Get target spawner's entity type
         EntityType targetEntityType = targetSpawner.getEntityType();
 
+        // Support for stacking spawners with Spawner from EconomyShopGUI
+        if (handEntityType == null) {
+            String displayName = meta.getDisplayName();
+            if (displayName.matches("§9§l[A-Za-z]+(?: [A-Za-z]+)? §rSpawner")) {
+                String entityName = displayName
+                        .replaceAll("§9§l", "")
+                        .replaceAll(" §rSpawner", "")
+                        .replace(" ", "_")
+                        .toUpperCase();
+                handEntityType = EntityType.valueOf(entityName.toUpperCase());
+            }
+        }
+
         // Check if two spawners are the same type
         if (handEntityType != targetEntityType) {
             languageManager.sendMessage(player, "messages.different-type");
             return false;
         }
 
-        if (maxStackSize <= 1) {
-            languageManager.sendMessage(player, "messages.stack-full");
-            return false;
-        }
-
+        int maxStackSize = configManager.getMaxStackSize();
         int currentStack = targetSpawner.getStackSize();
         if (currentStack >= maxStackSize) {
             languageManager.sendMessage(player, "messages.stack-full");

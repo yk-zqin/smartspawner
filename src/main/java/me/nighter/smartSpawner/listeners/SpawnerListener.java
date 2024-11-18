@@ -405,10 +405,6 @@ public class SpawnerListener implements Listener {
         int change = getChangeAmount(displayName);
         if (change == 0) return;
 
-        // Calculate new stack size with overflow handling
-        int targetSize = currentSize + change;
-        int actualChange;
-
         if (change > 0) {
             handleStackIncrease(player, spawner, currentSize, change, maxStackSize);
             handleSpawnerInfoClick(player, spawner);
@@ -480,17 +476,45 @@ public class SpawnerListener implements Listener {
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
+    private EntityType getSpawnerEntityType(ItemStack item) {
+        if (item == null || item.getType() != Material.SPAWNER) {
+            return null;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (!(meta instanceof BlockStateMeta)) {
+            return null;
+        }
+
+        BlockStateMeta blockMeta = (BlockStateMeta) meta;
+        CreatureSpawner spawner = (CreatureSpawner) blockMeta.getBlockState();
+        EntityType spawnerEntity = spawner.getSpawnedType();
+
+        // Support for stacking spawners with Spawner from EconomyShopGUI
+        if (spawnerEntity == null) {
+            String displayName = meta.getDisplayName();
+            if (displayName.matches("§9§l[A-Za-z]+(?: [A-Za-z]+)? §rSpawner")) {
+                String entityName = displayName
+                        .replaceAll("§9§l", "")
+                        .replaceAll(" §rSpawner", "")
+                        .replace(" ", "_")
+                        .toUpperCase();
+                try {
+                    spawnerEntity = EntityType.valueOf(entityName);
+                } catch (IllegalArgumentException e) {
+                    configManager.debug("Could not find entity type: " + entityName);
+                }
+            }
+        }
+
+        return spawnerEntity;
+    }
+
     private boolean hasDifferentSpawnerType(Player player, EntityType requiredType) {
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SPAWNER) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta instanceof BlockStateMeta) {
-                    BlockStateMeta blockMeta = (BlockStateMeta) meta;
-                    CreatureSpawner spawner = (CreatureSpawner) blockMeta.getBlockState();
-                    if (spawner.getSpawnedType() != requiredType) {
-                        return true;
-                    }
-                }
+            EntityType spawnerEntity = getSpawnerEntityType(item);
+            if (spawnerEntity != null && spawnerEntity != requiredType) {
+                return true;
             }
         }
         return false;
@@ -499,15 +523,9 @@ public class SpawnerListener implements Listener {
     private int countValidSpawnersInInventory(Player player, EntityType requiredType) {
         int count = 0;
         for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SPAWNER) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta instanceof BlockStateMeta) {
-                    BlockStateMeta blockMeta = (BlockStateMeta) meta;
-                    CreatureSpawner spawner = (CreatureSpawner) blockMeta.getBlockState();
-                    if (spawner.getSpawnedType() == requiredType) {
-                        count += item.getAmount();
-                    }
-                }
+            EntityType spawnerEntity = getSpawnerEntityType(item);
+            if (spawnerEntity == requiredType) {
+                count += item.getAmount();
             }
         }
         return count;
@@ -519,22 +537,16 @@ public class SpawnerListener implements Listener {
         ItemStack[] contents = player.getInventory().getContents();
         for (int i = 0; i < contents.length && remainingToRemove > 0; i++) {
             ItemStack item = contents[i];
-            if (item != null && item.getType() == Material.SPAWNER) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta instanceof BlockStateMeta) {
-                    BlockStateMeta blockMeta = (BlockStateMeta) meta;
-                    CreatureSpawner spawner = (CreatureSpawner) blockMeta.getBlockState();
+            EntityType spawnerEntity = getSpawnerEntityType(item);
 
-                    if (spawner.getSpawnedType() == requiredType) {
-                        int itemAmount = item.getAmount();
-                        if (itemAmount <= remainingToRemove) {
-                            player.getInventory().setItem(i, null);
-                            remainingToRemove -= itemAmount;
-                        } else {
-                            item.setAmount(itemAmount - remainingToRemove);
-                            remainingToRemove = 0;
-                        }
-                    }
+            if (spawnerEntity == requiredType) {
+                int itemAmount = item.getAmount();
+                if (itemAmount <= remainingToRemove) {
+                    player.getInventory().setItem(i, null);
+                    remainingToRemove -= itemAmount;
+                } else {
+                    item.setAmount(itemAmount - remainingToRemove);
+                    remainingToRemove = 0;
                 }
             }
         }
