@@ -3,7 +3,12 @@ version: '${version}'
 main: me.nighter.smartSpawner.SmartSpawner
 api-version: '1.21'
 authors: [Nighter, Samarth Sharma]
-softdepend: [floodgate, EconomyShopGUI, EconomyShopGUI-Premium]
+softdepend:
+  - EconomyShopGUI
+  - EconomyShopGUI-Premium
+
+  - Essentials
+  - CMI
 
 commands:
   smartspawner:
