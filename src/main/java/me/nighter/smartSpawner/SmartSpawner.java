@@ -1,7 +1,5 @@
 package me.nighter.smartSpawner;
 
-import me.nighter.smartSpawner.commands.GiveSpawnerCommand;
-import me.nighter.smartSpawner.commands.ReloadCommand;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.managers.*;
