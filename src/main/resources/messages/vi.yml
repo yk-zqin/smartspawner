@@ -117,6 +117,12 @@ messages:
     type: CHAT
     sound: block.note_block.bell
 
+  sell-all-tax:
+    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a%price%$&#d6e7ed (Thuế: &c%tax%%&#d6e7ed)!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
   no-items:
     message: "&cKhông có vật phẩm nào trong spawner để bán."
     prefix: true
@@ -388,7 +394,7 @@ spawner-list:
   gui-title:
     world-selection: "&#3287A9&lDanh sách Spawner"
     spawner-list: "&#4fc3f7✧ Spawners thế giới %world% &#4fc3f7✧ &7Trang %page%/%total%"
-    page_title: "{world} &r- [{current}/{total}]"
+    page-title: "{world} &r- [{current}/{total}]"
 
   world-buttons:
     overworld:

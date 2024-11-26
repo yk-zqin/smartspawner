@@ -118,6 +118,12 @@ messages:
     type: CHAT
     sound: block.note_block.bell
 
+  sell-all-tax:
+    message: "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed (Tax: &#ff6b6b%tax%%&#d6e7ed)!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.bell
+
   no-items:
     message: "&cThere are no items to sell in the spawner."
     prefix: true
