@@ -351,9 +351,8 @@ public class SpawnerBreakHandler implements Listener {
         String newSpawnerId = UUID.randomUUID().toString().substring(0, 8);
 
         // Create new spawner with specific entity type
-        SpawnerData spawner = new SpawnerData(newSpawnerId, block.getLocation(), plugin);
+        SpawnerData spawner = new SpawnerData(newSpawnerId, block.getLocation(), entityType, plugin);
         spawner.setSpawnerActive(true);
-        spawner.setEntityType(entityType);
 
         // Add to manager and save
         spawnerManager.addSpawner(newSpawnerId, spawner);
