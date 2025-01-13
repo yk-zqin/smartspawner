@@ -22,13 +22,13 @@ import java.util.UUID;
 
 public class WorldGuardAPI {
     // Check if player can break in a location
-    public static boolean canPlayerBreakInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
+    public static boolean canPlayerBreakBlockInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
         Player player = Bukkit.getServer().getPlayer(pUUID);
         if (player != null && (player.isOp() || player.hasPermission("worldguard.region.bypass"))) {
             return true;
         }
 
-        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapOfflinePlayer(Bukkit.getServer().getOfflinePlayer(pUUID));
+        LocalPlayer localPlayer = player != null ? WorldGuardPlugin.inst().wrapPlayer(player) : WorldGuardPlugin.inst().wrapOfflinePlayer(Bukkit.getServer().getOfflinePlayer(pUUID));
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
@@ -38,13 +38,17 @@ public class WorldGuardAPI {
     }
 
     // Check if player can place in a location
-    public static boolean canPlayerPlaceInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
+    public static boolean canPlayerPlaceBlockInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
         Player player = Bukkit.getServer().getPlayer(pUUID);
-        if (player != null && (player.isOp() || player.hasPermission("worldguard.region.bypass"))) {
-            return true;
+        if (player != null) {
+            if (player.isOp() || player.hasPermission("worldguard.region.bypass")) {
+                return true;
+            }
+        } else {
+            player = Bukkit.getServer().getOfflinePlayer(pUUID).getPlayer();
         }
 
-        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapOfflinePlayer(Bukkit.getServer().getOfflinePlayer(pUUID));
+        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapOfflinePlayer(player);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
@@ -73,7 +77,7 @@ public class WorldGuardAPI {
         if (p.isOp() || p.hasPermission("worldguard.region.bypass")) {
             return true;
         }
-
+        
         LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(p);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
@@ -83,13 +87,17 @@ public class WorldGuardAPI {
         return query.testBuild(loc, localPlayer, condition);
     }
 
-    // Check if player is in a region
-    public static boolean isInRegion(Player p, String name) {
+    public static boolean isPlayerInRegion(Player p, String name) {
+        if (p == null || p.getLocation() == null || p.getWorld() == null) {
+            return false;
+        }
         Location loc = BukkitAdapter.adapt(p.getLocation());
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
 
-        if (regions == null) return false;
+        if (regions == null) {
+            return false;
+        }
 
         ApplicableRegionSet set = regions.getApplicableRegions(loc.toVector().toBlockPoint());
 

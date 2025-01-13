@@ -31,8 +31,9 @@ public class SpawnerStackHandler {
 
         // Check WorldGuard restrictions
         Location location = targetSpawner.getSpawnerLocation();
-        if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
-            return false;
+        if (SmartSpawner.hasWorldGuard)
+            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
+                return false;
         }
 
         // Check if player has permission to stack spawners

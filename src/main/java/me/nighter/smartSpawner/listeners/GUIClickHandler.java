@@ -134,6 +134,14 @@ public class GUIClickHandler implements Listener {
     }
 
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
+
+        if (SmartSpawner.hasWorldGuard) {
+            Location location = spawner.getSpawnerLocation();
+            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
+                return;
+            }
+        }
+
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
 

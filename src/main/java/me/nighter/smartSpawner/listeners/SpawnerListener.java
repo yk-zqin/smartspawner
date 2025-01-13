@@ -24,9 +24,10 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
+import me.nighter.smartSpawner.hooks.WorldGuardAPI;
+
 import org.geysermc.floodgate.api.FloodgateApi;
 
-import java.util.UUID;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -174,6 +175,14 @@ public class SpawnerListener implements Listener {
     }
 
     private void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
+        
+        if (SmartSpawner.hasWorldGuard) {
+            Location location = spawner.getSpawnerLocation();
+            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
+                return;
+            }
+        }
+
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
         if (spawner.getStackSize() >1){

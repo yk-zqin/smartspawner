@@ -16,6 +16,7 @@ import org.geysermc.floodgate.api.FloodgateApi;
 import com.sk89q.worldguard.WorldGuard;
 
 public class SmartSpawner extends JavaPlugin {
+    public static boolean hasWorldGuard = false;
     private static SmartSpawner instance;
     private ConfigManager configManager;
     private LanguageManager languageManager;
@@ -32,7 +33,6 @@ public class SmartSpawner extends JavaPlugin {
     private EconomyShopGUI shopIntegration;
     private boolean isEconomyShopGUI = false;
     private HopperHandler hopperHandler;
-    private boolean hasWorldGuard = false;
 
     @Override
     public void onEnable() {

@@ -59,9 +59,10 @@ public class SpawnerBreakHandler implements Listener {
         }
 
         // Check WorldGuard restrictions
-        if (!WorldGuardAPI.canPlayerBreakInRegion(player.getUniqueId(), location)) {
-            event.setCancelled(true);
-            return;
+        if (SmartSpawner.hasWorldGuard)
+            if (!WorldGuardAPI.canPlayerBreakBlockInRegion(player.getUniqueId(), location)) {
+                event.setCancelled(true);
+                return;
         }
 
         // Cache config values
@@ -308,9 +309,10 @@ public class SpawnerBreakHandler implements Listener {
         Location location = event.getBlock().getLocation();
     
         // Check WorldGuard restrictions
-        if (!WorldGuardAPI.canPlayerPlaceInRegion(player.getUniqueId(), location)) {
-            event.setCancelled(true);
-            return;
+        if (SmartSpawner.hasWorldGuard)
+            if (!WorldGuardAPI.canPlayerBreakBlockInRegion(player.getUniqueId(), location)) {
+                event.setCancelled(true);
+                return;
         }
 
         Block block = event.getBlock();
