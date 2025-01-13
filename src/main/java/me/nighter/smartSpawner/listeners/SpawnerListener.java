@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.utils.*;
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -739,18 +740,13 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof PagedSpawnerLootHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof PagedSpawnerLootHolder holder)) return;
 
-        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) event.getInventory().getHolder();
         SpawnerData spawner = holder.getSpawnerData();
-
-        // Save items from current page
-        SpawnerLootManager lootManager = new SpawnerLootManager(plugin);
-        lootManager.saveItems(spawner, event.getInventory());
-
-        // Save to file
-        spawnerManager.saveSpawnerData();
+        plugin.getSpawnerLootManager().saveItems(spawner, event.getInventory());
+        plugin.getSpawnerManager().saveSpawnerData();
     }
+
 
     /**
      * Get entity type from spawn egg material

@@ -124,12 +124,6 @@ messages:
     type: CHAT
     sound: block.note_block.bell
 
-  no-items:
-    message: "&cThere are no items to sell in the spawner."
-    prefix: true
-    type: CHAT
-    sound: block.note_block.pling
-
   no-sellable-items:
     message: "&cNo items can be sold from this spawner."
     prefix: true
