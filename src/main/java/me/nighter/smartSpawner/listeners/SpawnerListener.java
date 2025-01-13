@@ -1,11 +1,13 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
-import me.nighter.smartSpawner.commands.SpawnerListCommand;
-import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.utils.*;
+import me.nighter.smartSpawner.managers.*;
+import me.nighter.smartSpawner.hooks.WorldGuardAPI;
+import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
+import me.nighter.smartSpawner.commands.SpawnerListCommand;
+import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
+import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -24,10 +26,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 import org.geysermc.floodgate.api.FloodgateApi;
 
-import java.util.UUID;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -175,6 +175,14 @@ public class SpawnerListener implements Listener {
     }
 
     private void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
+        
+        if (SmartSpawner.hasWorldGuard) {
+            Location location = spawner.getSpawnerLocation();
+            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
+                return;
+            }
+        }
+
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
         if (spawner.getStackSize() >1){
