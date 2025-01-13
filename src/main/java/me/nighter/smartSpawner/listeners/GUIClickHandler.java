@@ -8,8 +8,11 @@ import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
+import me.nighter.smartSpawner.hooks.WorldGuardAPI;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -133,6 +136,7 @@ public class GUIClickHandler implements Listener {
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
+
         if (spawner.getStackSize() >1){
             title = languageManager.getGuiTitle("gui-title.stacked-menu", "%amount%", String.valueOf(spawner.getStackSize()), "%entity%", entityName);
         } else {

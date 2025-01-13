@@ -4,12 +4,16 @@ import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.hooks.EconomyShopGUI;
+import me.nighter.smartSpawner.hooks.WorldGuardAPI;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.geysermc.floodgate.api.FloodgateApi;
+
+import com.sk89q.worldguard.WorldGuard;
 
 public class SmartSpawner extends JavaPlugin {
     private static SmartSpawner instance;
@@ -28,6 +32,7 @@ public class SmartSpawner extends JavaPlugin {
     private EconomyShopGUI shopIntegration;
     private boolean isEconomyShopGUI = false;
     private HopperHandler hopperHandler;
+    private boolean hasWorldGuard = false;
 
     @Override
     public void onEnable() {
@@ -85,6 +90,16 @@ public class SmartSpawner extends JavaPlugin {
             }
         } catch (NoClassDefFoundError | NullPointerException e) {
             getLogger().info("Floodgate not detected, continuing without it");
+        }
+
+        try {
+            WorldGuard.getInstance();
+            if (WorldGuard.getInstance() != null) {
+                getLogger().info("WorldGuard integration enabled successfully!");
+                hasWorldGuard = true;
+            }
+        } catch (NoClassDefFoundError | NullPointerException e) {
+            getLogger().info("WorldGuard not detected, continuing without it");
         }
 
         ConfigManager.ShopType shopType = configManager.getShopType();
