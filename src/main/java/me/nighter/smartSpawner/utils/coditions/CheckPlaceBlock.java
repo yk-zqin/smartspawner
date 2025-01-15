@@ -11,7 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public class PlaceBlock {
+public class CheckPlaceBlock {
     public static boolean CanPlayerPlaceBlock(@NotNull final UUID playerUUID, @NotNull Block block) {
         return CanPlayerPlaceBlock(playerUUID, block.getLocation());
     }
@@ -25,8 +25,8 @@ public class PlaceBlock {
         if (SmartSpawner.hasGriefPrevention)
             if (!GriefPreventionAPI.CanplayerPlaceClaimBlock(playerUUID, location)) return false;
 
-        if (SmartSpawner.hasWorldGuard)
-            if (!WorldGuardAPI.canPlayerPlaceBlockInRegion(playerUUID, location)) return false;
+        if (SmartSpawner.hasLands)
+            if (!LandsIntegrationAPI.CanplayerPlaceClaimBlock(playerUUID, location)) return false;
 
         return true;
     }

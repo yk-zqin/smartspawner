@@ -13,13 +13,6 @@ import java.util.UUID;
 
 public class GriefPreventionAPI {
 
-    public static boolean isPlayerInClaim(@NotNull Player p, Location location, boolean acceptWilderness) {
-        Claim claim = GriefPrevention.instance.dataStore.getClaimAt(p.getLocation(), true, null);
-        if (claim == null || claim.getOwnerID() == null) return acceptWilderness;
-
-        return claim.getOwnerID().equals(p.getUniqueId()) || claim.getPermission("public") != null || (claim.hasExplicitPermission(p, ClaimPermission.Build) && claim.hasExplicitPermission(p, ClaimPermission.Access) && claim.hasExplicitPermission(p, ClaimPermission.Inventory));
-    }
-
     public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
         Claim claim = GriefPrevention.instance.dataStore.getClaimAt(location, true, null);
         if (claim == null) return true;

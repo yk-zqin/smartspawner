@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.coditions.PlaceBlock;
+import me.nighter.smartSpawner.utils.coditions.CheckPlaceBlock;
 
 import org.bukkit.*;
 import org.bukkit.block.CreatureSpawner;
@@ -32,7 +32,7 @@ public class SpawnerStackHandler {
 
         // Check if player can place block or not
         Location location = targetSpawner.getSpawnerLocation();
-        if (!PlaceBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
+        if (!CheckPlaceBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
             return false;
         }
 

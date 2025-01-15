@@ -10,6 +10,7 @@ softdepend:
   - CMI
   - WorldGuard
   - GriefPrevention
+  - Lands
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

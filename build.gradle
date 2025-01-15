@@ -41,6 +41,8 @@ dependencies {
     implementation 'net.kyori:adventure-api:4.14.0'
     implementation 'net.kyori:adventure-text-minimessage:4.14.0'
     implementation 'com.github.Gypopo:EconomyShopGUI-API:1.7.2'
+    implementation 'com.github.GriefPrevention:GriefPrevention:16.18.4'
+    implementation 'com.github.IncrediblePlugins:LandsAPI:7.11.10'
 }
 
 def targetJavaVersion = 21
@@ -75,5 +77,4 @@ def minecraftVersion = "1.21+"
 jar {
     archiveBaseName.set("SmartSpawner")
     archiveVersion.set("${version}-MC-${minecraftVersion}")
-    destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\TestServer\\plugins\\')
 }

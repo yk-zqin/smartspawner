@@ -9,7 +9,7 @@ import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.utils.VirtualInventory;
-import me.nighter.smartSpawner.utils.coditions.OpenMenu;
+import me.nighter.smartSpawner.utils.coditions.CheckOpenMenu;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -244,7 +244,7 @@ public class GUIClickHandler implements Listener {
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         
         Location location = spawner.getSpawnerLocation();
-        if (!OpenMenu.CanPlayerOpenMenu(player.getUniqueId(), location)) {
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), location)) {
             return;
         }
 

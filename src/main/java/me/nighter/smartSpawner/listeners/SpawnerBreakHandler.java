@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.utils.coditions.BreakBlock;
+import me.nighter.smartSpawner.utils.coditions.CheckBreakBlock;
 import me.nighter.smartSpawner.managers.SpawnerManager;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
@@ -59,7 +59,7 @@ public class SpawnerBreakHandler implements Listener {
         }
 
         // Check CanBreak restrictions
-        if (!BreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
+        if (!CheckBreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
             event.setCancelled(true);
             return;
         }
@@ -308,7 +308,7 @@ public class SpawnerBreakHandler implements Listener {
         Location location = event.getBlock().getLocation();
     
         // Check WorldGuard restrictions
-        if (!BreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
+        if (!CheckBreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
             event.setCancelled(true);
             return;
         }

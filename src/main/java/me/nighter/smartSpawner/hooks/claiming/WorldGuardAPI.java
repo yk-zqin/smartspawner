@@ -58,7 +58,7 @@ public class WorldGuardAPI {
     }
 
     // Check if player can build in a location
-    public static boolean canPlayerBuildInRegion(@NotNull Player p, org.bukkit.Location location) {
+    public static boolean CanPlayerBuildInRegion(@NotNull Player p, org.bukkit.Location location) {
         if (p.isOp() || p.hasPermission("worldguard.region.bypass")) {
             return true;
         }
@@ -73,7 +73,7 @@ public class WorldGuardAPI {
     }
 
     // Check if player can interact in a location
-    public static boolean canPlayerInteractInRegion(@NotNull Player p, org.bukkit.Location location) {
+    public static boolean CanPlayerInteractInRegion(@NotNull Player p, org.bukkit.Location location) {
         if (p.isOp() || p.hasPermission("worldguard.region.bypass")) {
             return true;
         }
@@ -85,27 +85,5 @@ public class WorldGuardAPI {
 
         StateFlag[] condition = new StateFlag[]{Flags.INTERACT};
         return query.testBuild(loc, localPlayer, condition);
-    }
-
-    public static boolean isPlayerInRegion(Player p, String name) {
-        if (p == null || p.getLocation() == null || p.getWorld() == null) {
-            return false;
-        }
-        Location loc = BukkitAdapter.adapt(p.getLocation());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
-
-        if (regions == null) {
-            return false;
-        }
-
-        ApplicableRegionSet set = regions.getApplicableRegions(loc.toVector().toBlockPoint());
-
-        for (ProtectedRegion region : set) {
-            if (region.getId().equalsIgnoreCase(name)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

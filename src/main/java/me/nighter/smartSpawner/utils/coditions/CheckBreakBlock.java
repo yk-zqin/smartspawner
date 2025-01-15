@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class BreakBlock {
+public class CheckBreakBlock {
     public static boolean CanPlayerBreakBlock(@NotNull final UUID playerUUID, @NotNull Block block) {
         return CanPlayerBreakBlock(playerUUID, block.getLocation());
     }
@@ -27,6 +27,9 @@ public class BreakBlock {
 
         if (SmartSpawner.hasWorldGuard)
             if (!WorldGuardAPI.canPlayerBreakBlockInRegion(playerUUID, location)) return false;
+
+        if (SmartSpawner.hasLands)
+            if (!LandsIntegrationAPI.CanplayerBreakClaimBlock(playerUUID, location)) return false;
 
         return true;
     }
