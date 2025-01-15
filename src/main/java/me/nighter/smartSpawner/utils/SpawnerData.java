@@ -4,16 +4,11 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class SpawnerData {
@@ -34,6 +29,7 @@ public class SpawnerData {
     private int stackSize;
     private VirtualInventory virtualInventory;
     private boolean allowEquipmentItems;
+    private UUID lockedBy;
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
@@ -49,6 +45,7 @@ public class SpawnerData {
         this.stackSize = 1;
         this.maxSpawnerLootSlots = 45;
         this.allowEquipmentItems = true;
+        this.lockedBy = null;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
@@ -393,5 +390,32 @@ public class SpawnerData {
 
     public void setAllowEquipmentItems(boolean allowEquipmentItems) {
         this.allowEquipmentItems = allowEquipmentItems;
+    }
+
+    //---------------------------------------------------
+    // Spawner Lock Mechanism (make only one player access GUI at a time)
+    //---------------------------------------------------
+    public synchronized boolean isLocked() {
+        return lockedBy != null;
+    }
+
+    public synchronized boolean lock(UUID playerUUID) {
+        if (isLocked()) {
+            return false;
+        }
+        lockedBy = playerUUID;
+        return true;
+    }
+
+    public synchronized boolean unlock(UUID playerUUID) {
+        if (lockedBy == null || !lockedBy.equals(playerUUID)) {
+            return false;
+        }
+        lockedBy = null;
+        return true;
+    }
+
+    public synchronized UUID getLockedBy() {
+        return lockedBy;
     }
 }

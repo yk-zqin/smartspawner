@@ -108,6 +108,12 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
+  spawner-in-use:
+    message: "&c[!] Lồng spawn đang được người khác sử dụng!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Bán vật phẩm từ Spawner
   #---------------------------------------------------

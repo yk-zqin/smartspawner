@@ -7,7 +7,6 @@ import me.nighter.smartSpawner.hooks.WorldGuardAPI;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.commands.SpawnerListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
-import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -19,9 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.SpawnerSpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
@@ -44,6 +41,9 @@ public class SpawnerListener implements Listener {
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
             Material.CREEPER_HEAD, Material.PIGLIN_HEAD
     );
+    // Click cooldown for optimization
+    private final Map<UUID, Long> playerCooldowns = new HashMap<>();
+    private static final long COOLDOWN_MS = 250;
 
     public SpawnerListener(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -52,19 +52,8 @@ public class SpawnerListener implements Listener {
         this.spawnerManager = plugin.getSpawnerManager();
         this.stackHandler = plugin.getSpawnerStackHandler();
         this.listCommand = new SpawnerListCommand(plugin);
-    }
 
-    /**
-     * Prevent natural spawning from modified spawners
-     */
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onCreatureSpawn(SpawnerSpawnEvent event){
-        if (event.getSpawner() == null) return;
-        SpawnerData spawner = spawnerManager.getSpawnerByLocation(event.getSpawner().getLocation());
-        if (spawner != null && spawner.getSpawnerActive()) {
-            event.setCancelled(true);
-//            configManager.debug("Cancelled spawner spawn event for spawner ID: " + spawner.getSpawnerId());
-        }
+        startCleanupTask();
     }
 
     // Helper method to create new spawner
@@ -99,83 +88,128 @@ public class SpawnerListener implements Listener {
         return spawner;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onSpawnerClick(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        // Early exit if not right-click
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) return;
+
+        // Cache block to avoid multiple calls
         Block block = event.getClickedBlock();
-        if (block == null || block.getType() != Material.SPAWNER) return;
+        if (block.getType() != Material.SPAWNER) return;
 
+        // Cache player and check cooldown
         Player player = event.getPlayer();
-        ItemStack itemInHand = player.getInventory().getItemInMainHand();
-        CreatureSpawner cspawner = (CreatureSpawner) event.getClickedBlock().getState();
+        if (!checkCooldown(player)) {
+            event.setCancelled(true);
+            return;
+        }
 
-        // Allow block placement when sneaking
-        if (player.isSneaking() && itemInHand.getType().isBlock() && itemInHand.getType() != Material.SPAWNER) {
+        // Cache item to avoid multiple getter calls
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        Material itemType = itemInHand.getType();
+
+        // Allow block placement when sneaking with placeable block
+        if (player.isSneaking() && itemType.isBlock() && itemType != Material.SPAWNER) {
             event.setCancelled(false);
             return;
         }
 
-        // For Bedrock players, only open GUI if they're not trying to break the block
+        // Handle Bedrock player tool usage
         if (isBedrockPlayer(player)) {
-            // Check if they're in "destroy mode" (typically when holding a tool)
-            if (itemInHand.getType().name().endsWith("_PICKAXE") || itemInHand.getType().name().endsWith("_SHOVEL") || itemInHand.getType().name().endsWith("_HOE") || itemInHand.getType().name().endsWith("_AXE")) {
+            String itemName = itemType.name();
+            if (itemName.endsWith("_PICKAXE") || itemName.endsWith("_SHOVEL") ||
+                    itemName.endsWith("_HOE") || itemName.endsWith("_AXE")) {
                 event.setCancelled(false);
                 return;
             }
         }
-        //configManager.debug(isBedrockPlayer(player) ? "Bedrock player detected" : "Java player detected");
 
+        // Prevent further event processing
         event.setCancelled(true);
-        // Direct O(1) lookup instead of iteration
+
+        // Get spawner data with O(1) lookup
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
 
-        // Handle new spawner creation if it doesn't exist
+        // Handle spawner initialization
         if (spawner == null) {
             spawner = createNewSpawner(block, player);
-        } else {
-            // Handle existing spawner with null entityType
-            if (spawner.getEntityType() == null) {
-                CreatureSpawner cs = (CreatureSpawner) block.getState();
-                EntityType entityType = cs.getSpawnedType();
-                if (entityType == null || entityType == EntityType.UNKNOWN) {
-                    entityType = configManager.getDefaultEntityType();
-                }
-                spawner.setEntityType(entityType);
-                spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
-            }
+        } else if (spawner.getEntityType() == null) {
+            initializeExistingSpawner(spawner, block);
         }
 
         // Handle spawn egg usage
-        if (isSpawnEgg(itemInHand.getType())) {
-            handleSpawnEggUse(player, cspawner, spawner, itemInHand);
+        if (isSpawnEgg(itemType)) {
+            handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, itemInHand);
             return;
         }
 
         // Handle spawner stacking
-        if (itemInHand.getType() == Material.SPAWNER) {
-            if (player.isSneaking()) {
-                // Stack all spawners when sneaking
-                boolean success = stackHandler.handleSpawnerStack(player, spawner, itemInHand, true);
-                if (success) {
-                    spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
-                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                    block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER,
-                            block.getLocation().add(0.5, 0.5, 0.5),
-                            10, 0.3, 0.3, 0.3, 0);
-                }
-            } else {
-                // Stack single spawner when not sneaking
-                if (stackHandler.handleSpawnerStack(player, spawner, itemInHand, false)) {
-                    spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
-                }
-            }
-        } else {
+        if (itemType == Material.SPAWNER) {
+            handleSpawnerStacking(player, block, spawner, itemInHand);
+            return;
+        }
+
+        // Open menu if not locked
+        if (spawner.lock(player.getUniqueId())) {
             openSpawnerMenu(player, spawner, false);
+        } else {
+            player.sendMessage(languageManager.getMessage("spawner-in-use"));
+        }
+    }
+
+    private boolean checkCooldown(Player player) {
+        long currentTime = System.currentTimeMillis();
+        Long lastInteraction = playerCooldowns.get(player.getUniqueId());
+
+        if (lastInteraction != null) {
+            if (currentTime - lastInteraction < COOLDOWN_MS) {
+                return false;
+            }
+        }
+
+        playerCooldowns.put(player.getUniqueId(), currentTime);
+        return true;
+    }
+
+    private void startCleanupTask() {
+        plugin.getServer().getScheduler().runTaskTimer(plugin,
+                () -> cleanupCooldowns(),
+                6000L,  // 5 minutes initial delay
+                6000L   // 5 minutes between runs
+        );
+    }
+
+    // Clean up cooldowns periodically (call this every 5-10 minutes)
+    public void cleanupCooldowns() {
+        long currentTime = System.currentTimeMillis();
+        playerCooldowns.entrySet().removeIf(entry ->
+                currentTime - entry.getValue() > COOLDOWN_MS * 10);
+    }
+
+    private void initializeExistingSpawner(SpawnerData spawner, Block block) {
+        CreatureSpawner cs = (CreatureSpawner) block.getState();
+        EntityType entityType = cs.getSpawnedType();
+        spawner.setEntityType(entityType == null || entityType == EntityType.UNKNOWN ?
+                configManager.getDefaultEntityType() : entityType);
+        spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
+    }
+
+    private void handleSpawnerStacking(Player player, Block block, SpawnerData spawner, ItemStack itemInHand) {
+        boolean success = stackHandler.handleSpawnerStack(player, spawner, itemInHand, player.isSneaking());
+        if (success) {
+            spawnerManager.saveSingleSpawner(spawner.getSpawnerId());
+            if (player.isSneaking()) {
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
+                block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER,
+                        block.getLocation().add(0.5, 0.5, 0.5),
+                        10, 0.3, 0.3, 0.3, 0);
+            }
         }
     }
 
     private void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
-        
+
+        // WorldGuard check
         if (SmartSpawner.hasWorldGuard) {
             Location location = spawner.getSpawnerLocation();
             if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
@@ -191,7 +225,7 @@ public class SpawnerListener implements Listener {
             title = languageManager.getGuiTitle("gui-title.menu", "%entity%", entityName);
         }
 
-        // Tạo inventory với custom holder
+        // Create new inventory with custom holder
         Inventory menu = Bukkit.createInventory(new SpawnerMenuHolder(spawner), 27, title);
 
         // Create chest item
@@ -290,6 +324,7 @@ public class SpawnerListener implements Listener {
                 handleSpawnerInfoClick(player, spawner);
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 break;
+
             case EXPERIENCE_BOTTLE:
                 handleExpBottleClick(player, spawner);
                 break;
@@ -736,16 +771,6 @@ public class SpawnerListener implements Listener {
             languageManager.sendMessage(player, "messages.exp-collected", "%exp%", String.valueOf(exp));
         }
     }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof PagedSpawnerLootHolder holder)) return;
-
-        SpawnerData spawner = holder.getSpawnerData();
-        plugin.getSpawnerLootManager().saveItems(spawner, event.getInventory());
-        plugin.getSpawnerManager().saveSpawnerData();
-    }
-
 
     /**
      * Get entity type from spawn egg material

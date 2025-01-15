@@ -82,7 +82,7 @@ public class SpawnerGuiListener implements Listener {
             SpawnerMenuHolder holder = (SpawnerMenuHolder) event.getInventory().getHolder();
             spawnerManager.trackOpenGui(event.getPlayer().getUniqueId(), holder.getSpawnerData());
 
-            // Chỉ start task khi GUI đầu tiên được mở
+            // Only start task when the first GUI is opened
             if (!isTaskRunning) {
                 startUpdateTask();
             }
@@ -93,7 +93,7 @@ public class SpawnerGuiListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getInventory().getHolder() instanceof SpawnerMenuHolder) {
             spawnerManager.untrackOpenGui(event.getPlayer().getUniqueId());
-            // Kiểm tra nếu không còn GUI nào mở thì dừng task
+            // Stop task if no more GUIs are open
             if (spawnerManager.getOpenSpawnerGuis().isEmpty()) {
                 stopUpdateTask();
             }

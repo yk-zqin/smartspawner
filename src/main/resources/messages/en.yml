@@ -109,6 +109,12 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
+  spawner-in-use:
+    message: "&c[!] Other player is currently using this spawner! Please wait."
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Selling Items from Spawner
   #---------------------------------------------------

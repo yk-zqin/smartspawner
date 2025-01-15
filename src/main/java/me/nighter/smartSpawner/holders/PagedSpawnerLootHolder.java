@@ -4,7 +4,7 @@ import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-public class PagedSpawnerLootHolder implements InventoryHolder {
+public class PagedSpawnerLootHolder implements InventoryHolder, SpawnerHolder {
     private final SpawnerData spawnerData;
     private final int currentPage;
     private final int totalPages;
