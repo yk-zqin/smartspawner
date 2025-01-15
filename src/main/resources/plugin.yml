@@ -9,6 +9,7 @@ softdepend:
   - Essentials
   - CMI
   - WorldGuard
+  - GriefPrevention
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
