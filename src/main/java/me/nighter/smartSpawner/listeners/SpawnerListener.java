@@ -2,8 +2,8 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.utils.*;
+import me.nighter.smartSpawner.utils.coditions.OpenMenu;
 import me.nighter.smartSpawner.managers.*;
-import me.nighter.smartSpawner.hooks.WorldGuardAPI;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.commands.SpawnerListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
@@ -176,11 +176,9 @@ public class SpawnerListener implements Listener {
 
     private void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
         
-        if (SmartSpawner.hasWorldGuard) {
-            Location location = spawner.getSpawnerLocation();
-            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
-                return;
-            }
+        Location location = spawner.getSpawnerLocation();
+        if (!OpenMenu.CanPlayerOpenMenu(player.getUniqueId(), location)) {
+            return;
         }
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());

@@ -1,8 +1,9 @@
 package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.hooks.WorldGuardAPI;
 import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.utils.coditions.PlaceBlock;
+
 import org.bukkit.*;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -29,11 +30,10 @@ public class SpawnerStackHandler {
             return false;
         }
 
-        // Check WorldGuard restrictions
+        // Check if player can place block or not
         Location location = targetSpawner.getSpawnerLocation();
-        if (SmartSpawner.hasWorldGuard)
-            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
-                return false;
+        if (!PlaceBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
+            return false;
         }
 
         // Check if player has permission to stack spawners
