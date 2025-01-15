@@ -61,6 +61,11 @@ public class LanguageManager {
         put("messages.activated.type", "CHAT");
         put("messages.activated.sound", "entity.experience_orb.pickup");
 
+        put("messages.entity-spawner-placed.message", "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally.");
+        put("messages.entity-spawner-placed.prefix", "true");
+        put("messages.entity-spawner-placed.type", "CHAT");
+        put("messages.entity-spawner-placed.sound", "block.note_block.pling");
+
         put("messages.changed.message", "&#d6e7edSpawner changed to &#3287A9%type%&#d6e7ed!");
         put("messages.changed.prefix", "true");
         put("messages.changed.type", "CHAT");
@@ -85,10 +90,10 @@ public class LanguageManager {
         put("messages.silk-touch-required.type", "ACTION_BAR");
         put("messages.silk-touch-required.sound", "block.note_block.pling");
 
-        put("messages.entity-spawner-placed.message", "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally.");
-        put("messages.entity-spawner-placed.prefix", "true");
-        put("messages.entity-spawner-placed.type", "CHAT");
-        put("messages.entity-spawner-placed.sound", "block.note_block.pling");
+        put("messages.spawner-in-use.message", "&c[!] Other player is currently using this spawner! Please wait.");
+        put("messages.spawner-in-use.prefix", "false");
+        put("messages.spawner-in-use.type", "ACTION_BAR");
+        put("messages.spawner-in-use.sound", "block.note_block.pling");
 
         // Selling Items from Spawner
         put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed!");

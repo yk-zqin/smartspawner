@@ -23,6 +23,7 @@ public class SmartSpawner extends JavaPlugin {
     private static SmartSpawner instance;
     private ConfigManager configManager;
     private LanguageManager languageManager;
+    private EventHandlers eventHandlers;
     private SpawnerManager spawnerManager;
     private SpawnerRangeChecker rangeChecker;
     private SpawnerLootGenerator lootGenerator;
@@ -42,6 +43,7 @@ public class SmartSpawner extends JavaPlugin {
         instance = this;
         configManager = new ConfigManager(this);
         languageManager = new LanguageManager(this);
+        eventHandlers = new EventHandlers(this);
         lootGenerator = new SpawnerLootGenerator(this);
         lootManager = new SpawnerLootManager(this);
         spawnerManager = new SpawnerManager(this);
@@ -76,6 +78,7 @@ public class SmartSpawner extends JavaPlugin {
 
     private void registerListeners() {
         PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(new EventHandlers(this), this);
         pm.registerEvents(new SpawnerListener(this), this);
         pm.registerEvents(new SpawnerGuiListener(this), this);
         pm.registerEvents(new SpawnerRangeChecker(this), this);
@@ -169,6 +172,10 @@ public class SmartSpawner extends JavaPlugin {
         }
         if (hopperHandler != null) {
             hopperHandler.cleanup();
+        }
+
+        if (eventHandlers != null) {
+            eventHandlers.cleanup();
         }
 
         SpawnerHeadManager.clearCache();

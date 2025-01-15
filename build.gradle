@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.nighter'
-version = '1.1.9-DEV'
+version = '1.1.9'
 
 repositories {
     mavenCentral()
@@ -21,7 +21,7 @@ repositories {
         name = "opencollabRepositoryMain"
         url = "https://repo.opencollab.dev/main"
     }
-    // EconomyShopGUI and GriefPrevention
+    // EconomyShopGUI
     maven { 
         name = "jitpack"
         url = "https://jitpack.io"
@@ -41,7 +41,6 @@ dependencies {
     implementation 'net.kyori:adventure-api:4.14.0'
     implementation 'net.kyori:adventure-text-minimessage:4.14.0'
     implementation 'com.github.Gypopo:EconomyShopGUI-API:1.7.2'
-    implementation 'com.github.GriefPrevention:GriefPrevention:16.18.4'
 }
 
 def targetJavaVersion = 21
@@ -76,4 +75,5 @@ def minecraftVersion = "1.21+"
 jar {
     archiveBaseName.set("SmartSpawner")
     archiveVersion.set("${version}-MC-${minecraftVersion}")
+    destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\TestServer\\plugins\\')
 }

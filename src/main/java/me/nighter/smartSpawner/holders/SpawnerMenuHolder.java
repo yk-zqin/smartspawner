@@ -4,7 +4,7 @@ import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-public class SpawnerMenuHolder implements InventoryHolder {
+public class SpawnerMenuHolder implements InventoryHolder, SpawnerHolder {
     private final SpawnerData spawnerData;
 
     public SpawnerMenuHolder(SpawnerData spawnerData) {
