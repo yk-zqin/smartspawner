@@ -2,10 +2,10 @@ package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
+import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.economy.EconomyShopGUI;
 import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
-import me.angeschossen.lands.api.LandsIntegration;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 
 import org.bukkit.Bukkit;
@@ -65,7 +65,7 @@ public class SmartSpawner extends JavaPlugin {
             getLogger().info("Hopper integration is disabled by configuration");
             hopperHandler = null;
         }
-        updateChecker = new UpdateChecker(this, 120743);
+        updateChecker = new UpdateChecker(this, "9tQwxSFr");
         checkDependencies();
 
         // Load configs

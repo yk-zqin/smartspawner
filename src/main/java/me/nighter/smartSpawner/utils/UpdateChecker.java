@@ -1,5 +1,9 @@
-package me.nighter.smartSpawner.listeners;
+package me.nighter.smartSpawner.utils;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
@@ -26,17 +30,17 @@ import java.util.concurrent.TimeUnit;
 
 public class UpdateChecker implements Listener {
     private final SmartSpawner plugin;
-    private final int resourceId;
+    private final String projectId;
     private String latestVersion;
     private boolean hasUpdate = false;
-    private static final String SPIGOT_API_URL = "https://api.spigotmc.org/legacy/update.php?resource=";
-    private static final String RESOURCE_URL = "https://www.spigotmc.org/resources/";
+    private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/project/%s/version";
+    private static final String MODRINTH_PROJECT_URL = "https://modrinth.com/plugin/";
     private static final int TIMEOUT_SECONDS = 5;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private BukkitTask updateTask;
 
-    // Fancy console colors
+    // Console colors
     private static final String CONSOLE_RESET = "\u001B[0m";
     private static final String CONSOLE_RED = "\u001B[31m";
     private static final String CONSOLE_GREEN = "\u001B[32m";
@@ -44,9 +48,9 @@ public class UpdateChecker implements Listener {
     private static final String CONSOLE_BLUE = "\u001B[34m";
     private static final String CONSOLE_PURPLE = "\u001B[35m";
 
-    public UpdateChecker(SmartSpawner plugin, int resourceId) {
+    public UpdateChecker(SmartSpawner plugin, String projectId) {
         this.plugin = plugin;
-        this.resourceId = resourceId;
+        this.projectId = projectId;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
     }
@@ -56,7 +60,6 @@ public class UpdateChecker implements Listener {
             return;
         }
 
-        // Register events only if update checker is enabled
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Initial check after server starts (delayed by 1 minute)
@@ -64,11 +67,11 @@ public class UpdateChecker implements Listener {
                 checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L);
 
         // Schedule periodic checks
-        long intervalTicks = configManager.getUpdateCheckInterval() * 20L * 60L * 60L; // hours to ticks
+        long intervalTicks = configManager.getUpdateCheckInterval() * 20L * 60L * 60L;
         updateTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
                 () -> checkForUpdate().thenAccept(this::handleUpdateResult),
-                intervalTicks, // First check after interval
-                intervalTicks  // Repeat at interval
+                intervalTicks,
+                intervalTicks
         );
     }
 
@@ -84,23 +87,87 @@ public class UpdateChecker implements Listener {
         }
     }
 
+    private static class Version implements Comparable<Version> {
+        private final int[] parts;
+
+        public Version(String version) {
+            // Remove any non-numeric prefix (e.g., "v1.0.0" -> "1.0.0")
+            version = version.replaceAll("[^0-9.].*$", "")
+                    .replaceAll("^[^0-9]*", "");
+
+            String[] split = version.split("\\.");
+            parts = new int[Math.max(split.length, 3)]; // Ensure at least 3 parts (major.minor.patch)
+
+            // Parse each part, defaulting to 0 if not a valid number
+            for (int i = 0; i < split.length; i++) {
+                try {
+                    parts[i] = Integer.parseInt(split[i]);
+                } catch (NumberFormatException e) {
+                    parts[i] = 0;
+                }
+            }
+        }
+
+        @Override
+        public int compareTo(Version other) {
+            int maxLength = Math.max(parts.length, other.parts.length);
+            for (int i = 0; i < maxLength; i++) {
+                int thisPart = i < parts.length ? parts[i] : 0;
+                int otherPart = i < other.parts.length ? other.parts[i] : 0;
+
+                if (thisPart != otherPart) {
+                    return thisPart - otherPart;
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                if (i > 0) sb.append('.');
+                sb.append(parts[i]);
+            }
+            return sb.toString();
+        }
+    }
+
     private CompletableFuture<Boolean> checkForUpdate() {
         return CompletableFuture.supplyAsync(() -> {
             String currentVersion = plugin.getDescription().getVersion();
             try {
-                URL url = new URL(SPIGOT_API_URL + resourceId);
+                URL url = new URL(String.format(MODRINTH_API_URL, projectId));
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestProperty("User-Agent", plugin.getName() + "/" + currentVersion);
                 connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS));
                 connection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS));
 
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                    latestVersion = reader.readLine();
-                }
+                    JsonArray versions = new Gson().fromJson(reader, JsonArray.class);
+                    Version currentVer = new Version(currentVersion);
+                    Version latestVer = null;
 
-                if (latestVersion != null && !currentVersion.equals(latestVersion)) {
-                    hasUpdate = true;
-                    return true;
+                    // Find the latest release version
+                    for (JsonElement versionElement : versions) {
+                        JsonObject version = versionElement.getAsJsonObject();
+                        if (version.get("version_type").getAsString().equals("release")) {
+                            String versionNumber = version.get("version_number").getAsString();
+                            Version ver = new Version(versionNumber);
+
+                            if (latestVer == null || ver.compareTo(latestVer) > 0) {
+                                latestVer = ver;
+                                latestVersion = versionNumber;
+                            }
+                        }
+                    }
+
+                    if (latestVer != null && latestVer.compareTo(currentVer) > 0) {
+                        plugin.getLogger().info("Found new version: Current=" + currentVer + ", Latest=" + latestVer);
+                        hasUpdate = true;
+                        return true;
+                    }
                 }
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to check for updates: " + e.getMessage());
@@ -111,9 +178,9 @@ public class UpdateChecker implements Listener {
 
     private void printUpdateAlert() {
         String currentVersion = plugin.getDescription().getVersion();
-        String downloadUrl = RESOURCE_URL + resourceId;
+        //String downloadUrl = MODRINTH_PROJECT_URL + projectId;
+        String downloadUrl = "https://modrinth.com/plugin/smart-spawner-plugin";
 
-        // Fancy console box
         String[] consoleMessage = {
                 CONSOLE_PURPLE + "╔═══════════════════════ UPDATE AVAILABLE ═════════════════════╗" + CONSOLE_RESET,
                 CONSOLE_PURPLE + "║" + CONSOLE_RESET + "                                                              " + CONSOLE_PURPLE + "║" + CONSOLE_RESET,
@@ -125,7 +192,6 @@ public class UpdateChecker implements Listener {
                 CONSOLE_PURPLE + "╚══════════════════════════════════════════════════════════════╝" + CONSOLE_RESET
         };
 
-        // Print to console
         for (String line : consoleMessage) {
             plugin.getLogger().info(line);
         }
@@ -147,7 +213,6 @@ public class UpdateChecker implements Listener {
     }
 
     private void sendUpdateMessage(Player player) {
-        // Lấy messages từ file ngôn ngữ
         String currentVersion = plugin.getDescription().getVersion();
         String titleMsg = languageManager.getMessage("update.title");
         String versionMsg = languageManager.getMessage("update.current_version")
@@ -167,16 +232,14 @@ public class UpdateChecker implements Listener {
         Component lastVersion = Component.text(lastVersionMsg)
                 .color(TextColor.fromHexString("#00E689"));
 
-        // Nút download với hiệu ứng hover và click
         Component downloadButton = Component.text(downloadMsg)
                 .color(TextColor.fromHexString("#ADF3FD"))
-                .clickEvent(ClickEvent.openUrl(RESOURCE_URL + resourceId))
+                .clickEvent(ClickEvent.openUrl(MODRINTH_PROJECT_URL + projectId))
                 .hoverEvent(HoverEvent.showText(
                         Component.text(downloadHoverMsg)
                                 .color(TextColor.fromHexString("#ADF3FD"))
                 ));
 
-        // Gửi thông báo
         player.sendMessage(Component.empty());
         player.sendMessage(title);
         player.sendMessage(version);
@@ -185,7 +248,6 @@ public class UpdateChecker implements Listener {
         player.sendMessage(downloadButton);
         player.sendMessage(Component.empty());
 
-        // Thêm hiệu ứng âm thanh
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.0f);
     }
 
