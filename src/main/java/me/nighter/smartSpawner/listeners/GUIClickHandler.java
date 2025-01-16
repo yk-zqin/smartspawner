@@ -26,7 +26,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Location;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class GUIClickHandler implements Listener {
     private final SmartSpawner plugin;
@@ -89,12 +88,14 @@ public class GUIClickHandler implements Listener {
         switch (slot) {
             case 48: // Navigate to the previous page
                 if (holder.getCurrentPage() > 1) {
+                    player.closeInventory();
                     openLootPage(player, spawner, holder.getCurrentPage() - 1, false);
                 }
                 break;
 
             case 50: // Navigate to the next page
                 if (holder.getCurrentPage() < holder.getTotalPages()) {
+                    player.closeInventory();
                     openLootPage(player, spawner, holder.getCurrentPage() + 1, false);
                 }
                 break;
@@ -106,7 +107,6 @@ public class GUIClickHandler implements Listener {
                     if (!player.hasPermission("smartspawner.sellall")) {
                         player.sendMessage(languageManager.getMessage("no-permission"));
                     } else if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
-                        openLootPage(player, spawner, holder.getCurrentPage(), true);
                         player.closeInventory();
                         openLootPage(player, spawner, holder.getCurrentPage(), true);
                     }
@@ -116,6 +116,7 @@ public class GUIClickHandler implements Listener {
 
             case 53: // Open the main spawner menu
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+                player.closeInventory();
                 openSpawnerMenu(player, spawner);
                 break;
 
@@ -127,6 +128,7 @@ public class GUIClickHandler implements Listener {
             case 46: // Toggle equipment items on or off
                 if (configManager.isAllowToggleEquipmentItems()) {
                     spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
+                    player.closeInventory();
                     openLootPage(player, spawner, holder.getCurrentPage(), true);
                 }
                 break;

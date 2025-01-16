@@ -88,7 +88,7 @@ public class SpawnerListener implements Listener {
         return spawner;
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onSpawnerClick(PlayerInteractEvent event) {
         // Early exit if not right-click
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) return;
@@ -139,12 +139,22 @@ public class SpawnerListener implements Listener {
 
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
+            // Check if spawner is locked
+            if (spawner.isLocked()) {
+                languageManager.sendMessage(player, "messages.spawner-in-use");
+                return;
+            }
             handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, itemInHand);
             return;
         }
 
         // Handle spawner stacking
         if (itemType == Material.SPAWNER) {
+            // Check if spawner is locked
+            if (spawner.isLocked()) {
+                languageManager.sendMessage(player, "messages.spawner-in-use");
+                return;
+            }
             handleSpawnerStacking(player, block, spawner, itemInHand);
             return;
         }
@@ -153,7 +163,7 @@ public class SpawnerListener implements Listener {
         if (spawner.lock(player.getUniqueId())) {
             openSpawnerMenu(player, spawner, false);
         } else {
-            player.sendMessage(languageManager.getMessage("spawner-in-use"));
+            languageManager.sendMessage(player, "messages.spawner-in-use");
         }
     }
 
@@ -769,9 +779,6 @@ public class SpawnerListener implements Listener {
         }
     }
 
-    /**
-     * Get entity type from spawn egg material
-     */
     private EntityType getEntityTypeFromSpawnEgg(Material material) {
         String entityName = material.name().replace("_SPAWN_EGG", "");
         try {
@@ -796,11 +803,11 @@ public class SpawnerListener implements Listener {
     }
 
     public void handleSpawnEggUse(Player player, CreatureSpawner spawner, SpawnerData spawnerData, ItemStack spawnEgg) {
-
         if (!player.hasPermission("smartspawner.changetype")) {
             languageManager.sendMessage(player, "no-permission");
             return;
         }
+
         EntityType newType = getEntityTypeFromSpawnEgg(spawnEgg.getType());
 
         if (newType != null && spawnerData != null) {

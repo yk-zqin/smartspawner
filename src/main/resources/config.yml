@@ -68,7 +68,7 @@ spawner-break:
 shop-integration: EconomyShopGUI
 
 # Supported currencies: ITEM, LEVELS, EXP, VAULT, PLAYER_POINTS
-# Formating price with currency symbol: k, m, b, t (for VAULT only)
+# Formating price with currency symbol: K, M, B, T (for VAULT only)
 formated-price: true
 
 tax:

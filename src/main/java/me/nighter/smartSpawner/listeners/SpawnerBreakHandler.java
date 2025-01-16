@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.coditions.CheckBreakBlock;
 import me.nighter.smartSpawner.managers.SpawnerManager;
@@ -20,6 +21,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -49,13 +52,12 @@ public class SpawnerBreakHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onSpawnerBreak(BlockBreakEvent event) {
-
         final Player player = event.getPlayer();
         final Block block = event.getBlock();
-        final Location location = event.getBlock().getLocation();
+        final Location location = block.getLocation();
 
-        if (event.getBlock().getType() != Material.SPAWNER) {
-                return;
+        if (block.getType() != Material.SPAWNER) {
+            return;
         }
 
         // Check CanBreak restrictions
@@ -64,38 +66,48 @@ public class SpawnerBreakHandler implements Listener {
             return;
         }
 
-        // Cache config values
-        final boolean isEnabled = configManager.isSpawnerBreakEnabled();
-        if (!isEnabled) {
+        // Check if spawner breaking is enabled
+        if (!configManager.isSpawnerBreakEnabled()) {
             event.setCancelled(true);
             return;
         }
 
-        // Permission check with early return
+        // Permission check
         if (!player.hasPermission("smartspawner.break")) {
             event.setCancelled(true);
             languageManager.sendMessage(player, "no-permission");
             return;
         }
 
-        // Get spawner data with location caching
-        final Location loc = block.getLocation();
-        final SpawnerData spawner = spawnerManager.getSpawnerByLocation(loc);
+        // Get spawner data
+        final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
         final CreatureSpawner cs = (CreatureSpawner) block.getState();
 
-        if (spawner == null) {
-            handleCSpawnerBreak(block, cs, player);
-            event.setCancelled(true);
-        } else {
+        // Handle GUI closing and player notification
+        if (spawner != null) {
+            // Get the player who currently has the spawner locked
+            UUID lockedBy = spawner.getLockedBy();
+            if (lockedBy != null) {
+                Player viewingPlayer = Bukkit.getPlayer(lockedBy);
+                if (viewingPlayer != null) {
+                    viewingPlayer.closeInventory();
+                    //languageManager.sendMessage(viewingPlayer, "messages.spawner-broken");
+                }
+                spawner.unlock(lockedBy);
+            }
+
             handleSpawnerBreak(block, spawner, player);
-            event.setCancelled(true);
+        } else {
+            handleCSpawnerBreak(block, cs, player);
         }
 
-        Block blockBelow = event.getBlock().getRelative(BlockFace.DOWN);
-        if (blockBelow.getType() == Material.HOPPER) {
-            if (hopperHandler != null) {
-                hopperHandler.stopHopperTask(blockBelow.getLocation());
-            }
+        // Cancel the vanilla break event as we handle it ourselves
+        event.setCancelled(true);
+
+        // Handle hopper cleanup
+        Block blockBelow = block.getRelative(BlockFace.DOWN);
+        if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
+            hopperHandler.stopHopperTask(blockBelow.getLocation());
         }
     }
 

@@ -480,11 +480,20 @@ public class ConfigManager {
     }
 
     public boolean getFormatedPrice() {
-        return (boolean) configCache.computeIfAbsent("formated-price", key -> {
+        Object value = configCache.computeIfAbsent("formated-price", key -> {
             boolean defaultValue = true;
             setDefaultIfNotExists(key, defaultValue);
+
             return config.getBoolean(key, defaultValue);
         });
+
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        } else {
+            throw new IllegalStateException("Invalid value type for 'formated-price': " + value);
+        }
     }
 
     public boolean isTaxEnabled() {
