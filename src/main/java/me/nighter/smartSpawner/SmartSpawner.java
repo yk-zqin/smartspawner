@@ -4,6 +4,7 @@ import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.economy.EconomyShopGUI;
+import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
 import me.angeschossen.lands.api.LandsIntegration;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 
@@ -121,8 +122,9 @@ public class SmartSpawner extends JavaPlugin {
         }
 
         try {
-            LandsIntegration landsApi = LandsIntegration.of(this);
-            if (landsApi != null) {
+            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
+            if (landsPlugin != null) {
+                new LandsIntegrationAPI(this);
                 getLogger().info("Lands integration enabled successfully!");
                 hasLands = true;
             }
