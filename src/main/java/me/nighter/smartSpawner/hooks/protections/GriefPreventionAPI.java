@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.hooks.claiming;
+package me.nighter.smartSpawner.hooks.protections;
 
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.ClaimPermission;

@@ -1,10 +1,9 @@
-package me.nighter.smartSpawner.hooks.claiming;
+package me.nighter.smartSpawner.hooks.protections;
 
 import java.util.UUID;
 
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.flags.Flags;
-import me.angeschossen.lands.api.land.Area;
 import me.angeschossen.lands.api.land.LandWorld;
 
 import org.bukkit.Bukkit;

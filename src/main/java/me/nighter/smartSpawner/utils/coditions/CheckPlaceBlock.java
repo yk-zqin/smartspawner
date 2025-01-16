@@ -1,6 +1,6 @@
 package me.nighter.smartSpawner.utils.coditions;
 
-import me.nighter.smartSpawner.hooks.claiming.*;
+import me.nighter.smartSpawner.hooks.protections.*;
 import me.nighter.smartSpawner.SmartSpawner;
 
 import java.util.UUID;

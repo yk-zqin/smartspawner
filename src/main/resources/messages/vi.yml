@@ -4,10 +4,10 @@ prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 # Định dạng số
 #---------------------------------------------------
 format-number:
-  thousand: "%sk"
-  million: "%sm"
-  billion: "%sb"
-  trillion: "%st"
+  thousand: "%sK"
+  million: "%sM"
+  billion: "%sB"
+  trillion: "%sT"
   default: "%s"
 
 #---------------------------------------------------
@@ -145,7 +145,7 @@ messages:
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689Đã chồng thành công &6%amount%&#00E689 lồng spawn!"
+    message: "&#00E689[✔] Đã chồng thành công &6%amount%&#00E689 lồng spawn!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup

@@ -5,10 +5,10 @@ prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 # Formatted Numbers
 #---------------------------------------------------
 format-number:
-  thousand: "%sk"
-  million: "%sm"
-  billion: "%sb"
-  trillion: "%st"
+  thousand: "%sK"
+  million: "%sM"
+  billion: "%sB"
+  trillion: "%sT"
   default: "%s"
 
 #---------------------------------------------------
@@ -140,7 +140,7 @@ messages:
   # Spawner Stacking/Unstacking
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689Successfully stacked &6%amount%&#00E689 spawners!"
+    message: "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup
