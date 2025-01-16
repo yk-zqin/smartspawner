@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.hooks.claiming;
+package me.nighter.smartSpawner.hooks.protections;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.util.Location;

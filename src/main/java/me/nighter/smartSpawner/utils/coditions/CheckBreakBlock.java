@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.utils.coditions;
 
-import me.nighter.smartSpawner.hooks.claiming.*;
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.hooks.protections.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

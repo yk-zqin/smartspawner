@@ -9,9 +9,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.hooks.claiming.WorldGuardAPI;
-import me.nighter.smartSpawner.hooks.claiming.GriefPreventionAPI;
-import me.nighter.smartSpawner.hooks.claiming.LandsIntegrationAPI;
+import me.nighter.smartSpawner.hooks.protections.GriefPreventionAPI;
+import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
+import me.nighter.smartSpawner.hooks.protections.WorldGuardAPI;
 
 public class CheckOpenMenu {
     public static boolean CanPlayerOpenMenu(@NotNull final UUID playerUUID, @NotNull Block block) {
