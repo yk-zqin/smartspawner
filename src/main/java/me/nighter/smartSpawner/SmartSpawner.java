@@ -121,8 +121,8 @@ public class SmartSpawner extends JavaPlugin {
         }
 
         try {
-            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
-            if (landsPlugin != null && landsPlugin instanceof LandsIntegration) {
+            LandsIntegration landsApi = LandsIntegration.of(this);
+            if (landsApi != null) {
                 getLogger().info("Lands integration enabled successfully!");
                 hasLands = true;
             }

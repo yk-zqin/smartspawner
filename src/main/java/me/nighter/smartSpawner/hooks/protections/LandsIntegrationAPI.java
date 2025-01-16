@@ -16,17 +16,17 @@ import org.jetbrains.annotations.NotNull;
 public class LandsIntegrationAPI {
 
     private static LandsIntegration landsIntegration;
-
-    public LandsIntegrationAPI(Plugin plugin) {
-        landsIntegration = LandsIntegration.of(plugin);
-    }
-
-    public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
-
-        Player player = Bukkit.getPlayer(pUUID);
-        if (player == null)  return true;
-
-        LandWorld world = landsIntegration.getWorld(location.getWorld());
+    
+        public void LandsIntegrationAPI(Plugin SmartSpawner) {
+            landsIntegration = LandsIntegration.of(SmartSpawner);
+        }
+    
+        public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    
+            Player player = Bukkit.getPlayer(pUUID);
+            if (player == null)  return true;
+    
+            LandWorld world = landsIntegration.getWorld(location.getWorld());
         if (world != null) { // Lands is enabled in this world
             if (world.hasFlag(player, location, Material.SPAWNER, Flags.BLOCK_BREAK, true)) {
                 return true;
@@ -39,6 +39,11 @@ public class LandsIntegrationAPI {
     }
 
     public static boolean CanplayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+
+        if (landsIntegration == null) {
+            // Handle the case where landsIntegration is null
+            return true; // or throw an exception, depending on your requirements
+        }
 
         Player player = Bukkit.getPlayer(pUUID);
         if (player == null)  return true;
@@ -62,7 +67,7 @@ public class LandsIntegrationAPI {
 
         LandWorld world = landsIntegration.getWorld(location.getWorld());
         if (world != null) { // Lands is enabled in this world
-            if (world.hasFlag(player, location, Material.SPAWNER, Flags.INTERACT_CONTAINER, true)) {
+            if (world.hasFlag(player, location, Material.SPAWNER, Flags.INTERACT_CONTAINER, false)) {
                 return true;
                 
             } else {
