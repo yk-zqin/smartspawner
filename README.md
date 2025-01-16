@@ -6,4 +6,4 @@ For the full plugin and additional resources, please visit the SpigotMC page: [S
 - [Minecraft 1.20 - 1.20.6](https://github.com/ptthanh02/Smart-Spawner-Plugin/tree/1.20%2B)
 
 ### 📜 License
-This plugin is licensed under the CC BY-NC-SA 4.0 License. Please refer to the LICENSE file for details.
+This plugin is licensed under the CC BY-NC-SA 4.0 License. Please refer to the [LICENSE file](https://github.com/ptthanh02/Smart-Spawner-Plugin/blob/1.21%2B/LICENSE) for details.
