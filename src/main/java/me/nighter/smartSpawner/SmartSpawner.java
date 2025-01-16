@@ -1,10 +1,11 @@
 package me.nighter.smartSpawner;
 
-import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
-import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.managers.*;
-import me.nighter.smartSpawner.hooks.EconomyShopGUI;
-import me.nighter.smartSpawner.hooks.WorldGuardAPI;
+import me.nighter.smartSpawner.listeners.*;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
+import me.nighter.smartSpawner.hooks.economy.EconomyShopGUI;
+import me.angeschossen.lands.api.LandsIntegration;
+import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -16,7 +17,11 @@ import org.geysermc.floodgate.api.FloodgateApi;
 import com.sk89q.worldguard.WorldGuard;
 
 public class SmartSpawner extends JavaPlugin {
+    
+    public static boolean hasLands = false;
     public static boolean hasWorldGuard = false;
+    public static boolean hasGriefPrevention = false;
+
     private static SmartSpawner instance;
     private ConfigManager configManager;
     private LanguageManager languageManager;
@@ -103,6 +108,26 @@ public class SmartSpawner extends JavaPlugin {
             }
         } catch (NoClassDefFoundError | NullPointerException e) {
             getLogger().info("WorldGuard not detected, continuing without it");
+        }
+
+        try {
+            GriefPrevention griefPrevention = (GriefPrevention) Bukkit.getPluginManager().getPlugin("GriefPrevention");
+            if (griefPrevention != null) {
+                getLogger().info("GriefPrevention integration enabled successfully!");
+                hasGriefPrevention = true;
+            }
+        } catch (NoClassDefFoundError | NullPointerException e) {
+            getLogger().info("GriefPrevention not detected, continuing without it");
+        }
+
+        try {
+            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
+            if (landsPlugin != null && landsPlugin instanceof LandsIntegration) {
+                getLogger().info("Lands integration enabled successfully!");
+                hasLands = true;
+            }
+        } catch (NoClassDefFoundError | NullPointerException e) {
+            getLogger().info("Lands not detected, continuing without it");
         }
 
         ConfigManager.ShopType shopType = configManager.getShopType();

@@ -8,8 +8,9 @@ import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.hooks.WorldGuardAPI;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+import me.nighter.smartSpawner.utils.coditions.CheckOpenMenu;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -241,12 +242,10 @@ public class GUIClickHandler implements Listener {
     //---------------------------------------------------
 
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
-
-        if (SmartSpawner.hasWorldGuard) {
-            Location location = spawner.getSpawnerLocation();
-            if (!WorldGuardAPI.canPlayerInteractInRegion(player, location)) {
-                return;
-            }
+        
+        Location location = spawner.getSpawnerLocation();
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), location)) {
+            return;
         }
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());

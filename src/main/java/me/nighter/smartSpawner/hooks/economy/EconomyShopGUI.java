@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.hooks;
+package me.nighter.smartSpawner.hooks.economy;
 
 import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
 import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
