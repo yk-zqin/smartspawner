@@ -31,6 +31,7 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerRangeChecker rangeChecker;
     private SpawnerLootGenerator lootGenerator;
     private SpawnerLootManager lootManager;
+    private SpawnerListener spawnerListener;
     private SpawnerGuiListener spawnerGuiListener;
     private UpdateChecker updateChecker;
     private SpawnerStackHandler spawnerStackHandler;
@@ -51,6 +52,7 @@ public class SmartSpawner extends JavaPlugin {
         lootManager = new SpawnerLootManager(this);
         spawnerManager = new SpawnerManager(this);
         rangeChecker = new SpawnerRangeChecker(this);
+        spawnerListener = new SpawnerListener(this);
         spawnerGuiListener = new SpawnerGuiListener(this);
         spawnerBreakHandler = new SpawnerBreakHandler(this);
         spawnerStackHandler = new SpawnerStackHandler(this);
@@ -218,6 +220,10 @@ public class SmartSpawner extends JavaPlugin {
 
     public SpawnerManager getSpawnerManager() {
         return spawnerManager;
+    }
+
+    public SpawnerListener getSpawnerListener() {
+        return spawnerListener;
     }
 
     public SpawnerRangeChecker getRangeChecker() {

@@ -137,6 +137,11 @@ public class SpawnerListener implements Listener {
             initializeExistingSpawner(spawner, block);
         }
 
+        // Check if player can open menu on private land claims(GriefPrevention, Lands, etc.)
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
+            return;
+        }
+
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
             // Check if spawner is locked
@@ -217,12 +222,7 @@ public class SpawnerListener implements Listener {
         }
     }
 
-    private void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
-
-        Location location = spawner.getSpawnerLocation();
-        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), location)) {
-            return;
-        }
+    protected void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
