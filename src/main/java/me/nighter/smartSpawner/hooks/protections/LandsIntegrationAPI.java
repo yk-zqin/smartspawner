@@ -16,63 +16,58 @@ import org.jetbrains.annotations.NotNull;
 public class LandsIntegrationAPI {
 
     private static LandsIntegration landsIntegration;
-    
-        public void LandsIntegrationAPI(Plugin SmartSpawner) {
-            landsIntegration = LandsIntegration.of(SmartSpawner);
+
+    public LandsIntegrationAPI(Plugin smartSpawner) {
+        landsIntegration = LandsIntegration.of(smartSpawner);
+    }
+
+    public static boolean canPlayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+        if (landsIntegration == null) {
+            return true;
         }
-    
-        public static boolean CanplayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
-    
-            Player player = Bukkit.getPlayer(pUUID);
-            if (player == null)  return true;
-    
-            LandWorld world = landsIntegration.getWorld(location.getWorld());
+
+        Player player = Bukkit.getPlayer(pUUID);
+        if (player == null) {
+            return true;
+        }
+
+        LandWorld world = landsIntegration.getWorld(location.getWorld());
         if (world != null) { // Lands is enabled in this world
-            if (world.hasFlag(player, location, Material.SPAWNER, Flags.BLOCK_BREAK, true)) {
-                return true;
-                
-            } else {
-                return false;
-            }
+            return world.hasFlag(player, location, Material.SPAWNER, Flags.BLOCK_BREAK, true);
         }
         return true;
     }
 
-    public static boolean CanplayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
-
+    public static boolean canPlayerPlaceClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
         if (landsIntegration == null) {
-            // Handle the case where landsIntegration is null
-            return true; // or throw an exception, depending on your requirements
+            return true;
         }
 
         Player player = Bukkit.getPlayer(pUUID);
-        if (player == null)  return true;
+        if (player == null) {
+            return true;
+        }
 
         LandWorld world = landsIntegration.getWorld(location.getWorld());
         if (world != null) { // Lands is enabled in this world
-            if (world.hasFlag(player, location, Material.SPAWNER, Flags.BLOCK_PLACE, true)) {
-                return true;
-                
-            } else {
-                return false;
-            }
+            return world.hasFlag(player, location, Material.SPAWNER, Flags.BLOCK_PLACE, true);
         }
         return true;
     }
 
     public static boolean CanPlayerInteractContainer(@NotNull UUID pUUID, @NotNull Location location) {
+        if (landsIntegration == null) {
+            return true;
+        }
 
         Player player = Bukkit.getPlayer(pUUID);
-        if (player == null)  return true;
+        if (player == null) {
+            return true;
+        }
 
         LandWorld world = landsIntegration.getWorld(location.getWorld());
         if (world != null) { // Lands is enabled in this world
-            if (world.hasFlag(player, location, Material.SPAWNER, Flags.INTERACT_CONTAINER, false)) {
-                return true;
-                
-            } else {
-                return false;
-            }
+            return world.hasFlag(player, location, Material.SPAWNER, Flags.INTERACT_CONTAINER, true);
         }
         return true;
     }

@@ -29,7 +29,7 @@ public class CheckBreakBlock {
             if (!WorldGuardAPI.canPlayerBreakBlockInRegion(playerUUID, location)) return false;
 
         if (SmartSpawner.hasLands)
-            if (!LandsIntegrationAPI.CanplayerBreakClaimBlock(playerUUID, location)) return false;
+            if (!LandsIntegrationAPI.canPlayerBreakClaimBlock(playerUUID, location)) return false;
 
         return true;
     }

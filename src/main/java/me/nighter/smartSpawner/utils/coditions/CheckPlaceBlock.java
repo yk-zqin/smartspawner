@@ -26,7 +26,7 @@ public class CheckPlaceBlock {
             if (!GriefPreventionAPI.CanplayerPlaceClaimBlock(playerUUID, location)) return false;
 
         if (SmartSpawner.hasLands)
-            if (!LandsIntegrationAPI.CanplayerPlaceClaimBlock(playerUUID, location)) return false;
+            if (!LandsIntegrationAPI.canPlayerBreakClaimBlock(playerUUID, location)) return false;
 
         return true;
     }
