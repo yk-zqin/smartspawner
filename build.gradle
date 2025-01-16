@@ -42,7 +42,7 @@ dependencies {
     implementation 'net.kyori:adventure-text-minimessage:4.14.0'
     implementation 'com.github.Gypopo:EconomyShopGUI-API:1.7.2'
     implementation 'com.github.GriefPrevention:GriefPrevention:16.18.4'
-    implementation 'com.github.IncrediblePlugins:LandsAPI:7.11.10'
+    implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
 }
 
 def targetJavaVersion = 21
