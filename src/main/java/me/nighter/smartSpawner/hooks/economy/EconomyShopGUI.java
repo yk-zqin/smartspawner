@@ -217,48 +217,58 @@ public class EconomyShopGUI {
 
     private String formatMonetaryValue(double value, EcoType ecoType) {
         if (ecoType == null) {
-            return String.format("%.2f", value); // Fallback format if ecoType is null
+            return formatDefaultValue(value);
         }
 
         try {
-            DecimalFormat df = new DecimalFormat("#,##0.00");
-            // Set the decimal separator and grouping separator based on locale if needed
-            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-            df.setDecimalFormatSymbols(symbols);
-
-            String formattedAmount;
             switch (ecoType.getType()) {
                 case VAULT:
-                    if(configManager.getFormatedPrice()) {
-                        formattedAmount = languageManager.formatNumber((long) value);
-                        return formattedAmount;
-                    }
-                    else {
-                        formattedAmount = df.format(value);
-                        return formattedAmount;
-                    }
-                case ITEM:
-                    // For items, we might want to show whole numbers if the value is integer
-                    if (value == (int)value) {
-                        return String.format("%d %s", (int)value, ecoType.getType().name());
-                    }
-                    return String.format("%.2f %s", value, ecoType.getType().name());
-
-                case EXP, LEVELS:
-                    // Always round to integer for levels and exp
-                    return String.format("%d %s", Math.round(value), ecoType.getType().name());
-
+                    return formatVaultValue(value);
                 case PLAYER_POINTS:
-                    formattedAmount = df.format(value);
-                    return formattedAmount;
-
+                    return formatCurrencyValue(value, true);
+                case ITEM:
+                    return formatItemValue(value, ecoType);
+                case EXP:
+                case LEVELS:
+                    return formatIntegerValue(value, ecoType);
                 default:
-                    // Use the decimal format for unknown types
-                    return df.format(value);
+                    return formatCurrencyValue(value, false);
             }
         } catch (Exception e) {
-            // Fallback formatting in case of any formatting errors
-            return String.format("%.2f", value);
+            return formatDefaultValue(value);
         }
+    }
+
+    private String formatDefaultValue(double value) {
+        return String.format("%.2f", value);
+    }
+
+    private String formatVaultValue(double value) {
+        if (configManager.getFormatedPrice()) {
+            return languageManager.formatNumber((long) value);
+        }
+        return formatCurrencyValue(value, true);
+    }
+
+    private String formatCurrencyValue(double value, boolean useLanguageManager) {
+        if (useLanguageManager && value >= 1000) {
+            return languageManager.formatNumber((long) value);
+        }
+
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+        df.setDecimalFormatSymbols(symbols);
+        return df.format(value);
+    }
+
+    private String formatItemValue(double value, EcoType ecoType) {
+        if (value == (int)value) {
+            return String.format("%d %s", (int)value, ecoType.getType().name());
+        }
+        return String.format("%.2f %s", value, ecoType.getType().name());
+    }
+
+    private String formatIntegerValue(double value, EcoType ecoType) {
+        return String.format("%d %s", Math.round(value), ecoType.getType().name());
     }
 }

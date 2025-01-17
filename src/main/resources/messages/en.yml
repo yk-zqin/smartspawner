@@ -115,6 +115,13 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
+  # Message for accessing spawner when it's protected by an external plugin
+  spawner-protected:
+    message: "&c[!] This spawner is protected!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Selling Items from Spawner
   #---------------------------------------------------
@@ -123,6 +130,12 @@ messages:
     prefix: true
     type: CHAT
     sound: block.note_block.bell
+
+  no-items:
+    message: "&cThere are no items to sell in the spawner."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
 
   sell-all-tax:
     message: "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed (Tax: &#ff6b6b%tax%%&#d6e7ed)!"
@@ -301,12 +314,12 @@ spawner-info-item:
       &8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%
       &8▪ &#81d4faSpawn Delay: &f%delay%&7s
       &8▪ &#81d4faNext Spawn: &e
-               
+      
       &#81d4fa➜ &7Click to open stack menu
   lore-change: "&8▪ &#81d4faNext Spawn: &e"
   lore-inactive: "&cSpawner is inactive!"
   lore-now: "&cNow!"
-  lore-error: "&cError in spawn time! Please restart the server."
+  lore-error: "&cError! Please replace the spawner."
 
 exp-info-item:
   name: "&#00F898&lStored Exp: &e%current_exp%&#00F898"
@@ -366,13 +379,13 @@ page-indicator:
     &7Total Items: &f%current_items%&7/&f%max_slots%
 
 shop-page-indicator:
-  name: "&#ffd700Page [%current_page%/&#ffd700%total_pages%]"
+  name: "&#ffd700Sell All Items"
   lore: |
     
     &8▪ &#ffd700Total Items: &f%current_items%&7/&f%max_slots%
     &8▪ &#ffd700Storage: &a%percent_storage%&a%&f full
     
-    &#ffd700➜ &7Click to sell all items in storage
+    &#ffd700➜ &7Click to sell all items
 
 return-button:
   name: "&#ff6b6b Return to Main Menu"

@@ -139,6 +139,7 @@ public class SpawnerListener implements Listener {
 
         // Check if player can open menu on private land claims(GriefPrevention, Lands, etc.)
         if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
+            languageManager.sendMessage(player, "messages.spawner-protected");
             return;
         }
 

@@ -95,6 +95,11 @@ public class LanguageManager {
         put("messages.spawner-in-use.type", "ACTION_BAR");
         put("messages.spawner-in-use.sound", "block.note_block.pling");
 
+        put("messages.spawner-protected.message", "&c[!] This spawner is protected!");
+        put("messages.spawner-protected.prefix", "false");
+        put("messages.spawner-protected.type", "ACTION_BAR");
+        put("messages.spawner-protected.sound", "block.note_block.pling");
+
         // Selling Items from Spawner
         put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed!");
         put("messages.sell-all.prefix", "true");
@@ -110,7 +115,6 @@ public class LanguageManager {
         put("messages.no-sellable-items.prefix", "true");
         put("messages.no-sellable-items.type", "CHAT");
         put("messages.no-sellable-items.sound", "block.note_block.pling");
-
 
         // Spawner Stacking/Unstacking Messages
         put("messages.hand-stack.message", "&#00E689Successfully stacked &6%amount%&#00E689 spawners!");
@@ -200,8 +204,8 @@ public class LanguageManager {
         put("page-indicator.lore", "&#f4d842Total slots: %total_slots%");
 
         // Shop Page Indicator
-        put("shop-page-indicator.name", "&#ffd700Page [%current_page%/&#ffd700%total_pages%]");
-        put("shop-page-indicator.lore", "\n&8▪ &#ffd700Total Items: &f%current_items%&7/&f%max_slots%\n&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full\n\n&#ffd700➜ &7Click to sell all items in storage");
+        put("shop-page-indicator.name", "&#ffd700Sell All Items");
+        put("shop-page-indicator.lore", "\n&8▪ &#ffd700Total Items: &f%current_items%&7/&f%max_slots%\n&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full\n\n&#ffd700➜ &7Click to sell all items");
 
         // Other GUI Buttons
         put("return-button.name", "&#ff6b6b Return to Main Menu");

@@ -114,6 +114,13 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
+  # Tin nhắn khi truy cập vào lồng spawn được bảo vệ bởi plugin khác
+  spawner-protected:
+    message: "&c[!] Lồng spawn này được bảo vệ!"
+    prefix: false
+    type: ACTION_BAR
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Bán vật phẩm từ Spawner
   #---------------------------------------------------
@@ -311,7 +318,7 @@ spawner-info-item:
   lore-change: "&8▪ &#81d4faLần sinh tiếp: &e"
   lore-inactive: "&cLồng spawn đang không hoạt động!"
   lore-now: "&cBây giờ!"
-  lore-error: "&cLỗi thời gian sinh! Vui lòng khởi động lại máy chủ."
+  lore-error: "&cLỗi! Vui lòng đặt lại lồng spawn."
 
 exp-info-item:
   name: "&#00F898KN đã lưu: &e%current_exp%&#00F898"
@@ -377,7 +384,7 @@ shop-page-indicator:
     &8▪ &#ffd700Vật phẩm: &f%current_items%&7/&f%max_slots%
     &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
 
-    &#ffd700➜ &7Nhấn để bán tất cả
+    &#ffd700➜ &7Nhấn để bán tất cả items
 
 return-button:
   name: "&#ff6b6b Quay Lại Menu Chính"
