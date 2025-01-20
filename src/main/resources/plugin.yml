@@ -12,6 +12,7 @@ softdepend:
   - WorldGuard
   - GriefPrevention
   - Lands
+  - Towny
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

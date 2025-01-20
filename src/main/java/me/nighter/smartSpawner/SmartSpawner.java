@@ -16,6 +16,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.geysermc.floodgate.api.FloodgateApi;
+
+import com.palmergames.bukkit.towny.TownyAPI;
 import com.sk89q.worldguard.WorldGuard;
 
 public class SmartSpawner extends JavaPlugin {
@@ -40,6 +42,7 @@ public class SmartSpawner extends JavaPlugin {
     private GUIClickHandler guiClickHandler;
 
     // Integration flags
+    public static boolean hasTowny = false;
     public static boolean hasLands = false;
     public static boolean hasWorldGuard = false;
     public static boolean hasGriefPrevention = false;
@@ -109,6 +112,10 @@ public class SmartSpawner extends JavaPlugin {
                 return true;
             }
             return false;
+        });
+        hasTowny = checkPlugin("Towny", () -> {
+            TownyAPI.getInstance();
+            return TownyAPI.getInstance() != null;
         });
     }
 

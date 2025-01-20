@@ -30,6 +30,9 @@ public class CheckBreakBlock {
 
         if (SmartSpawner.hasLands)
             if (!LandsIntegrationAPI.canPlayerBreakClaimBlock(playerUUID, location)) return false;
+        
+        if (SmartSpawner.hasTowny)
+            if (!Towny.IfPlayerHasResident(playerUUID, location)) return false;
 
         return true;
     }
