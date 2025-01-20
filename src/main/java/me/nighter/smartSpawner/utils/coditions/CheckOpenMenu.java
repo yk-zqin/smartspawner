@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.hooks.protections.Towny;
 import me.nighter.smartSpawner.hooks.protections.WorldGuardAPI;
 import me.nighter.smartSpawner.hooks.protections.GriefPreventionAPI;
 import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
@@ -32,6 +33,9 @@ public class CheckOpenMenu {
 
         if (SmartSpawner.hasLands)
             if (!LandsIntegrationAPI.CanPlayerInteractContainer(playerUUID, location)) return false;
+        
+        if (SmartSpawner.hasTowny)
+            if (!Towny.IfPlayerHasResident(playerUUID, location)) return false;
 
         return true;
     }
