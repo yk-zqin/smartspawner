@@ -2,7 +2,6 @@ package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
-import me.nighter.smartSpawner.hooks.shops.api.ShopGuiPlus;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.utils.UpdateChecker;
@@ -94,6 +93,10 @@ public class SmartSpawner extends JavaPlugin {
         checkFloodgate();
     }
 
+    private void checkFloodgate() {
+        checkPlugin("Floodgate", () -> FloodgateApi.getInstance() != null);
+    }
+
     private void checkProtectionPlugins() {
         hasWorldGuard = checkPlugin("WorldGuard", () -> {
             WorldGuard.getInstance();
@@ -129,10 +132,6 @@ public class SmartSpawner extends JavaPlugin {
             getLogger().info(pluginName + " not detected, continuing without it");
         }
         return false;
-    }
-
-    private void checkFloodgate() {
-        checkPlugin("Floodgate", () -> FloodgateApi.getInstance() != null);
     }
 
     private void loadData() {
@@ -195,13 +194,5 @@ public class SmartSpawner extends JavaPlugin {
 
     public boolean hasShopIntegration() {
         return shopIntegrationManager.hasShopIntegration();
-    }
-
-    public EconomyShopGUI getEconomyShopIntegration() {
-        return shopIntegrationManager.getEconomyShopIntegration();
-    }
-
-    public boolean hasShopGuiPlus() {
-        return shopIntegrationManager.hasShopGuiPlus();
     }
 }

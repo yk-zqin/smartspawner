@@ -10,9 +10,7 @@ import org.bukkit.plugin.Plugin;
 public class ShopIntegrationManager {
     private final SmartSpawner plugin;
     private IShopIntegration shopIntegration;
-    private EconomyShopGUI economyShopIntegration;
     private boolean hasShopIntegration = false;
-    private boolean hasShopGuiPlus = false;
 
     public ShopIntegrationManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -54,7 +52,6 @@ public class ShopIntegrationManager {
         if (Bukkit.getPluginManager().getPlugin("ShopGUIPlus") != null) {
             shopIntegration = new ShopGuiPlus(plugin);
             hasShopIntegration = true;
-            hasShopGuiPlus = true;
             plugin.getLogger().info("ShopGUIPlus integration enabled!");
             return;
         }
@@ -66,7 +63,7 @@ public class ShopIntegrationManager {
             hasShopIntegration = checkPlugin(pluginName, () -> {
                 Plugin shop = Bukkit.getPluginManager().getPlugin(pluginName);
                 if (shop != null) {
-                    economyShopIntegration = new EconomyShopGUI(plugin);
+                    shopIntegration = new EconomyShopGUI(plugin);
                     return true;
                 }
                 return false;
@@ -86,6 +83,7 @@ public class ShopIntegrationManager {
         return false;
     }
 
+    // Getters
     public IShopIntegration getShopIntegration() {
         if (shopIntegration != null && shopIntegration.isEnabled()) {
             return shopIntegration;
@@ -93,17 +91,8 @@ public class ShopIntegrationManager {
         return null;
     }
 
-    // Getters
     public boolean hasShopIntegration() {
         return hasShopIntegration;
-    }
-
-    public EconomyShopGUI getEconomyShopIntegration() {
-        return economyShopIntegration;
-    }
-
-    public boolean hasShopGuiPlus() {
-        return hasShopGuiPlus;
     }
 
     @FunctionalInterface
