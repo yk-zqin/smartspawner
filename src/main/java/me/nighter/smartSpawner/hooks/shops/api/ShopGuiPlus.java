@@ -15,7 +15,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -161,16 +160,16 @@ public class ShopGuiPlus implements IShopIntegration {
                 .sum();
 
         // Send notification
-        String formattedPrice = formatPrice(totalFinalPrice);
+        String formattedPrice = formatPrice(totalFinalPrice, configManager.isFormatedPrice());
         if (taxPercentage > 0) {
             plugin.getLanguageManager().sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(totalAmount),
+                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
                     "%price%", formattedPrice,
                     "%tax%", String.format("%.2f", taxPercentage)
             );
         } else {
             plugin.getLanguageManager().sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(totalAmount),
+                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
                     "%price%", formattedPrice);
         }
 
@@ -197,15 +196,9 @@ public class ShopGuiPlus implements IShopIntegration {
         return EconomyType.CUSTOM;
     }
 
-    private String formatPrice(double price) {
-        if (configManager.getFormatedPrice() && price >= 1000) {
-            return languageManager.formatNumber((long) price);
-        }
-
-        DecimalFormat df = new DecimalFormat("#,##0.00");
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        df.setDecimalFormatSymbols(symbols);
-        return df.format(price);
+    @Override
+    public LanguageManager getLanguageManager() {
+        return languageManager;
     }
 
     @Override

@@ -9,7 +9,6 @@ import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,6 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import me.nighter.smartSpawner.SmartSpawner;
+
+import static me.gypopo.economyshopgui.util.EconomyType.*;
 
 public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
@@ -143,12 +144,12 @@ public class EconomyShopGUI implements IShopIntegration {
 
             if (taxPercentage > 0) {
                 plugin.getLanguageManager().sendMessage(player, "messages.sell-all-tax",
-                        "%amount%", String.valueOf(totalAmount),
+                        "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
                         "%price%", priceBuilder.toString(),
                         "%tax%", String.format("%.2f", taxPercentage));
             } else {
                 plugin.getLanguageManager().sendMessage(player, "messages.sell-all",
-                        "%amount%", String.valueOf(totalAmount),
+                        "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
                         "%price%", priceBuilder.toString());
             }
             return true;
@@ -219,59 +220,28 @@ public class EconomyShopGUI implements IShopIntegration {
 
     private String formatMonetaryValue(double value, EcoType ecoType) {
         if (ecoType == null) {
-            return formatDefaultValue(value);
+            return formatPrice(value, false);
         }
 
         try {
-            switch (ecoType.getType()) {
-                case VAULT:
-                    return formatVaultValue(value);
-                case PLAYER_POINTS:
-                    return formatCurrencyValue(value, true);
-                case ITEM:
-                    return formatItemValue(value, ecoType);
-                case EXP:
-                case LEVELS:
-                    return formatIntegerValue(value, ecoType);
-                default:
-                    return formatCurrencyValue(value, false);
+            boolean useLanguageManager = ecoType.getType() == VAULT && configManager.isFormatedPrice()
+                    || ecoType.getType() == PLAYER_POINTS;
+            String formattedValue = formatPrice(value, useLanguageManager);
+
+            // Add name type for EXP, LEVELS và ITEM
+            if (ecoType.getType() == EXP || ecoType.getType() == LEVELS || ecoType.getType() == ITEM) {
+                return formattedValue + " " + ecoType.getType().name();
             }
+
+            return formattedValue;
         } catch (Exception e) {
-            return formatDefaultValue(value);
+            return formatPrice(value, false);
         }
     }
 
-    private String formatDefaultValue(double value) {
-        return String.format("%.2f", value);
-    }
-
-    private String formatVaultValue(double value) {
-        if (configManager.getFormatedPrice()) {
-            return languageManager.formatNumber((long) value);
-        }
-        return formatCurrencyValue(value, true);
-    }
-
-    private String formatCurrencyValue(double value, boolean useLanguageManager) {
-        if (useLanguageManager && value >= 1000) {
-            return languageManager.formatNumber((long) value);
-        }
-
-        DecimalFormat df = new DecimalFormat("#,##0.00");
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        df.setDecimalFormatSymbols(symbols);
-        return df.format(value);
-    }
-
-    private String formatItemValue(double value, EcoType ecoType) {
-        if (value == (int)value) {
-            return String.format("%d %s", (int)value, ecoType.getType().name());
-        }
-        return String.format("%.2f %s", value, ecoType.getType().name());
-    }
-
-    private String formatIntegerValue(double value, EcoType ecoType) {
-        return String.format("%d %s", Math.round(value), ecoType.getType().name());
+    @Override
+    public LanguageManager getLanguageManager() {
+        return languageManager;
     }
 
     @Override

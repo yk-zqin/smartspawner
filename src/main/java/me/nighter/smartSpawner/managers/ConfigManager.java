@@ -488,7 +488,7 @@ public class ConfigManager {
         return ShopType.fromString(shopType);
     }
 
-    public boolean getFormatedPrice() {
+    public boolean isFormatedPrice() {
         Object value = configCache.computeIfAbsent("formated-price", key -> {
             boolean defaultValue = true;
             setDefaultIfNotExists(key, defaultValue);
