@@ -456,26 +456,35 @@ public class ConfigManager {
     public enum ShopType {
         DISABLED,
         ECONOMY_SHOP_GUI,
-        ECONOMY_SHOP_GUI_PREMIUM;
+        ECONOMY_SHOP_GUI_PREMIUM,
+        SHOP_GUI_PLUS;
 
         public static ShopType fromString(String value) {
             if (value == null) return DISABLED;
 
-            switch (value.toLowerCase()) {
-                case "economyshopgui":
-                    return ECONOMY_SHOP_GUI;
-                case "economyshopgui-premium":
-                    return ECONOMY_SHOP_GUI_PREMIUM;
-                case "disabled":
-                default:
-                    return DISABLED;
-            }
+            return switch (value.toLowerCase()) {
+                case "economyshopgui" -> ECONOMY_SHOP_GUI;
+                case "economyshopgui-premium" -> ECONOMY_SHOP_GUI_PREMIUM;
+                case "shopguiplus" -> SHOP_GUI_PLUS;
+                case "disabled" -> DISABLED;
+                default -> DISABLED;
+            };
+        }
+
+        @Override
+        public String toString() {
+            return switch (this) {
+                case ECONOMY_SHOP_GUI -> "economyshopgui";
+                case ECONOMY_SHOP_GUI_PREMIUM -> "economyshopgui-premium";
+                case SHOP_GUI_PLUS -> "shopguiplus";
+                case DISABLED -> "disabled";
+            };
         }
     }
 
     public ShopType getShopType() {
         String shopType = (String) configCache.computeIfAbsent("shop-integration",
-                key -> config.getString(key, "EconomyShopGUI"));
+                key -> config.getString(key, "economyshopgui"));
         return ShopType.fromString(shopType);
     }
 

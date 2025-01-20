@@ -42,7 +42,7 @@ public class HopperHandler implements Listener {
     public HopperHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
-        this.lootManager = plugin.getSpawnerLootManager();
+        this.lootManager = plugin.getLootManager();
         this.languageManager = plugin.getLanguageManager();
         this.config = plugin.getConfigManager();
 

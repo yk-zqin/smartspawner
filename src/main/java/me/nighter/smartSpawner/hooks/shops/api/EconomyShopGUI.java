@@ -1,9 +1,10 @@
-package me.nighter.smartSpawner.hooks.economy;
+package me.nighter.smartSpawner.hooks.shops.api;
 
 import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
 import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
 import me.gypopo.economyshopgui.objects.ShopItem;
 import me.gypopo.economyshopgui.util.EcoType;
+import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.utils.SpawnerData;
@@ -21,7 +22,7 @@ import java.util.UUID;
 
 import me.nighter.smartSpawner.SmartSpawner;
 
-public class EconomyShopGUI {
+public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
@@ -270,5 +271,10 @@ public class EconomyShopGUI {
 
     private String formatIntegerValue(double value, EcoType ecoType) {
         return String.format("%d %s", Math.round(value), ecoType.getType().name());
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

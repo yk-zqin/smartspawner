@@ -1,84 +1,136 @@
 package me.nighter.smartSpawner;
 
+import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
+import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
+import me.nighter.smartSpawner.hooks.shops.api.ShopGuiPlus;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import me.nighter.smartSpawner.hooks.economy.EconomyShopGUI;
+import me.nighter.smartSpawner.hooks.shops.api.EconomyShopGUI;
 import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
-
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.geysermc.floodgate.api.FloodgateApi;
-
 import com.sk89q.worldguard.WorldGuard;
 
 public class SmartSpawner extends JavaPlugin {
-    
+    private static SmartSpawner instance;
+
+    // Managers
+    private ConfigManager configManager;
+    private LanguageManager languageManager;
+    private SpawnerManager spawnerManager;
+    private SpawnerLootManager lootManager;
+    private HopperHandler hopperHandler;
+    private ShopIntegrationManager shopIntegrationManager;
+
+    // Handlers and Listeners
+    private EventHandlers eventHandlers;
+    private SpawnerRangeChecker rangeChecker;
+    private SpawnerLootGenerator lootGenerator;
+    private SpawnerListener spawnerListener;
+    private SpawnerGuiListener spawnerGuiListener;
+    private SpawnerStackHandler spawnerStackHandler;
+    private SpawnerBreakHandler spawnerBreakHandler;
+    private GUIClickHandler guiClickHandler;
+
+    // Integration flags
     public static boolean hasLands = false;
     public static boolean hasWorldGuard = false;
     public static boolean hasGriefPrevention = false;
 
-    private static SmartSpawner instance;
-    private ConfigManager configManager;
-    private LanguageManager languageManager;
-    private EventHandlers eventHandlers;
-    private SpawnerManager spawnerManager;
-    private SpawnerRangeChecker rangeChecker;
-    private SpawnerLootGenerator lootGenerator;
-    private SpawnerLootManager lootManager;
-    private SpawnerListener spawnerListener;
-    private SpawnerGuiListener spawnerGuiListener;
-    private UpdateChecker updateChecker;
-    private SpawnerStackHandler spawnerStackHandler;
-    private SpawnerBreakHandler spawnerBreakHandler;
-    private GUIClickHandler guiClickHandler;
-    private SpawnerExplosionListener spawnerExplosionListener;
-    private EconomyShopGUI shopIntegration;
-    private boolean isEconomyShopGUI = false;
-    private HopperHandler hopperHandler;
-
     @Override
     public void onEnable() {
         instance = this;
-        configManager = new ConfigManager(this);
-        languageManager = new LanguageManager(this);
-        eventHandlers = new EventHandlers(this);
-        lootGenerator = new SpawnerLootGenerator(this);
-        lootManager = new SpawnerLootManager(this);
-        spawnerManager = new SpawnerManager(this);
-        rangeChecker = new SpawnerRangeChecker(this);
-        spawnerListener = new SpawnerListener(this);
-        spawnerGuiListener = new SpawnerGuiListener(this);
-        spawnerBreakHandler = new SpawnerBreakHandler(this);
-        spawnerStackHandler = new SpawnerStackHandler(this);
-        guiClickHandler = new GUIClickHandler(this);
-        if (configManager.isHopperEnabled())
-        {
-            hopperHandler = new HopperHandler(this);
-            hopperHandler.checkAllHoppers();
+        initializeComponents();
+        setupCommand();
+        checkDependencies();
+        loadData();
+        registerListeners();
+        getLogger().info("SmartSpawner has been enabled!");
+    }
+
+    private void initializeComponents() {
+        this.configManager = new ConfigManager(this);
+        this.languageManager = new LanguageManager(this);
+        this.eventHandlers = new EventHandlers(this);
+        this.lootGenerator = new SpawnerLootGenerator(this);
+        this.lootManager = new SpawnerLootManager(this);
+        this.spawnerManager = new SpawnerManager(this);
+        this.rangeChecker = new SpawnerRangeChecker(this);
+        this.spawnerListener = new SpawnerListener(this);
+        this.spawnerGuiListener = new SpawnerGuiListener(this);
+        this.spawnerBreakHandler = new SpawnerBreakHandler(this);
+        this.spawnerStackHandler = new SpawnerStackHandler(this);
+        this.guiClickHandler = new GUIClickHandler(this);
+        this.shopIntegrationManager = new ShopIntegrationManager(this);
+
+        if (configManager.isHopperEnabled()) {
+            this.hopperHandler = new HopperHandler(this);
+            this.hopperHandler.checkAllHoppers();
         } else {
             getLogger().info("Hopper integration is disabled by configuration");
-            hopperHandler = null;
+            this.hopperHandler = null;
         }
-        updateChecker = new UpdateChecker(this, "9tQwxSFr");
-        checkDependencies();
+    }
 
-        // Load configs
-        spawnerManager.loadSpawnerData();
-        updateChecker.initialize();
-
-        // Register the reload command
+    private void setupCommand() {
         SmartSpawnerCommand smartSpawnerCommand = new SmartSpawnerCommand(this);
         getCommand("smartspawner").setExecutor(smartSpawnerCommand);
         getCommand("smartspawner").setTabCompleter(smartSpawnerCommand);
+    }
 
-        registerListeners();
-        getLogger().info("SmartSpawner has been enabled!");
+    private void checkDependencies() {
+        checkProtectionPlugins();
+        shopIntegrationManager.initialize();
+        checkFloodgate();
+    }
+
+    private void checkProtectionPlugins() {
+        hasWorldGuard = checkPlugin("WorldGuard", () -> {
+            WorldGuard.getInstance();
+            return WorldGuard.getInstance() != null;
+        });
+
+        hasGriefPrevention = checkPlugin("GriefPrevention", () -> {
+            GriefPrevention griefPrevention = (GriefPrevention) Bukkit.getPluginManager().getPlugin("GriefPrevention");
+            return griefPrevention != null;
+        });
+
+        hasLands = checkPlugin("Lands", () -> {
+            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
+            if (landsPlugin != null) {
+                new LandsIntegrationAPI(this);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private boolean checkPlugin(String pluginName, PluginCheck checker) {
+        try {
+            if (checker.check()) {
+                getLogger().info(pluginName + " integration enabled successfully!");
+                return true;
+            }
+        } catch (NoClassDefFoundError | NullPointerException e) {
+            getLogger().info(pluginName + " not detected, continuing without it");
+        }
+        return false;
+    }
+
+    private void checkFloodgate() {
+        checkPlugin("Floodgate", () -> FloodgateApi.getInstance() != null);
+    }
+
+    private void loadData() {
+        spawnerManager.loadSpawnerData();
+        new UpdateChecker(this, "9tQwxSFr").initialize();
     }
 
     private void registerListeners() {
@@ -92,165 +144,57 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(new SpawnerExplosionListener(this), this);
     }
 
-    private void checkDependencies() {
-        // Check Floodgate
-        try {
-            FloodgateApi floodgateApi = FloodgateApi.getInstance();
-            if (floodgateApi != null) {
-                getLogger().info("Floodgate integration enabled successfully!");
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            getLogger().info("Floodgate not detected, continuing without it");
-        }
-
-        try {
-            WorldGuard.getInstance();
-            if (WorldGuard.getInstance() != null) {
-                getLogger().info("WorldGuard integration enabled successfully!");
-                hasWorldGuard = true;
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            getLogger().info("WorldGuard not detected, continuing without it");
-        }
-
-        try {
-            GriefPrevention griefPrevention = (GriefPrevention) Bukkit.getPluginManager().getPlugin("GriefPrevention");
-            if (griefPrevention != null) {
-                getLogger().info("GriefPrevention integration enabled successfully!");
-                hasGriefPrevention = true;
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            getLogger().info("GriefPrevention not detected, continuing without it");
-        }
-
-        try {
-            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
-            if (landsPlugin != null) {
-                new LandsIntegrationAPI(this);
-                getLogger().info("Lands integration enabled successfully!");
-                hasLands = true;
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            getLogger().info("Lands not detected, continuing without it");
-        }
-
-        ConfigManager.ShopType shopType = configManager.getShopType();
-
-        switch (shopType) {
-            case ECONOMY_SHOP_GUI_PREMIUM:
-                Plugin premiumShop = Bukkit.getPluginManager().getPlugin("EconomyShopGUI-Premium");
-                if (premiumShop != null) {
-                    this.shopIntegration = new EconomyShopGUI(this);
-                    isEconomyShopGUI = true;
-                    getLogger().info("EconomyShopGUI Premium integration enabled!");
-                } else {
-                    getLogger().warning("EconomyShopGUI-Premium not found but configured. Sell features will be disabled.");
-                }
-                break;
-
-            case ECONOMY_SHOP_GUI:
-                Plugin basicShop = Bukkit.getPluginManager().getPlugin("EconomyShopGUI");
-                if (basicShop != null) {
-                    this.shopIntegration = new EconomyShopGUI(this);
-                    isEconomyShopGUI = true;
-                    getLogger().info("EconomyShopGUI integration enabled!");
-                } else {
-                    getLogger().warning("EconomyShopGUI not found but configured. Sell features will be disabled.");
-                }
-                break;
-
-            case DISABLED:
-            default:
-                getLogger().info("Shop integration is disabled by configuration");
-                break;
-        }
-    }
-
     @Override
     public void onDisable() {
-        if (spawnerManager != null) {
-            spawnerManager.saveSpawnerData();
-        }
-        if (rangeChecker != null) {
-            rangeChecker.cleanup();
-        }
-        // Save configs before shutdown
-        if (configManager != null) {
-            configManager.saveConfigs();
-        }
-
-        if (spawnerGuiListener != null) {
-            spawnerGuiListener.onDisable();
-        }
-
-        if (updateChecker != null) {
-            updateChecker.shutdown();
-        }
-        if (hopperHandler != null) {
-            hopperHandler.cleanup();
-        }
-
-        if (eventHandlers != null) {
-            eventHandlers.cleanup();
-        }
-
+        saveAndCleanup();
         SpawnerHeadManager.clearCache();
         getLogger().info("SmartSpawner has been disabled!");
     }
 
-    public static SmartSpawner getInstance() {
-        return instance;
+    private void saveAndCleanup() {
+        if (spawnerManager != null) spawnerManager.saveSpawnerData();
+        if (rangeChecker != null) rangeChecker.cleanup();
+        if (configManager != null) configManager.saveConfigs();
+        if (spawnerGuiListener != null) spawnerGuiListener.onDisable();
+        if (hopperHandler != null) hopperHandler.cleanup();
+        if (eventHandlers != null) eventHandlers.cleanup();
     }
 
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public LanguageManager getLanguageManager() {
-        return languageManager;
-    }
-
-    public SpawnerLootGenerator getLootGenerator() {
-        return lootGenerator;
-    }
-
-    public SpawnerLootManager getLootManager() {
-        return lootManager;
-    }
-
-    public SpawnerManager getSpawnerManager() {
-        return spawnerManager;
-    }
-
-    public SpawnerListener getSpawnerListener() {
-        return spawnerListener;
-    }
-
-    public SpawnerRangeChecker getRangeChecker() {
-        return rangeChecker;
-    }
-
-    public SpawnerStackHandler getSpawnerStackHandler() {
-        return spawnerStackHandler;
-    }
-
-    public HopperHandler getHopperHandler() {
-        return hopperHandler;
-    }
-
-    public SpawnerLootManager getSpawnerLootManager() {
-        return lootManager;
-    }
-
-    public EconomyShopGUI getShopIntegration() {
-        return shopIntegration;
-    }
-
-    public boolean isEconomyShopGUI() {
-        return isEconomyShopGUI;
-    }
+    // Getters
+    public static SmartSpawner getInstance() { return instance; }
+    public ConfigManager getConfigManager() { return configManager; }
+    public LanguageManager getLanguageManager() { return languageManager; }
+    public SpawnerLootGenerator getLootGenerator() { return lootGenerator; }
+    public SpawnerLootManager getLootManager() { return lootManager; }
+    public SpawnerManager getSpawnerManager() { return spawnerManager; }
+    public SpawnerListener getSpawnerListener() { return spawnerListener; }
+    public SpawnerRangeChecker getRangeChecker() { return rangeChecker; }
+    public SpawnerStackHandler getSpawnerStackHandler() { return spawnerStackHandler; }
+    public HopperHandler getHopperHandler() { return hopperHandler; }
 
     public BukkitTask runTaskAsync(Runnable runnable) {
-        return this.getServer().getScheduler().runTaskAsynchronously(this, runnable);
+        return getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    }
+
+    @FunctionalInterface
+    private interface PluginCheck {
+        boolean check();
+    }
+
+    // Getters for ShopIntegration
+    public IShopIntegration getShopIntegration() {
+        return shopIntegrationManager.getShopIntegration();
+    }
+
+    public boolean hasShopIntegration() {
+        return shopIntegrationManager.hasShopIntegration();
+    }
+
+    public EconomyShopGUI getEconomyShopIntegration() {
+        return shopIntegrationManager.getEconomyShopIntegration();
+    }
+
+    public boolean hasShopGuiPlus() {
+        return shopIntegrationManager.hasShopGuiPlus();
     }
 }

@@ -607,7 +607,7 @@ public class LanguageManager {
     public String colorize(String message) {
         if (message == null) return "";
 
-        // Xử lý hex color (&#RRGGBB)
+        // Process Hex color (&#RRGGBB)
         Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
         Matcher matcher = hexPattern.matcher(message);
         StringBuffer buffer = new StringBuffer(message.length() + 4 * 8);
@@ -618,7 +618,7 @@ public class LanguageManager {
         }
         matcher.appendTail(buffer);
 
-        // Xử lý màu thông thường
+        // Process Minecraft color codes
         return ChatColor.translateAlternateColorCodes('&', buffer.toString());
     }
 

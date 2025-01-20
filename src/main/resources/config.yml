@@ -64,8 +64,8 @@ spawner-break:
 #                     Economic Integration
 # ===============================================================
 
-# Available options: disabled, EconomyShopGUI, EconomyShopGUI-Premium
-shop-integration: EconomyShopGUI
+# Available options: disabled, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus
+shop-integration: shopguiplus
 
 # Formating price with currency symbol: K, M, B, T
 formated-price: true

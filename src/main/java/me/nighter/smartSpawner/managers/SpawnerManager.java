@@ -30,7 +30,7 @@ public class SpawnerManager {
     private long previousExpValue = 0;
     private File spawnerDataFile;
     private FileConfiguration spawnerData;
-    private final SpawnerLootGenerator lootGenerator;
+    private final SpawnerLootGenerator spawnerLootGenerator;
     private final SpawnerLootManager lootManager;
     private final Map<UUID, SpawnerData> openSpawnerGuis = new ConcurrentHashMap<>();
     private final ConfigManager configManager;
@@ -40,7 +40,7 @@ public class SpawnerManager {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
-        this.lootGenerator = plugin.getLootGenerator();
+        this.spawnerLootGenerator = plugin.getLootGenerator();
         this.lootManager = plugin.getLootManager();
         setupSpawnerDataFile();
         startSaveTask();
@@ -363,7 +363,7 @@ public class SpawnerManager {
 
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
-            LootResult loot = lootGenerator.generateLoot(
+            LootResult loot = spawnerLootGenerator.generateLoot(
                     spawner.getEntityType(),
                     spawner.getMinMobs(),
                     spawner.getMaxMobs(),
@@ -377,7 +377,7 @@ public class SpawnerManager {
                     10, 0.3, 0.3, 0.3, 0);
 
             // Add loot to virtual inventory
-            lootGenerator.addLootToSpawner(spawner, loot);
+            spawnerLootGenerator.addLootToSpawner(spawner, loot);
             spawner.setLastSpawnTime(System.currentTimeMillis());
 
             // Update for all players viewing the spawner

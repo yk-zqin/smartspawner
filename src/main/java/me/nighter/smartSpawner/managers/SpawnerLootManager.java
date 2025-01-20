@@ -194,7 +194,7 @@ public class SpawnerLootManager {
 
         int currentItems = virtualInventory.getAllItems().size();
 
-        if (plugin.isEconomyShopGUI()) {
+        if (plugin.hasShopIntegration()) {
             material = Material.GOLD_INGOT;
             itemName = languageManager.getMessage("shop-page-indicator.name")
                     .replace("%current_page%", String.valueOf(currentPage))

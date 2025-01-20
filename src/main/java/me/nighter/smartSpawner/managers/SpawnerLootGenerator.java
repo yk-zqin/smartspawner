@@ -21,13 +21,11 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerLootGenerator {
-    private final SmartSpawner plugin;
     private final Random random;
     private final Map<String, EntityLootConfig> entityLootConfigs;
     private final ConfigManager configManager;
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
-        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.random = new Random();
         this.entityLootConfigs = new ConcurrentHashMap<>();

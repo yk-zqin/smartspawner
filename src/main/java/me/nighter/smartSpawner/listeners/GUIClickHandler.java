@@ -95,7 +95,7 @@ public class GUIClickHandler implements Listener {
                 break;
 
             case 49: // Sell all items (requires economy integration)
-                if (plugin.isEconomyShopGUI()) {
+                if (plugin.hasShopIntegration()) {
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
                     if (!player.hasPermission("smartspawner.sellall")) {
@@ -131,7 +131,7 @@ public class GUIClickHandler implements Listener {
 
     // Opens the loot inventory for the specified page
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
-        SpawnerLootManager lootManager = plugin.getSpawnerLootManager();
+        SpawnerLootManager lootManager = plugin.getLootManager();
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
         Inventory pageInventory = lootManager.createLootInventory(spawner, title, page);
 
@@ -221,7 +221,7 @@ public class GUIClickHandler implements Listener {
         // Get the spawner data and save the inventory state
         PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) sourceInventory.getHolder();
         SpawnerData spawner = holder.getSpawnerData();
-        plugin.getSpawnerLootManager().saveItems(spawner, sourceInventory);
+        plugin.getLootManager().saveItems(spawner, sourceInventory);
 
         // Send appropriate message
         if (!anyItemMoved) {

@@ -6,6 +6,7 @@ authors: [Nighter, Samarth Sharma, maiminhdung]
 softdepend:
   - EconomyShopGUI
   - EconomyShopGUI-Premium
+  - ShopGUIPlus
   - Essentials
   - CMI
   - WorldGuard
