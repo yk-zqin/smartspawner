@@ -210,7 +210,7 @@ public class EconomyShopGUI implements IShopIntegration {
 
     private boolean isClaimableCurrency(EcoType ecoType) {
         return switch (ecoType.getType().name()) {
-            case "ITEM", "LEVELS", "EXP", "VAULT", "PLAYER_POINTS"-> true;
+            case "ITEM", "LEVELS", "EXP", "VAULT", "PLAYER_POINTS", "COINS" -> true;
             default -> false;
         };
     }
