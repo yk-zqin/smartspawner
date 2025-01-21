@@ -23,7 +23,7 @@ public class GiveSpawnerCommand {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final List<String> supportedMobs;
-    private final int MAX_AMOUNT = 64; // Giới hạn số lượng tối đa
+    private final int MAX_AMOUNT = 6400;
 
     public GiveSpawnerCommand(SmartSpawner plugin) {
         this.plugin = plugin;

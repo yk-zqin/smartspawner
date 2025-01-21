@@ -465,7 +465,7 @@ command:
     player-not-found: "&cPlayer not found!"
     amount-too-large: "&cMaximum amount allowed is %max%!"
     invalid-amount: "&cInvalid amount! Please enter a number between 1 and 64."
-    inventory-full: "&eYour inventory is full! Some items have been dropped on the ground."
+    inventory-full: "&eYour inventory is full! Some given spawners have been dropped on the ground."
     invalid-mob-type: "&cInvalid mob type! Use tab completion to see available types."
     spawner-received: "&aYou have received %amount% %entity% spawner(s)!"
     spawner-given: "&aYou have given %player% %amount% %entity% spawner(s)!"

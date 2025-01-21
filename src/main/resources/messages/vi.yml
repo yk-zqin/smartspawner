@@ -465,7 +465,7 @@ command:
     player-not-found: "&cKhông tìm thấy người chơi!"
     amount-too-large: "&cSố lượng tối đa cho phép là %max%!"
     invalid-amount: "&cSố lượng không hợp lệ! Vui lòng nhập số từ 1 đến 64."
-    inventory-full: "&eTúi đồ của bạn đã đầy! Một số vật phẩm đã rơi xuống đất."
+    inventory-full: "&eTúi đồ của bạn đã đầy! Một số lồng spawn được cho đã rơi xuống đất."
     invalid-mob-type: "&cLoại mob không hợp lệ! Sử dụng tab để xem các loại có sẵn."
     spawner-received: "&aBạn đã nhận được %amount% lồng spawn %entity%!"
     spawner-given: "&aBạn đã cho %player% %amount% lồng spawn %entity%!"

@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.hooks.shops;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.api.EconomyShopGUI;
-import me.nighter.smartSpawner.hooks.shops.api.ShopGuiPlus;
+import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -11,6 +11,7 @@ public class ShopIntegrationManager {
     private final SmartSpawner plugin;
     private IShopIntegration shopIntegration;
     private boolean hasShopIntegration = false;
+    private boolean isShopGUIPlusEnabled = false;
 
     public ShopIntegrationManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -49,29 +50,40 @@ public class ShopIntegrationManager {
     }
 
     private void setupShopGuiPlus() {
-        if (Bukkit.getPluginManager().getPlugin("ShopGUIPlus") != null) {
-            shopIntegration = new ShopGuiPlus(plugin);
-            hasShopIntegration = true;
-            plugin.getLogger().info("ShopGUIPlus integration enabled!");
-            return;
+        Plugin shopGuiPlus = Bukkit.getPluginManager().getPlugin("ShopGUIPlus");
+        if (shopGuiPlus != null && shopGuiPlus.isEnabled()) {
+            try {
+                shopIntegration = new ShopGuiPlus(plugin);
+                hasShopIntegration = true;
+                isShopGUIPlusEnabled = true;
+                plugin.getLogger().info("ShopGUIPlus integration enabled successfully!");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to setup ShopGUIPlus integration: " + e.getMessage());
+                hasShopIntegration = false;
+                isShopGUIPlusEnabled = false;
+            }
+        } else {
+            plugin.getLogger().info("ShopGUIPlus not found - integration disabled");
         }
-        plugin.getLogger().info("ShopGUIPlus is not found. Skipping ShopGUIPlus integration.");
     }
 
     private void setupEconomyShopGUI(String pluginName) {
-        if (!hasShopIntegration) {
-            hasShopIntegration = checkPlugin(pluginName, () -> {
-                Plugin shop = Bukkit.getPluginManager().getPlugin(pluginName);
-                if (shop != null) {
-                    shopIntegration = new EconomyShopGUI(plugin);
-                    return true;
-                }
-                return false;
-            });
+        Plugin shop = Bukkit.getPluginManager().getPlugin(pluginName);
+        if (shop != null && shop.isEnabled()) {
+            try {
+                shopIntegration = new EconomyShopGUI(plugin);
+                hasShopIntegration = true;
+                plugin.getLogger().info(pluginName + " integration enabled successfully!");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to setup " + pluginName + " integration: " + e.getMessage());
+                hasShopIntegration = false;
+            }
+        } else {
+            plugin.getLogger().info(pluginName + " not found - integration disabled");
         }
     }
 
-    private boolean checkPlugin(String pluginName, PluginCheck checker) {
+        private boolean checkPlugin(String pluginName, PluginCheck checker) {
         try {
             if (checker.check()) {
                 plugin.getLogger().info(pluginName + " integration enabled successfully!");
@@ -93,6 +105,10 @@ public class ShopIntegrationManager {
 
     public boolean hasShopIntegration() {
         return hasShopIntegration;
+    }
+
+    public boolean isShopGUIPlusEnabled() {
+        return isShopGUIPlusEnabled;
     }
 
     @FunctionalInterface

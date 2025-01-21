@@ -3,15 +3,10 @@ package me.nighter.smartSpawner.listeners;
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
-import me.nighter.smartSpawner.managers.SpawnerHeadManager;
 import me.nighter.smartSpawner.managers.SpawnerLootManager;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
-import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.utils.VirtualInventory;
-import me.nighter.smartSpawner.utils.coditions.CheckOpenMenu;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -22,8 +17,6 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.Location;
 
 import java.util.*;
 

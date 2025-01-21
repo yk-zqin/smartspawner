@@ -2,11 +2,12 @@ package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
+import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
+import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import me.nighter.smartSpawner.hooks.shops.api.EconomyShopGUI;
 import me.nighter.smartSpawner.hooks.protections.LandsIntegrationAPI;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
 import org.bukkit.Bukkit;
@@ -129,7 +130,7 @@ public class SmartSpawner extends JavaPlugin {
                 return true;
             }
         } catch (NoClassDefFoundError | NullPointerException e) {
-            getLogger().info(pluginName + " not detected, continuing without it");
+            //getLogger().info(pluginName + " not detected, continuing without it");
         }
         return false;
     }
@@ -148,6 +149,9 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(new SpawnerBreakHandler(this), this);
         pm.registerEvents(new GUIClickHandler(this), this);
         pm.registerEvents(new SpawnerExplosionListener(this), this);
+        if (isShopGUIPlusEnabled()) {
+            pm.registerEvents(new SpawnerHook(this), this);
+        }
     }
 
     @Override
@@ -194,5 +198,13 @@ public class SmartSpawner extends JavaPlugin {
 
     public boolean hasShopIntegration() {
         return shopIntegrationManager.hasShopIntegration();
+    }
+
+    public boolean isShopGUIPlusEnabled() {
+        return shopIntegrationManager.isShopGUIPlusEnabled();
+    }
+
+    public SpawnerProvider getSpawnerProvider() {
+        return new SpawnerProvider(this);
     }
 }

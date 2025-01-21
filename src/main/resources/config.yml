@@ -67,7 +67,7 @@ spawner-break:
 # Available options: disabled, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus
 shop-integration: EconomyShopGUI
 
-# Formating price with currency symbol: K, M, B, T
+# Formating price with currency symbol: K, M, B, T by default in the message file
 formated-price: true
 
 tax:
