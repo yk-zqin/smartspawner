@@ -33,6 +33,7 @@ public class SpawnerStackHandler {
         // Check if player can place block or not
         Location location = targetSpawner.getSpawnerLocation();
         if (!CheckPlaceBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
+            languageManager.sendMessage(player, "messages.spawner-protected");
             return false;
         }
 
