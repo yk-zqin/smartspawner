@@ -39,21 +39,59 @@ public class LanguageManager {
         put("prefix", "&8[&#3287A9&lSmartSpawner&8]&r");
 
         // Format Numbers
-        put("format-number.thousand", "%sk");
-        put("format-number.million", "%sm");
-        put("format-number.billion", "%sb");
-        put("format-number.trillion", "%st");
+        put("format-number.thousand", "%sK");
+        put("format-number.million", "%sM");
+        put("format-number.billion", "%sB");
+        put("format-number.trillion", "%sT");
         put("format-number.default", "%s");
 
         // Mob Names
-        put("mob_names.PIG", "Pig");
-        put("mob_names.ZOMBIE", "Zombie");
-        put("mob_names.SKELETON", "Skeleton");
-        put("mob_names.SPIDER", "Spider");
+        put("mob_names.BLAZE", "Blaze");
+        put("mob_names.BOGGED", "Bogged");
+        put("mob_names.BREEZE", "Breeze");
+        put("mob_names.CAVE_SPIDER", "Cave Spider");
+        put("mob_names.CHICKEN", "Chicken");
+        put("mob_names.COW", "Cow");
         put("mob_names.CREEPER", "Creeper");
+        put("mob_names.DROWNED", "Drowned");
+        put("mob_names.ENDERMAN", "Enderman");
+        put("mob_names.EVOKER", "Evoker");
+        put("mob_names.GHAST", "Ghast");
+        put("mob_names.GLOW_SQUID", "Glow Squid");
+        put("mob_names.GUARDIAN", "Guardian");
+        put("mob_names.HOGLIN", "Hoglin");
+        put("mob_names.HUSK", "Husk");
+        put("mob_names.IRON_GOLEM", "Iron Golem");
+        put("mob_names.MAGMA_CUBE", "Magma Cube");
+        put("mob_names.MOOSHROOM", "Mooshroom");
+        put("mob_names.PIG", "Pig");
+        put("mob_names.PIGLIN", "Piglin");
+        put("mob_names.PIGLIN_BRUTE", "Piglin Brute");
+        put("mob_names.PILLAGER", "Pillager");
+        put("mob_names.PUFFERFISH", "Pufferfish");
+        put("mob_names.RABBIT", "Rabbit");
+        put("mob_names.RAVAGER", "Ravager");
+        put("mob_names.SALMON", "Salmon");
+        put("mob_names.SHEEP", "Sheep");
+        put("mob_names.SHULKER", "Shulker");
+        put("mob_names.SILVERFISH", "Silverfish");
+        put("mob_names.SKELETON", "Skeleton");
+        put("mob_names.SLIME", "Slime");
+        put("mob_names.SPIDER", "Spider");
+        put("mob_names.SQUID", "Squid");
+        put("mob_names.STRAY", "Stray");
+        put("mob_names.STRIDER", "Strider");
+        put("mob_names.TROPICAL_FISH", "Tropical Fish");
+        put("mob_names.VINDICATOR", "Vindicator");
+        put("mob_names.WITCH", "Witch");
+        put("mob_names.WITHER_SKELETON", "Wither Skeleton");
+        put("mob_names.ZOGLIN", "Zoglin");
+        put("mob_names.ZOMBIE", "Zombie");
+        put("mob_names.ZOMBIE_VILLAGER", "Zombie Villager");
+        put("mob_names.ZOMBIFIED_PIGLIN", "Zombified Piglin");
 
         // Spawner Name With Entity
-        put("spawner-name", "%entity% Spawner");
+        put("spawner-name", "&6%entity% Spawner");
 
         // Spawner Interaction Messages
         put("messages.activated.message", "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead.");
@@ -115,6 +153,11 @@ public class LanguageManager {
         put("messages.no-sellable-items.prefix", "true");
         put("messages.no-sellable-items.type", "CHAT");
         put("messages.no-sellable-items.sound", "block.note_block.pling");
+
+        put("messages.sell-failed.message", "&cFailed to sell items! Please try again.");
+        put("messages.sell-failed.prefix", "true");
+        put("messages.sell-failed.type", "CHAT");
+        put("messages.sell-failed.sound", "block.note_block.pling");
 
         // Spawner Stacking/Unstacking Messages
         put("messages.hand-stack.message", "&#00E689Successfully stacked &6%amount%&#00E689 spawners!");

@@ -149,6 +149,12 @@ messages:
     type: CHAT
     sound: block.note_block.pling
 
+  sell-failed:
+    message: "&cFailed to sell items! Please try again."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Spawner Stacking/Unstacking
   #---------------------------------------------------

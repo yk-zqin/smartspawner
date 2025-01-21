@@ -117,7 +117,7 @@ public class ShopGuiPlus implements IShopIntegration{
         }
 
         if (!allTransactionsSuccessful) {
-            plugin.getLanguageManager().sendMessage(player, "messages.transaction-error");
+            plugin.getLanguageManager().sendMessage(player, "messages.sell-failed");
             return false;
         }
 

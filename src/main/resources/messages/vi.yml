@@ -148,6 +148,12 @@ messages:
     type: CHAT
     sound: block.note_block.pling
 
+  sell-failed:
+    message: "&cKhông thể bán vật phẩm! Hãy thử lại sau."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
