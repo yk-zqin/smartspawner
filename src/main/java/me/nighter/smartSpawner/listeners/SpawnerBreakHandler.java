@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.hooks.protections.CheckBreakBlock;
 import me.nighter.smartSpawner.managers.SpawnerManager;
@@ -423,7 +424,7 @@ public class SpawnerBreakHandler implements Listener {
 
         // Visual effect
         block.getWorld().spawnParticle(
-                Particle.WITCH,
+                ParticleWrapper.SPELL_WITCH,
                 block.getLocation().clone().add(0.5, 0.5, 0.5),
                 50, 0.5, 0.5, 0.5, 0
         );

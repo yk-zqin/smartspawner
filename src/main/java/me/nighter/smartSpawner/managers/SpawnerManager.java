@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.utils.VirtualInventory;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -372,7 +373,7 @@ public class SpawnerManager {
 
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
-            world.spawnParticle(Particle.HAPPY_VILLAGER,
+            world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
                     loc.clone().add(0.5, 0.5, 0.5),
                     10, 0.3, 0.3, 0.3, 0);
 
