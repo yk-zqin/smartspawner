@@ -36,7 +36,7 @@ public class HopperHandler implements Listener {
     private final SpawnerManager spawnerManager;
     private final SpawnerLootManager lootManager;
     private final LanguageManager languageManager;
-    private final ConfigManager config;
+    private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
 
     public HopperHandler(SmartSpawner plugin) {
@@ -44,7 +44,7 @@ public class HopperHandler implements Listener {
         this.spawnerManager = plugin.getSpawnerManager();
         this.lootManager = plugin.getLootManager();
         this.languageManager = plugin.getLanguageManager();
-        this.config = plugin.getConfigManager();
+        this.configManager = plugin.getConfigManager();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().runTaskLater(plugin, this::restartAllHoppers, 40L);
@@ -119,7 +119,7 @@ public class HopperHandler implements Listener {
     }
 
     public void startHopperTask(Location hopperLoc, Location spawnerLoc) {
-        if (!config.isHopperEnabled()) return;
+        if (!configManager.isHopperEnabled()) return;
         if (activeHoppers.containsKey(hopperLoc)) return;
 
         BukkitTask task = new BukkitRunnable() {
@@ -131,7 +131,7 @@ public class HopperHandler implements Listener {
                 }
                 transferItems(hopperLoc, spawnerLoc);
             }
-        }.runTaskTimer(plugin, 0L, config.getHopperCheckInterval());
+        }.runTaskTimer(plugin, 0L, configManager.getHopperCheckInterval());
 
         activeHoppers.put(hopperLoc, task);
     }
@@ -163,7 +163,7 @@ public class HopperHandler implements Listener {
             OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
             Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
-            int itemsPerTransfer = config.getHopperItemsPerTransfer();
+            int itemsPerTransfer = configManager.getHopperItemsPerTransfer();
             int transferred = 0;
             boolean inventoryChanged = false;
 
