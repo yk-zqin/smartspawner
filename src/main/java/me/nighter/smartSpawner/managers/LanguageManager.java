@@ -368,6 +368,7 @@ public class LanguageManager {
                 "&f/smartspawner hologram &7- Toggle hologram visibility"
         ));
         put("command.reload.usage", "&cUsage: /smartspawner reload");
+        put("command.reload.wait", "&eReloading plugin please wait...");
         put("command.reload.success", "&aPlugin reloaded successfully!");
         put("command.reload.error", "&cError reloading plugin. Check console for details.");
 

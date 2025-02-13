@@ -466,6 +466,7 @@ command:
     &f/ss hologram &7- Bật/Tắt hologram của spawner
   reload:
     usage: "&cSử dụng: /smartspawner reload"
+    wait: "&eĐang tải lại plugin..."
     success: "&aĐã tải lại plugin thành công!"
     error: "&cLỗi khi tải lại plugin. Kiểm tra console để biết chi tiết."
   give:

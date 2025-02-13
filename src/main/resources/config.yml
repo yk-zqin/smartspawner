@@ -67,7 +67,7 @@ spawner-break:
 
 # Hologram Configuration
 hologram:
-  enabled: true
+  enabled: false
   see-through: false      # Whether hologram should be visible through blocks
   shadowed-text: true     # Whether hologram text is shadowed
   height: 1.6             # Height of the hologram above the spawner

@@ -769,9 +769,9 @@ public class SpawnerListener implements Listener {
 
         if (remainingExp < exp) {
             languageManager.sendMessage(player, "messages.exp-collected-with-mending",
-                    "%exp-mending%", String.valueOf(exp-remainingExp), "%exp%", String.valueOf(remainingExp));
+                    "%exp-mending%", languageManager.formatNumberTenThousand(exp-remainingExp), "%exp%", languageManager.formatNumberTenThousand(remainingExp));
         } else {
-            languageManager.sendMessage(player, "messages.exp-collected", "%exp%", String.valueOf(exp));
+            languageManager.sendMessage(player, "messages.exp-collected", "%exp%", languageManager.formatNumberTenThousand(exp));
         }
     }
 

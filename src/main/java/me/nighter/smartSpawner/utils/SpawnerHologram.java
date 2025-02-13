@@ -9,14 +9,12 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.TextDisplay;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class SpawnerHologram {
     private final SmartSpawner plugin;
@@ -30,8 +28,8 @@ public class SpawnerHologram {
     private int maxExp;
     private int currentItems;
     private int maxSlots;
-    private UUID displayUUID;
-    private static final String METADATA_KEY = "SmartSpawner_Hologram";
+    private static final String HOLOGRAM_IDENTIFIER = "SmartSpawner-Holo";
+    private String uniqueIdentifier;
 
     private static final Vector3f SCALE = new Vector3f(1.0f, 1.0f, 1.0f);
     private static final Vector3f TRANSLATION = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -42,12 +40,20 @@ public class SpawnerHologram {
         this.spawnerLocation = location;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
+        this.uniqueIdentifier = generateUniqueIdentifier(location);
+    }
+
+    private String generateUniqueIdentifier(Location location) {
+        return HOLOGRAM_IDENTIFIER + "-" +
+                location.getWorld().getName() + "-" +
+                location.getBlockX() + "-" +
+                location.getBlockY() + "-" +
+                location.getBlockZ();
     }
 
     public void createHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        // Get configuration values
         double offsetX = configManager.getHologramOffsetX();
         double offsetY = configManager.getHologramHeight();
         double offsetZ = configManager.getHologramOffsetZ();
@@ -63,6 +69,9 @@ public class SpawnerHologram {
                 display.setDefaultBackground(false);
                 display.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
                 display.setSeeThrough(configManager.isHologramSeeThrough());
+                // Add custom name for identification
+                display.setCustomName(uniqueIdentifier);
+                display.setCustomNameVisible(false);
             });
 
             updateText();
@@ -110,9 +119,37 @@ public class SpawnerHologram {
     public void cleanupExistingHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        // Search in a small radius around the spawner location
-        spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, 2, 2, 2).stream()
-                .filter(entity -> entity.getType() == EntityType.TEXT_DISPLAY)
+        double offsetX = configManager.getHologramOffsetX();
+        double offsetY = configManager.getHologramHeight();
+        double offsetZ = configManager.getHologramOffsetZ();
+
+        // Calculate efficient search area
+        double searchRadius = Math.max(Math.max(Math.abs(offsetX), Math.abs(offsetY)), Math.abs(offsetZ)) + 1.0;
+
+        // Use efficient entity lookup
+        spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, searchRadius, searchRadius, searchRadius)
+                .stream()
+                .filter(entity -> entity instanceof TextDisplay)
+                .filter(entity -> {
+                    String customName = entity.getCustomName();
+                    return customName != null &&
+                            customName.startsWith(HOLOGRAM_IDENTIFIER) &&
+                            (customName.equals(uniqueIdentifier) || isOldHologramForLocation(customName, spawnerLocation));
+                })
                 .forEach(Entity::remove);
+    }
+
+    private boolean isOldHologramForLocation(String hologramName, Location location) {
+        try {
+            String[] parts = hologramName.split("-");
+            if (parts.length != 6) return false;
+
+            return parts[2].equals(location.getWorld().getName()) &&
+                    Integer.parseInt(parts[3]) == location.getBlockX() &&
+                    Integer.parseInt(parts[4]) == location.getBlockY() &&
+                    Integer.parseInt(parts[5]) == location.getBlockZ();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

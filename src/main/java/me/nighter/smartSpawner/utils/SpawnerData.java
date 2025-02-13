@@ -103,7 +103,7 @@ public class SpawnerData {
         }
     }
 
-    public void cleanup() {
+    public void removeHologram() {
         if (hologram != null) {
             hologram.remove();
             hologram = null;
@@ -111,7 +111,7 @@ public class SpawnerData {
     }
 
     public void removeGhostHologram() {
-        if (hologram != null) {
+        if (hologram != null && configManager.isHologramEnabled()) {
             hologram.cleanupExistingHologram();
         }
     }

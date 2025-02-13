@@ -465,6 +465,7 @@ command:
     &f/smartspawner hologram &7- Toggle hologram visibility
   reload:
     usage: "&cUsage: /smartspawner reload"
+    wait: "&eReloading plugin please wait..."
     success: "&aPlugin reloaded successfully!"
     error: "&cError reloading plugin. Check console for details."
   give:

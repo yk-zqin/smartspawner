@@ -217,7 +217,7 @@ public class ConfigManager {
         // Cache hologram settings
         configCache.put("hologram.enabled", config.getBoolean("hologram.enabled"));
         configCache.put("hologram.see-through", config.getBoolean("hologram.see-through"));
-        configCache.put("hologram.shadowed-text", config.getBoolean("hologram.shadowed"));
+        configCache.put("hologram.shadowed-text", config.getBoolean("hologram.shadowed-text"));
         configCache.put("hologram.height", config.getDouble("hologram.height"));
         configCache.put("hologram.offset.x", config.getDouble("hologram.offset.x"));
         configCache.put("hologram.offset.z", config.getDouble("hologram.offset.z"));

@@ -51,9 +51,10 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
     private void reloadAll(CommandSender sender) {
         try {
+            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.wait"));
             // Reload all configurations
             configManager.reloadConfigs();
-            plugin.getLogger().info(configManager.isHologramShadowed() + "");
+
             // Reload language files
             languageManager.reload();
 

@@ -77,20 +77,6 @@ public class SpawnerManager {
         }
     }
 
-    public void refreshAllHolograms() {
-        spawners.values().forEach(SpawnerData::refreshHologram);
-    }
-
-    public void reloadAllHolograms() {
-        if (configManager.isHologramEnabled()) {
-            spawners.values().forEach(SpawnerData::reloadHologramData);
-        }
-    }
-
-    public void removeAllGhostsHolograms() {
-        spawners.values().forEach(SpawnerData::removeGhostHologram);
-    }
-
     // Add methods to maintain the location index
     public void addSpawner(String id, SpawnerData spawner) {
         spawners.put(id, spawner);
@@ -100,7 +86,7 @@ public class SpawnerManager {
     public void removeSpawner(String id) {
         SpawnerData spawner = spawners.get(id);
         if (spawner != null) {
-            spawner.cleanup();
+            spawner.removeHologram();
             locationIndex.remove(new LocationKey(spawner.getSpawnerLocation()));
             spawners.remove(id);
         }
@@ -111,7 +97,7 @@ public class SpawnerManager {
         try {
             SpawnerData spawner = spawners.get(spawnerId);
             if (spawner != null) {
-                spawner.cleanup();
+                spawner.removeHologram();
             }
             String path = "spawners." + spawnerId;
             spawnerData.set(path, null);
@@ -184,6 +170,12 @@ public class SpawnerManager {
                - ITEM_TYPE:amount
                - ITEM_TYPE;durability:amount,durability:amount,...
         """);
+    }
+
+    private void startSaveTask() {
+        configManager.debug("Starting spawner data save task");
+        int intervalSeconds = configManager.getSaveInterval();
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 mins
     }
 
     public void saveSpawnerData() {
@@ -368,11 +360,6 @@ public class SpawnerManager {
                 spawners.put(spawnerId, spawner);
                 locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
 
-                // Refresh hologram after all data is loaded
-//                if (hologramEnabled) {
-//                    Bukkit.getScheduler().runTask(plugin, spawner::updateHologramData);
-//                }
-
                 loadedCount++;
             } catch (Exception e) {
                 plugin.getLogger().severe("Error loading spawner " + spawnerId);
@@ -382,17 +369,12 @@ public class SpawnerManager {
         }
 
         if (hologramEnabled && loadedCount > 0) {
+            removeAllGhostsHolograms();
             Bukkit.getScheduler().runTask(plugin, () -> {
                 plugin.getLogger().info("Updating holograms for all spawners...");
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
         }
-    }
-
-    private void startSaveTask() {
-        configManager.debug("Starting spawner data save task");
-        int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 mins
     }
 
     public void spawnLoot(SpawnerData spawner) {
@@ -681,10 +663,29 @@ public class SpawnerManager {
 
     public void cleanupAllSpawners() {
         for (SpawnerData spawner : spawners.values()) {
-            spawner.cleanup();
+            spawner.removeHologram();
         }
-        removeAllGhostsHolograms();
         spawners.clear();
         locationIndex.clear();
     }
+
+
+    // ===============================================================
+    //                    Spawner Hologram
+    // ===============================================================
+
+    public void refreshAllHolograms() {
+        spawners.values().forEach(SpawnerData::refreshHologram);
+    }
+
+    public void reloadAllHolograms() {
+        if (configManager.isHologramEnabled()) {
+            spawners.values().forEach(SpawnerData::reloadHologramData);
+        }
+    }
+
+    public void removeAllGhostsHolograms() {
+        spawners.values().forEach(SpawnerData::removeGhostHologram);
+    }
+
 }
