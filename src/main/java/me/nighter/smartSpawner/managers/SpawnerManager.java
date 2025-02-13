@@ -81,6 +81,16 @@ public class SpawnerManager {
         spawners.values().forEach(SpawnerData::refreshHologram);
     }
 
+    public void reloadAllHolograms() {
+        if (configManager.isHologramEnabled()) {
+            spawners.values().forEach(SpawnerData::reloadHologramData);
+        }
+    }
+
+    public void removeAllGhostsHolograms() {
+        spawners.values().forEach(SpawnerData::removeGhostHologram);
+    }
+
     // Add methods to maintain the location index
     public void addSpawner(String id, SpawnerData spawner) {
         spawners.put(id, spawner);
@@ -126,6 +136,10 @@ public class SpawnerManager {
 
     public SpawnerData getSpawnerById(String id) {
         return spawners.get(id);
+    }
+
+    public List<SpawnerData> getAllSpawners() {
+        return new ArrayList<>(spawners.values());
     }
 
     private void setupSpawnerDataFile() {
@@ -381,10 +395,6 @@ public class SpawnerManager {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 mins
     }
 
-    public List<SpawnerData> getAllSpawners() {
-        return new ArrayList<>(spawners.values());
-    }
-
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
             // Run heavy calculations async
@@ -398,12 +408,13 @@ public class SpawnerManager {
 
                 // Switch back to main thread for Bukkit API calls
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    Location loc = spawner.getSpawnerLocation();
-                    World world = loc.getWorld();
-                    world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                            loc.clone().add(0.5, 0.5, 0.5),
-                            10, 0.3, 0.3, 0.3, 0);
-
+                    if (configManager.isLootSpawnParticlesEnabled()) {
+                        Location loc = spawner.getSpawnerLocation();
+                        World world = loc.getWorld();
+                        world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                                loc.clone().add(0.5, 0.5, 0.5),
+                                10, 0.3, 0.3, 0.3, 0);
+                    }
                     // Calculate pages before adding new loot
                     int oldTotalPages = calculateTotalPages(spawner);
 
@@ -672,6 +683,7 @@ public class SpawnerManager {
         for (SpawnerData spawner : spawners.values()) {
             spawner.cleanup();
         }
+        removeAllGhostsHolograms();
         spawners.clear();
         locationIndex.clear();
     }

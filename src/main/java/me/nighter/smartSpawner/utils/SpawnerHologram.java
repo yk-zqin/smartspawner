@@ -6,14 +6,17 @@ import me.nighter.smartSpawner.managers.LanguageManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class SpawnerHologram {
     private final SmartSpawner plugin;
@@ -27,6 +30,8 @@ public class SpawnerHologram {
     private int maxExp;
     private int currentItems;
     private int maxSlots;
+    private UUID displayUUID;
+    private static final String METADATA_KEY = "SmartSpawner_Hologram";
 
     private static final Vector3f SCALE = new Vector3f(1.0f, 1.0f, 1.0f);
     private static final Vector3f TRANSLATION = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -41,14 +46,20 @@ public class SpawnerHologram {
 
     public void createHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
-        Location holoLoc = spawnerLocation.clone().add(0.5, 1.6, 0.5);
+
+        // Get configuration values
+        double offsetX = configManager.getHologramOffsetX();
+        double offsetY = configManager.getHologramHeight();
+        double offsetZ = configManager.getHologramOffsetZ();
+
+        Location holoLoc = spawnerLocation.clone().add(offsetX, offsetY, offsetZ);
 
         try {
             textDisplay = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, display -> {
                 display.setBillboard(Display.Billboard.CENTER);
                 display.setAlignment(TextDisplay.TextAlignment.CENTER);
                 display.setViewRange(16.0f);
-                display.setShadowed(false);
+                display.setShadowed(configManager.isHologramShadowed());
                 display.setDefaultBackground(false);
                 display.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
                 display.setSeeThrough(configManager.isHologramSeeThrough());
@@ -72,7 +83,7 @@ public class SpawnerHologram {
         replacements.put("%stack_size%", String.valueOf(stackSize));
         replacements.put("%current_exp%", languageManager.formatNumberTenThousand(currentExp));
         replacements.put("%max_exp%", languageManager.formatNumberTenThousand(maxExp));
-        replacements.put("%current_items%",languageManager.formatNumberTenThousand(currentItems));
+        replacements.put("%used_slots%",languageManager.formatNumberTenThousand(currentItems));
         replacements.put("%max_slots%", languageManager.formatNumberTenThousand(maxSlots));
 
         String hologramText = languageManager.getMessage("spawner-hologram.format", replacements);
@@ -94,5 +105,14 @@ public class SpawnerHologram {
             textDisplay.remove();
             textDisplay = null;
         }
+    }
+
+    public void cleanupExistingHologram() {
+        if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
+
+        // Search in a small radius around the spawner location
+        spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, 2, 2, 2).stream()
+                .filter(entity -> entity.getType() == EntityType.TEXT_DISPLAY)
+                .forEach(Entity::remove);
     }
 }
