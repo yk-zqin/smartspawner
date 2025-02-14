@@ -3,6 +3,7 @@ package me.nighter.smartSpawner.hooks.shops;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.api.economyshopgui.EconomyShopGUI;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
+import me.nighter.smartSpawner.hooks.shops.api.zshop.ZShop;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -42,6 +43,10 @@ public class ShopIntegrationManager {
                 plugin.getLogger().info("Checking for ShopGUIPlus...");
                 setupShopGuiPlus();
                 break;
+            case ZSHOP:
+                plugin.getLogger().info("Checking for zShop...");
+                setupZShop();
+                break;
             case DISABLED:
                 plugin.getLogger().info("Shop integration is disabled by configuration");
                 break;
@@ -63,6 +68,22 @@ public class ShopIntegrationManager {
             }
         } else {
             plugin.getLogger().info("ShopGUIPlus not found - integration disabled");
+        }
+    }
+
+    private void setupZShop() {
+        Plugin zShop = Bukkit.getPluginManager().getPlugin("zShop");
+        if (zShop != null && zShop.isEnabled()) {
+            try {
+                shopIntegration = new ZShop(plugin);
+                hasShopIntegration = true;
+                plugin.getLogger().info("zShop integration enabled successfully!");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to setup zShop integration: " + e.getMessage());
+                hasShopIntegration = false;
+            }
+        } else {
+            plugin.getLogger().info("zShop not found - integration disabled");
         }
     }
 

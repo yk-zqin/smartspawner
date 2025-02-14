@@ -569,7 +569,8 @@ public class ConfigManager {
         DISABLED,
         ECONOMY_SHOP_GUI,
         ECONOMY_SHOP_GUI_PREMIUM,
-        SHOP_GUI_PLUS;
+        SHOP_GUI_PLUS,
+        ZSHOP;
 
         public static ShopType fromString(String value) {
             if (value == null) return DISABLED;
@@ -578,6 +579,7 @@ public class ConfigManager {
                 case "economyshopgui" -> ECONOMY_SHOP_GUI;
                 case "economyshopgui-premium" -> ECONOMY_SHOP_GUI_PREMIUM;
                 case "shopguiplus" -> SHOP_GUI_PLUS;
+                case "zshop" -> ZSHOP;
                 case "disabled" -> DISABLED;
                 default -> DISABLED;
             };
@@ -589,6 +591,7 @@ public class ConfigManager {
                 case ECONOMY_SHOP_GUI -> "economyshopgui";
                 case ECONOMY_SHOP_GUI_PREMIUM -> "economyshopgui-premium";
                 case SHOP_GUI_PLUS -> "shopguiplus";
+                case ZSHOP -> "zshop";
                 case DISABLED -> "disabled";
             };
         }

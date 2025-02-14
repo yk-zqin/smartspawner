@@ -30,6 +30,10 @@ dependencies {
     implementation 'net.kyori:adventure-api:4.18.0'
     implementation 'net.kyori:adventure-text-minimessage:4.18.0'
     implementation 'com.github.Gypopo:EconomyShopGUI-API:1.7.3'
+        compileOnly('com.github.Maxlego08:zShop-API:3.0.5')  {
+            exclude module: "zMenu-API"
+        }
+    implementation 'com.github.Maxlego08:zMenu-API:1.0.3.7'
     implementation 'com.github.GriefPrevention:GriefPrevention:17.0.0'
     implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
 }
