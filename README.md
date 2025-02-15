@@ -37,6 +37,7 @@ A powerful and intuitive GUI-based spawner plugin for Minecraft servers.
 - `/smartspawner reload` - Reload the plugin configuration
 - `/smartspawner list` - Open the spawner list (for admin management)
 - `/smartspawner give <player> <mobtype> <amount>` - Give spawners to a player
+- `/smartspawner hologram` - Toggle hologram display for spawners
 
 ## 🔒 Permissions
 
@@ -44,6 +45,7 @@ A powerful and intuitive GUI-based spawner plugin for Minecraft servers.
 - `smartspawner.reload` - Permission to reload SmartSpawner plugin (default: op)
 - `smartspawner.give` - Allow giving spawners to yourself or other players (default: op)
 - `smartspawner.list` - Allow viewing list of spawners and teleporting to them (default: op)
+- `smartspawner.hologram` - Allow toggling hologram display for spawners (default: op)
 - `smartspawner.stack` - Allow stacking spawners (default: true)
 - `smartspawner.changetype` - Allow changing spawner type with spawn egg (default: true)
 - `smartspawner.break` - Allow breaking spawners (default: true)
