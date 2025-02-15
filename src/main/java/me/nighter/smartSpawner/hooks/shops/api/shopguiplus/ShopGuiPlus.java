@@ -2,6 +2,7 @@ package me.nighter.smartSpawner.hooks.shops.api.shopguiplus;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
+import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
@@ -21,11 +22,13 @@ public class ShopGuiPlus implements IShopIntegration{
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
+    private final boolean isLoggingEnabled;
 
     public ShopGuiPlus(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
+        this.isLoggingEnabled = configManager.isLoggingEnabled();
     }
 
     @Override
@@ -40,6 +43,7 @@ public class ShopGuiPlus implements IShopIntegration{
 
         Map<EconomyType, Map<ItemStack, Integer>> itemsByEconomy = new HashMap<>();
         Map<EconomyType, Double> totalPriceByEconomy = new HashMap<>();
+        Map<String, Integer> itemAmounts = new HashMap<>(); // For logging
         int totalAmount = 0;
         boolean foundSellableItem = false;
         List<ItemStack> itemsToRemove = new ArrayList<>();
@@ -72,6 +76,12 @@ public class ShopGuiPlus implements IShopIntegration{
                 // Track total price for each economy type
                 totalPriceByEconomy.merge(itemEconomyType, sellPrice * amount, Double::sum);
                 totalAmount += amount;
+
+                // Store item amounts for logging
+                if (isLoggingEnabled) {
+                    String itemName = template.getType().name();
+                    itemAmounts.merge(itemName, (int)amount, Integer::sum);
+                }
             }
         }
 
@@ -102,6 +112,18 @@ public class ShopGuiPlus implements IShopIntegration{
                 }
 
                 economyProvider.deposit(player, finalPrice);
+                // Log transaction if enabled
+                if (configManager.isLoggingEnabled()) {
+                    for (Map.Entry<String, Integer> itemEntry : itemAmounts.entrySet()) {
+                        SaleLogger.getInstance().logSale(
+                                player.getName(),
+                                itemEntry.getKey(),
+                                itemEntry.getValue(),
+                                finalPrice,
+                                economyType.name()
+                        );
+                    }
+                }
             } catch (Exception e) {
                 plugin.getLogger().severe("Error processing transaction for economy " +
                         economyType + ": " + e.getMessage());
@@ -168,7 +190,6 @@ public class ShopGuiPlus implements IShopIntegration{
 
     @Override
     public boolean isEnabled() {
-        return ShopGuiPlusApi.getPlugin() != null &&
-                ShopGuiPlusApi.getPlugin().getShopManager().areShopsLoaded();
+        return ShopGuiPlusApi.getPlugin().getShopManager().areShopsLoaded();
     }
 }

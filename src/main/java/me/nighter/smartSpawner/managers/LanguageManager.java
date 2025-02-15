@@ -168,7 +168,7 @@ public class LanguageManager {
         put("messages.sell-failed.sound", "block.note_block.pling");
 
         // Spawner Stacking/Unstacking Messages
-        put("messages.hand-stack.message", "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!");
+        put("messages.hand-stack.message", "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!");
         put("messages.hand-stack.prefix", false);
         put("messages.hand-stack.type", "ACTION_BAR");
         put("messages.hand-stack.sound", "entity.experience_orb.pickup");

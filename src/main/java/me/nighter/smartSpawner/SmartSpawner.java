@@ -2,6 +2,7 @@ package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.dataMigration.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
+import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
@@ -67,6 +68,9 @@ public class SmartSpawner extends JavaPlugin {
         checkDependencies();
         new UpdateChecker(this, "9tQwxSFr").initialize();
         registerListeners();
+        if (configManager.isLoggingEnabled()) {
+            SaleLogger.getInstance();
+        }
         getLogger().info("SmartSpawner has been enabled!");
     }
 
@@ -162,6 +166,9 @@ public class SmartSpawner extends JavaPlugin {
     public void onDisable() {
         saveAndCleanup();
         SpawnerHeadManager.clearCache();
+        if (configManager.isLoggingEnabled()) {
+            SaleLogger.getInstance().shutdown();
+            }
         getLogger().info("SmartSpawner has been disabled!");
     }
 

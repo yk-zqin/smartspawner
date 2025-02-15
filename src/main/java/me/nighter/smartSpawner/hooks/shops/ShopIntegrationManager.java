@@ -8,102 +8,98 @@ import me.nighter.smartSpawner.managers.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+
 public class ShopIntegrationManager {
     private final SmartSpawner plugin;
     private IShopIntegration shopIntegration;
     private boolean hasShopIntegration = false;
     private boolean isShopGUIPlusEnabled = false;
 
+    // Map to store shop plugin details: plugin name -> integration creator
+    private final Map<String, Function<SmartSpawner, IShopIntegration>> shopIntegrations = new LinkedHashMap<>();
+
     public ShopIntegrationManager(SmartSpawner plugin) {
         this.plugin = plugin;
+        registerShopIntegrations();
+    }
+
+    private void registerShopIntegrations() {
+        // Register available shop integrations with their creation logic
+        shopIntegrations.put("EconomyShopGUI-Premium", EconomyShopGUI::new);
+        shopIntegrations.put("EconomyShopGUI", EconomyShopGUI::new);
+        shopIntegrations.put("ShopGUIPlus", ShopGuiPlus::new);
+        shopIntegrations.put("zShop", ZShop::new);
     }
 
     public void initialize() {
-        setupShopIntegration();
-    }
+        ConfigManager.ShopType configuredShopType = plugin.getConfigManager().getShopType();
 
-    private void setupShopIntegration() {
-        // Ensure only one shop integration is active
-        if (hasShopIntegration) {
-            plugin.getLogger().warning("Another shop integration is already enabled. Skipping additional shop setup.");
+        if (configuredShopType == ConfigManager.ShopType.DISABLED) {
+            plugin.getLogger().info("Shop integration is disabled by configuration");
             return;
         }
 
-        ConfigManager.ShopType shopType = plugin.getConfigManager().getShopType();
-        switch (shopType) {
-            case ECONOMY_SHOP_GUI_PREMIUM:
-                plugin.getLogger().info("Checking for EconomyShopGUI-Premium...");
-                setupEconomyShopGUI("EconomyShopGUI-Premium");
-                break;
-            case ECONOMY_SHOP_GUI:
-                plugin.getLogger().info("Checking for EconomyShopGUI...");
-                setupEconomyShopGUI("EconomyShopGUI");
-                break;
-            case SHOP_GUI_PLUS:
-                plugin.getLogger().info("Checking for ShopGUIPlus...");
-                setupShopGuiPlus();
-                break;
-            case ZSHOP:
-                plugin.getLogger().info("Checking for zShop...");
-                setupZShop();
-                break;
-            case DISABLED:
-                plugin.getLogger().info("Shop integration is disabled by configuration");
-                break;
-        }
-    }
-
-    private void setupShopGuiPlus() {
-        Plugin shopGuiPlus = Bukkit.getPluginManager().getPlugin("ShopGUIPlus");
-        if (shopGuiPlus != null && shopGuiPlus.isEnabled()) {
-            try {
-                shopIntegration = new ShopGuiPlus(plugin);
-                hasShopIntegration = true;
-                isShopGUIPlusEnabled = true;
-                plugin.getLogger().info("ShopGUIPlus integration enabled successfully!");
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to setup ShopGUIPlus integration: " + e.getMessage());
-                hasShopIntegration = false;
-                isShopGUIPlusEnabled = false;
-            }
+        if (configuredShopType == ConfigManager.ShopType.AUTO) {
+            autoDetectAndSetupShop();
         } else {
-            plugin.getLogger().info("ShopGUIPlus not found - integration disabled");
+            setupSpecificShop(configuredShopType);
         }
     }
 
-    private void setupZShop() {
-        Plugin zShop = Bukkit.getPluginManager().getPlugin("zShop");
-        if (zShop != null && zShop.isEnabled()) {
-            try {
-                shopIntegration = new ZShop(plugin);
-                hasShopIntegration = true;
-                plugin.getLogger().info("zShop integration enabled successfully!");
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to setup zShop integration: " + e.getMessage());
-                hasShopIntegration = false;
+    private void autoDetectAndSetupShop() {
+        plugin.getLogger().info("Auto-detecting available shop plugins...");
+
+        for (Map.Entry<String, Function<SmartSpawner, IShopIntegration>> entry : shopIntegrations.entrySet()) {
+            String pluginName = entry.getKey();
+            Plugin shopPlugin = Bukkit.getPluginManager().getPlugin(pluginName);
+
+            if (shopPlugin != null && shopPlugin.isEnabled()) {
+                try {
+                    setupShopIntegration(pluginName, entry.getValue());
+                    //plugin.getLogger().info("Successfully auto-detected and enabled " + pluginName + " integration!");
+                    return;
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to setup " + pluginName + " integration: " + e.getMessage());
+                }
             }
-        } else {
-            plugin.getLogger().info("zShop not found - integration disabled");
         }
+
+        plugin.getLogger().warning("No compatible shop plugins were found during auto-detection.");
     }
 
-    private void setupEconomyShopGUI(String pluginName) {
-        Plugin shop = Bukkit.getPluginManager().getPlugin(pluginName);
-        if (shop != null && shop.isEnabled()) {
-            try {
-                shopIntegration = new EconomyShopGUI(plugin);
-                hasShopIntegration = true;
-                plugin.getLogger().info(pluginName + " integration enabled successfully!");
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to setup " + pluginName + " integration: " + e.getMessage());
-                hasShopIntegration = false;
+    private void setupSpecificShop(ConfigManager.ShopType shopType) {
+        String pluginName = shopType.toString();
+        Function<SmartSpawner, IShopIntegration> integrationCreator = shopIntegrations.get(pluginName);
+
+        if (integrationCreator != null) {
+            plugin.getLogger().info("Checking for " + pluginName + "...");
+            Plugin shopPlugin = Bukkit.getPluginManager().getPlugin(pluginName);
+
+            if (shopPlugin != null && shopPlugin.isEnabled()) {
+                setupShopIntegration(pluginName, integrationCreator);
+            } else {
+                plugin.getLogger().info(pluginName + " not found - integration disabled");
             }
-        } else {
-            plugin.getLogger().info(pluginName + " not found - integration disabled");
         }
     }
 
-    // Getters
+    private void setupShopIntegration(String pluginName, Function<SmartSpawner, IShopIntegration> integrationCreator) {
+        try {
+            shopIntegration = integrationCreator.apply(plugin);
+            hasShopIntegration = true;
+            isShopGUIPlusEnabled = pluginName.equals("ShopGUIPlus");
+            plugin.getLogger().info(pluginName + " integration enabled successfully!");
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to setup " + pluginName + " integration: " + e.getMessage());
+            hasShopIntegration = false;
+            isShopGUIPlusEnabled = false;
+        }
+    }
+
+    // Getters remain the same
     public IShopIntegration getShopIntegration() {
         if (shopIntegration != null && shopIntegration.isEnabled()) {
             return shopIntegration;

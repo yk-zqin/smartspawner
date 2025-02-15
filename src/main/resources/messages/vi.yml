@@ -174,7 +174,7 @@ messages:
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689[✔] Đã chồng thành công &6%amount%&#00E689 lồng spawn!"
+    message: "&#f[&#00E689✔&#f] &#fĐã chồng thành công &#00E689%amount%&#f lồng spawn!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup

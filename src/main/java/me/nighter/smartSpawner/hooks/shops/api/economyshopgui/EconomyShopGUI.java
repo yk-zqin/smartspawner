@@ -7,6 +7,7 @@ import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
 import me.gypopo.economyshopgui.objects.ShopItem;
 import me.gypopo.economyshopgui.util.EcoType;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
+import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
@@ -156,10 +157,32 @@ public class EconomyShopGUI implements IShopIntegration {
         if (EconomyShopGUIHook.hasMultipleSellPrices(shopItem)) {
             AdvancedSellPrice sellPrice = EconomyShopGUIHook.getMultipleSellPrices(shopItem);
             sellPrice.getSellPrices(sellPrice.giveAll() ? null : sellPrice.getSellTypes().get(0), player, item, amount, sold)
-                    .forEach((type, price) -> prices.put(type, prices.getOrDefault(type, 0d) + price));
+                    .forEach((type, price) -> {
+                        prices.put(type, prices.getOrDefault(type, 0d) + price);
+                        // Log sale for each type of currency
+                        if (configManager.isLoggingEnabled()) {
+                            SaleLogger.getInstance().logSale(
+                                    player.getName(),
+                                    item.getType().name(),
+                                    amount,
+                                    price,
+                                    type.getType().name()
+                            );
+                        }
+                    });
         } else {
             double sellPrice = EconomyShopGUIHook.getItemSellPrice(shopItem, item, player, amount, sold);
             prices.put(shopItem.getEcoType(), prices.getOrDefault(shopItem.getEcoType(), 0d) + sellPrice);
+            // Log sale for single currency
+            if (configManager.isLoggingEnabled()) {
+                SaleLogger.getInstance().logSale(
+                        player.getName(),
+                        item.getType().name(),
+                        amount,
+                        sellPrice,
+                        shopItem.getEcoType().getType().name()
+                );
+            }
         }
     }
 

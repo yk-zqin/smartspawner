@@ -84,9 +84,14 @@ particles:
 # ===============================================================
 #                     Economic Integration
 # ===============================================================
-
-# Available options: disabled, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus
-shop-integration: EconomyShopGUI
+# Available Options:
+# - auto: Automatically detect supported shop plugins
+# - EconomyShopGUI
+# - EconomyShopGUI-Premium
+# - ShopGUIPlus
+# - zShop (with Vault only)
+# - disabled: No shop integration
+shop-integration: auto
 
 # Formating price with currency symbol: K, M, B, T by default in the message file
 formated-price: true
@@ -94,6 +99,11 @@ formated-price: true
 tax:
   enabled: false
   rate: 10.0  # % tax on sales
+
+# Logging sales transactions to file
+logging:
+  enabled: true
+  file-path: "shop-logs/sales.log"
 
 # ===============================================================
 #                  Hopper Mechanics (Experimental)

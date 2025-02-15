@@ -168,10 +168,14 @@ public class ConfigManager {
         put("particles.spawner-activate", true);
 
         // Economic Integration
-        put("shop-integration", "EconomyShopGUI");
+        put("shop-integration", "auto");
         put("formated-price", true);
         put("tax.enabled", false);
         put("tax.rate", 10.0);
+
+        // Logging
+        put("logging.enabled", true);
+        put("logging.file-path", "shop-logs/sales.log");
 
         // Hopper Mechanics
         put("hopper.enabled", false);
@@ -233,13 +237,14 @@ public class ConfigManager {
         configCache.put("tax.enabled", config.getBoolean("tax.enabled"));
         configCache.put("tax.rate", config.getDouble("tax.rate"));
 
+        // Cache logging settings
+        configCache.put("logging.enabled", config.getBoolean("logging.enabled"));
+        configCache.put("logging.file-path", config.getString("logging.file-path"));
+
         // Cache hopper settings
         configCache.put("hopper.enabled", config.getBoolean("hopper.enabled"));
         configCache.put("hopper.transfer-cooldown", config.getInt("hopper.transfer-cooldown"));
         configCache.put("hopper.check-interval", config.getInt("hopper.check-interval"));
-
-        // Cache performance settings
-        configCache.put("performance.batch-size", config.getInt("performance.batch-size"));
 
         // Cache update checker settings
         configCache.put("update-checker.enabled", config.getBoolean("update-checker.enabled"));
@@ -567,6 +572,7 @@ public class ConfigManager {
 
     public enum ShopType {
         DISABLED,
+        AUTO,
         ECONOMY_SHOP_GUI,
         ECONOMY_SHOP_GUI_PREMIUM,
         SHOP_GUI_PLUS,
@@ -576,6 +582,7 @@ public class ConfigManager {
             if (value == null) return DISABLED;
 
             return switch (value.toLowerCase()) {
+                case "auto" -> AUTO;
                 case "economyshopgui" -> ECONOMY_SHOP_GUI;
                 case "economyshopgui-premium" -> ECONOMY_SHOP_GUI_PREMIUM;
                 case "shopguiplus" -> SHOP_GUI_PLUS;
@@ -588,6 +595,7 @@ public class ConfigManager {
         @Override
         public String toString() {
             return switch (this) {
+                case AUTO -> "auto";
                 case ECONOMY_SHOP_GUI -> "economyshopgui";
                 case ECONOMY_SHOP_GUI_PREMIUM -> "economyshopgui-premium";
                 case SHOP_GUI_PLUS -> "shopguiplus";
@@ -598,7 +606,7 @@ public class ConfigManager {
     }
     public ShopType getShopType() {
         String shopType = (String) configCache.computeIfAbsent("shop-integration",
-                key -> config.getString(key, "economyshopgui"));
+                key -> config.getString(key, "auto"));
         return ShopType.fromString(shopType);
     }
 
@@ -633,6 +641,22 @@ public class ConfigManager {
             double defaultValue = 10.0;
             setDefaultIfNotExists(key, defaultValue);
             return config.getDouble(key, defaultValue);
+        });
+    }
+
+    public boolean isLoggingEnabled() {
+        return (boolean) configCache.computeIfAbsent("logging.enabled", key -> {
+            boolean defaultValue = true;
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getBoolean(key, defaultValue);
+        });
+    }
+
+    public String getLogFilePath() {
+        return (String) configCache.computeIfAbsent("logging.file-path", key -> {
+            String defaultValue = "shop-logs/sales.log";
+            setDefaultIfNotExists(key, defaultValue);
+            return config.getString(key, defaultValue);
         });
     }
 

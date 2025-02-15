@@ -174,7 +174,7 @@ messages:
   # Spawner Stacking/Unstacking
   #---------------------------------------------------
   hand-stack:
-    message: "&#00E689[✔] Successfully stacked &6%amount%&#00E689 spawners!"
+    message: "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!"
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup

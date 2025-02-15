@@ -4,7 +4,6 @@ import fr.maxlego08.zshop.api.ShopManager;
 import fr.maxlego08.zshop.api.buttons.ItemButton;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
-import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.managers.ConfigManager;
 import me.nighter.smartSpawner.managers.LanguageManager;
 import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
@@ -12,38 +11,24 @@ import me.nighter.smartSpawner.utils.SpawnerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import net.milkbowl.vault.economy.Economy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class ZShop implements IShopIntegration {
+public class OldZShopDefaultDeposit implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private ShopManager shopManager;
-    private Economy vaultEconomy;
 
-    public ZShop(SmartSpawner plugin) {
+    public OldZShopDefaultDeposit(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
-        setupVaultEconomy();
-    }
-
-    private boolean setupVaultEconomy() {
-        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
-            return false;
-        }
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            return false;
-        }
-        vaultEconomy = rsp.getProvider();
-        return vaultEconomy != null;
     }
 
     private Optional<ItemButton> getItemButton(Player player, ItemStack itemStack) {
@@ -61,17 +46,9 @@ public class ZShop implements IShopIntegration {
         return this.shopManager = this.plugin.getServer().getServicesManager().getRegistration(ShopManager.class).getProvider();
     }
 
-    private double calculateNetAmount(double grossAmount, double taxPercentage) {
-        if (taxPercentage <= 0) {
-            return grossAmount;
-        }
-        return grossAmount * (1 - taxPercentage / 100.0);
-    }
-
     @Override
     public boolean sellAllItems(Player player, SpawnerData spawner) {
-        if (!isEnabled() || vaultEconomy == null) {
-            plugin.getLogger().warning("Support for zShop requires Vault as a currency provider");
+        if (!isEnabled()) {
             return false;
         }
 
@@ -83,26 +60,26 @@ public class ZShop implements IShopIntegration {
             return false;
         }
 
-        double totalGrossPrice = 0.0;
-        int totalAmount = 0;
+        AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
+        AtomicInteger totalAmount = new AtomicInteger(0);
         List<ItemStack> itemsToRemove = new ArrayList<>();
-        boolean foundSellableItem = false;
+        List<ItemButton> processedButtons = new ArrayList<>();
+        Map<ItemButton, Integer> buttonAmounts = new java.util.HashMap<>();
+        Map<ItemButton, Double> buttonPrices = new java.util.HashMap<>();
 
-        // Process each distinct item type
-        for (Map.Entry<OptimizedVirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+        // First pass: collect all sellable items and calculate prices
+        boolean foundSellableItem = items.entrySet().stream().anyMatch(entry -> {
             ItemStack template = entry.getKey().getTemplate();
             long amount = entry.getValue();
 
-            if (amount <= 0) continue;
+            if (amount <= 0) return false;
 
             Optional<ItemButton> sellButtonOpt = getItemButton(player, template);
-            if (sellButtonOpt.isEmpty()) continue;
+            if (sellButtonOpt.isEmpty()) return false;
 
             ItemButton sellButton = sellButtonOpt.get();
             double sellPrice = sellButton.getSellPrice(player, (int) amount);
-            if (sellPrice <= 0) continue;
-
-            foundSellableItem = true;
+            if (sellPrice <= 0) return false;
 
             // Create item for removal
             ItemStack itemToRemove = template.clone();
@@ -110,59 +87,52 @@ public class ZShop implements IShopIntegration {
             itemToRemove.setAmount(removeAmount);
             itemsToRemove.add(itemToRemove);
 
-            totalGrossPrice += sellPrice;
-            totalAmount += removeAmount;
-        }
+            // Track button data for batch processing
+            processedButtons.add(sellButton);
+            buttonAmounts.merge(sellButton, removeAmount, Integer::sum);
+            buttonPrices.merge(sellButton, sellPrice, Double::sum);
+
+            totalPrice.updateAndGet(current -> current + sellPrice);
+            totalAmount.addAndGet(removeAmount);
+
+            return true;
+        });
 
         if (!foundSellableItem) {
             plugin.getLanguageManager().sendMessage(player, "messages.no-sellable-items");
             return false;
         }
 
-        // Remove all items first
-        boolean itemsRemoved = virtualInv.removeItems(itemsToRemove);
-        if (!itemsRemoved) {
-            plugin.getLogger().warning("Failed to remove items from virtual inventory for player " + player.getName());
-            return false;
-        }
+        // Remove all items first (to prevent exploitation if a later operation fails)
+        virtualInv.removeItems(itemsToRemove);
 
-        // Process payment with Vault only
-        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
-        double netAmount = calculateNetAmount(totalGrossPrice, taxPercentage);
+        // Process all economy transactions as a batch
+        processedButtons.forEach(button -> {
+            double price = buttonPrices.getOrDefault(button, 0.0);
+            if (price > 0) {
 
-        if (!vaultEconomy.depositPlayer(player, netAmount).transactionSuccess()) {
-            plugin.getLogger().warning("Failed to deposit " + netAmount + " to player " + player.getName());
-        }
-
-        if (itemsRemoved && configManager.isLoggingEnabled()) {
-            // Log each item separately
-            for (ItemStack item : itemsToRemove) {
-                Optional<ItemButton> sellButtonOpt = getItemButton(player, item);
-                if (sellButtonOpt.isPresent()) {
-                    ItemButton sellButton = sellButtonOpt.get();
-                    double itemSellPrice = sellButton.getSellPrice(player, item.getAmount());
-                    SaleLogger.getInstance().logSale(
-                            player.getName(),
-                            item.getType().name(),
-                            item.getAmount(),
-                            itemSellPrice,
-                            "VAULT" // ZShop uses Vault economy
-                    );
-                }
+                // NoSuchMethodError: 'net.milkbowl.vault.economy.Economy.depositPlayer(org.bukkit.OfflinePlayer, double)'
+                button.getEconomy().depositMoney(player, price);
             }
-        }
+        });
+
+        // Apply tax
+        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
+        double finalPrice = taxPercentage > 0
+                ? totalPrice.get() * (1 - taxPercentage / 100.0)
+                : totalPrice.get();
 
         // Send success message
-        String formattedPrice = formatPrice(netAmount, configManager.isFormatedPrice());
+        String formattedPrice = formatPrice(finalPrice, configManager.isFormatedPrice());
         if (taxPercentage > 0) {
             plugin.getLanguageManager().sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
+                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount.get())),
                     "%price%", formattedPrice,
                     "%tax%", String.format("%.2f", taxPercentage)
             );
         } else {
             plugin.getLanguageManager().sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
+                    "%amount%", String.valueOf(languageManager.formatNumber(totalAmount.get())),
                     "%price%", formattedPrice);
         }
         return true;
