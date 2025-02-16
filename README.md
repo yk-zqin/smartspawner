@@ -14,54 +14,44 @@ A powerful and intuitive GUI-based spawner plugin for Minecraft servers.
 
 </div>
 
-## ✨ Features
+## 📌 About
+Smart Spawner is a feature-rich Minecraft plugin that provides an intuitive graphical interface for managing and customizing mob spawners. Designed for performance and ease of use, it offers extensive configurability, making it a great addition to any Minecraft server.
 
-- **Intuitive GUI Interface** - Easy-to-use menu system for spawner usage
-- **Advanced Drop System** - Fully customizable mob drop tables with powerful configuration options
-- **Storage System** - Built-in storage GUI for spawner drops
-- **Sell Feature** - Sell items directly from storage GUI from other shop plugins
-- **Spawner Stacking** - Stack multiple spawners to save space
-- **Mineable Spawner** - Mine spawners with Silk Touch to obtain them
-- **Spawner List Management** - View detail and teleport to all spawners (admin feature)
-- **Multi-Language Support** - Easily customize all plugin messages
-- **Performance Optimized** - Minimal impact on server performance
+## 🚀 Installation
+1. Download the latest version of the plugin.
+2. Place the `.jar` file in your server’s `plugins` folder.
+3. Restart the server to generate the necessary configuration files.
+4. Modify the configuration to your needs and reload the plugin.
 
-## 🚀 Getting Started
+## 🛠 Configuration
+All configuration files are located in the `plugins/SmartSpawner` directory. Customize settings such as mob drops, holograms, stacking behavior, and more to fit your server's requirements.
 
-1. Download the latest plugin version
-2. Place the .jar file in your server's plugins folder
-3. Restart your server
+## 🌍 Supported Translations
+| Language         | Locale Code | Contributor | Version |
+|-----------------|------------|-------------|---------|
+| English (Default) | `en_US.yml` | - | v1.2.3 |
+| Vietnamese (Default) | `vi_VN.yml` | - | v1.2.3 |
+| Chinese Simplified | `zh_CN.yml` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | v1.2.3 |
 
-## ⚙️ Commands
-
-- `/smartspawner reload` - Reload the plugin configuration
-- `/smartspawner list` - Open the spawner list (for admin management)
-- `/smartspawner give <player> <mobtype> <amount>` - Give spawners to a player
-- `/smartspawner hologram` - Toggle hologram display for spawners
-
-## 🔒 Permissions
-
-- `smartspawner.*` - Grants access to all SmartSpawner permissions (default: op)
-- `smartspawner.reload` - Permission to reload SmartSpawner plugin (default: op)
-- `smartspawner.give` - Allow giving spawners to yourself or other players (default: op)
-- `smartspawner.list` - Allow viewing list of spawners and teleporting to them (default: op)
-- `smartspawner.hologram` - Allow toggling hologram display for spawners (default: op)
-- `smartspawner.stack` - Allow stacking spawners (default: true)
-- `smartspawner.changetype` - Allow changing spawner type with spawn egg (default: true)
-- `smartspawner.break` - Allow breaking spawners (default: true)
-- `smartspawner.sellall` - Allow selling items in spawner storage GUI (default: true)
+Want to contribute a translation? Feel free to submit a pull request!
 
 ## 📖 Documentation
+Full documentation will be available soon. Stay tuned!
 
-Coming soon!
+## 🤝 Contributing
+Contributions are always welcome! To contribute:
+- Fork the repository
+- Make your changes
+- Submit a pull request
 
-## 🤝 Support
+For translation contributions, simply add a new locale file following the existing structure and submit a PR.
 
-Having issues or need help? Feel free to:
+## 📢 Support
+Need help or found a bug? Feel free to:
 - Join our [Discord server](https://discord.gg/zrnyG4CuuT)
 - Open an [issue](https://github.com/ptthanh02/Smart-Spawner-Plugin/issues)
 - Visit our [Modrinth page](https://modrinth.com/plugin/smart-spawner-plugin)
 
 ## 📄 License
+This project is licensed under the CC BY-NC-SA 4.0 License. See the [LICENSE](LICENSE) file for more details.
 
-This project is licensed under the CC BY-NC-SA 4.0 License - see the [LICENSE](LICENSE) file for details.

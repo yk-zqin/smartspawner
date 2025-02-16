@@ -604,6 +604,7 @@ public class ConfigManager {
             };
         }
     }
+
     public ShopType getShopType() {
         String shopType = (String) configCache.computeIfAbsent("shop-integration",
                 key -> config.getString(key, "auto"));

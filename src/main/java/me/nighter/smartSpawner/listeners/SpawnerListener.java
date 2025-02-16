@@ -249,10 +249,13 @@ public class SpawnerListener implements Listener {
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
-        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest")
-                .replace("%max_slots%", String.valueOf(maxSlots))
-                .replace("%current_items%", String.valueOf(currentItems))
-                .replace("%percent_storage%", String.valueOf(percentStorage));
+
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("%max_slots%", String.valueOf(maxSlots));
+        replacements.put("%current_items%", String.valueOf(currentItems));
+        replacements.put("%percent_storage%", String.valueOf(percentStorage));
+
+        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest", replacements);
 
         chestLore.addAll(Arrays.asList(loreMessageChest.split("\n")));
         chestMeta.setLore(chestLore);
@@ -262,15 +265,15 @@ public class SpawnerListener implements Listener {
         ItemStack spawnerItem = SpawnerHeadManager.getCustomHead(spawner.getEntityType(), player);
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         spawnerMeta.setDisplayName(languageManager.getMessage("spawner-info-item.name"));
-        Map<String, String> replacements = new HashMap<>();
-        replacements.put("%entity%", entityName);
-        replacements.put("%stack_size%", String.valueOf(spawner.getStackSize()));
-        replacements.put("%range%", String.valueOf(spawner.getSpawnerRange()));
-        replacements.put("%delay%", String.valueOf(spawner.getSpawnDelay() / 20)); // Convert ticks to seconds
-        replacements.put("%min_mobs%", String.valueOf(spawner.getMinMobs()));
-        replacements.put("%max_mobs%", String.valueOf(spawner.getMaxMobs()));
+        Map<String, String> infoReplacements = new HashMap<>();
+        infoReplacements.put("%entity%", entityName);
+        infoReplacements.put("%stack_size%", String.valueOf(spawner.getStackSize()));
+        infoReplacements.put("%range%", String.valueOf(spawner.getSpawnerRange()));
+        infoReplacements.put("%delay%", String.valueOf(spawner.getSpawnDelay() / 20)); // Convert ticks to seconds
+        infoReplacements.put("%min_mobs%", String.valueOf(spawner.getMinMobs()));
+        infoReplacements.put("%max_mobs%", String.valueOf(spawner.getMaxMobs()));
         String lorePath = "spawner-info-item.lore.spawner-info";
-        String loreMessage = languageManager.getMessage(lorePath, replacements);
+        String loreMessage = languageManager.getMessage(lorePath, infoReplacements);
         List<String> lore = Arrays.asList(loreMessage.split("\n"));
         spawnerMeta.setLore(lore);
         spawnerItem.setItemMeta(spawnerMeta);

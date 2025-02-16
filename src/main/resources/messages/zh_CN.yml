@@ -1,4 +1,8 @@
-
+#---------------------------------------------------
+# Language: 简体中文 (Chinese Simplified)
+# Plugin Version: 1.2.3
+# Author: https://github.com/SnowCutieOwO
+#---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
 #---------------------------------------------------
@@ -413,43 +417,56 @@ spawner-list:
     world-selection: "&#3287A9&l刷怪笼列表"
     page-title: "{world} &r- [{current}/{total}]"
 
-  world-buttons:
-    overworld:
-      name: "&a&l主世界"
-      lore: |
-        &8▪ &7刷怪笼总数: &a{total}
-        
-        &a➜ &7点击浏览主世界刷怪笼
-    nether:
-      name: "&c&l下界"
-      lore: |
-        &8▪ &7刷怪笼总数: &c{total}
-        
-        &c➜ &7点击浏览下界刷怪笼
-    end:
-      name: "&5&l末地"
-      lore: |
-        &8▪ &7刷怪笼总数: &5{total}
-        
-        &5➜ &7点击浏览末地刷怪笼
-
-  spawner-item:
-    name: "&#4fc3f7&l刷怪笼 #{id}"
-    id_pattern: "刷怪笼 #([A-Za-z0-9]+)"    # 匹配传送的刷怪笼 ID 正则表达式
-    lore:
-      separator: "&8&m------------------------"
-      location: "&8▪ &7位置: &f{x}, {y}, {z}"
-      entity: "&8▪ &7实体: &f{entity}"
-      stack_size: "&8▪ &7堆叠数: &6{size}"
-      status:
-        active: "&8▪ &7状态: &a&l激活"
-        inactive: "&8▪ &7状态: &c&l禁用"
-      teleport: "&#3287A9➜ &e点击传送"
-
   navigation:
     previous-page: "&e&l上一页"
     next-page: "&e&l下一页"
-    back: "&c&l返回至世界列表"
+    back: "&c&l返回世界选择"
+
+  world-buttons:
+
+    overworld:
+      name: "&a&l主世界"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &a{total}
+        &7⮞ &f堆叠总数: &a{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &a▶ &7点击查看!
+
+    nether:
+      name: "&c&l下界"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &c{total}
+        &7⮞ &f堆叠总数: &c{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &c▶ &7点击查看!
+
+    end:
+      name: "&5&l末地"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &f刷怪笼总数: &5{total}
+        &7⮞ &f堆叠总数: &5{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &5▶ &7点击查看!
+
+  spawner-item:
+    name: "&#4fc3f7&l刷怪笼 #{id}"
+    id_pattern: "刷怪笼 #([A-Za-z0-9]+)"
+
+    lore:
+      separator: "&7&m―――――――――――――――――――――――"
+      entity: "&f⮞ &7实体: &f{entity}"
+      stack_size: "&f⮞ &7堆叠大小: &#4fc3f7{size}"
+
+      status:
+        active: "&f⮞ &7状态: &a&l激活"
+        inactive: "&f⮞ &7状态: &c&l未激活"
+
+      location: "&f⮞ &7位置: &#4fc3f7{x}, {y}, {z}"
+
+      teleport: "&#4fc3f7▶ &f点击传送"
 
 #---------------------------------------------------
 # 命令与更新消息
