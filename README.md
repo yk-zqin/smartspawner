@@ -31,6 +31,8 @@
 
 ### Prerequisites
 - Minecraft Server (Bukkit, Paper, or compatible fork)
+- Using a newer fork like **Folia**? Check out [Smart Spawner for Folia (Beta)
+](https://github.com/maiminhdung/Smart-Spawner-Plugin)
 - Server version 1.20 - 1.21.4
 
 ### Installation
@@ -109,7 +111,7 @@ Need help or found a bug? Feel free to:
 This project is licensed under the **CC BY-NC-SA 4.0 License**. See the [LICENSE](LICENSE) file for more details.
 
 ## 📊 bStats Statistics
-
+See real-time usage statistics on **[bStats](https://bstats.org/plugin/bukkit/SmartSpawner)**:  
 [![bStats Graph](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
 
 ## 📊 Server Showcase
