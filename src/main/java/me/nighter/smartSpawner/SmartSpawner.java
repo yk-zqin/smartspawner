@@ -13,8 +13,8 @@ import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.utils.UpdateChecker;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.commands.CommandHandler;
 
 import org.bukkit.Bukkit;
@@ -59,6 +59,7 @@ public class SmartSpawner extends JavaPlugin {
     public static boolean hasLands = false;
     public static boolean hasWorldGuard = false;
     public static boolean hasGriefPrevention = false;
+    public static boolean hasSuperiorSkyblock2 = false;
 
     @Override
     public void onEnable() {
@@ -145,9 +146,14 @@ public class SmartSpawner extends JavaPlugin {
             }
             return false;
         });
+
         hasTowny = checkPlugin("Towny", () -> {
             TownyAPI.getInstance();
             return TownyAPI.getInstance() != null;
+        });
+
+        hasSuperiorSkyblock2 = checkPlugin("SuperiorSkyblock2", () -> {
+            return Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2") != null;
         });
     }
 
