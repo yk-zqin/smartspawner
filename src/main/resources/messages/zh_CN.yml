@@ -384,14 +384,14 @@ navigation-button:
 page-indicator:
   name: "&#ffd700第 [%current_page%/&#ffd700%total_pages%] 页"
   lore: |
-    &7物品总数: &a%current_items%&7/&f%max_slots%
+    &7格子: &a%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700全部出售"
   lore: |
     
-    &8▪ &#ffd700物品数: &a%current_items%&7/&f%max_slots%
-    &8▪ &#ffd700总容量: &a%percent_storage%&a%&f
+    &8▪ &#ffd700格子: &a%used_slots%&7/&f%max_slots%
+    &8▪ &#ffd700仓库: &a%percent_storage%&a%&f 已满
     
     &#ffd700➜ &7点击出售所有物品
 

@@ -342,13 +342,13 @@ public class LanguageManager {
 
         // Page Indicator
         put("page-indicator.name", "&#f4d842Page %current_page%/&#f4d842%total_pages%");
-        put("page-indicator.lore", "&7Total Items: &a%current_items%&7/&f%max_slots%");
+        put("page-indicator.lore", "&7Used Slots: &a%used_slots%&7/&f%max_slots%");
 
         // Shop Page Indicator
         put("shop-page-indicator.name", "&#ffd700Sell All Items");
         put("shop-page-indicator.lore", Arrays.asList(
                 "",
-                "&8▪ &#ffd700Total Items: &a%current_items%&7/&f%max_slots%",
+                "&8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%",
                 "&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full",
                 "",
                 "&#ffd700➜ &7Click to sell all items"

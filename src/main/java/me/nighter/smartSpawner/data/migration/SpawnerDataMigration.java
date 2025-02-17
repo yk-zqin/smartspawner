@@ -69,7 +69,7 @@ public class SpawnerDataMigration {
             }
 
             if (!needsMigration) {
-                plugin.getLogger().info("Data format is up to date.");
+                //plugin.getLogger().info("Data format is up to date.");
                 return false;
             }
 

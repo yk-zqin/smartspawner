@@ -383,16 +383,16 @@ navigation-button:
 page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-    &7Vật phẩm: &a%current_items%&7/&f%max_slots%
+    &7Số ô chứa: &a%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
   name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
   lore: |
-
-    &8▪ &#ffd700Vật phẩm: &a%current_items%&7/&f%max_slots%
+    
+    &8▪ &#ffd700Số ô chứa: &a%used_slots%&7/&f%max_slots%
     &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
-
-    &#ffd700➜ &7Nhấn để bán tất cả items
+    
+    &#ffd700➜ &7Nhấn để bán tất cả vật phẩm
 
 return-button:
   name: "&#ff6b6bQuay Lại Menu Chính"
