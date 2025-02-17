@@ -20,13 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GiveSpawnerCommand {
+public class GiveCommand {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final List<String> supportedMobs;
     private final int MAX_AMOUNT = 6400;
 
-    public GiveSpawnerCommand(SmartSpawner plugin) {
+    public GiveCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.supportedMobs = SpawnerWrapper.SUPPORTED_MOBS;

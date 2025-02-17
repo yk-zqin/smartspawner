@@ -37,7 +37,7 @@ public class HologramCommand implements CommandExecutor {
         mainConfig.set("hologram.enabled", newValue);
 
         // Save configs and reload
-        configManager.saveConfigs();
+        configManager.saveMainConfig();
         configManager.reloadConfigs();
 
         // Update all holograms

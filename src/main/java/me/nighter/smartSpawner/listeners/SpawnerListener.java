@@ -7,7 +7,7 @@ import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.hooks.protections.CheckOpenMenu;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.commands.SpawnerListCommand;
+import me.nighter.smartSpawner.commands.ListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
@@ -40,7 +40,7 @@ public class SpawnerListener implements Listener {
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerStackHandler stackHandler;
-    private final SpawnerListCommand listCommand;
+    private final ListCommand listCommand;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD, Material.SPAWNER, Material.ZOMBIE_HEAD,
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
@@ -56,7 +56,7 @@ public class SpawnerListener implements Listener {
         this.languageManager = plugin.getLanguageManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.stackHandler = plugin.getSpawnerStackHandler();
-        this.listCommand = new SpawnerListCommand(plugin);
+        this.listCommand = new ListCommand(plugin);
 
         startCleanupTask();
     }
@@ -831,7 +831,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onWorldSelectionClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SpawnerListCommand.WorldSelectionHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof ListCommand.WorldSelectionHolder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
@@ -849,7 +849,7 @@ public class SpawnerListener implements Listener {
 
     @EventHandler
     public void onSpawnerListClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SpawnerListCommand.SpawnerListHolder holder)) return;
+        if (!(event.getInventory().getHolder() instanceof ListCommand.SpawnerListHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {

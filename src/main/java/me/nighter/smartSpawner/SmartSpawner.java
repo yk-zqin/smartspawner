@@ -1,5 +1,6 @@
 package me.nighter.smartSpawner;
 
+import me.nighter.smartSpawner.bstats.Metrics;
 import me.nighter.smartSpawner.data.migration.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
@@ -14,8 +15,7 @@ import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
-import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
-import me.nighter.smartSpawner.utils.Metrics;
+import me.nighter.smartSpawner.commands.CommandHandler;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -106,9 +106,9 @@ public class SmartSpawner extends JavaPlugin {
     }
 
     private void setupCommand() {
-        SmartSpawnerCommand smartSpawnerCommand = new SmartSpawnerCommand(this);
-        getCommand("smartspawner").setExecutor(smartSpawnerCommand);
-        getCommand("smartspawner").setTabCompleter(smartSpawnerCommand);
+        CommandHandler commandHandler = new CommandHandler(this);
+        getCommand("smartspawner").setExecutor(commandHandler);
+        getCommand("smartspawner").setTabCompleter(commandHandler);
     }
 
     private void setupBtatsMetrics() {
@@ -192,7 +192,6 @@ public class SmartSpawner extends JavaPlugin {
             spawnerManager.cleanupAllSpawners();
         }
         if (rangeChecker != null) rangeChecker.cleanup();
-        if (configManager != null) configManager.saveConfigs();
         if (spawnerGuiListener != null) spawnerGuiListener.onDisable();
         if (hopperHandler != null) hopperHandler.cleanup();
         if (eventHandlers != null) eventHandlers.cleanup();

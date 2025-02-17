@@ -1,5 +1,6 @@
-package me.nighter.smartSpawner;
+package me.nighter.smartSpawner.listeners;
 
+import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
 import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;

@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SpawnerListCommand {
+public class ListCommand {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
     private final LanguageManager languageManager;
     private static final int SPAWNERS_PER_PAGE = 45;
 
-    public SpawnerListCommand(SmartSpawner plugin) {
+    public ListCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.languageManager = plugin.getLanguageManager();
