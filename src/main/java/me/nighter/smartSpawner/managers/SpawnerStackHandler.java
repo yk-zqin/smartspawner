@@ -2,9 +2,9 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.hooks.protections.CheckStackBlock;
 
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
