@@ -1,12 +1,12 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.spawner.properties;
 
-import me.nighter.smartSpawner.serializers.ItemStackSerializer;
+import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -267,10 +267,10 @@ public class SpawnerManager {
 
                 spawnerData.set(path + ".settings", settings);
 
-                // Save OptimizedVirtualInventory
-                OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+                // Save VirtualInventory
+                VirtualInventory virtualInv = spawner.getVirtualInventory();
                 if (virtualInv != null) {
-                    Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+                    Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
                     List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
                     spawnerData.set(path + ".inventory", serializedItems);
                 }
@@ -369,7 +369,7 @@ public class SpawnerManager {
                 }
 
                 // Load inventory
-                OptimizedVirtualInventory virtualInv = new OptimizedVirtualInventory(spawner.getMaxSpawnerLootSlots());
+                VirtualInventory virtualInv = new VirtualInventory(spawner.getMaxSpawnerLootSlots());
                 List<String> inventoryData = spawnerData.getStringList(path + ".inventory");
 
                 if (inventoryData != null && !inventoryData.isEmpty()) {
@@ -458,7 +458,7 @@ public class SpawnerManager {
     }
 
     private int calculateTotalPages(SpawnerData spawner) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         int totalItems = virtualInv.getDisplayInventory().size();
         return Math.max(1, (int) Math.ceil((double) totalItems / 45));
     }
@@ -577,7 +577,7 @@ public class SpawnerManager {
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
         // Create replacements map
-        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);

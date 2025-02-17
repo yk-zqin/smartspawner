@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.utils;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import org.bukkit.configuration.file.FileConfiguration;

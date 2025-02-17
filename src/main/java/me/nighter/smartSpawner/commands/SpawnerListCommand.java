@@ -1,10 +1,10 @@
 package me.nighter.smartSpawner.commands;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.LanguageManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.managers.SpawnerHeadManager;
-import me.nighter.smartSpawner.managers.SpawnerManager;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;

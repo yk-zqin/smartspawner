@@ -1,6 +1,6 @@
 package me.nighter.smartSpawner;
 
-import me.nighter.smartSpawner.dataMigration.SpawnerDataMigration;
+import me.nighter.smartSpawner.data.migration.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
@@ -8,17 +8,22 @@ import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.utils.UpdateChecker;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
+import me.nighter.smartSpawner.utils.Metrics;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.geysermc.floodgate.api.FloodgateApi;
 
+import org.geysermc.floodgate.api.FloodgateApi;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.sk89q.worldguard.WorldGuard;
 
@@ -46,6 +51,9 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerBreakHandler spawnerBreakHandler;
     private GUIClickHandler guiClickHandler;
 
+    // Other Utilities
+    private UpdateChecker updateChecker;
+
     // Integration flags
     public static boolean hasTowny = false;
     public static boolean hasLands = false;
@@ -66,7 +74,7 @@ public class SmartSpawner extends JavaPlugin {
         initializeComponents();
         setupCommand();
         checkDependencies();
-        new UpdateChecker(this, "9tQwxSFr").initialize();
+        setupBtatsMetrics();
         registerListeners();
         if (configManager.isLoggingEnabled()) {
             SaleLogger.getInstance();
@@ -88,18 +96,24 @@ public class SmartSpawner extends JavaPlugin {
         this.spawnerStackHandler = new SpawnerStackHandler(this);
         this.guiClickHandler = new GUIClickHandler(this);
         this.shopIntegrationManager = new ShopIntegrationManager(this);
-
         if (configManager.isHopperEnabled()) {
             this.hopperHandler = new HopperHandler(this);
         } else {
             this.hopperHandler = null;
         }
+        this.updateChecker = new UpdateChecker(this, "9tQwxSFr");
+        updateChecker.initialize();
     }
 
     private void setupCommand() {
         SmartSpawnerCommand smartSpawnerCommand = new SmartSpawnerCommand(this);
         getCommand("smartspawner").setExecutor(smartSpawnerCommand);
         getCommand("smartspawner").setTabCompleter(smartSpawnerCommand);
+    }
+
+    private void setupBtatsMetrics() {
+        Metrics metrics = new Metrics(this, 24822);
+        metrics.addCustomChart(new Metrics.SimplePie("players", () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
     }
 
     private void checkDependencies() {
@@ -182,6 +196,7 @@ public class SmartSpawner extends JavaPlugin {
         if (spawnerGuiListener != null) spawnerGuiListener.onDisable();
         if (hopperHandler != null) hopperHandler.cleanup();
         if (eventHandlers != null) eventHandlers.cleanup();
+        if (updateChecker != null) updateChecker.shutdown();
     }
 
     // Getters

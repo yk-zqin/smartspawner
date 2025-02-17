@@ -279,7 +279,7 @@ messages:
   # Spawner List Teleport Message
   #---------------------------------------------------
   teleported:
-    message: "&aSuccessfully teleported to &6Spawner #%spawnerId%"
+    message: "&aSuccessfully teleported to &dSpawner #%spawnerId%"
     prefix: true
     type: CHAT
     sound: entity.enderman.teleport

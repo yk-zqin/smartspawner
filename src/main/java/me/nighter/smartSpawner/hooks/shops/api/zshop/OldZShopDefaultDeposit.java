@@ -4,10 +4,10 @@ import fr.maxlego08.zshop.api.ShopManager;
 import fr.maxlego08.zshop.api.buttons.ItemButton;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -52,8 +52,8 @@ public class OldZShopDefaultDeposit implements IShopIntegration {
             return false;
         }
 
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
 
         if (items.isEmpty()) {
             plugin.getLanguageManager().sendMessage(player, "messages.no-items");

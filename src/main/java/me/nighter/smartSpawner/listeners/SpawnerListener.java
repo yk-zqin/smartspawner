@@ -2,13 +2,17 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.utils.*;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.hooks.protections.CheckOpenMenu;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.commands.SpawnerListCommand;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -245,7 +249,7 @@ public class SpawnerListener implements Listener {
         chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
 
         List<String> chestLore = new ArrayList<>();
-        OptimizedVirtualInventory virtualInventory = spawner.getVirtualInventory();
+        VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);

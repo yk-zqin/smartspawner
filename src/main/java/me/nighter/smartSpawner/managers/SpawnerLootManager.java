@@ -2,8 +2,10 @@ package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,7 +29,7 @@ public class SpawnerLootManager {
     }
 
     public Inventory createLootInventory(SpawnerData spawner, String title, int page) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
         int totalItems = displayItems.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
@@ -46,7 +48,7 @@ public class SpawnerLootManager {
     }
 
     public void updateInventoryContents(Inventory inventory, SpawnerData spawner, int page) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
         Map<Integer, ItemStack> displayItems = virtualInv.getDisplayInventory();
         int totalItems = displayItems.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / SLOTS_PER_PAGE));
@@ -155,7 +157,7 @@ public class SpawnerLootManager {
         return createItemStack(material, buttonName, buttonLore);
     }
 
-    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalItems, OptimizedVirtualInventory virtualInventory, int maxSlots) {
+    private ItemStack createPageIndicator(int currentPage, int totalPages, int totalItems, VirtualInventory virtualInventory, int maxSlots) {
         Material material;
         String itemName;
         List<String> itemLore = new ArrayList<>();

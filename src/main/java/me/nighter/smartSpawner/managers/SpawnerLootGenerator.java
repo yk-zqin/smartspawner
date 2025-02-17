@@ -1,7 +1,8 @@
 package me.nighter.smartSpawner.managers;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+import me.nighter.smartSpawner.utils.ConfigManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;

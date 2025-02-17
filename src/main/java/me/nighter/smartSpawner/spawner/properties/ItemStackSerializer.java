@@ -1,6 +1,5 @@
-package me.nighter.smartSpawner.serializers;
+package me.nighter.smartSpawner.spawner.properties;
 
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -48,10 +47,10 @@ public class ItemStackSerializer {
         }
     }
 
-    public static List<String> serializeInventory(Map<OptimizedVirtualInventory.ItemSignature, Long> items) {
+    public static List<String> serializeInventory(Map<VirtualInventory.ItemSignature, Long> items) {
         Map<Material, ItemGroup> groupedItems = new HashMap<>();
 
-        for (Map.Entry<OptimizedVirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
             Material material = template.getType();
             ItemGroup group = groupedItems.computeIfAbsent(material, ItemGroup::new);

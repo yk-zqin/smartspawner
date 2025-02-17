@@ -280,7 +280,7 @@ messages:
   # 刷怪笼列表传送消息
   #---------------------------------------------------
   teleported:
-    message: "&a成功传送至&6刷怪笼 #%spawnerId%"
+    message: "&a成功传送至&d刷怪笼 #%spawnerId%"
     prefix: true
     type: CHAT
     sound: entity.enderman.teleport

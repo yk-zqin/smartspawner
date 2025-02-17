@@ -3,10 +3,10 @@ package me.nighter.smartSpawner.hooks.shops.api.shopguiplus;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyManager;
@@ -33,8 +33,8 @@ public class ShopGuiPlus implements IShopIntegration{
 
     @Override
     public synchronized boolean sellAllItems(Player player, SpawnerData spawner) {
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
 
         if (items.isEmpty()) {
             plugin.getLanguageManager().sendMessage(player, "messages.no-items");
@@ -49,7 +49,7 @@ public class ShopGuiPlus implements IShopIntegration{
         List<ItemStack> itemsToRemove = new ArrayList<>();
 
         // Group items by economy type and calculate prices
-        for (Map.Entry<OptimizedVirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
             long amount = entry.getValue();
 

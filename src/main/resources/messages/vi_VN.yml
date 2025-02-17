@@ -277,7 +277,7 @@ messages:
   # Tin nhắn khi dịch chuyển bằng lệnh /ss list
   #---------------------------------------------------
   teleported:
-    message: "&aDịch chuyển thành công đến &6Spawner #%spawnerId%"
+    message: "&aDịch chuyển thành công đến &dSpawner #%spawnerId%"
     prefix: true
     type: CHAT
     sound: entity.enderman.teleport

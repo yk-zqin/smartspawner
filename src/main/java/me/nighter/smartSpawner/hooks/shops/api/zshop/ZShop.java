@@ -5,10 +5,10 @@ import fr.maxlego08.zshop.api.buttons.ItemButton;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
-import me.nighter.smartSpawner.managers.ConfigManager;
-import me.nighter.smartSpawner.managers.LanguageManager;
-import me.nighter.smartSpawner.utils.OptimizedVirtualInventory;
-import me.nighter.smartSpawner.utils.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
+import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.LanguageManager;
+import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -75,8 +75,8 @@ public class ZShop implements IShopIntegration {
             return false;
         }
 
-        OptimizedVirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<OptimizedVirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
 
         if (items.isEmpty()) {
             plugin.getLanguageManager().sendMessage(player, "messages.no-items");
@@ -89,7 +89,7 @@ public class ZShop implements IShopIntegration {
         boolean foundSellableItem = false;
 
         // Process each distinct item type
-        for (Map.Entry<OptimizedVirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
             long amount = entry.getValue();
 

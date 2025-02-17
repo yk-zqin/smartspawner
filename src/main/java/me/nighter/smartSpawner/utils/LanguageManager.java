@@ -1,5 +1,4 @@
-package me.nighter.smartSpawner.managers;
-import me.nighter.smartSpawner.utils.SupportedLanguage;
+package me.nighter.smartSpawner.utils;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
