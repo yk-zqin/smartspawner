@@ -99,7 +99,7 @@ SmartSpawner is an open-source project, and we welcome contributions from the co
 4. **Push** to the branch (`git push origin feature/amazing-feature`)
 5. **Open** a Pull Request
 
-## 📢 Support & & Community
+## 📢 Support & Community
 Need help or found a bug? Feel free to:
 - Join our [Discord Server](https://discord.gg/zrnyG4CuuT)
 - Report bugs on [GitHub Issues](https://github.com/ptthanh02/Smart-Spawner-Plugin/issues)
