@@ -9,9 +9,10 @@ import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
 import me.nighter.smartSpawner.utils.UpdateChecker;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.commands.SmartSpawnerCommand;
+import me.ryanhamshire.GriefPrevention.GriefPrevention;
+
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -51,6 +52,7 @@ public class SmartSpawner extends JavaPlugin {
     public static boolean hasLands = false;
     public static boolean hasWorldGuard = false;
     public static boolean hasGriefPrevention = false;
+    public static boolean hasSuperiorSkyblock2 = false;
 
     @Override
     public void onEnable() {
@@ -131,9 +133,14 @@ public class SmartSpawner extends JavaPlugin {
             }
             return false;
         });
+
         hasTowny = checkPlugin("Towny", () -> {
             TownyAPI.getInstance();
             return TownyAPI.getInstance() != null;
+        });
+
+        hasSuperiorSkyblock2 = checkPlugin("SuperiorSkyblock2", () -> {
+            return Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2") != null;
         });
     }
 
