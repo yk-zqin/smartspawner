@@ -3,8 +3,9 @@
 # ===============================================================
 settings:
   # Language Selection
-  # Supported: en (English), vi (Vietnamese)
-  language: en
+  # Supported: en_US (English), vi_VN (Vietnamese), zh_CN (Simplified Chinese)
+  # You can also use custom language files by placing them in the messages folder and setting the language to the file name
+  language: en_US
 
   # Debug Mode (for printing debug messages to console)
   debug: false
