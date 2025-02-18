@@ -3,8 +3,9 @@ package me.nighter.smartSpawner.spawner.properties;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.spawner.storage.gui.StoragePageHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
@@ -33,7 +34,7 @@ public class SpawnerManager {
     private File spawnerDataFile;
     private FileConfiguration spawnerData;
     private final SpawnerLootGenerator spawnerLootGenerator;
-    private final SpawnerLootManager lootManager;
+    private final SpawnerStorageUI lootManager;
     private final Map<UUID, SpawnerData> openSpawnerGuis = new ConcurrentHashMap<>();
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
@@ -477,8 +478,8 @@ public class SpawnerManager {
             if (viewer instanceof Player) {
                 Player player = (Player) viewer;
                 Inventory currentInv = player.getOpenInventory().getTopInventory();
-                if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                    PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
+                if (currentInv.getHolder() instanceof StoragePageHolder) {
+                    StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
                     int currentPage = holder.getCurrentPage();
 
                     boolean needsNewInventory = false;
@@ -505,7 +506,7 @@ public class SpawnerManager {
                 for (UpdateAction action : updateQueue) {
                     if (action.requiresNewInventory) {
                         // Need new inventory for title update
-                        Inventory newInv = lootManager.createLootInventory(
+                        Inventory newInv = lootManager.createInventory(
                                 action.spawner,
                                 languageManager.getGuiTitle("gui-title.loot-menu"),
                                 action.page
@@ -515,7 +516,7 @@ public class SpawnerManager {
                     } else {
                         // Just update contents of current inventory
                         Inventory currentInv = action.player.getOpenInventory().getTopInventory();
-                        lootManager.updateInventoryContents(currentInv, action.spawner, action.page);
+                        lootManager.updateDisplay(currentInv, action.spawner, action.page);
                         action.player.updateInventory();
                     }
                 }
@@ -551,8 +552,8 @@ public class SpawnerManager {
         List<HumanEntity> viewers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             Inventory openInv = player.getOpenInventory().getTopInventory();
-            if (openInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) openInv.getHolder();
+            if (openInv.getHolder() instanceof StoragePageHolder) {
+                StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
                 if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId())) {
                     viewers.add(player);
                 }

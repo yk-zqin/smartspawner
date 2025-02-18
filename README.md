@@ -14,8 +14,6 @@
 
 </div>
 
-![Smart Spawner Banner](https://i.imgur.com/your-banner-image.png)
-
 ## ✨ Key Features
 
 - **Intuitive GUI** - Allows players effortlessly view, manage, and interact with spawners.

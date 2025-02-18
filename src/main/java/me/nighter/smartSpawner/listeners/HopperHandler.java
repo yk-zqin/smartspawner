@@ -3,9 +3,9 @@ package me.nighter.smartSpawner.listeners;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
-import me.nighter.smartSpawner.managers.SpawnerLootManager;
+import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
-import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.spawner.storage.gui.StoragePageHolder;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.*;
@@ -34,7 +34,7 @@ public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
     private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
-    private final SpawnerLootManager lootManager;
+    private final SpawnerStorageUI lootManager;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
@@ -224,10 +224,10 @@ public class HopperHandler implements Listener {
                 if (viewer instanceof Player) {
                     Player player = (Player) viewer;
                     Inventory currentInv = player.getOpenInventory().getTopInventory();
-                    if (currentInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                        PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) currentInv.getHolder();
+                    if (currentInv.getHolder() instanceof StoragePageHolder) {
+                        StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
                         int currentPage = holder.getCurrentPage();
-                        Inventory newInv = lootManager.createLootInventory(spawner,
+                        Inventory newInv = lootManager.createInventory(spawner,
                                 languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
                         for (int i = 0; i < newInv.getSize(); i++) {
                             currentInv.setItem(i, newInv.getItem(i));
@@ -253,8 +253,8 @@ public class HopperHandler implements Listener {
         List<HumanEntity> viewers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             Inventory openInv = player.getOpenInventory().getTopInventory();
-            if (openInv.getHolder() instanceof PagedSpawnerLootHolder) {
-                PagedSpawnerLootHolder holder = (PagedSpawnerLootHolder) openInv.getHolder();
+            if (openInv.getHolder() instanceof StoragePageHolder) {
+                StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
                 if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId())) {
                     viewers.add(player);
                 }

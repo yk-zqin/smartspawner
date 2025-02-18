@@ -2,6 +2,7 @@ package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.managers.*;
@@ -230,7 +231,7 @@ public class SpawnerListener implements Listener {
         }
     }
 
-    protected void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
+    public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String title;
@@ -717,8 +718,8 @@ public class SpawnerListener implements Listener {
      */
     private void handleChestClick(Player player, SpawnerData spawner) {
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
-        SpawnerLootManager lootManager = new SpawnerLootManager(plugin);
-        Inventory pageInventory = lootManager.createLootInventory(spawner, title, 1);
+        SpawnerStorageUI lootManager = new SpawnerStorageUI(plugin);
+        Inventory pageInventory = lootManager.createInventory(spawner, title, 1);
 
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
         player.closeInventory();

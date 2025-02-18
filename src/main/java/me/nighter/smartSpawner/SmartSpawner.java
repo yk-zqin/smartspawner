@@ -9,6 +9,8 @@ import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.listeners.*;
+import me.nighter.smartSpawner.spawner.storage.interation.SpawnerStorageEvents;
+import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -37,7 +39,7 @@ public class SmartSpawner extends JavaPlugin {
     private ConfigManager configManager;
     private LanguageManager languageManager;
     private SpawnerManager spawnerManager;
-    private SpawnerLootManager lootManager;
+    private SpawnerStorageUI lootManager;
     private HopperHandler hopperHandler;
     private ShopIntegrationManager shopIntegrationManager;
 
@@ -49,7 +51,7 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerGuiListener spawnerGuiListener;
     private SpawnerStackHandler spawnerStackHandler;
     private SpawnerBreakHandler spawnerBreakHandler;
-    private GUIClickHandler guiClickHandler;
+    private SpawnerStorageEvents spawnerStorageEvents;
 
     // Other Utilities
     private UpdateChecker updateChecker;
@@ -88,14 +90,14 @@ public class SmartSpawner extends JavaPlugin {
         this.languageManager = new LanguageManager(this);
         this.eventHandlers = new EventHandlers(this);
         this.lootGenerator = new SpawnerLootGenerator(this);
-        this.lootManager = new SpawnerLootManager(this);
+        this.lootManager = new SpawnerStorageUI(this);
         this.spawnerManager = new SpawnerManager(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
         this.spawnerListener = new SpawnerListener(this);
         this.spawnerGuiListener = new SpawnerGuiListener(this);
         this.spawnerBreakHandler = new SpawnerBreakHandler(this);
         this.spawnerStackHandler = new SpawnerStackHandler(this);
-        this.guiClickHandler = new GUIClickHandler(this);
+        this.spawnerStorageEvents = new SpawnerStorageEvents(this);
         this.shopIntegrationManager = new ShopIntegrationManager(this);
         if (configManager.isHopperEnabled()) {
             this.hopperHandler = new HopperHandler(this);
@@ -175,7 +177,7 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(new SpawnerListener(this), this);
         pm.registerEvents(new SpawnerGuiListener(this), this);
         pm.registerEvents(new SpawnerBreakHandler(this), this);
-        pm.registerEvents(new GUIClickHandler(this), this);
+        pm.registerEvents(new SpawnerStorageEvents(this), this);
         pm.registerEvents(new SpawnerExplosionListener(this), this);
         if (isShopGUIPlusEnabled()) {
             pm.registerEvents(new SpawnerHook(this), this);
@@ -209,7 +211,7 @@ public class SmartSpawner extends JavaPlugin {
     public ConfigManager getConfigManager() { return configManager; }
     public LanguageManager getLanguageManager() { return languageManager; }
     public SpawnerLootGenerator getLootGenerator() { return lootGenerator; }
-    public SpawnerLootManager getLootManager() { return lootManager; }
+    public SpawnerStorageUI getLootManager() { return lootManager; }
     public SpawnerManager getSpawnerManager() { return spawnerManager; }
     public SpawnerListener getSpawnerListener() { return spawnerListener; }
     public SpawnerRangeChecker getRangeChecker() { return rangeChecker; }

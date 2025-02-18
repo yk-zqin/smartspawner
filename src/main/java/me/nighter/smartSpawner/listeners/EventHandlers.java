@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.listeners;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.holders.PagedSpawnerLootHolder;
+import me.nighter.smartSpawner.spawner.storage.gui.StoragePageHolder;
 import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
@@ -33,7 +33,7 @@ public class EventHandlers implements Listener {
     // Spawner Lock Mechanism (make only one player access GUI at a time)
     private final Map<Player, String> playerCurrentMenu = new HashMap<>();
     private final Set<Class<? extends InventoryHolder>> validHolderTypes = Set.of(
-            PagedSpawnerLootHolder.class,
+            StoragePageHolder.class,
             SpawnerMenuHolder.class,
             SpawnerStackerHolder.class
     );
