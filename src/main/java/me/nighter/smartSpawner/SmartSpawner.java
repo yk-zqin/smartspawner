@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner;
 
 import me.nighter.smartSpawner.bstats.Metrics;
-import me.nighter.smartSpawner.data.migration.SpawnerDataMigration;
+import me.nighter.smartSpawner.migration.data.SpawnerDataMigration;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
