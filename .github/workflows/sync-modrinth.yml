@@ -1,38 +1,37 @@
 name: Sync Modrinth Releases to GitHub
 
 on:
-  # Run the workflow every day at midnight
   schedule:
     - cron: '0 0 * * *'
-  # Run the workflow manually
   workflow_dispatch:
 
 jobs:
   sync-to-github:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT_TOKEN }}
-
+          
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-
+          
       - name: Create sync script
         run: |
           cat > sync-modrinth.js << 'EOF'
           const fs = require('fs');
           const https = require('https');
           const path = require('path');
-          const { execSync } = require('child_process');
           
           // Constants
           const MODRINTH_PROJECT_ID = process.env.MODRINTH_PROJECT_ID;
-          const GITHUB_TOKEN = process.env.GH_PAT_TOKEN;
+          const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
           const GITHUB_REPO = process.env.GITHUB_REPOSITORY;
           
           // Get existing GitHub releases
@@ -48,7 +47,7 @@ jobs:
                   'Accept': 'application/vnd.github.v3+json'
                 }
               };
-          
+              
               const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => {
@@ -62,11 +61,11 @@ jobs:
                   }
                 });
               });
-          
+              
               req.on('error', (error) => {
                 reject(error);
               });
-          
+              
               req.end();
             });
           }
@@ -82,7 +81,7 @@ jobs:
                   'User-Agent': 'ModrinthSync/1.0'
                 }
               };
-          
+              
               const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => {
@@ -96,11 +95,11 @@ jobs:
                   }
                 });
               });
-          
+              
               req.on('error', (error) => {
                 reject(error);
               });
-          
+              
               req.end();
             });
           }
@@ -125,60 +124,80 @@ jobs:
           // Create GitHub release
           function createGitHubRelease(version) {
             return new Promise(async (resolve, reject) => {
-              // Download the file first
-              const fileName = path.basename(version.files[0].url);
-              const filePath = `./${fileName}`;
-              await downloadFile(version.files[0].url, filePath);
-          
-              // Prepare release data
-              const isPrerelease = version.version_type === 'alpha' || version.version_type === 'beta';
-              const releaseData = {
-                tag_name: version.version_number,
-                name: version.name,
-                body: `${version.changelog}\n\nImported from Modrinth`,
-                draft: false,
-                prerelease: isPrerelease
-              };
-          
-              // Create the release
-              const options = {
-                hostname: 'api.github.com',
-                path: `/repos/${GITHUB_REPO}/releases`,
-                method: 'POST',
-                headers: {
-                  'User-Agent': 'ModrinthSync',
-                  'Authorization': `token ${GITHUB_TOKEN}`,
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/vnd.github.v3+json'
+              try {
+                // Download the file first
+                const fileName = path.basename(version.files[0].url);
+                const filePath = `./${fileName}`;
+                console.log(`Downloading file from ${version.files[0].url} to ${filePath}`);
+                await downloadFile(version.files[0].url, filePath);
+                
+                // Create tag if it doesn't exist
+                try {
+                  console.log(`Checking if tag ${version.version_number} exists...`);
+                  execSync(`git ls-remote --tags origin refs/tags/${version.version_number}`);
+                  console.log(`Tag ${version.version_number} exists.`);
+                } catch (err) {
+                  console.log(`Creating tag ${version.version_number}...`);
+                  execSync(`git tag ${version.version_number}`);
+                  execSync(`git push origin ${version.version_number}`);
+                  console.log(`Tag ${version.version_number} created.`);
                 }
-              };
-          
-              const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => {
-                  data += chunk;
-                });
-                res.on('end', () => {
-                  if (res.statusCode >= 200 && res.statusCode < 300) {
-                    const release = JSON.parse(data);
-                    // Upload the asset
-                    uploadAsset(release.upload_url.replace(/{.*}/, ''), filePath, fileName)
-                      .then(() => resolve(release))
-                      .catch(reject);
-                  } else {
-                    reject(new Error(`Status Code: ${res.statusCode}, Body: ${data}`));
+                
+                // Prepare release data
+                const isPrerelease = version.version_type === 'alpha' || version.version_type === 'beta';
+                const releaseData = {
+                  tag_name: version.version_number,
+                  name: version.name,
+                  body: `${version.changelog}\n\nImported from Modrinth`,
+                  draft: false,
+                  prerelease: isPrerelease
+                };
+                
+                // Create the release
+                const options = {
+                  hostname: 'api.github.com',
+                  path: `/repos/${GITHUB_REPO}/releases`,
+                  method: 'POST',
+                  headers: {
+                    'User-Agent': 'ModrinthSync',
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
                   }
+                };
+                
+                const req = https.request(options, (res) => {
+                  let data = '';
+                  res.on('data', (chunk) => {
+                    data += chunk;
+                  });
+                  res.on('end', () => {
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                      const release = JSON.parse(data);
+                      // Upload the asset
+                      uploadAsset(release.upload_url.replace(/{.*}/, ''), filePath, fileName)
+                        .then(() => resolve(release))
+                        .catch(reject);
+                    } else {
+                      reject(new Error(`Status Code: ${res.statusCode}, Body: ${data}`));
+                    }
+                  });
                 });
-              });
-          
-              req.on('error', (error) => {
+                
+                req.on('error', (error) => {
+                  reject(error);
+                });
+                
+                req.write(JSON.stringify(releaseData));
+                req.end();
+              } catch (error) {
                 reject(error);
-              });
-          
-              req.write(JSON.stringify(releaseData));
-              req.end();
+              }
             });
           }
+          
+          // Add missing execSync function
+          const { execSync } = require('child_process');
           
           // Upload asset to GitHub release
           function uploadAsset(uploadUrl, filePath, fileName) {
@@ -186,7 +205,7 @@ jobs:
               const stats = fs.statSync(filePath);
               const fileSize = stats.size;
               const fileStream = fs.createReadStream(filePath);
-          
+              
               const options = {
                 hostname: new URL(uploadUrl).hostname,
                 path: `${new URL(uploadUrl).pathname}?name=${encodeURIComponent(fileName)}`,
@@ -199,7 +218,7 @@ jobs:
                   'Accept': 'application/vnd.github.v3+json'
                 }
               };
-          
+              
               const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => {
@@ -214,11 +233,11 @@ jobs:
                   }
                 });
               });
-          
+              
               req.on('error', (error) => {
                 reject(error);
               });
-          
+              
               fileStream.pipe(req);
             });
           }
@@ -227,24 +246,24 @@ jobs:
           async function syncModrinthToGitHub() {
             try {
               console.log('Starting Modrinth to GitHub sync...');
-          
+              
               // Get existing GitHub releases
               const githubReleases = await getGitHubReleases();
               const existingTags = githubReleases.map(release => release.tag_name);
-          
+              
               console.log(`Found ${existingTags.length} existing GitHub releases.`);
-          
+              
               // Get Modrinth versions
               const modrinthVersions = await getModrinthVersions();
               console.log(`Found ${modrinthVersions.length} versions on Modrinth.`);
-          
+              
               // Find versions that don't exist on GitHub
               const newVersions = modrinthVersions.filter(version => 
                 !existingTags.includes(version.version_number)
               );
-          
+              
               console.log(`Found ${newVersions.length} new versions to sync to GitHub.`);
-          
+              
               // Create GitHub releases for new versions
               for (const version of newVersions) {
                 try {
@@ -255,7 +274,7 @@ jobs:
                   console.error(`Error creating release for ${version.version_number}:`, err.message);
                 }
               }
-          
+              
               console.log('Sync completed.');
             } catch (error) {
               console.error('Sync failed:', error.message);
@@ -266,7 +285,7 @@ jobs:
           // Execute
           syncModrinthToGitHub();
           EOF
-
+          
       - name: Extract Modrinth Project ID
         run: |
           MODRINTH_ID=$(grep -oP '(?<=modrinth_id=).*' gradle.properties || echo "")
@@ -275,9 +294,9 @@ jobs:
             MODRINTH_ID="9tQwxSFr"
           fi
           echo "MODRINTH_PROJECT_ID=$MODRINTH_ID" >> $GITHUB_ENV
-
+          
       - name: Run sync script
         env:
-          GH_PAT_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ env.MODRINTH_PROJECT_ID }}
         run: node sync-modrinth.js
