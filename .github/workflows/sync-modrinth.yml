@@ -1,4 +1,4 @@
-name: Sync Modrinth Releases to GitHub
+name: Sync Modrinth Releases to GitHub and Discord
 
 on:
   schedule:
@@ -34,6 +34,7 @@ jobs:
           const MODRINTH_PROJECT_ID = process.env.MODRINTH_PROJECT_ID;
           const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
           const GITHUB_REPO = process.env.GITHUB_REPOSITORY;
+          const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
           
           // Get existing GitHub releases
           function getGitHubReleases() {
@@ -105,6 +106,138 @@ jobs:
             });
           }
           
+          // Get Modrinth project details
+          function getModrinthProject() {
+            return new Promise((resolve, reject) => {
+              const options = {
+                hostname: 'api.modrinth.com',
+                path: `/v2/project/${MODRINTH_PROJECT_ID}`,
+                method: 'GET',
+                headers: {
+                  'User-Agent': 'ModrinthSync/1.0'
+                }
+              };
+              
+              const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => {
+                  data += chunk;
+                });
+                res.on('end', () => {
+                  if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve(JSON.parse(data));
+                  } else {
+                    reject(new Error(`Status Code: ${res.statusCode}, Body: ${data}`));
+                  }
+                });
+              });
+              
+              req.on('error', (error) => {
+                reject(error);
+              });
+              
+              req.end();
+            });
+          }
+          
+          // Send Discord webhook notification
+          function sendDiscordNotification(version, githubReleaseUrl, projectInfo) {
+            return new Promise((resolve, reject) => {
+              if (!DISCORD_WEBHOOK_URL) {
+                console.log('Discord webhook URL not provided, skipping notification');
+                resolve();
+                return;
+              }
+              
+              const webhookUrl = new URL(DISCORD_WEBHOOK_URL);
+              
+              // Create an embed color based on version type
+              let color = 0x55FF55; // Green for release
+              if (version.version_type === 'beta') {
+                color = 0x3498DB; // Blue for beta
+              } else if (version.version_type === 'alpha') {
+                color = 0xFF5555; // Red for alpha
+              }
+              
+              // Format game versions
+              const gameVersions = version.game_versions ? version.game_versions.join(', ') : 'N/A';
+              
+              // Prepare the webhook payload
+              const payload = {
+                username: "Modrinth Sync Bot",
+                avatar_url: "https://cdn-raw.modrinth.com/favicon.png",
+                embeds: [{
+                  title: `New Release: ${version.name || `Version ${version.version_number}`}`,
+                  description: version.changelog || 'No changelog provided.',
+                  url: githubReleaseUrl,
+                  color: color,
+                  fields: [
+                    {
+                      name: "Version",
+                      value: version.version_number,
+                      inline: true
+                    },
+                    {
+                      name: "Type",
+                      value: version.version_type.charAt(0).toUpperCase() + version.version_type.slice(1),
+                      inline: true
+                    },
+                    {
+                      name: "Game Versions",
+                      value: gameVersions,
+                      inline: true
+                    },
+                    {
+                      name: "Project",
+                      value: `[${projectInfo.title}](https://modrinth.com/project/${projectInfo.slug})`,
+                      inline: true
+                    },
+                    {
+                      name: "GitHub Release",
+                      value: `[Download](${githubReleaseUrl})`,
+                      inline: true
+                    }
+                  ],
+                  timestamp: new Date().toISOString(),
+                  footer: {
+                    text: "Synced from Modrinth to GitHub"
+                  }
+                }]
+              };
+              
+              const options = {
+                hostname: webhookUrl.hostname,
+                path: webhookUrl.pathname + webhookUrl.search,
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                }
+              };
+              
+              const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => {
+                  data += chunk;
+                });
+                res.on('end', () => {
+                  if (res.statusCode >= 200 && res.statusCode < 300) {
+                    console.log('Discord notification sent successfully');
+                    resolve();
+                  } else {
+                    reject(new Error(`Discord webhook failed. Status Code: ${res.statusCode}, Body: ${data}`));
+                  }
+                });
+              });
+              
+              req.on('error', (error) => {
+                reject(error);
+              });
+              
+              req.write(JSON.stringify(payload));
+              req.end();
+            });
+          }
+          
           // Download file from URL
           function downloadFile(url, destination) {
             return new Promise((resolve, reject) => {
@@ -123,7 +256,7 @@ jobs:
           }
           
           // Create GitHub release
-          function createGitHubRelease(version) {
+          function createGitHubRelease(version, projectInfo) {
             return new Promise(async (resolve, reject) => {
               try {
                 // Download the file first
@@ -177,6 +310,10 @@ jobs:
                       const release = JSON.parse(data);
                       // Upload the asset
                       uploadAsset(release.upload_url.replace(/{.*}/, ''), filePath, fileName)
+                        .then(() => {
+                          // Send Discord notification after successful GitHub release
+                          return sendDiscordNotification(version, release.html_url, projectInfo);
+                        })
                         .then(() => resolve(release))
                         .catch(reject);
                     } else {
@@ -245,6 +382,10 @@ jobs:
             try {
               console.log('Starting Modrinth to GitHub sync...');
               
+              // Get Modrinth project info first
+              const projectInfo = await getModrinthProject();
+              console.log(`Found project: ${projectInfo.title}`);
+              
               // Get existing GitHub releases
               const githubReleases = await getGitHubReleases();
               const existingTags = githubReleases.map(release => release.tag_name);
@@ -266,8 +407,8 @@ jobs:
               for (const version of newVersions) {
                 try {
                   console.log(`Creating GitHub release for version ${version.version_number} (published ${new Date(version.date_published).toISOString()})...`);
-                  await createGitHubRelease(version);
-                  console.log(`Successfully created GitHub release for version ${version.version_number}.`);
+                  await createGitHubRelease(version, projectInfo);
+                  console.log(`Successfully created GitHub release for version ${version.version_number} and sent Discord notification.`);
                 } catch (err) {
                   console.error(`Error creating release for ${version.version_number}:`, err.message);
                 }
@@ -288,4 +429,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODRINTH_PROJECT_ID: "9tQwxSFr"
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: node sync-modrinth.js
