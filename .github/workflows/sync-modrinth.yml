@@ -28,6 +28,7 @@ jobs:
           const fs = require('fs');
           const https = require('https');
           const path = require('path');
+          const { execSync } = require('child_process');
           
           // Constants
           const MODRINTH_PROJECT_ID = process.env.MODRINTH_PROJECT_ID;
@@ -147,8 +148,8 @@ jobs:
                 const isPrerelease = version.version_type === 'alpha' || version.version_type === 'beta';
                 const releaseData = {
                   tag_name: version.version_number,
-                  name: version.name,
-                  body: `${version.changelog}\n\nImported from Modrinth`,
+                  name: version.name || `Version ${version.version_number}`,
+                  body: `${version.changelog || 'No changelog provided.'}\n\nImported from Modrinth (published: ${new Date(version.date_published).toLocaleDateString()})`,
                   draft: false,
                   prerelease: isPrerelease
                 };
@@ -195,9 +196,6 @@ jobs:
               }
             });
           }
-          
-          // Add missing execSync function
-          const { execSync } = require('child_process');
           
           // Upload asset to GitHub release
           function uploadAsset(uploadUrl, filePath, fileName) {
@@ -257,17 +255,17 @@ jobs:
               const modrinthVersions = await getModrinthVersions();
               console.log(`Found ${modrinthVersions.length} versions on Modrinth.`);
               
-              // Find versions that don't exist on GitHub
-              const newVersions = modrinthVersions.filter(version => 
-                !existingTags.includes(version.version_number)
-              );
+              // Find versions that don't exist on GitHub and sort by date (oldest first)
+              const newVersions = modrinthVersions
+                .filter(version => !existingTags.includes(version.version_number))
+                .sort((a, b) => new Date(a.date_published) - new Date(b.date_published));
               
               console.log(`Found ${newVersions.length} new versions to sync to GitHub.`);
               
               // Create GitHub releases for new versions
               for (const version of newVersions) {
                 try {
-                  console.log(`Creating GitHub release for version ${version.version_number}...`);
+                  console.log(`Creating GitHub release for version ${version.version_number} (published ${new Date(version.date_published).toISOString()})...`);
                   await createGitHubRelease(version);
                   console.log(`Successfully created GitHub release for version ${version.version_number}.`);
                 } catch (err) {
@@ -286,17 +284,8 @@ jobs:
           syncModrinthToGitHub();
           EOF
           
-      - name: Extract Modrinth Project ID
-        run: |
-          MODRINTH_ID=$(grep -oP '(?<=modrinth_id=).*' gradle.properties || echo "")
-          if [ -z "$MODRINTH_ID" ]; then
-            echo "Couldn't find Modrinth ID in gradle.properties. Please specify it manually in the workflow file."
-            MODRINTH_ID="9tQwxSFr"
-          fi
-          echo "MODRINTH_PROJECT_ID=$MODRINTH_ID" >> $GITHUB_ENV
-          
       - name: Run sync script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MODRINTH_PROJECT_ID: ${{ env.MODRINTH_PROJECT_ID }}
+          MODRINTH_PROJECT_ID: "9tQwxSFr"
         run: node sync-modrinth.js
