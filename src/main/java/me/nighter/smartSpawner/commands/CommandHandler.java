@@ -1,6 +1,10 @@
 package me.nighter.smartSpawner.commands;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.commands.give.GiveCommand;
+import me.nighter.smartSpawner.commands.hologram.HologramCommand;
+import me.nighter.smartSpawner.commands.list.ListCommand;
+import me.nighter.smartSpawner.commands.reload.ReloadCommand;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 

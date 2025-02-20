@@ -2,10 +2,10 @@ package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.spawner.storage.gui.StoragePageHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
+import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuHolder;
+import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
+import me.nighter.smartSpawner.spawner.gui.storage.StoragePageHolder;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;

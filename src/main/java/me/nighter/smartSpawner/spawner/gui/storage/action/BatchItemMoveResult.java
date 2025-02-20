@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.spawner.storage.interation;
+package me.nighter.smartSpawner.spawner.gui.storage.action;
 
 import org.bukkit.inventory.ItemStack;
 import java.util.List;

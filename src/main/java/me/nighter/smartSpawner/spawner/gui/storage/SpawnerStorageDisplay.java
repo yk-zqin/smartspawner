@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.spawner.storage.gui;
+package me.nighter.smartSpawner.spawner.gui.storage;
 
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.inventory.Inventory;

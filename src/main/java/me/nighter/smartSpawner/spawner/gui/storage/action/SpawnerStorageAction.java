@@ -1,9 +1,10 @@
-package me.nighter.smartSpawner.spawner.storage.interation;
+package me.nighter.smartSpawner.spawner.gui.storage.action;
 
 import me.nighter.smartSpawner.*;
+import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
-import me.nighter.smartSpawner.spawner.storage.gui.StoragePageHolder;
-import me.nighter.smartSpawner.spawner.storage.gui.SpawnerStorageUI;
+import me.nighter.smartSpawner.spawner.gui.storage.StoragePageHolder;
+import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
@@ -23,10 +24,11 @@ import org.bukkit.inventory.PlayerInventory;
 
 import java.util.*;
 
-public class SpawnerStorageEvents implements Listener {
+public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final SpawnerMenuUI spawnerMenuUI;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
@@ -34,11 +36,12 @@ public class SpawnerStorageEvents implements Listener {
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
 
-    public SpawnerStorageEvents(SmartSpawner plugin) {
+    public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.clickHandlers = initializeClickHandlers();
+        this.spawnerMenuUI = new SpawnerMenuUI(plugin);
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -210,7 +213,7 @@ public class SpawnerStorageEvents implements Listener {
 
     private void openMainMenu(Player player, SpawnerData spawner) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-        plugin.getSpawnerListener().openSpawnerMenu(player, spawner, true);
+        spawnerMenuUI.openSpawnerMenu(player, spawner, true);
     }
 
     private void handleToggleEquipment(Player player, SpawnerData spawner, StoragePageHolder holder) {
@@ -337,9 +340,4 @@ public class SpawnerStorageEvents implements Listener {
 
     private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
     private record TransferItemResult(int amountMoved, boolean inventoryFull) {}
-}
-
-@FunctionalInterface
-interface ItemClickHandler {
-    void handle(Player player, Inventory inventory, int slot, ItemStack item, SpawnerData spawner);
 }

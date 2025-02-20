@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.commands;
+package me.nighter.smartSpawner.commands.hologram;
 
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.SmartSpawner;

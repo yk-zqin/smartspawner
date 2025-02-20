@@ -5,7 +5,7 @@ import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
-import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
+import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

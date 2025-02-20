@@ -1,5 +1,6 @@
-package me.nighter.smartSpawner.holders;
+package me.nighter.smartSpawner.spawner.gui.stacker;
 
+import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

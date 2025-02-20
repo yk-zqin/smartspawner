@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.commands;
+package me.nighter.smartSpawner.commands.give;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.LanguageManager;

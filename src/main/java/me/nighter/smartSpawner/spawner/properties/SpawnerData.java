@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.commands.hologram.SpawnerHologram;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 
