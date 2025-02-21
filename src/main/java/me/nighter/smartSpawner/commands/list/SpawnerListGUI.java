@@ -2,7 +2,6 @@ package me.nighter.smartSpawner.commands.list;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
-import me.nighter.smartSpawner.managers.*;
 
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
@@ -19,7 +18,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SpawnerListGUI implements Listener {
-    private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
@@ -31,7 +29,6 @@ public class SpawnerListGUI implements Listener {
     );
 
     public SpawnerListGUI(SmartSpawner plugin) {
-        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerManager = plugin.getSpawnerManager();
