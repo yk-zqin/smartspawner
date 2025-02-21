@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.spawner.gui.main;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;

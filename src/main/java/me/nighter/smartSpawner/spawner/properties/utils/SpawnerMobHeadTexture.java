@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.spawner.properties.utils;
 
 import me.nighter.smartSpawner.nms.TextureWrapper;
 import org.bukkit.Bukkit;
@@ -16,7 +16,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SpawnerHeadManager {
+public class SpawnerMobHeadTexture {
     private static final Map<EntityType, ItemStack> HEAD_CACHE = new EnumMap<>(EntityType.class);
 
     static {

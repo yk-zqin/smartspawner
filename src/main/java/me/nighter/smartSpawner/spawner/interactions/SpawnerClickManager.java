@@ -242,7 +242,7 @@ public class SpawnerClickManager implements Listener {
         spawner.setSpawnerActive(true);
 
         spawnerManager.addSpawner(spawnerId, spawner);
-        spawnerManager.saveSpawnerData();
+        spawnerManager.queueSpawnerForSaving(spawnerId);
 
         // Notify player
         languageManager.sendMessage(player, "messages.activated");

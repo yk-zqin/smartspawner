@@ -1,5 +1,6 @@
-package me.nighter.smartSpawner.spawner.properties;
+package me.nighter.smartSpawner.spawner.properties.utils;
 
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;

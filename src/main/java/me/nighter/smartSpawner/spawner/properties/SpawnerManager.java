@@ -1,56 +1,67 @@
 package me.nighter.smartSpawner.spawner.properties;
 
-import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuHolder;
+import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
-import me.nighter.smartSpawner.spawner.gui.storage.StoragePageHolder;
+import me.nighter.smartSpawner.holders.StoragePageHolder;
+import me.nighter.smartSpawner.spawner.properties.utils.LootResult;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerFileHandler;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerLootGenerator;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.*;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
+/**
+ * Manages all spawner data and interactions, delegating file operations
+ * to SpawnerFileHandler for improved performance.
+ */
 public class SpawnerManager {
     private final SmartSpawner plugin;
     private Map<String, SpawnerData> spawners = new HashMap<>();
     private Map<LocationKey, SpawnerData> locationIndex = new HashMap<>();
     private long previousExpValue = 0;
-    private File spawnerDataFile;
-    private FileConfiguration spawnerData;
     private final SpawnerLootGenerator spawnerLootGenerator;
     private final SpawnerStorageUI lootManager;
     private final Map<UUID, SpawnerData> openSpawnerGuis = new ConcurrentHashMap<>();
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final Map<String, Set<SpawnerData>> worldIndex = new HashMap<>();
+    private final SpawnerFileHandler fileHandler;
+    private final Logger logger;
 
+    /**
+     * Constructor for SpawnerManager
+     *
+     * @param plugin The SmartSpawner plugin instance
+     */
     public SpawnerManager(SmartSpawner plugin) {
         this.plugin = plugin;
+        this.logger = plugin.getLogger();
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerLootGenerator = plugin.getLootGenerator();
         this.lootManager = plugin.getLootManager();
-        setupSpawnerDataFile();
+
+        // Initialize file handler
+        this.fileHandler = new SpawnerFileHandler(plugin);
+
+        // Load spawners from file
         loadSpawnerData();
-        startSaveTask();
     }
 
+    /**
+     * Key class for efficient location-based spawner lookups
+     */
     private static class LocationKey {
         private final String world;
         private final int x, y, z;
@@ -79,7 +90,12 @@ public class SpawnerManager {
         }
     }
 
-    // Add methods to maintain the location index
+    /**
+     * Adds a spawner to the manager and indexes it
+     *
+     * @param id The spawner ID
+     * @param spawner The spawner data object
+     */
     public void addSpawner(String id, SpawnerData spawner) {
         spawners.put(id, spawner);
         locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
@@ -87,8 +103,16 @@ public class SpawnerManager {
         // Add to world index
         String worldName = spawner.getSpawnerLocation().getWorld().getName();
         worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
+
+        // Queue for saving
+        fileHandler.queueSpawnerForSaving(id);
     }
 
+    /**
+     * Removes a spawner from the manager and file storage
+     *
+     * @param id The spawner ID to remove
+     */
     public void removeSpawner(String id) {
         SpawnerData spawner = spawners.get(id);
         if (spawner != null) {
@@ -107,14 +131,26 @@ public class SpawnerManager {
 
             spawners.remove(id);
         }
-        deleteSpawnerFromFile(id);
+        fileHandler.deleteSpawnerFromFile(id);
     }
 
+    /**
+     * Counts spawners in a specific world
+     *
+     * @param worldName The name of the world
+     * @return Number of spawners in that world
+     */
     public int countSpawnersInWorld(String worldName) {
         Set<SpawnerData> worldSpawners = worldIndex.get(worldName);
         return worldSpawners != null ? worldSpawners.size() : 0;
     }
 
+    /**
+     * Counts total spawners including stacks in a world
+     *
+     * @param worldName The name of the world
+     * @return Total count including stacked spawners
+     */
     public int countTotalSpawnersWithStacks(String worldName) {
         Set<SpawnerData> worldSpawners = worldIndex.get(worldName);
         if (worldSpawners == null) return 0;
@@ -124,7 +160,9 @@ public class SpawnerManager {
                 .sum();
     }
 
-    // Method to handle world reloading or plugin reload
+    /**
+     * Rebuilds world indexes - useful after world loads/unloads
+     */
     public void reindexWorlds() {
         worldIndex.clear();
         for (SpawnerData spawner : spawners.values()) {
@@ -133,290 +171,120 @@ public class SpawnerManager {
         }
     }
 
-    public void deleteSpawnerFromFile(String spawnerId) {
-        try {
-            SpawnerData spawner = spawners.get(spawnerId);
-            if (spawner != null) {
-                spawner.removeHologram();
-            }
-            String path = "spawners." + spawnerId;
-            spawnerData.set(path, null);
-            spawnerData.save(spawnerDataFile);
-            SpawnerData removedSpawner = spawners.remove(spawnerId);
-            if (removedSpawner != null) {
-                locationIndex.remove(new LocationKey(removedSpawner.getSpawnerLocation()));
-            }
-
-            configManager.debug("Successfully deleted spawner " + spawnerId + " from data file");
-
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not delete spawner " + spawnerId + " from spawners_data.yml!");
-            e.printStackTrace();
-        }
-    }
-
-    // Add efficient location lookup method
+    /**
+     * Gets a spawner by its location in the world
+     *
+     * @param location The location to check
+     * @return The spawner at that location, or null if none exists
+     */
     public SpawnerData getSpawnerByLocation(Location location) {
         return locationIndex.get(new LocationKey(location));
     }
 
+    /**
+     * Gets a spawner by its unique ID
+     *
+     * @param id The spawner ID
+     * @return The spawner with that ID, or null if none exists
+     */
     public SpawnerData getSpawnerById(String id) {
         return spawners.get(id);
     }
 
+    /**
+     * Gets all spawners currently managed
+     *
+     * @return List of all spawner data objects
+     */
     public List<SpawnerData> getAllSpawners() {
         return new ArrayList<>(spawners.values());
     }
 
-    private void setupSpawnerDataFile() {
-        if (!plugin.getDataFolder().exists()) {
-            plugin.getDataFolder().mkdirs();
-        }
 
-        spawnerDataFile = new File(plugin.getDataFolder(), "spawners_data.yml");
-
-        if (!spawnerDataFile.exists()) {
-            try {
-                spawnerDataFile.createNewFile();
-                String header = """
-                # File Format Example:
-                #  spawners:
-                #    spawnerId:
-                #      location: world,x,y,z
-                #      entityType: ENTITY_TYPE
-                #      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
-                #      inventory:
-                #        - ITEM_TYPE:amount
-                #        - ITEM_TYPE;durability:amount,durability:amount,...
-                """;
-
-                Files.write(spawnerDataFile.toPath(), header.getBytes(), StandardOpenOption.WRITE);
-            } catch (IOException e) {
-                plugin.getLogger().severe("Could not create spawners_data.yml!");
-                e.printStackTrace();
-            }
-        }
-
-        spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);
-
-        spawnerData.options().header("""
-        File Format Example:
-         spawners:
-           spawnerId:
-             location: world,x,y,z
-             entityType: ENTITY_TYPE
-             settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
-             inventory:
-               - ITEM_TYPE:amount
-               - ITEM_TYPE;durability:amount,durability:amount,...
-        """);
-    }
-
-    private void startSaveTask() {
-        configManager.debug("Starting spawner data save task");
-        int intervalSeconds = configManager.getSaveInterval();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveSpawnerData, 0, intervalSeconds); // 5 mins
-    }
-
-    public void saveSpawnerData() {
-        try {
-            // Preserve data_version if it exists, otherwise set default
-            int dataVersion = spawnerData.getInt("data_version", 2);
-            spawnerData.set("data_version", dataVersion);
-
-            // Get existing spawners section or create new one
-            ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
-            if (spawnersSection == null) {
-                spawnersSection = spawnerData.createSection("spawners");
-            }
-
-            // Track existing spawner IDs to remove only those that no longer exist
-            Set<String> existingIds = new HashSet<>(spawnersSection.getKeys(false));
-            Set<String> currentIds = spawners.keySet();
-
-            // Remove only spawners that don't exist anymore
-            ConfigurationSection finalSpawnersSection = spawnersSection;
-            existingIds.stream()
-                    .filter(id -> !currentIds.contains(id))
-                    .forEach(id -> finalSpawnersSection.set(id, null));
-
-            // Save or update current spawners
-            for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
-                String spawnerId = entry.getKey();
-                SpawnerData spawner = entry.getValue();
-                Location loc = spawner.getSpawnerLocation();
-                String path = "spawners." + spawnerId;
-
-                // Save basic spawner properties
-                spawnerData.set(path + ".location", String.format("%s,%d,%d,%d",
-                        loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-                spawnerData.set(path + ".entityType", spawner.getEntityType().name());
-
-                // Use StringBuilder for better performance when building settings string
-                String settings = String.valueOf(spawner.getSpawnerExp()) + ',' +
-                        spawner.getSpawnerActive() + ',' +
-                        spawner.getSpawnerRange() + ',' +
-                        spawner.getSpawnerStop() + ',' +
-                        spawner.getSpawnDelay() + ',' +
-                        spawner.getMaxSpawnerLootSlots() + ',' +
-                        spawner.getMaxStoredExp() + ',' +
-                        spawner.getMinMobs() + ',' +
-                        spawner.getMaxMobs() + ',' +
-                        spawner.getStackSize() + ',' +
-                        spawner.getLastSpawnTime() + ',' +
-                        spawner.isAllowEquipmentItems();
-
-                spawnerData.set(path + ".settings", settings);
-
-                // Save VirtualInventory
-                VirtualInventory virtualInv = spawner.getVirtualInventory();
-                if (virtualInv != null) {
-                    Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
-                    List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
-                    spawnerData.set(path + ".inventory", serializedItems);
-                }
-            }
-
-            spawnerData.save(spawnerDataFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save spawners_data.yml!");
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * Loads all spawner data from file storage
+     */
     public void loadSpawnerData() {
         // Clear existing data
         spawners.clear();
         locationIndex.clear();
+        worldIndex.clear();
 
-        // Check if hologram is enabled
+        // Load spawners from file handler
+        Map<String, SpawnerData> loadedSpawners = fileHandler.loadAllSpawners();
         boolean hologramEnabled = configManager.isHologramEnabled();
 
-        ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
-        if (spawnersSection == null) return;
+        // Add all loaded spawners to our indexes
+        for (Map.Entry<String, SpawnerData> entry : loadedSpawners.entrySet()) {
+            String spawnerId = entry.getKey();
+            SpawnerData spawner = entry.getValue();
 
-        int loadedCount = 0;
-        int errorCount = 0;
+            spawners.put(spawnerId, spawner);
+            locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
 
-        for (String spawnerId : spawnersSection.getKeys(false)) {
-            try {
-                String path = "spawners." + spawnerId;
-
-                // Load location
-                String locationString = spawnerData.getString(path + ".location");
-                if (locationString == null) {
-                    plugin.getLogger().warning("Invalid location for spawner " + spawnerId);
-                    continue;
-                }
-
-                String[] locParts = locationString.split(",");
-                if (locParts.length != 4) {
-                    plugin.getLogger().warning("Invalid location format for spawner " + spawnerId);
-                    continue;
-                }
-
-                World world = Bukkit.getWorld(locParts[0]);
-                if (world == null) {
-                    plugin.getLogger().warning("World not found for spawner " + spawnerId + ": " + locParts[0]);
-                    continue;
-                }
-
-                Location location = new Location(world,
-                        Integer.parseInt(locParts[1]),
-                        Integer.parseInt(locParts[2]),
-                        Integer.parseInt(locParts[3]));
-
-                // Load entity type
-                String entityTypeString = spawnerData.getString(path + ".entityType");
-                if (entityTypeString == null) {
-                    plugin.getLogger().warning("Missing entity type for spawner " + spawnerId);
-                    continue;
-                }
-
-                EntityType entityType;
-                try {
-                    entityType = EntityType.valueOf(entityTypeString);
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid entity type for spawner " + spawnerId + ": " + entityTypeString);
-                    continue;
-                }
-
-                // Create spawner instance
-                SpawnerData spawner = new SpawnerData(spawnerId, location, entityType, plugin);
-
-                // Load settings
-                String settingsString = spawnerData.getString(path + ".settings");
-                if (settingsString != null) {
-                    String[] settings = settingsString.split(",");
-                    if (settings.length >= 12) {
-                        try {
-                            spawner.setSpawnerExp(Integer.parseInt(settings[0]));
-                            spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
-                            spawner.setSpawnerRange(Integer.parseInt(settings[2]));
-                            spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
-                            spawner.setSpawnDelay(Integer.parseInt(settings[4]));
-                            spawner.setMaxSpawnerLootSlots(Integer.parseInt(settings[5]));
-                            spawner.setMaxStoredExp(Integer.parseInt(settings[6]));
-                            spawner.setMinMobs(Integer.parseInt(settings[7]));
-                            spawner.setMaxMobs(Integer.parseInt(settings[8]));
-                            spawner.setStackSize(Integer.parseInt(settings[9]));
-                            spawner.setLastSpawnTime(Long.parseLong(settings[10]));
-                            spawner.setAllowEquipmentItems(Boolean.parseBoolean(settings[11]));
-                        } catch (NumberFormatException e) {
-                            plugin.getLogger().warning("Invalid settings format for spawner " + spawnerId);
-                            continue;
-                        }
-                    }
-                }
-
-                // Load inventory
-                VirtualInventory virtualInv = new VirtualInventory(spawner.getMaxSpawnerLootSlots());
-                List<String> inventoryData = spawnerData.getStringList(path + ".inventory");
-
-                if (inventoryData != null && !inventoryData.isEmpty()) {
-                    try {
-                        Map<ItemStack, Integer> items = ItemStackSerializer.deserializeInventory(inventoryData);
-                        for (Map.Entry<ItemStack, Integer> entry : items.entrySet()) {
-                            ItemStack item = entry.getKey();
-                            int amount = entry.getValue();
-
-                            if (item != null && amount > 0) {
-                                while (amount > 0) {
-                                    int batchSize = Math.min(amount, item.getMaxStackSize());
-                                    ItemStack batch = item.clone();
-                                    batch.setAmount(batchSize);
-                                    virtualInv.addItems(Collections.singletonList(batch));
-                                    amount -= batchSize;
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("Error loading inventory for spawner " + spawnerId);
-                        e.printStackTrace();
-                    }
-                }
-
-                spawner.setVirtualInventory(virtualInv);
-                spawners.put(spawnerId, spawner);
-                locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
-
-                loadedCount++;
-            } catch (Exception e) {
-                plugin.getLogger().severe("Error loading spawner " + spawnerId);
-                e.printStackTrace();
-                errorCount++;
+            // Add to world index
+            World world = spawner.getSpawnerLocation().getWorld();
+            if (world != null) {
+                String worldName = world.getName();
+                worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
             }
         }
 
-        if (hologramEnabled && loadedCount > 0) {
+        // Update holograms if enabled
+        if (hologramEnabled && !spawners.isEmpty()) {
             removeAllGhostsHolograms();
             Bukkit.getScheduler().runTask(plugin, () -> {
-                plugin.getLogger().info("Updating holograms for all spawners...");
+                logger.info("Updating holograms for all spawners...");
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
         }
-        reindexWorlds();
     }
+
+
+    /**
+     * Marks a spawner as modified for batch saving
+     *
+     * @param spawnerId The ID of the modified spawner
+     */
+    public void markSpawnerModified(String spawnerId) {
+        fileHandler.markSpawnerModified(spawnerId);
+    }
+
+    /**
+     * Immediately queues a spawner for saving
+     *
+     * @param spawnerId The ID of the spawner to save
+     */
+    public void queueSpawnerForSaving(String spawnerId) {
+        fileHandler.queueSpawnerForSaving(spawnerId);
+    }
+
+    /**
+     * Saves all spawner data to file - mainly used for server shutdown
+     */
+    public void saveSpawnerData() {
+        fileHandler.saveAllSpawners(spawners);
+    }
+
+    /**
+     * Saves only modified spawners
+     */
+    public void saveModifiedSpawners() {
+        fileHandler.saveModifiedSpawners();
+    }
+
+    /**
+     * Gets the file handler instance
+     *
+     * @return The spawner file handler
+     */
+    public SpawnerFileHandler getFileHandler() {
+        return fileHandler;
+    }
+
+    // ===============================================================
+    //                      Loot Spawning
+    // ===============================================================
 
     public void spawnLoot(SpawnerData spawner) {
         if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
@@ -453,6 +321,8 @@ public class SpawnerManager {
                     if (configManager.isHologramEnabled()) {
                         spawner.updateHologramData();
                     }
+                    // Mark spawner as modified for saving
+                    markSpawnerModified(spawner.getSpawnerId());
                 });
             });
         }

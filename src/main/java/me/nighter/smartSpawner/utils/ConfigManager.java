@@ -22,7 +22,7 @@ public class ConfigManager {
     private File configFile;
     private File lootConfigFile;
     private Map<String, Object> configCache;
-    private final String CURRENT_CONFIG_VERSION = "1.2.3.0";
+    private final String CURRENT_CONFIG_VERSION = "1.2.4.0";
 
     public ConfigManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -296,7 +296,7 @@ public class ConfigManager {
         // Global Settings
         put("settings.language", "en_US");
         put("settings.debug", false);
-        put("settings.save-interval", 6000);
+        put("settings.save-interval", 300);
 
         // Spawner Core Mechanics
         put("spawner.default-entity", "PIG");

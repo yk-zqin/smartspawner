@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.spawner.properties.utils;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;

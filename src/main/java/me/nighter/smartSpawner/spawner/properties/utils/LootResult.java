@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.managers;
+package me.nighter.smartSpawner.spawner.properties.utils;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;

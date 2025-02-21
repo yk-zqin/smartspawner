@@ -2,6 +2,7 @@ package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.commands.hologram.SpawnerHologram;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerFileHandler;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 
@@ -35,6 +36,7 @@ public class SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
+    private SpawnerFileHandler spawnerFileHandler;
     private SpawnerHologram hologram;
 
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {

@@ -10,18 +10,22 @@ import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.listeners.*;
-import me.nighter.smartSpawner.managers.*;
 import me.nighter.smartSpawner.migration.data.SpawnerDataMigration;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuAction;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerAction;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
-import me.nighter.smartSpawner.spawner.gui.storage.action.SpawnerStorageAction;
+import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageAction;
 import me.nighter.smartSpawner.spawner.interactions.SpawnerClickManager;
+import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerBreakListener;
+import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerExplosionListener;
+import me.nighter.smartSpawner.spawner.interactions.place.SpawnerPlaceListener;
 import me.nighter.smartSpawner.spawner.interactions.stack.SpawnerStackHandler;
 import me.nighter.smartSpawner.spawner.interactions.type.SpawnEggHandler;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerMobHeadTexture;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerLootGenerator;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.utils.UpdateChecker;
@@ -74,7 +78,9 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerLootGenerator lootGenerator;
     private SpawnerListGUI spawnerListGUI;
     private SpawnerGuiListener spawnerGuiListener;
-    private SpawnerBreakHandler spawnerBreakHandler;
+    private SpawnerExplosionListener spawnerExplosionListener;
+    private SpawnerBreakListener spawnerBreakListener;
+    private SpawnerPlaceListener spawnerPlaceListener;
     private UpdateChecker updateChecker;
 
     // Integration flags - static for quick access
@@ -170,7 +176,9 @@ public class SmartSpawner extends JavaPlugin {
         this.eventHandlers = new EventHandlers(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
         this.spawnerGuiListener = new SpawnerGuiListener(this);
-        this.spawnerBreakHandler = new SpawnerBreakHandler(this);
+        this.spawnerExplosionListener = new SpawnerExplosionListener(this);
+        this.spawnerBreakListener = new SpawnerBreakListener(this);
+        this.spawnerPlaceListener = new SpawnerPlaceListener(this);
 
         // Initialize hopper handler if enabled in config
         if (configManager.isHopperEnabled()) {
@@ -193,9 +201,10 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(eventHandlers, this);
         pm.registerEvents(spawnerListGUI, this);
         pm.registerEvents(spawnerGuiListener, this);
-        pm.registerEvents(spawnerBreakHandler, this);
+        pm.registerEvents(spawnerBreakListener, this);
+        pm.registerEvents(spawnerPlaceListener, this);
         pm.registerEvents(spawnerStorageAction, this);
-        pm.registerEvents(new SpawnerExplosionListener(this), this);
+        pm.registerEvents(spawnerExplosionListener, this);
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
         pm.registerEvents(spawnerStackerAction, this);
@@ -323,7 +332,7 @@ public class SmartSpawner extends JavaPlugin {
     @Override
     public void onDisable() {
         saveAndCleanup();
-        SpawnerHeadManager.clearCache();
+        SpawnerMobHeadTexture.clearCache();
         shutdownSaleLogger();
         getLogger().info("SmartSpawner has been disabled!");
     }

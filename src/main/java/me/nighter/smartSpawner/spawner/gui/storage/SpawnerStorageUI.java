@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.spawner.gui.storage;
 
 import me.nighter.smartSpawner.*;
+import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;

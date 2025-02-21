@@ -11,8 +11,8 @@ settings:
   debug: false
 
   # Data Persistence Interval
-  # 20 ticks = 1 second, default: 5 minutes
-  save-interval: 6000
+  # Save interval in seconds (default: 300 seconds) - 5 minutes
+  save-interval: 300
 
 # ===============================================================
 #                      Spawner Core Mechanics

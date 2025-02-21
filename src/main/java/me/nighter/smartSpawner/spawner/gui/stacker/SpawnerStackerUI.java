@@ -1,6 +1,7 @@
 package me.nighter.smartSpawner.spawner.gui.stacker;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -26,7 +27,7 @@ public class SpawnerStackerUI {
     private static final int SPAWNER_INFO_SLOT = 13;
 
     // Stack modification amounts
-    private static final int[] STACK_AMOUNTS = {64, 16, 1};
+    private static final int[] STACK_AMOUNTS = {64, 10, 1};
 
     private final ConfigManager configManager;
     private final LanguageManager languageManager;

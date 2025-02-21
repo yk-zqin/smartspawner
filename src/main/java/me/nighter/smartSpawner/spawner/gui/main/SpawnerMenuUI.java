@@ -1,7 +1,8 @@
 package me.nighter.smartSpawner.spawner.gui.main;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.managers.SpawnerHeadManager;
+import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerMobHeadTexture;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -121,7 +122,7 @@ public class SpawnerMenuUI {
      * @return The configured spawner info item
      */
     private ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
-        ItemStack spawnerItem = SpawnerHeadManager.getCustomHead(spawner.getEntityType(), player);
+        ItemStack spawnerItem = SpawnerMobHeadTexture.getCustomHead(spawner.getEntityType(), player);
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         if (spawnerMeta == null) return spawnerItem;
 

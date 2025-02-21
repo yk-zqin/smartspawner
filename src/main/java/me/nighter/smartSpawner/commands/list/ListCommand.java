@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.commands.list;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.LanguageManager;
-import me.nighter.smartSpawner.managers.SpawnerHeadManager;
+import me.nighter.smartSpawner.spawner.properties.utils.SpawnerMobHeadTexture;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;
@@ -151,7 +151,7 @@ public class ListCommand {
 
     private ItemStack createSpawnerInfoItem(SpawnerData spawner) {
         // Get the custom head for the spawner's entity type
-        ItemStack spawnerItem = SpawnerHeadManager.getCustomHead(spawner.getEntityType());
+        ItemStack spawnerItem = SpawnerMobHeadTexture.getCustomHead(spawner.getEntityType());
         ItemMeta meta = spawnerItem.getItemMeta();
         Location loc = spawner.getSpawnerLocation();
 

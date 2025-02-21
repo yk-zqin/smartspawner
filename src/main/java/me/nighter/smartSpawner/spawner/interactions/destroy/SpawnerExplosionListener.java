@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.listeners;
+package me.nighter.smartSpawner.spawner.interactions.destroy;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.utils.ConfigManager;

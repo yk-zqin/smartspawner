@@ -1,10 +1,10 @@
-package me.nighter.smartSpawner.spawner.gui.storage.action;
+package me.nighter.smartSpawner.spawner.gui.storage;
 
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
+import me.nighter.smartSpawner.spawner.gui.storage.utils.*;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
-import me.nighter.smartSpawner.spawner.gui.storage.StoragePageHolder;
-import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
+import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
