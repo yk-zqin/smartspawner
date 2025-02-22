@@ -1,12 +1,9 @@
-package me.nighter.smartSpawner.listeners;
+package me.nighter.smartSpawner;
 
-import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
-import me.nighter.smartSpawner.utils.ConfigManager;
-import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 
@@ -24,10 +21,8 @@ import org.bukkit.inventory.InventoryView;
 
 import java.util.*;
 
-public class EventHandlers implements Listener {
+public class GlobalEventHandlers implements Listener {
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
-    private final LanguageManager languageManager;
     private final SpawnerManager spawnerManager;
 
     // Spawner Lock Mechanism (make only one player access GUI at a time)
@@ -38,10 +33,8 @@ public class EventHandlers implements Listener {
             SpawnerStackerHolder.class
     );
 
-    public EventHandlers(SmartSpawner plugin) {
+    public GlobalEventHandlers(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
         this.spawnerManager = plugin.getSpawnerManager();
     }
 

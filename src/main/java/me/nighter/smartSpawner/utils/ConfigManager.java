@@ -8,7 +8,6 @@ import org.bukkit.entity.EntityType;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -46,7 +45,7 @@ public class ConfigManager {
     }
 
     public void debug(String message) {
-        if (isDebugMode()) {
+        if (isDebugEnabled()) {
             logger.info("[DEBUG] " + message);
         }
     }
@@ -449,7 +448,7 @@ public class ConfigManager {
     //                      Global Settings
     // ===============================================================
 
-    public boolean isDebugMode() {
+    public boolean isDebugEnabled() {
         return (boolean) configCache.computeIfAbsent("settings.debug",
                 key -> config.getBoolean(key, (boolean) defaultConfig.get(key)));
     }

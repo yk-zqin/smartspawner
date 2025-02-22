@@ -3,16 +3,17 @@ package me.nighter.smartSpawner;
 import me.nighter.smartSpawner.bstats.Metrics;
 import me.nighter.smartSpawner.commands.CommandHandler;
 import me.nighter.smartSpawner.commands.list.SpawnerListGUI;
+import me.nighter.smartSpawner.extras.HopperHandler;
 import me.nighter.smartSpawner.hooks.protections.api.Lands;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.hooks.shops.ShopIntegrationManager;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
-import me.nighter.smartSpawner.listeners.*;
-import me.nighter.smartSpawner.migration.data.SpawnerDataMigration;
+import me.nighter.smartSpawner.migration.SpawnerDataMigration;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuAction;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
+import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerAction;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
@@ -23,9 +24,10 @@ import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerExplosionList
 import me.nighter.smartSpawner.spawner.interactions.place.SpawnerPlaceListener;
 import me.nighter.smartSpawner.spawner.interactions.stack.SpawnerStackHandler;
 import me.nighter.smartSpawner.spawner.interactions.type.SpawnEggHandler;
+import me.nighter.smartSpawner.spawner.lootgen.SpawnerRangeChecker;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.utils.SpawnerMobHeadTexture;
-import me.nighter.smartSpawner.spawner.properties.utils.SpawnerLootGenerator;
+import me.nighter.smartSpawner.spawner.lootgen.SpawnerLootGenerator;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.utils.UpdateChecker;
@@ -73,11 +75,11 @@ public class SmartSpawner extends JavaPlugin {
     private HopperHandler hopperHandler;
 
     // Event handlers and utilities
-    private EventHandlers eventHandlers;
-    private SpawnerRangeChecker rangeChecker;
-    private SpawnerLootGenerator lootGenerator;
+    private GlobalEventHandlers globalEventHandlers;
+    private SpawnerLootGenerator spawnerLootGenerator;
     private SpawnerListGUI spawnerListGUI;
-    private SpawnerGuiListener spawnerGuiListener;
+    private SpawnerGuiUpdater spawnerGuiUpdater;
+    private SpawnerRangeChecker rangeChecker;
     private SpawnerExplosionListener spawnerExplosionListener;
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
@@ -147,14 +149,16 @@ public class SmartSpawner extends JavaPlugin {
      * @return CompletableFuture that completes when initialization is done
      */
     private CompletableFuture<Void> initializeComponents() {
-        // Initialize core components first to ensure they are available
+        // Initialize core components in order
         this.configManager = new ConfigManager(this);
         this.languageManager = new LanguageManager(this);
         this.spawnerStorageUI = new SpawnerStorageUI(this);
-        this.lootGenerator = new SpawnerLootGenerator(this);
+        this.spawnerListGUI = new SpawnerListGUI(this);
+        this.spawnerGuiUpdater = new SpawnerGuiUpdater(this);
         this.spawnerManager = new SpawnerManager(this);
+        this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
-
+;
         // Parallel initialization for components that can be initialized concurrently
         CompletableFuture<Void> asyncInit = CompletableFuture.runAsync(() -> {
             this.shopIntegrationManager = new ShopIntegrationManager(this);
@@ -173,9 +177,7 @@ public class SmartSpawner extends JavaPlugin {
         this.spawnerStackerAction = new SpawnerStackerAction(this);
         this.spawnerStorageAction = new SpawnerStorageAction(this);
 
-        this.eventHandlers = new EventHandlers(this);
-        this.spawnerListGUI = new SpawnerListGUI(this);
-        this.spawnerGuiListener = new SpawnerGuiListener(this);
+        this.globalEventHandlers = new GlobalEventHandlers(this);
         this.spawnerExplosionListener = new SpawnerExplosionListener(this);
         this.spawnerBreakListener = new SpawnerBreakListener(this);
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
@@ -198,12 +200,12 @@ public class SmartSpawner extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
 
         // Register core listeners
-        pm.registerEvents(eventHandlers, this);
+        pm.registerEvents(globalEventHandlers, this);
         pm.registerEvents(spawnerListGUI, this);
-        pm.registerEvents(spawnerGuiListener, this);
         pm.registerEvents(spawnerBreakListener, this);
         pm.registerEvents(spawnerPlaceListener, this);
         pm.registerEvents(spawnerStorageAction, this);
+        pm.registerEvents(spawnerGuiUpdater, this);
         pm.registerEvents(spawnerExplosionListener, this);
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
@@ -358,9 +360,9 @@ public class SmartSpawner extends JavaPlugin {
 
         // Clean up other resources
         if (rangeChecker != null) rangeChecker.cleanup();
-        if (spawnerGuiListener != null) spawnerGuiListener.onDisable();
+        if (spawnerGuiUpdater != null) spawnerGuiUpdater.onDisable();
         if (hopperHandler != null) hopperHandler.cleanup();
-        if (eventHandlers != null) eventHandlers.cleanup();
+        if (globalEventHandlers != null) globalEventHandlers.cleanup();
         if (updateChecker != null) updateChecker.shutdown();
     }
 
@@ -384,137 +386,62 @@ public class SmartSpawner extends JavaPlugin {
 
     // Getters
 
-    /**
-     * Gets the singleton instance of this plugin.
-     *
-     * @return The SmartSpawner plugin instance
-     */
     public static SmartSpawner getInstance() {
         return instance;
     }
 
-    /**
-     * Gets the config manager.
-     *
-     * @return The ConfigManager instance
-     */
     public ConfigManager getConfigManager() {
         return configManager;
     }
 
-    /**
-     * Gets the language manager.
-     *
-     * @return The LanguageManager instance
-     */
     public LanguageManager getLanguageManager() {
         return languageManager;
     }
 
-    /**
-     * Gets the spawner menu UI.
-     *
-     * @return The SpawnerMenuUI instance
-     */
     public SpawnerMenuUI getSpawnerMenuUI() {
         return spawnerMenuUI;
     }
 
-    /**
-     * Gets the spawn egg handler.
-     *
-     * @return The SpawnEggHandler instance
-     */
+    public SpawnerGuiUpdater getSpawnerGuiUpdater() {
+        return spawnerGuiUpdater;
+    }
+
     public SpawnEggHandler getSpawnEggHandler() {
         return spawnEggHandler;
     }
 
-    /**
-     * Gets the spawner stacker UI.
-     *
-     * @return The SpawnerStackerUI instance
-     */
     public SpawnerStackerUI getSpawnerStackerUI() {
         return spawnerStackerUI;
     }
 
-    /**
-     * Gets the spawner storage UI.
-     *
-     * @return The SpawnerStorageUI instance
-     */
     public SpawnerStorageUI getSpawnerStorageUI() {
         return spawnerStorageUI;
     }
 
-    /**
-     * Gets the loot generator.
-     *
-     * @return The SpawnerLootGenerator instance
-     */
-    public SpawnerLootGenerator getLootGenerator() {
-        return lootGenerator;
+    public SpawnerLootGenerator getSpawnerLootGenerator() {
+        return spawnerLootGenerator;
     }
 
-    /**
-     * Gets the loot manager.
-     *
-     * @return The SpawnerStorageUI instance used for loot management
-     */
     public SpawnerStorageUI getLootManager() {
         return spawnerStorageUI;
     }
 
-    /**
-     * Gets the spawner manager.
-     *
-     * @return The SpawnerManager instance
-     */
     public SpawnerManager getSpawnerManager() {
         return spawnerManager;
     }
 
-    /**
-     * Gets the spawner list GUI.
-     *
-     * @return The SpawnerListGUI instance
-     */
-    public SpawnerListGUI getSpawnerListener() {
-        return spawnerListGUI;
-    }
-
-    /**
-     * Gets the range checker.
-     *
-     * @return The SpawnerRangeChecker instance
-     */
     public SpawnerRangeChecker getRangeChecker() {
         return rangeChecker;
     }
 
-    /**
-     * Gets the spawner stack handler.
-     *
-     * @return The SpawnerStackHandler instance
-     */
     public SpawnerStackHandler getSpawnerStackHandler() {
         return spawnerStackHandler;
     }
 
-    /**
-     * Gets the hopper handler.
-     *
-     * @return The HopperHandler instance, or null if hopper functionality is disabled
-     */
     public HopperHandler getHopperHandler() {
         return hopperHandler;
     }
 
-    /**
-     * Gets the shop integration.
-     *
-     * @return The active shop integration, or null if none is available
-     */
     public IShopIntegration getShopIntegration() {
         return shopIntegrationManager.getShopIntegration();
     }

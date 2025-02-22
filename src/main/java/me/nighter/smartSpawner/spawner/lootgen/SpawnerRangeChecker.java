@@ -1,6 +1,7 @@
-package me.nighter.smartSpawner.listeners;
+package me.nighter.smartSpawner.spawner.lootgen;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
@@ -19,6 +20,8 @@ public class SpawnerRangeChecker {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
+    private final SpawnerLootGenerator spawnerLootGenerator;
+    private final SpawnerGuiUpdater spawnerGuiUpdater;
     private final Map<String, BukkitTask> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
@@ -26,6 +29,8 @@ public class SpawnerRangeChecker {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.spawnerManager = plugin.getSpawnerManager();
+        this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
+        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
         this.spawnerTasks = new ConcurrentHashMap<>();
         this.playersInRange = new ConcurrentHashMap<>();
         initializeRangeCheckTask();
@@ -110,7 +115,7 @@ public class SpawnerRangeChecker {
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
                 () -> {
                     if (!spawner.getSpawnerStop()) {
-                        spawnerManager.spawnLoot(spawner);
+                        spawnerLootGenerator.spawnLoot(spawner);
                     }
                 },
                 0L, spawner.getSpawnDelay()
@@ -128,12 +133,12 @@ public class SpawnerRangeChecker {
 
     private void updateGuiForSpawner(SpawnerData spawner) {
         Bukkit.getScheduler().runTask(plugin, () ->
-                spawnerManager.getOpenSpawnerGuis().entrySet().stream()
+                spawnerGuiUpdater.getOpenSpawnerGuis().entrySet().stream()
                         .filter(entry -> entry.getValue().getSpawnerId().equals(spawner.getSpawnerId()))
                         .forEach(entry -> {
                             Player viewer = Bukkit.getPlayer(entry.getKey());
                             if (viewer != null && viewer.isOnline()) {
-                                spawnerManager.updateSpawnerGui(viewer, spawner, true);
+                                spawnerGuiUpdater.updateSpawnerGui(viewer, spawner, true);
                             }
                         })
         );

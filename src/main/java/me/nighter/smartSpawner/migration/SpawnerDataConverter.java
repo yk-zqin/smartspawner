@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.migration.data;
+package me.nighter.smartSpawner.migration;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

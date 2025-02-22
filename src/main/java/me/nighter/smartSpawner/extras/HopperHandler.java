@@ -1,6 +1,7 @@
-package me.nighter.smartSpawner.listeners;
+package me.nighter.smartSpawner.extras;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
@@ -34,7 +35,8 @@ public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
     private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
-    private final SpawnerStorageUI lootManager;
+    private final SpawnerStorageUI spawnerStorageUI;
+    private final SpawnerGuiUpdater spawnerGuiUpdater;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
@@ -42,7 +44,8 @@ public class HopperHandler implements Listener {
     public HopperHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
-        this.lootManager = plugin.getLootManager();
+        this.spawnerStorageUI = plugin.getLootManager();
+        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
 
@@ -227,7 +230,7 @@ public class HopperHandler implements Listener {
                     if (currentInv.getHolder() instanceof StoragePageHolder) {
                         StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
                         int currentPage = holder.getCurrentPage();
-                        Inventory newInv = lootManager.createInventory(spawner,
+                        Inventory newInv = spawnerStorageUI.createInventory(spawner,
                                 languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
                         for (int i = 0; i < newInv.getSize(); i++) {
                             currentInv.setItem(i, newInv.getItem(i));
@@ -237,12 +240,12 @@ public class HopperHandler implements Listener {
                 }
             }
 
-            Map<UUID, SpawnerData> openGuis = spawnerManager.getOpenSpawnerGuis();
+            Map<UUID, SpawnerData> openGuis = spawnerGuiUpdater.getOpenSpawnerGuis();
             for (Map.Entry<UUID, SpawnerData> entry : openGuis.entrySet()) {
                 if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
                     Player viewer = Bukkit.getPlayer(entry.getKey());
                     if (viewer != null && viewer.isOnline()) {
-                        spawnerManager.updateSpawnerGui(viewer, spawner, true);
+                        spawnerGuiUpdater.updateSpawnerGui(viewer, spawner, true);
                     }
                 }
             }

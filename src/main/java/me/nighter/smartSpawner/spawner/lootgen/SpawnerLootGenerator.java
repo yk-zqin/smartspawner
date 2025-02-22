@@ -1,10 +1,13 @@
-package me.nighter.smartSpawner.spawner.properties.utils;
+package me.nighter.smartSpawner.spawner.lootgen;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
+import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.utils.ConfigManager;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
@@ -19,11 +22,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SpawnerLootGenerator {
+    private final SmartSpawner plugin;
+    private final SpawnerGuiUpdater spawnerGuiUpdater;
+    private final SpawnerManager spawnerManager;
+    private final ConfigManager configManager;
     private final Random random;
     private final Map<String, EntityLootConfig> entityLootConfigs;
-    private final ConfigManager configManager;
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
+        this.plugin = plugin;
+        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
+        this.spawnerManager = plugin.getSpawnerManager();
         this.configManager = plugin.getConfigManager();
         this.random = new Random();
         this.entityLootConfigs = new ConcurrentHashMap<>();
@@ -67,15 +76,8 @@ public class SpawnerLootGenerator {
             this.potionAmplifier = potionAmplifier;
         }
 
-        // Constructor cũ để đảm bảo tương thích ngược
-        LootItem(Material material, int minAmount, int maxAmount, double chance,
-                 Integer minDurability, Integer maxDurability) {
-            this(material, minAmount, maxAmount, chance, minDurability, maxDurability,
-                    null, null, null);
-        }
-
         public ItemStack createItemStack(Random random) {
-            ItemStack item = new ItemStack(material, 1); // Amount sẽ được set sau
+            ItemStack item = new ItemStack(material, 1);
             if (minDurability != null && maxDurability != null) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta instanceof Damageable) {
@@ -85,7 +87,6 @@ public class SpawnerLootGenerator {
                 }
             }
 
-            // Xử lý Tipped Arrow
             if (material == Material.TIPPED_ARROW && potionEffectType != null) {
                 PotionMeta meta = (PotionMeta) item.getItemMeta();
                 if (meta != null) {
@@ -101,12 +102,12 @@ public class SpawnerLootGenerator {
                         );
                         meta.addCustomEffect(effect, true);
                     }
-                    // Format thời gian theo kiểu Minecraft
+
                     String duration = formatMinecraftDuration(potionDuration);
                     String effectName = formatEffectName(effectType.getName());
                     String level = potionAmplifier > 0 ? " " + toRomanNumeral(potionAmplifier + 1) : "";
 
-                    // Set custom lore
+
                     List<String> lore = new ArrayList<>();
                     lore.add(ChatColor.RED + effectName + level + " (" + duration + ")");
                     meta.setLore(lore);
@@ -244,5 +245,53 @@ public class SpawnerLootGenerator {
                 spawner.getSpawnerExp() + lootResult.getExperience(),
                 spawner.getMaxStoredExp()
         ));
+    }
+
+    public void spawnLoot(SpawnerData spawner) {
+        if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
+            // Run heavy calculations async
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                LootResult loot = generateLoot(
+                        spawner.getEntityType(),
+                        spawner.getMinMobs(),
+                        spawner.getMaxMobs(),
+                        spawner
+                );
+
+                // Switch back to main thread for Bukkit API calls
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (configManager.isLootSpawnParticlesEnabled()) {
+                        Location loc = spawner.getSpawnerLocation();
+                        World world = loc.getWorld();
+                        world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                                loc.clone().add(0.5, 0.5, 0.5),
+                                10, 0.3, 0.3, 0.3, 0);
+                    }
+                    // Calculate pages before adding new loot
+                    int oldTotalPages = calculateTotalPages(spawner);
+
+                    addLootToSpawner(spawner, loot);
+                    spawner.setLastSpawnTime(System.currentTimeMillis());
+
+                    // Calculate pages after adding new loot
+                    int newTotalPages = calculateTotalPages(spawner);
+
+                    spawnerGuiUpdater.updateLootInventoryViewers(spawner, oldTotalPages, newTotalPages);
+                    spawnerGuiUpdater.updateSpawnerGuiViewers(spawner);
+
+                    if (configManager.isHologramEnabled()) {
+                        spawner.updateHologramData();
+                    }
+                    // Mark spawner as modified for saving
+                    spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+                });
+            });
+        }
+    }
+
+    private int calculateTotalPages(SpawnerData spawner) {
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        int totalItems = virtualInv.getDisplayInventory().size();
+        return Math.max(1, (int) Math.ceil((double) totalItems / 45));
     }
 }

@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.migration.data;
+package me.nighter.smartSpawner.migration;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import org.bukkit.configuration.file.FileConfiguration;

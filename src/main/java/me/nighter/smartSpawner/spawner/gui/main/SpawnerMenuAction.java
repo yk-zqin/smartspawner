@@ -125,6 +125,10 @@ public class SpawnerMenuAction implements Listener {
      * @param spawner The spawner data for this menu
      */
     private void handleSpawnerInfoClick(Player player, SpawnerData spawner) {
+        if (!player.hasPermission("smartspawner.stack")) {
+            languageManager.sendMessage(player, "messages.no-permission");
+            return;
+        }
         spawnerStackerUI.handleSpawnerInfoClick(player, spawner);
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }

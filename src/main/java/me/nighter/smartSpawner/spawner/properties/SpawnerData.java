@@ -2,7 +2,6 @@ package me.nighter.smartSpawner.spawner.properties;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.commands.hologram.SpawnerHologram;
-import me.nighter.smartSpawner.spawner.properties.utils.SpawnerFileHandler;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 
@@ -16,8 +15,13 @@ import java.util.logging.Logger;
 
 public class SpawnerData {
     private final SmartSpawner plugin;
+    private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
+    private final LanguageManager languageManager;
+    private final ConfigManager configManager;
+
+    // Spawner properties
     private final String spawnerId;
-    private Location spawnerLocation;
+    private final Location spawnerLocation;
     private Integer spawnerExp;
     private Boolean spawnerActive;
     private Integer spawnerRange;
@@ -30,14 +34,16 @@ public class SpawnerData {
     private int minMobs;
     private int maxMobs;
     private int stackSize;
+
+    // Inventory properties
     private VirtualInventory virtualInventory;
     private boolean allowEquipmentItems;
-    private UUID lockedBy;
-    private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
-    private final LanguageManager languageManager;
-    private final ConfigManager configManager;
-    private SpawnerFileHandler spawnerFileHandler;
+
+    // Hologram properties
     private SpawnerHologram hologram;
+
+    // Lock properties
+    private UUID lockedBy;
 
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;

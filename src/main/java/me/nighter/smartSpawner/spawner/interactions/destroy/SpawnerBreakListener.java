@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.spawner.interactions.destroy;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.listeners.HopperHandler;
+import me.nighter.smartSpawner.extras.HopperHandler;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.hooks.protections.CheckBreakBlock;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;

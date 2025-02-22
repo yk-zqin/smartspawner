@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.spawner.interactions.place;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.listeners.HopperHandler;
+import me.nighter.smartSpawner.extras.HopperHandler;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
@@ -25,7 +25,6 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Handles spawner placement events, including entity type inheritance

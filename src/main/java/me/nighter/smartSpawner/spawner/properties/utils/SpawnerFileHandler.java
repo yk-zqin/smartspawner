@@ -121,16 +121,6 @@ public class SpawnerFileHandler {
         }, intervalSeconds * 20L, intervalSeconds * 20L).getTaskId();
     }
 
-    public boolean isSaveTaskRunning() {
-        if (saveTaskId == -1) return false;
-        return Bukkit.getScheduler().isQueued(saveTaskId) ||
-                Bukkit.getScheduler().isCurrentlyRunning(saveTaskId);
-    }
-
-    public void restartSaveTask() {
-        startSaveTask();
-    }
-
     /**
      * Saves a specific spawner to the data file
      *
