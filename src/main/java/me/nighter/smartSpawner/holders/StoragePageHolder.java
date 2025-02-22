@@ -8,6 +8,7 @@ public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
     private final SpawnerData spawnerData;
     private final int currentPage;
     private final int totalPages;
+    private final int oldUsedSlots;
 
     // Make these public static final for better performance and accessibility
     public static final int ROWS_PER_PAGE = 5;
@@ -21,6 +22,7 @@ public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
         this.spawnerData = spawnerData;
         this.currentPage = Math.max(1, Math.min(currentPage, totalPages)); // Ensure valid page range
         this.totalPages = Math.max(1, totalPages);
+        this.oldUsedSlots = spawnerData.getVirtualInventory().getUsedSlots();
     }
 
     @Override
@@ -43,6 +45,10 @@ public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
 
     public int getTotalPages() {
         return totalPages;
+    }
+
+    public int getOldUsedSlots() {
+        return oldUsedSlots;
     }
 
     // Add utility methods for page calculations

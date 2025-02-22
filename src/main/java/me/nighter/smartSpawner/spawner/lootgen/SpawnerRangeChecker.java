@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.spawner.lootgen;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
@@ -99,13 +99,13 @@ public class SpawnerRangeChecker {
     private void activateSpawner(SpawnerData spawner) {
         startSpawnerTask(spawner);
         spawner.refreshHologram();
-        configManager.debug("Spawner " + spawner.getSpawnerId() + " activated - Player in range");
+        //configManager.debug("Spawner " + spawner.getSpawnerId() + " activated - Player in range");
     }
 
     private void deactivateSpawner(SpawnerData spawner) {
         stopSpawnerTask(spawner);
         spawner.removeHologram();
-        configManager.debug("Spawner " + spawner.getSpawnerId() + " deactivated - No players in range");
+        //configManager.debug("Spawner " + spawner.getSpawnerId() + " deactivated - No players in range");
     }
 
     private void startSpawnerTask(SpawnerData spawner) {

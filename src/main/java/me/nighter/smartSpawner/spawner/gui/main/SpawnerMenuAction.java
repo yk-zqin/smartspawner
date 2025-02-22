@@ -5,6 +5,7 @@ import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -40,12 +41,13 @@ public class SpawnerMenuAction implements Listener {
             Material.CREEPER_HEAD,
             Material.PIGLIN_HEAD
     );
-
+    private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStackerUI spawnerStackerUI;
-    private final SpawnerStorageUI storageUI;
+    private final SpawnerStorageUI spawnerStorageUI;
+    private final SpawnerViewsUpdater spawnerViewsUpdater;
 
     /**
      * Constructs a new SpawnerMenuAction with necessary dependencies.
@@ -53,11 +55,13 @@ public class SpawnerMenuAction implements Listener {
      * @param plugin The main plugin instance
      */
     public SpawnerMenuAction(SmartSpawner plugin) {
+        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStackerUI = plugin.getSpawnerStackerUI();
-        this.storageUI = plugin.getSpawnerStorageUI();
+        this.spawnerStorageUI = plugin.getSpawnerStorageUI();
+        this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
     }
 
     /**
@@ -111,7 +115,7 @@ public class SpawnerMenuAction implements Listener {
      */
     private void handleChestClick(Player player, SpawnerData spawner) {
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
-        Inventory pageInventory = storageUI.createInventory(spawner, title, 1);
+        Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1);
 
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
         player.closeInventory();
@@ -129,7 +133,7 @@ public class SpawnerMenuAction implements Listener {
             languageManager.sendMessage(player, "messages.no-permission");
             return;
         }
-        spawnerStackerUI.handleSpawnerInfoClick(player, spawner);
+        spawnerStackerUI.openStackerGui(player, spawner);
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
@@ -166,6 +170,9 @@ public class SpawnerMenuAction implements Listener {
         // Reset spawner exp and update menu
         spawner.setSpawnerExp(0);
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+
+        // Update all viewers instead of just current player
+        spawnerViewsUpdater.updateViewers(spawner);
 
         // Send appropriate message based on exp distribution
         sendExpCollectionMessage(player, initialExp, expUsedForMending);

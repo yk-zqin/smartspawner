@@ -125,12 +125,6 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
-  spawner-in-use:
-    message: "&c[!] Lồng spawn đang được người khác sử dụng!"
-    prefix: false
-    type: ACTION_BAR
-    sound: block.note_block.pling
-
   # Tin nhắn khi truy cập vào lồng spawn được bảo vệ bởi plugin khác
   spawner-protected:
     message: "&c[!] Lồng spawn này được bảo vệ!"
@@ -345,10 +339,10 @@ button:
   name:
     spawner: "&#4fc3f7Lồng Spawn %entity%"
     decrease-64: "&c-64 Lồng"
-    decrease-16: "&c-16 Lồng"
+    decrease-10: "&c-10 Lồng"
     decrease-1: "&c-1 Lồng"
     increase-64: "&a+64 Lồng"
-    increase-16: "&a+16 Lồng"
+    increase-10: "&a+10 Lồng"
     increase-1: "&a+1 Lồng"
   lore:
     remove: |

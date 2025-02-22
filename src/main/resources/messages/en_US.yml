@@ -127,12 +127,6 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
-  spawner-in-use:
-    message: "&c[!] Other player is currently using this spawner! Please wait."
-    prefix: false
-    type: ACTION_BAR
-    sound: block.note_block.pling
-
   # Message for accessing spawner when it's protected by an external plugin
   spawner-protected:
     message: "&c[!] This spawner is protected!"
@@ -347,10 +341,10 @@ button:
   name:
     spawner: "&#4fc3f7%entity% Spawner"
     decrease-64: "&c-64 Spawners"
-    decrease-16: "&c-16 Spawners"
+    decrease-10: "&c-10 Spawners"
     decrease-1: "&c-1 Spawner"
     increase-64: "&a+64 Spawners"
-    increase-16: "&a+16 Spawners"
+    increase-10: "&a+10 Spawners"
     increase-1: "&a+1 Spawner"
   lore:
     remove: |

@@ -28,7 +28,7 @@ public class SpawnerStackerUI {
 
     // Stack modification amounts
     private static final int[] STACK_AMOUNTS = {64, 10, 1};
-
+    private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
 
@@ -38,6 +38,7 @@ public class SpawnerStackerUI {
      * @param plugin The SmartSpawner plugin instance
      */
     public SpawnerStackerUI(SmartSpawner plugin) {
+        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
     }
@@ -49,7 +50,7 @@ public class SpawnerStackerUI {
      * @param player The player to show the GUI to
      * @param spawner The spawner data to display and modify
      */
-    public void handleSpawnerInfoClick(Player player, SpawnerData spawner) {
+    public void openStackerGui(Player player, SpawnerData spawner) {
         if (player == null || spawner == null) {
             return;
         }
@@ -69,7 +70,6 @@ public class SpawnerStackerUI {
 
         // Add spawner info button
         gui.setItem(SPAWNER_INFO_SLOT, createSpawnerInfoButton(spawner));
-
         player.openInventory(gui);
     }
 

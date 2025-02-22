@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.extras;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.spawner.gui.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
@@ -44,7 +44,7 @@ public class HopperHandler implements Listener {
     public HopperHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
-        this.spawnerStorageUI = plugin.getLootManager();
+        this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();

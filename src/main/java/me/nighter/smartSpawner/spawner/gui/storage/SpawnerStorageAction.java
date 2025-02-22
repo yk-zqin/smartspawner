@@ -224,7 +224,7 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
-        SpawnerStorageUI lootManager = plugin.getLootManager();
+        SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
         Inventory pageInventory = lootManager.createInventory(spawner, title, page);
 

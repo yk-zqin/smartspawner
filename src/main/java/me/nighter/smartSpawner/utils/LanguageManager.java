@@ -138,11 +138,6 @@ public class LanguageManager {
         put("messages.silk-touch-required.type", "ACTION_BAR");
         put("messages.silk-touch-required.sound", "block.note_block.pling");
 
-        put("messages.spawner-in-use.message", "&c[!] Other player is currently using this spawner! Please wait.");
-        put("messages.spawner-in-use.prefix", false);
-        put("messages.spawner-in-use.type", "ACTION_BAR");
-        put("messages.spawner-in-use.sound", "block.note_block.pling");
-
         put("messages.spawner-protected.message", "&c[!] This spawner is protected!");
         put("messages.spawner-protected.prefix", false);
         put("messages.spawner-protected.type", "ACTION_BAR");
@@ -307,10 +302,10 @@ public class LanguageManager {
         // Stacker GUI Buttons
         put("button.name.spawner", "&#4fc3f7%entity% Spawner");
         put("button.name.decrease-64", "&c-64 Spawners");
-        put("button.name.decrease-16", "&c-16 Spawners");
+        put("button.name.decrease-10", "&c-10 Spawners");
         put("button.name.decrease-1", "&c-1 Spawner");
         put("button.name.increase-64", "&a+64 Spawners");
-        put("button.name.increase-16", "&a+16 Spawners");
+        put("button.name.increase-10", "&a+10 Spawners");
         put("button.name.increase-1", "&a+1 Spawner");
 
         put("button.lore.remove", Arrays.asList(

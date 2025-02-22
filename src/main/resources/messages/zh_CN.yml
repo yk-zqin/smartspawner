@@ -128,12 +128,6 @@ messages:
     type: ACTION_BAR
     sound: block.note_block.pling
 
-  spawner-in-use:
-    message: "&c[!] 其他玩家正在与该刷怪笼交互! 请等一等."
-    prefix: false
-    type: ACTION_BAR
-    sound: block.note_block.pling
-
   # 试图与其他插件保护的刷怪笼互动时发出的消息
   spawner-protected:
     message: "&c[!] 该刷怪笼受到保护!"
@@ -348,10 +342,10 @@ button:
   name:
     spawner: "&#4fc3f7%entity% 刷怪笼"
     decrease-64: "&c-64 刷怪笼"
-    decrease-16: "&c-16 刷怪笼"
+    decrease-10: "&c-10 刷怪笼"
     decrease-1: "&c-1 刷怪笼"
     increase-64: "&a+64 刷怪笼"
-    increase-16: "&a+16 刷怪笼"
+    increase-10: "&a+10 刷怪笼"
     increase-1: "&a+1 刷怪笼"
   lore:
     remove: |

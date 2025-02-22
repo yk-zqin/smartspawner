@@ -3,9 +3,11 @@ package me.nighter.smartSpawner.spawner.gui.stacker;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerStackerUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -15,6 +17,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -36,10 +42,11 @@ public class SpawnerStackerAction implements Listener {
     private static final float SOUND_VOLUME = 1.0f;
     private static final float SOUND_PITCH = 1.0f;
 
+    private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
-    private final SpawnerStackerUI spawnerStackerUI;
     private final SpawnerMenuUI spawnerMenuUI;
+    private final SpawnerStackerUpdater spawnerStackerUpdater;
     private final Map<String, Integer> changeAmountMap;
 
     /**
@@ -48,10 +55,11 @@ public class SpawnerStackerAction implements Listener {
      * @param plugin The main plugin instance
      */
     public SpawnerStackerAction(SmartSpawner plugin) {
+        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
-        this.spawnerStackerUI = plugin.getSpawnerStackerUI();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
+        this.spawnerStackerUpdater = new SpawnerStackerUpdater(plugin);
         this.changeAmountMap = initializeChangeAmountMap();
     }
 
@@ -63,10 +71,10 @@ public class SpawnerStackerAction implements Listener {
     private Map<String, Integer> initializeChangeAmountMap() {
         Map<String, Integer> map = new HashMap<>();
         map.put("-64", -64);
-        map.put("-16", -16);
+        map.put("-10", -10);
         map.put("-1 ", -1);
         map.put("+1 ", 1);
-        map.put("+16", 16);
+        map.put("+10", 10);
         map.put("+64", 64);
         return map;
     }
@@ -94,7 +102,7 @@ public class SpawnerStackerAction implements Listener {
         }
 
         ItemMeta meta = clicked.getItemMeta();
-        if (meta == null || meta.getDisplayName() == null) return;
+        if (meta == null || meta.displayName() == null) return;
 
         // Determine the change amount based on the clicked item's name
         int change = getChangeAmount(meta.getDisplayName());
@@ -107,8 +115,47 @@ public class SpawnerStackerAction implements Listener {
             handleStackDecrease(player, spawner, change);
         }
 
-        // Refresh the spawner stacker UI
-        spawnerStackerUI.handleSpawnerInfoClick(player, spawner);
+        spawnerStackerUpdater.scheduleUpdateForAll(spawner, player);
+
+    }
+
+    @EventHandler
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder holder)) return;
+
+        SpawnerData spawner = holder.getSpawnerData();
+        spawnerStackerUpdater.trackViewer(spawner.getSpawnerId(), player);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder holder)) return;
+
+        SpawnerData spawner = holder.getSpawnerData();
+
+        // Schedule a check to see if the player really closed the inventory
+        // (handles inventory updates that temporarily "close" the inventory)
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Inventory topInventory = player.getOpenInventory().getTopInventory();
+            if (!(topInventory.getHolder() instanceof SpawnerStackerHolder)) {
+                spawnerStackerUpdater.untrackViewer(spawner.getSpawnerId(), player);
+            }
+        }, 1L);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        spawnerStackerUpdater.cleanup(event.getPlayer().getUniqueId());
+    }
+
+    public void cleanup() {
+        spawnerStackerUpdater.cleanupAll();
+    }
+
+    public SpawnerStackerUpdater getSpawnerStackerUpdater() {
+        return spawnerStackerUpdater;
     }
 
     /**

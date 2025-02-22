@@ -3,6 +3,7 @@ package me.nighter.smartSpawner.spawner.interactions.stack;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.protections.CheckStackBlock;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -30,6 +31,7 @@ public class SpawnerStackHandler {
 
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final SpawnerViewsUpdater spawnerViewsUpdater;
 
     /**
      * Constructs a new SpawnerStackHandler with the given plugin instance.
@@ -39,6 +41,7 @@ public class SpawnerStackHandler {
     public SpawnerStackHandler(SmartSpawner plugin) {
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
+        this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
     }
 
     /**
@@ -53,6 +56,8 @@ public class SpawnerStackHandler {
         boolean success = handleSpawnerStack(player, spawnerData, itemInHand, player.isSneaking());
 
         if (success && player.isSneaking()) {
+            // Update all viewers after successful stacking
+            spawnerViewsUpdater.updateViewersIncludeTitle(spawnerData);
             playStackSuccessEffects(player, block);
         }
     }
@@ -101,6 +106,9 @@ public class SpawnerStackHandler {
             languageManager.sendMessage(player, "messages.stack-full");
             return false;
         }
+
+        // Track the player as a viewer before processing the stack
+        spawnerViewsUpdater.trackViewer(targetSpawner.getSpawnerId(), player);
 
         // Process stacking
         return processStackAddition(player, targetSpawner, itemInHand, stackAll, currentStack, maxStackSize);
@@ -206,6 +214,8 @@ public class SpawnerStackHandler {
         updatePlayerInventory(player, itemInHand, amountToStack);
         showStackAnimation(targetSpawner, newStack, player);
 
+        // Update all viewers after successful stacking
+        spawnerViewsUpdater.updateViewersIncludeTitle(targetSpawner);
         return true;
     }
 

@@ -98,7 +98,6 @@ public class SpawnerBreakListener implements Listener {
         // Get spawner data and handle based on type
         final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
         if (spawner != null) {
-            unlockSpawnerIfNeeded(spawner);
             handleSpawnerBreak(block, spawner, player);
         } else {
             // Fallback to vanilla spawner handling
@@ -111,22 +110,6 @@ public class SpawnerBreakListener implements Listener {
 
         // Clean up associated hopper if present
         cleanupAssociatedHopper(block);
-    }
-
-    /**
-     * Unlocks a spawner if it's currently being viewed by a player
-     *
-     * @param spawner The spawner data to check and unlock
-     */
-    private void unlockSpawnerIfNeeded(SpawnerData spawner) {
-        UUID lockedBy = spawner.getLockedBy();
-        if (lockedBy != null) {
-            Player viewingPlayer = Bukkit.getPlayer(lockedBy);
-            if (viewingPlayer != null) {
-                viewingPlayer.closeInventory();
-            }
-            spawner.unlock(lockedBy);
-        }
     }
 
     /**
@@ -143,6 +126,8 @@ public class SpawnerBreakListener implements Listener {
         if (!validateBreakConditions(player, tool)) {
             return;
         }
+
+        plugin.getSpawnerViewUpdater().closeAllViewersInventory(spawner);
 
         // Process drops optimally based on stack size
         SpawnerBreakResult result = processDrops(location, spawner);

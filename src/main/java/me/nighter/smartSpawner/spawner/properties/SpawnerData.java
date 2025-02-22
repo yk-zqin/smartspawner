@@ -408,31 +408,4 @@ public class SpawnerData {
         this.allowEquipmentItems = allowEquipmentItems;
     }
 
-    //---------------------------------------------------
-    // Spawner Lock Mechanism (make only one player access GUI at a time)
-    //---------------------------------------------------
-    public synchronized boolean isLocked() {
-        return lockedBy != null;
-    }
-
-    public synchronized boolean lock(UUID playerUUID) {
-        if (isLocked()) {
-            return false;
-        }
-        lockedBy = playerUUID;
-        return true;
-    }
-
-    public synchronized boolean unlock(UUID playerUUID) {
-        if (lockedBy == null || !lockedBy.equals(playerUUID)) {
-            return false;
-        }
-        lockedBy = null;
-        return true;
-    }
-
-    public synchronized UUID getLockedBy() {
-        return lockedBy;
-    }
-
 }

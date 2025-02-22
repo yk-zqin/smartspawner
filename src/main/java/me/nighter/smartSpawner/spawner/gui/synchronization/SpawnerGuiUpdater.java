@@ -1,4 +1,4 @@
-package me.nighter.smartSpawner.spawner.gui;
+package me.nighter.smartSpawner.spawner.gui.synchronization;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
@@ -186,7 +186,7 @@ public class SpawnerGuiUpdater implements Listener {
      * Called when the plugin is disabled
      * Cleans up resources and ensures task is stopped
      */
-    public void onDisable() {
+    public void cleanUp() {
         stopUpdateTask();
         clearAllTrackedGuis();
     }
