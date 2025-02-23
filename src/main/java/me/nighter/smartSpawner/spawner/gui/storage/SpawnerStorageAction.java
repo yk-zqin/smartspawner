@@ -89,7 +89,6 @@ public class SpawnerStorageAction implements Listener {
             handler.handle(player, event.getInventory(), slot, clickedItem, holder.getSpawnerData());
         }
     }
-
     private void takeSingleItem(Player player, Inventory sourceInv, int slot, ItemStack item,
                                 SpawnerData spawner, boolean singleItem) {
         PlayerInventory playerInv = player.getInventory();
@@ -112,25 +111,32 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
-    private void handleTakeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem,
-                                           SpawnerData spawner) {
-        Map<Integer, ItemStack> similarItems = findSimilarItems(sourceInv, targetItem);
-        if (similarItems.isEmpty()) return;
+    private void handleTakeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem, SpawnerData spawner) {
+        // Lock to prevent race conditions
+        synchronized(spawner.getVirtualInventory()) {
 
-        BatchItemMoveResult result = ItemMoveHelper.moveBatchItems(
-                similarItems,
-                player.getInventory(),
-                spawner.getVirtualInventory()
-        );
+            // Save the cursor item before moving items
+            ItemStack cursorItem = player.getItemOnCursor();
 
-        if (result.getTotalMoved() > 0) {
-            updateBatchInventory(sourceInv, result.getSlotUpdates());
-            spawner.getVirtualInventory().removeItems(result.getMovedItems());
-            player.updateInventory();
-        }
+            Map<Integer, ItemStack> similarItems = findSimilarItems(sourceInv, targetItem);
+            if (similarItems.isEmpty()) return;
 
-        if (result.isInventoryFull()) {
-            languageManager.sendMessage(player, "messages.inventory-full");
+            BatchItemMoveResult result = ItemMoveHelper.moveBatchItems(
+                    similarItems,
+                    player.getInventory(),
+                    spawner.getVirtualInventory()
+            );
+
+            if (result.getTotalMoved() > 0) {
+                updateBatchInventory(sourceInv, result.getSlotUpdates());
+                spawner.getVirtualInventory().removeItems(result.getMovedItems());
+                // Restore cursor position
+                player.getOpenInventory().setCursor(cursorItem);
+            }
+
+            if (result.isInventoryFull()) {
+                languageManager.sendMessage(player, "messages.inventory-full");
+            }
         }
     }
 
