@@ -42,9 +42,6 @@ public class SpawnerData {
     // Hologram properties
     private SpawnerHologram hologram;
 
-    // Lock properties
-    private UUID lockedBy;
-
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerId = id;
@@ -56,7 +53,6 @@ public class SpawnerData {
         this.stackSize = 1;
         this.maxSpawnerLootSlots = 45;
         this.allowEquipmentItems = true;
-        this.lockedBy = null;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
