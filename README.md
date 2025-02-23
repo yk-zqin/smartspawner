@@ -1,117 +1,100 @@
 <div align="center">
 
-# Smart Spawner - GUI Spawner Plugin ✨
+# Smart Spawner
 
-[![Modrinth Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?logo=modrinth&logoColor=white&label=downloads&labelColor=%23139549&color=%2318c25f)](https://modrinth.com/plugin/smart-spawner-plugin)
-[![Spigot Downloads](https://img.shields.io/spiget/downloads/120743?logo=spigotmc&logoColor=white&label=spigot%20downloads&labelColor=%23ED8106&color=%23FF994C)](https://www.spigotmc.org/resources/smart-spawner-gui-spawner-plugin%E2%9C%A8-1-21-1-21-3-%EF%B8%8F.120743/)
-[![Discord](https://img.shields.io/discord/1299353023532896296?label=Discord&logo=discord)](https://discord.gg/zrnyG4CuuT)
-[![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-brightgreen.svg)](LICENSE)
+### Ultimate GUI Spawner Plugin for Minecraft Servers
 
-**A powerful and intuitive GUI-based spawner plugin for Minecraft servers**
+[![Version](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?color=4B32C3&logo=github&style=for-the-badge)](https://github.com/ptthanh02/Smart-Spawner-Plugin/releases/latest)
+[![Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?style=for-the-badge&logo=modrinth&logoColor=white&label=Downloads&color=00AF5C)](https://modrinth.com/plugin/smart-spawner-plugin)
+[![Rating](https://img.shields.io/spiget/rating/120743?style=for-the-badge&logo=spigotmc&logoColor=white&label=Spigot&color=FF8800)](https://www.spigotmc.org/resources/120743/)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-7289DA?style=for-the-badge&logo=creative-commons&logoColor=white)](LICENSE)
 
-[![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/modrinth_vector.svg)](https://modrinth.com/plugin/smart-spawner-plugin)
-[![Spigot](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/spigot_vector.svg)](https://www.spigotmc.org/resources/120743/)
+Transform your Minecraft server's spawner system with an elegant and powerful GUI solution
+
+[<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/modrinth_vector.svg" height="50">](https://modrinth.com/plugin/smart-spawner-plugin)
+[<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/supported/spigot_vector.svg" height="50">](https://www.spigotmc.org/resources/120743/)
 
 </div>
 
-## ✨ Key Features
-
-- **Intuitive GUI** - Allows players effortlessly view, manage, and interact with spawners.
-- **Storage System** - Built-in storage GUI for spawner drops
-- **Sell Feature** - Sell items directly from storage GUI from other shop plugins
-- **Spawner Stacking** - Stack multiple spawners to save space
-- **Hologram Support** - Display important information above spawners
-- **Extensive Customization** - Configure spawner behavior, drops, and more
-- **Multi-Language Support** - Easily customize all plugin messages
-- **Performance Optimized** - Minimal impact on server performance
-
 ## 🚀 Getting Started
 
-### Prerequisites
-- Minecraft Server (Bukkit, Paper, or compatible fork)
-- Using a newer fork like **Folia**? Check out [Smart Spawner for Folia (Beta)
-](https://github.com/maiminhdung/Smart-Spawner-Plugin)
-- Server version 1.20 - 1.21.4
+### System Requirements
 
-### Installation
-1. Download the latest version from [Modrinth](https://modrinth.com/plugin/smart-spawner-plugin) or [SpigotMC](https://www.spigotmc.org/resources/120743/)
+- **Server**: Bukkit, Paper, or compatible forks
+- **Minecraft Version**: 1.20 - 1.21.4
+- **Java**: Java 21 or newer
+
+### 📥 Installation
+
+1. Download the latest version from [Modrinth](https://modrinth.com/plugin/smart-spawner-plugin) or [Spigot](https://www.spigotmc.org/resources/120743/)
 2. Place the `.jar` file in your server's `plugins` folder
 3. Restart your server
-4. Edit the generated configuration files to customize the plugin
+4. Configure settings in `plugins/SmartSpawner/config.yml`
 
-## 🌍 Supported Translations
-| Language | Locale Code | Contributor | Version | Status |
-|----------|-------------|-------------|---------|--------|
-| English (Default) | `en_US.yml` | - | `latest` | ✅ Complete |
-| Vietnamese | `vi_VN.yml` | - | `latest` | ✅ Complete |
-| Chinese Simplified | `zh_CN.yml` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `latest` | ✅ Complete |
 
-**Want to contribute a translation?** Fork the repository, create your locale file based on `en_US.yml`, and submit a pull request!
+## 🎮 Commands & Permissions
 
-### Translation Guidelines
-When contributing translations:
-1. Use the `en_US.yml` file as a template
-2. Maintain all placeholders (%variable%)
-3. Keep formatting codes (like &e, &7)
-4. Test your translation in-game if possible
+### Core Commands
+> **Base Command:** `/smartspawner` (Aliases: `/ss`, `/spawner`)
 
-## 📝 Commands & Permissions
+| Command | Description | Permission | Default |
+|---------|-------------|------------|---------|
+| `/ss reload` | Reload plugin configuration | `smartspawner.reload` | OP |
+| `/ss give <player> <type> <amount>` | Give spawners to players | `smartspawner.give` | OP |
+| `/ss list` | Open admin spawner management | `smartspawner.list` | OP |
+| `/ss hologram` | Toggle hologram visibility | `smartspawner.hologram` | OP |
 
-<details> <summary>🛠️ Commands</summary>
-
-**Aliases:** `/ss`, `/spawner`, `/smartspawner`
-
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/smartspawner reload` | Reload the plugin settings | `smartspawner.reload` |
-| `/smartspawner give <player> <mobtype> <amount>` | Give a spawner to a player or yourself | `smartspawner.give` |
-| `/smartspawner list` | Open the spawner list GUI for admin management | `smartspawner.list` |
-| `/smartspawner hologram` | Toggle hologram display for spawners | `smartspawner.hologram` |
-
-</details>
-
-<br>
-
-<details> <summary>📜 Permissions</summary>
+### Player Permissions
 
 | Permission | Description | Default |
 |------------|-------------|---------|
-| `smartspawner.reload` | Allows reloading the plugin | OP |
-| `smartspawner.give` | Allows giving spawners to yourself or other players | OP |
-| `smartspawner.list` | Allows accessing the spawner list command | OP |
-| `smartspawner.hologram` | Allows toggling hologram display for spawners | OP |
-| `smartspawner.changetype` | Permits spawner type changes using spawn eggs | OP |
-| `smartspawner.stack` | Allows stacking in the GUI or by right-click | true |
-| `smartspawner.break` | Allows players to break spawners | true |
-| `smartspawner.sellall` | Allows selling items in the spawner storage GUI | true |
+| `smartspawner.stack` | Allow spawner stacking | true |
+| `smartspawner.break` | Allow spawner breaking | true |
+| `smartspawner.sellall` | Allow selling storage items | true |
+| `smartspawner.changetype` | Allow changing spawner types | OP |
 
-</details>
+## 🌍 Translations
 
-## 📖 Documentation
-Full documentation will be available soon. Stay tuned!
+| Language | Locale Code | Contributor | Version |
+|----------|-------------|-------------|---------|
+| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Smart Spawner Team | Latest |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | ptthanh02 | Latest |
+| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | Latest |
+
+> 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
+
+## 📊 Usage Statistics
+
+[![bStats](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
 
 ## 🤝 Contributing
-SmartSpawner is an open-source project, and we welcome contributions from the community to help improve and expand its features. Whether you want to fix a bug, add a new feature, or improve documentation, your contributions are highly valued.
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+We welcome contributions! Here's how you can help:
 
-## 📢 Support & Community
-Need help or found a bug? Feel free to:
-- Join our [Discord Server](https://discord.gg/zrnyG4CuuT)
-- Report bugs on [GitHub Issues](https://github.com/ptthanh02/Smart-Spawner-Plugin/issues)
-- Check our [FAQ Section](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/FAQ)
+1. 🍴 Fork the repository
+2. 🌿 Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. 💾 Commit your changes (`git commit -m 'Add amazing feature'`)
+4. 📤 Push to the branch (`git push origin feature/amazing-feature`)
+5. 🔄 Create a Pull Request
 
-## 📄 License
-This project is licensed under the **CC BY-NC-SA 4.0 License**. See the [LICENSE](LICENSE) file for more details.
+## 💬 Community & Support
 
-## 📊 bStats Statistics
-See real-time usage statistics on **[bStats](https://bstats.org/plugin/bukkit/SmartSpawner)**:  
-[![bStats Graph](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
+[![Discord Banner](https://img.shields.io/discord/1299353023532896296?style=for-the-badge&logo=discord&logoColor=white&label=Join%20our%20Discord&color=5865F2)](https://discord.gg/zrnyG4CuuT)
 
-## 📊 Server Showcase
+- 🎮 [Discord Community](https://discord.gg/zrnyG4CuuT)
+- 🐛 [Issue Tracker](https://github.com/ptthanh02/Smart-Spawner-Plugin/issues)
+- 📚 [Wiki Documentation](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki)
 
-Are you using Smart Spawner on your server? Let us know to be featured here!
+## 📜 License
+
+This project is licensed under the **CC BY-NC-SA 4.0 License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Created with ❤️ by Ptthanh02 & Contributors**
+
+[Website](https://github.com/ptthanh02/Smart-Spawner-Plugin) • [Documentation](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki) • [Support](https://discord.gg/zrnyG4CuuT)
+
+</div>
