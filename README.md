@@ -37,28 +37,28 @@ Transform your Minecraft server's spawner system with an elegant and powerful GU
 ### Core Commands
 > **Base Command:** `/smartspawner` (Aliases: `/ss`, `/spawner`)
 
-| Command | Description | Permission | Default |
-|---------|-------------|------------|---------|
-| `/ss reload` | Reload plugin configuration | `smartspawner.reload` | OP |
-| `/ss give <player> <type> <amount>` | Give spawners to players | `smartspawner.give` | OP |
-| `/ss list` | Open admin spawner management | `smartspawner.list` | OP |
-| `/ss hologram` | Toggle hologram visibility | `smartspawner.hologram` | OP |
+| Command | Description                       | Permission | Default |
+|---------|-----------------------------------|------------|---------|
+| `/ss reload` | Reload plugin configuration       | `smartspawner.reload` | OP |
+| `/ss give <player> <type> <amount>` | Give spawners to players          | `smartspawner.give` | OP |
+| `/ss list` | Open admin spawner management GUI | `smartspawner.list` | OP |
+| `/ss hologram` | Toggle hologram visibility        | `smartspawner.hologram` | OP |
 
 ### Player Permissions
 
-| Permission | Description | Default |
-|------------|-------------|---------|
-| `smartspawner.stack` | Allow spawner stacking | true |
-| `smartspawner.break` | Allow spawner breaking | true |
-| `smartspawner.sellall` | Allow selling storage items | true |
-| `smartspawner.changetype` | Allow changing spawner types | OP |
+| Permission | Description                            | Default |
+|------------|----------------------------------------|---------|
+| `smartspawner.stack` | Allow spawner stacking                 | true |
+| `smartspawner.break` | Allow spawner breaking                 | true |
+| `smartspawner.sellall` | Allow selling storage items directly   | true |
+| `smartspawner.changetype` | Allow changing spawner types with eggs | OP |
 
 ## 🌍 Translations
 
-| Language | Locale Code | Contributor | Version |
-|----------|-------------|-------------|---------|
-| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Smart Spawner Team | Latest |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | ptthanh02 | Latest |
+| Language | Locale Code | Contributor                                     | Version |
+|----------|-------------|-------------------------------------------------|---------|
+| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Ptthanh02                             | Latest |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | Latest |
 | [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | Latest |
 
 > 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
