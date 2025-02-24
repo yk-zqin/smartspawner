@@ -365,7 +365,7 @@ public class SmartSpawner extends JavaPlugin {
 
         // Clean up other resources
         if (rangeChecker != null) rangeChecker.cleanup();
-        if (spawnerGuiUpdater != null) spawnerGuiUpdater.cleanUp();
+        if (spawnerGuiUpdater != null) spawnerGuiUpdater.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerAction != null) spawnerStackerAction.cleanup();

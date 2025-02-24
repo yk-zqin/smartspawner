@@ -1,26 +1,43 @@
 package me.nighter.smartSpawner.hooks.shops.api.economyshopgui;
-import me.nighter.smartSpawner.SmartSpawner;
 
-import static me.gypopo.economyshopgui.util.EconomyType.*;
-import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
-import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
-import me.gypopo.economyshopgui.objects.ShopItem;
-import me.gypopo.economyshopgui.util.EcoType;
+import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
+
+import static me.gypopo.economyshopgui.util.EconomyType.*;
+import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
+import me.gypopo.economyshopgui.api.prices.AdvancedSellPrice;
+import me.gypopo.economyshopgui.objects.ShopItem;
+import me.gypopo.economyshopgui.util.EcoType;
+
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 
 public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
+
+    // Cooldown system
+    private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
+    private static final long SELL_COOLDOWN_MS = 500; // 500ms cooldown
+
+    // Transaction timeout
+    private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout
+
+    // Thread pool for async operations
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final Map<UUID, CompletableFuture<Boolean>> pendingSales = new ConcurrentHashMap<>();
 
     public EconomyShopGUI(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -28,35 +45,200 @@ public class EconomyShopGUI implements IShopIntegration {
         this.configManager = plugin.getConfigManager();
     }
 
-    private Map<EcoType, Double> applyTax(Map<EcoType, Double> originalPrices) {
-        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
-        Map<EcoType, Double> taxedPrices = new HashMap<>();
-        for (Map.Entry<EcoType, Double> entry : originalPrices.entrySet()) {
-            double originalPrice = entry.getValue();
-            double taxAmount = originalPrice * (taxPercentage / 100.0);
-            double afterTaxPrice = originalPrice - taxAmount;
-            taxedPrices.put(entry.getKey(), afterTaxPrice);
-        }
-        return taxedPrices;
+    private boolean isOnCooldown(Player player) {
+        long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
+        long currentTime = System.currentTimeMillis();
+        return (currentTime - lastSellTime) < SELL_COOLDOWN_MS;
     }
 
-    public synchronized boolean sellAllItems(Player player, SpawnerData spawner) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+    private void updateCooldown(Player player) {
+        sellCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+    }
 
-        // Prevent processing if inventory is empty
-        if (items.isEmpty()) {
-            plugin.getLanguageManager().sendMessage(player, "messages.no-items");
+    private void clearOldCooldowns() {
+        long currentTime = System.currentTimeMillis();
+        sellCooldowns.entrySet().removeIf(entry ->
+                (currentTime - entry.getValue()) > SELL_COOLDOWN_MS * 10);
+    }
+
+    @Override
+    public boolean sellAllItems(Player player, SpawnerData spawner) {
+        // Prevent multiple concurrent sales for the same player
+        if (pendingSales.containsKey(player.getUniqueId())) {
+            languageManager.sendMessage(player, "messages.transaction-in-progress");
             return false;
         }
 
+        // Check cooldown
+        if (isOnCooldown(player)) {
+            languageManager.sendMessage(player, "messages.sell-cooldown");
+            return false;
+        }
+
+        // Get lock with timeout
+        ReentrantLock lock = spawner.getLock();
+        if (!lock.tryLock()) {
+            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            return false;
+        }
+
+        try {
+            // Start async sale process
+            CompletableFuture<Boolean> saleFuture = CompletableFuture.supplyAsync(() ->
+                    processSaleAsync(player, spawner), executorService);
+
+            pendingSales.put(player.getUniqueId(), saleFuture);
+
+            // Handle completion
+            saleFuture.whenComplete((success, error) -> {
+                pendingSales.remove(player.getUniqueId());
+                lock.unlock();
+                updateCooldown(player);
+
+                if (error != null) {
+                    plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);
+                    plugin.getServer().getScheduler().runTask(plugin, () ->
+                            languageManager.sendMessage(player, "messages.sell-failed"));
+                }
+            });
+
+            // Wait for a very short time to get immediate result if possible
+            try {
+                Boolean result = saleFuture.get(100, TimeUnit.MILLISECONDS);
+                return result != null && result;
+            } catch (TimeoutException e) {
+                // Sale is still processing, return true to keep inventory open
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        } catch (Exception e) {
+            lock.unlock();
+            plugin.getLogger().log(Level.SEVERE, "Error initiating sale", e);
+            return false;
+        }
+    }
+
+    private boolean processSaleAsync(Player player, SpawnerData spawner) {
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+
+        if (items.isEmpty()) {
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                    languageManager.sendMessage(player, "messages.no-items"));
+            return false;
+        }
+
+        // Calculate prices and prepare items
+        SaleCalculationResult calculation = calculateSalePrices(player, items);
+        if (!calculation.isValid()) {
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                    languageManager.sendMessage(player, "messages.no-sellable-items"));
+            return false;
+        }
+
+        // Pre-remove items to improve UX
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            virtualInv.removeItems(calculation.getItemsToRemove());
+            updateInventoryDisplay(player, spawner);
+        });
+
+        try {
+            // Process transactions
+            CompletableFuture<Boolean> transactionFuture = new CompletableFuture<>();
+
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                boolean success = processTransactions(player, calculation);
+                transactionFuture.complete(success);
+            });
+
+            boolean success = transactionFuture.get(TRANSACTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+            if (!success) {
+                // Restore items if payment fails
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    virtualInv.addItems(calculation.getItemsToRemove());
+                    languageManager.sendMessage(player, "messages.sell-failed");
+                    updateInventoryDisplay(player, spawner);
+                });
+                return false;
+            }
+
+            // Update shop stats asynchronously
+            updateShopStats(calculation.getSoldItems(), player.getUniqueId());
+
+            // Send success message
+            double taxPercentage = configManager.getTaxPercentage();
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                    sendSuccessMessage(player, calculation));
+
+            return true;
+
+        } catch (Exception e) {
+            // Restore items on timeout/error
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                virtualInv.addItems(calculation.getItemsToRemove());
+                languageManager.sendMessage(player, "messages.sell-failed");
+                updateInventoryDisplay(player, spawner);
+            });
+            return false;
+        }
+    }
+
+    private void updateInventoryDisplay(Player player, SpawnerData spawner) {
+        if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
+            StoragePageHolder holder = (StoragePageHolder) player.getOpenInventory().getTopInventory().getHolder();
+            plugin.getSpawnerStorageUI().updateDisplay(
+                    player.getOpenInventory().getTopInventory(),
+                    holder.getSpawnerData(),
+                    holder.getCurrentPage()
+            );
+        }
+    }
+
+    private boolean processTransactions(Player player, SaleCalculationResult calculation) {
+        Map<EcoType, Double> afterTaxPrices = calculation.getTaxedPrices();
+
+        try {
+            for (Map.Entry<EcoType, Double> entry : afterTaxPrices.entrySet()) {
+                if (isClaimableCurrency(entry.getKey())) {
+                    EconomyShopGUIHook.getEcon(entry.getKey()).depositBalance(player, entry.getValue());
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Error processing transaction", e);
+            return false;
+        }
+    }
+
+    private void sendSuccessMessage(Player player, SaleCalculationResult calculation) {
+        StringBuilder priceBuilder = new StringBuilder();
+        calculation.getTaxedPrices().forEach((type, value) -> {
+            if (priceBuilder.length() > 0) priceBuilder.append(", ");
+            priceBuilder.append(formatMonetaryValue(value, type));
+        });
+
+        double taxPercentage = configManager.getTaxPercentage();
+        if (taxPercentage > 0) {
+            languageManager.sendMessage(player, "messages.sell-all-tax",
+                    "%amount%", String.valueOf(languageManager.formatNumber(calculation.getTotalAmount())),
+                    "%price%", priceBuilder.toString(),
+                    "%tax%", String.format("%.2f", taxPercentage));
+        } else {
+            languageManager.sendMessage(player, "messages.sell-all",
+                    "%amount%", String.valueOf(languageManager.formatNumber(calculation.getTotalAmount())),
+                    "%price%", priceBuilder.toString());
+        }
+    }
+
+    private SaleCalculationResult calculateSalePrices(Player player, Map<VirtualInventory.ItemSignature, Long> items) {
+        Map<EcoType, Double> prices = new HashMap<>();
+        Map<ShopItem, Integer> soldItems = new HashMap<>();
+        List<ItemStack> itemsToRemove = new ArrayList<>();
         int totalAmount = 0;
         boolean foundSellableItem = false;
-        Map<ShopItem, Integer> soldItems = new HashMap<>();
-        Map<EcoType, Double> prices = new HashMap<>();
-        List<ItemStack> itemsToRemove = new ArrayList<>();
 
-        // Calculate sellable items and prices
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
             long amount = entry.getValue();
@@ -73,7 +255,6 @@ public class EconomyShopGUI implements IShopIntegration {
                 limit = getMaxSell(shopItem, limit, soldItems.getOrDefault(shopItem, 0));
                 if (limit == -1) continue;
 
-                // Create ItemStack with correct amount for removal
                 ItemStack itemToRemove = template.clone();
                 itemToRemove.setAmount(limit);
                 itemsToRemove.add(itemToRemove);
@@ -84,53 +265,24 @@ public class EconomyShopGUI implements IShopIntegration {
             }
         }
 
-        if (!foundSellableItem) {
-            plugin.getLanguageManager().sendMessage(player, "messages.no-sellable-items");
-            return false;
-        }
+        Map<EcoType, Double> taxedPrices = configManager.getTaxPercentage() > 0
+                ? applyTax(prices)
+                : prices;
 
-        if (totalAmount > 0) {
-            double taxPercentage = plugin.getConfigManager().getTaxPercentage();
-            Map<EcoType, Double> afterTaxPrices = prices;
-
-            if (taxPercentage > 0) {
-                afterTaxPrices = applyTax(prices);
-            }
-
-            // Remove items all at once
-            virtualInv.removeItems(itemsToRemove);
-
-            updateShopStats(soldItems, player.getUniqueId());
-
-            for (Map.Entry<EcoType, Double> entry : afterTaxPrices.entrySet()) {
-                if (isClaimableCurrency(entry.getKey())) {
-                    EconomyShopGUIHook.getEcon(entry.getKey()).depositBalance(player, entry.getValue());
-                }
-            }
-
-            StringBuilder priceBuilder = new StringBuilder();
-            afterTaxPrices.forEach((type, value) -> {
-                if (priceBuilder.length() > 0) priceBuilder.append(", ");
-                priceBuilder.append(formatMonetaryValue(value, type));
-            });
-
-            if (taxPercentage > 0) {
-                plugin.getLanguageManager().sendMessage(player, "messages.sell-all-tax",
-                        "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
-                        "%price%", priceBuilder.toString(),
-                        "%tax%", String.format("%.2f", taxPercentage));
-            } else {
-                plugin.getLanguageManager().sendMessage(player, "messages.sell-all",
-                        "%amount%", String.valueOf(languageManager.formatNumber(totalAmount)),
-                        "%price%", priceBuilder.toString());
-            }
-            return true;
-        }
-
-        plugin.getLanguageManager().sendMessage(player, "messages.no-sellable-items");
-        return false;
+        return new SaleCalculationResult(prices, taxedPrices, totalAmount, itemsToRemove, soldItems, foundSellableItem);
     }
 
+    private Map<EcoType, Double> applyTax(Map<EcoType, Double> originalPrices) {
+        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
+        Map<EcoType, Double> taxedPrices = new HashMap<>();
+        for (Map.Entry<EcoType, Double> entry : originalPrices.entrySet()) {
+            double originalPrice = entry.getValue();
+            double taxAmount = originalPrice * (taxPercentage / 100.0);
+            double afterTaxPrice = originalPrice - taxAmount;
+            taxedPrices.put(entry.getKey(), afterTaxPrice);
+        }
+        return taxedPrices;
+    }
 
     private int getSellLimit(ShopItem shopItem, UUID playerUUID, int amount) {
         if (shopItem.getLimitedSellMode() != 0) {
@@ -241,5 +393,53 @@ public class EconomyShopGUI implements IShopIntegration {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    private static class SaleCalculationResult {
+        private final Map<EcoType, Double> originalPrices;
+        private final Map<EcoType, Double> taxedPrices;
+        private final int totalAmount;
+        private final List<ItemStack> itemsToRemove;
+        private final Map<ShopItem, Integer> soldItems;
+        private final boolean valid;
+
+        public SaleCalculationResult(
+                Map<EcoType, Double> originalPrices,
+                Map<EcoType, Double> taxedPrices,
+                int totalAmount,
+                List<ItemStack> itemsToRemove,
+                Map<ShopItem, Integer> soldItems,
+                boolean valid) {
+            this.originalPrices = originalPrices;
+            this.taxedPrices = taxedPrices;
+            this.totalAmount = totalAmount;
+            this.itemsToRemove = itemsToRemove;
+            this.soldItems = soldItems;
+            this.valid = valid;
+        }
+
+        public Map<EcoType, Double> getOriginalPrices() {
+            return originalPrices;
+        }
+
+        public Map<EcoType, Double> getTaxedPrices() {
+            return taxedPrices;
+        }
+
+        public int getTotalAmount() {
+            return totalAmount;
+        }
+
+        public List<ItemStack> getItemsToRemove() {
+            return itemsToRemove;
+        }
+
+        public Map<ShopItem, Integer> getSoldItems() {
+            return soldItems;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
     }
 }

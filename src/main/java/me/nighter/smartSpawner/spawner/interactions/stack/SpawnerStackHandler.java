@@ -15,90 +15,147 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Handles the stacking functionality for spawners in the SmartSpawner plugin.
- * Manages the process of adding spawners to existing spawner stacks.
- */
 public class SpawnerStackHandler {
     private static final Pattern ECONOMY_SHOP_GUI_PATTERN = Pattern.compile("§9§l([A-Za-z]+(?: [A-Za-z]+)?) §rSpawner");
-    private static final float SOUND_VOLUME = 1.0f;
-    private static final float SOUND_PITCH = 1.0f;
+    private static final long STACK_COOLDOWN = 250L; // 250ms cooldown between stacks
+    private static final long GUI_UPDATE_DELAY = 1L;
 
+    private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerViewsUpdater spawnerViewsUpdater;
+    private final Map<UUID, Long> lastStackTime;
+    private final Map<Location, UUID> stackLocks;
+    private final Cache<Location, EntityType> spawnerTypeCache;
+    private final Map<String, BukkitTask> pendingUpdates = new ConcurrentHashMap<>();
 
-    /**
-     * Constructs a new SpawnerStackHandler with the given plugin instance.
-     *
-     * @param plugin The SmartSpawner plugin instance
-     */
     public SpawnerStackHandler(SmartSpawner plugin) {
+        this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
+        this.lastStackTime = new ConcurrentHashMap<>();
+        this.stackLocks = new ConcurrentHashMap<>();
+        this.spawnerTypeCache = new Cache<>(30); // 30 seconds cache
+
+        // Start cleanup task
+        startCleanupTask();
     }
 
-    /**
-     * Handles the stacking of a spawner when a player interacts with it.
-     *
-     * @param player The player stacking the spawner
-     * @param block The spawner block being interacted with
-     * @param spawnerData The spawner data of the target spawner
-     * @param itemInHand The item in the player's hand
-     */
-    public void handleSpawnerStacking(Player player, Block block, SpawnerData spawnerData, ItemStack itemInHand) {
-        boolean success = handleSpawnerStack(player, spawnerData, itemInHand, player.isSneaking());
+    private void startCleanupTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                long now = System.currentTimeMillis();
+                lastStackTime.entrySet().removeIf(entry -> now - entry.getValue() > 10000); // Clear after 10 seconds
+                stackLocks.entrySet().removeIf(entry -> !Bukkit.getPlayer(entry.getValue()).isOnline());
+                spawnerTypeCache.cleanup();
+            }
+        }.runTaskTimer(plugin, 200L, 200L); // Run every 10 seconds
+    }
 
-        if (success && player.isSneaking()) {
-            // Update all viewers after successful stacking
-            spawnerViewsUpdater.updateViewersIncludeTitle(spawnerData);
-            playStackSuccessEffects(player, block);
+    public void handleSpawnerStacking(Player player, Block block, SpawnerData spawnerData, ItemStack itemInHand) {
+        // Anti-spam check
+        if (isOnCooldown(player)) {
+            return;
+        }
+
+        // Cancel any pending updates for this spawner
+        cancelPendingUpdate(spawnerData.getSpawnerId());
+
+        // Try to acquire lock
+        if (!acquireStackLock(player, block.getLocation())) {
+            return;
+        }
+
+        try {
+            boolean success = handleSpawnerStack(player, spawnerData, itemInHand, player.isSneaking());
+
+            if (success) {
+
+                // Schedule delayed GUI update
+                BukkitTask updateTask = new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            plugin.getSpawnerStackerUpdater().scheduleUpdateForAll(spawnerData, player);
+                            // spawnerViewsUpdater.updateViewersIncludeTitle(spawnerData);
+                            pendingUpdates.remove(spawnerData.getSpawnerId());
+                        } catch (Exception e) {
+                            plugin.getLogger().warning("Error updating spawner GUI: " + e.getMessage());
+                        }
+                    }
+                }.runTaskLater(plugin, GUI_UPDATE_DELAY);
+
+                pendingUpdates.put(spawnerData.getSpawnerId(), updateTask);
+            }
+        } finally {
+            releaseStackLock(block.getLocation());
+            updateLastStackTime(player);
         }
     }
 
-    /**
-     * Processes a spawner stacking attempt.
-     *
-     * @param player The player attempting to stack
-     * @param targetSpawner The target spawner data
-     * @param itemInHand The spawner item in hand
-     * @param stackAll Whether to stack all available spawners at once
-     * @return true if stacking was successful, false otherwise
-     */
+    private void cancelPendingUpdate(String spawnerId) {
+        BukkitTask pendingTask = pendingUpdates.remove(spawnerId);
+        if (pendingTask != null && !pendingTask.isCancelled()) {
+            pendingTask.cancel();
+        }
+    }
+
+    private boolean isOnCooldown(Player player) {
+        long lastTime = lastStackTime.getOrDefault(player.getUniqueId(), 0L);
+        return System.currentTimeMillis() - lastTime < STACK_COOLDOWN;
+    }
+
+    private void updateLastStackTime(Player player) {
+        lastStackTime.put(player.getUniqueId(), System.currentTimeMillis());
+    }
+
+    private boolean acquireStackLock(Player player, Location location) {
+        return stackLocks.putIfAbsent(location, player.getUniqueId()) == null;
+    }
+
+    private void releaseStackLock(Location location) {
+        stackLocks.remove(location);
+    }
+
     public boolean handleSpawnerStack(Player player, SpawnerData targetSpawner, ItemStack itemInHand, boolean stackAll) {
-        // Preliminary checks
         if (itemInHand.getType() != Material.SPAWNER) {
             return false;
         }
 
         Location location = targetSpawner.getSpawnerLocation();
-
         if (!hasStackPermissions(player, location)) {
             return false;
         }
 
-        // Validate spawner item
-        Optional<EntityType> handEntityTypeOpt = getEntityTypeFromItem(itemInHand);
+        // Use cached entity type if available
+        Optional<EntityType> handEntityTypeOpt = spawnerTypeCache.get(location)
+                .map(Optional::of)
+                .orElseGet(() -> getEntityTypeFromItem(itemInHand));
+
         if (!handEntityTypeOpt.isPresent()) {
             languageManager.sendMessage(player, "messages.invalid-spawner");
             return false;
         }
 
         EntityType handEntityType = handEntityTypeOpt.get();
-        EntityType targetEntityType = targetSpawner.getEntityType();
+        spawnerTypeCache.put(location, handEntityType);
 
+        EntityType targetEntityType = targetSpawner.getEntityType();
         if (handEntityType != targetEntityType) {
             languageManager.sendMessage(player, "messages.different-type");
             return false;
         }
 
-        // Check stack limits
         int maxStackSize = configManager.getMaxStackSize();
         int currentStack = targetSpawner.getStackSize();
 
@@ -107,20 +164,11 @@ public class SpawnerStackHandler {
             return false;
         }
 
-        // Track the player as a viewer before processing the stack
         spawnerViewsUpdater.trackViewer(targetSpawner.getSpawnerId(), player);
-
-        // Process stacking
         return processStackAddition(player, targetSpawner, itemInHand, stackAll, currentStack, maxStackSize);
     }
 
-    /**
-     * Checks if player has the necessary permissions to stack spawners at the given location.
-     *
-     * @param player The player to check
-     * @param location The location of the spawner
-     * @return true if player has permissions, false otherwise
-     */
+
     private boolean hasStackPermissions(Player player, Location location) {
         if (!CheckStackBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
             languageManager.sendMessage(player, "messages.spawner-protected");
@@ -135,13 +183,6 @@ public class SpawnerStackHandler {
         return true;
     }
 
-    /**
-     * Attempts to extract EntityType from a spawner item.
-     * Supports standard spawners, EconomyShopGUI format, and custom naming.
-     *
-     * @param item The spawner item
-     * @return Optional containing the EntityType if found, empty otherwise
-     */
     private Optional<EntityType> getEntityTypeFromItem(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (!(meta instanceof BlockStateMeta)) {
@@ -174,12 +215,6 @@ public class SpawnerStackHandler {
         return tryLanguageManagerFormat(displayName);
     }
 
-    /**
-     * Attempts to match a spawner display name against known entity types using language manager.
-     *
-     * @param displayName The display name to check
-     * @return Optional containing the EntityType if found, empty otherwise
-     */
     private Optional<EntityType> tryLanguageManagerFormat(String displayName) {
         for (EntityType entityType : EntityType.values()) {
             String entityTypeName = entityType.name();
@@ -191,17 +226,6 @@ public class SpawnerStackHandler {
         return Optional.empty();
     }
 
-    /**
-     * Processes the actual addition of spawners to the stack.
-     *
-     * @param player The player stacking the spawners
-     * @param targetSpawner The target spawner data
-     * @param itemInHand The spawner item in hand
-     * @param stackAll Whether to stack all available spawners at once
-     * @param currentStack Current stack size
-     * @param maxStackSize Maximum allowed stack size
-     * @return true if stacking was successful, false otherwise
-     */
     private boolean processStackAddition(Player player, SpawnerData targetSpawner, ItemStack itemInHand,
                                          boolean stackAll, int currentStack, int maxStackSize) {
         int itemAmount = itemInHand.getAmount();
@@ -215,17 +239,10 @@ public class SpawnerStackHandler {
         showStackAnimation(targetSpawner, newStack, player);
 
         // Update all viewers after successful stacking
-        spawnerViewsUpdater.updateViewersIncludeTitle(targetSpawner);
+        // spawnerViewsUpdater.updateViewersIncludeTitle(targetSpawner);
         return true;
     }
 
-    /**
-     * Updates the player's inventory after stacking.
-     *
-     * @param player The player whose inventory to update
-     * @param itemInHand The item being used for stacking
-     * @param amountUsed The number of items used in stacking
-     */
     private void updatePlayerInventory(Player player, ItemStack itemInHand, int amountUsed) {
         if (player.getGameMode() != GameMode.CREATIVE) {
             int remainingAmount = itemInHand.getAmount() - amountUsed;
@@ -238,32 +255,6 @@ public class SpawnerStackHandler {
         }
     }
 
-    /**
-     * Plays visual and audio effects for successful stacking.
-     *
-     * @param player The player who stacked the spawner
-     * @param block The spawner block
-     */
-    private void playStackSuccessEffects(Player player, Block block) {
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SOUND_VOLUME, SOUND_PITCH);
-
-        if (configManager.isSpawnerStackParticlesEnabled()) {
-            Location particleLocation = block.getLocation().add(0.5, 0.5, 0.5);
-            block.getWorld().spawnParticle(
-                    ParticleWrapper.VILLAGER_HAPPY,
-                    particleLocation,
-                    10, 0.3, 0.3, 0.3, 0
-            );
-        }
-    }
-
-    /**
-     * Displays the stacking animation and notification to the player.
-     *
-     * @param spawner The spawner that was stacked
-     * @param newStack The new stack size
-     * @param player The player to show the animation to
-     */
     private void showStackAnimation(SpawnerData spawner, int newStack, Player player) {
         if (configManager.isSpawnerStackParticlesEnabled()) {
             Location loc = spawner.getSpawnerLocation();
@@ -279,5 +270,49 @@ public class SpawnerStackHandler {
         }
 
         languageManager.sendMessage(player, "messages.hand-stack", "%amount%", String.valueOf(newStack));
+    }
+
+    private static class Cache<K, V> {
+        private final Map<K, CacheEntry<V>> map = new ConcurrentHashMap<>();
+        private final long expirationSeconds;
+
+        public Cache(long expirationSeconds) {
+            this.expirationSeconds = expirationSeconds;
+        }
+
+        public Optional<V> get(K key) {
+            CacheEntry<V> entry = map.get(key);
+            if (entry != null && !entry.isExpired(expirationSeconds)) {
+                return Optional.of(entry.getValue());
+            }
+            map.remove(key);
+            return Optional.empty();
+        }
+
+        public void put(K key, V value) {
+            map.put(key, new CacheEntry<>(value));
+        }
+
+        public void cleanup() {
+            map.entrySet().removeIf(entry -> entry.getValue().isExpired(expirationSeconds));
+        }
+
+        private static class CacheEntry<V> {
+            private final V value;
+            private final long timestamp;
+
+            public CacheEntry(V value) {
+                this.value = value;
+                this.timestamp = System.currentTimeMillis();
+            }
+
+            public V getValue() {
+                return value;
+            }
+
+            public boolean isExpired(long expirationSeconds) {
+                return System.currentTimeMillis() - timestamp > expirationSeconds * 1000;
+            }
+        }
     }
 }

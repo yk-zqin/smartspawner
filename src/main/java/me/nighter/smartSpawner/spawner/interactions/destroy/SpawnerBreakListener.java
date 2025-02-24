@@ -99,6 +99,9 @@ public class SpawnerBreakListener implements Listener {
         final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
         if (spawner != null) {
             handleSpawnerBreak(block, spawner, player);
+
+            // Clean up associated tasks
+            plugin.getRangeChecker().stopSpawnerTask(spawner);
         } else {
             // Fallback to vanilla spawner handling
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
@@ -110,6 +113,7 @@ public class SpawnerBreakListener implements Listener {
 
         // Clean up associated hopper if present
         cleanupAssociatedHopper(block);
+
     }
 
     /**

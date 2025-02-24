@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,8 +35,6 @@ public class SpawnerViewsUpdater implements Listener {
                 StoragePageHolder.class,
                 SpawnerMenuHolder.class
         );
-
-        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void trackViewer(String spawnerId, Player player) {
@@ -126,24 +125,6 @@ public class SpawnerViewsUpdater implements Listener {
 
                         plugin.getSpawnerGuiUpdater().updateLootInventoryViewers(
                                 spawner, oldTotalPages, newTotalPages);
-                    }
-                }
-            }
-        });
-    }
-
-    public void updateViewersIncludeTitle(SpawnerData spawner) {
-        Set<Player> viewers = getViewers(spawner.getSpawnerId());
-        if (viewers.isEmpty()) return;
-
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (Player viewer : viewers) {
-                if (!viewer.isOnline()) continue;
-
-                Inventory openInv = viewer.getOpenInventory().getTopInventory();
-                if (openInv != null && isValidHolder(openInv.getHolder())) {
-                    if (openInv.getHolder() instanceof SpawnerMenuHolder) {
-                        plugin.getSpawnerMenuUI().openSpawnerMenu(viewer, spawner, true);
                     }
                 }
             }

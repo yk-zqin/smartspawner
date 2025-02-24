@@ -1,6 +1,6 @@
 #---------------------------------------------------
 # Language: English (United States)
-# Plugin Version: 1.2.3
+# Plugin Version: 1.2.4
 #---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
@@ -163,6 +163,18 @@ messages:
 
   sell-failed:
     message: "&cFailed to sell items! Please try again."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  sell-cooldown:
+    message: "&cPlease wait a moment before selling items again."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  transaction-in-progress:
+    message: "&cA transaction is already in progress! Please wait."
     prefix: true
     type: CHAT
     sound: block.note_block.pling

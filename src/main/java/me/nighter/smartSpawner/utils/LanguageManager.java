@@ -164,6 +164,16 @@ public class LanguageManager {
         put("messages.sell-failed.type", "CHAT");
         put("messages.sell-failed.sound", "block.note_block.pling");
 
+        put("messages.sell-cooldown.message", "&cPlease wait a moment before selling items again.");
+        put("messages.sell-cooldown.prefix", true);
+        put("messages.sell-cooldown.type", "CHAT");
+        put("messages.sell-cooldown.sound", "block.note_block.pling");
+
+        put("messages.transaction-in-progress.message", "&cA transaction is already in progress! Please wait.");
+        put("messages.transaction-in-progress.prefix", true);
+        put("messages.transaction-in-progress.type", "CHAT");
+        put("messages.transaction-in-progress.sound", "block.note_block.pling");
+
         // Spawner Stacking/Unstacking Messages
         put("messages.hand-stack.message", "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!");
         put("messages.hand-stack.prefix", false);
@@ -541,7 +551,7 @@ public class LanguageManager {
             try {
                 Files.copy(resourceStream, langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 loadLanguageFile(langFile);
-                logger.info("Created language file from resource: " + language.getResourcePath());
+                //logger.info("Created language file from resource: " + language.getResourcePath());
                 return;
             } catch (IOException e) {
                 logger.warning("Failed to copy resource for " + language.getCode() + ": " + e.getMessage());

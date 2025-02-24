@@ -43,11 +43,6 @@ public class SpawnerGuiUpdater implements Listener {
     private volatile boolean isTaskRunning;
     private long previousExpValue = 0;
 
-    /**
-     * Constructs a new SpawnerGuiUpdater
-     *
-     * @param plugin The main plugin instance
-     */
     public SpawnerGuiUpdater(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
@@ -57,16 +52,13 @@ public class SpawnerGuiUpdater implements Listener {
         this.isTaskRunning = false;
     }
 
-    /**
-     * Starts the background task that updates all open spawner GUIs.
-     * The task will automatically stop if no GUIs are open.
-     */
+
     private synchronized void startUpdateTask() {
         if (isTaskRunning) {
             return;
         }
 
-        updateTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateAllGuis,
+        updateTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateGuiForSpawnerInfo,
                 INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS);
         isTaskRunning = true;
 
@@ -75,19 +67,10 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Checks if a player still has a valid GUI session
-     *
-     * @param player The player to check
-     * @return true if the player is still online and valid
-     */
     private boolean isValidGuiSession(Player player) {
         return player != null && player.isOnline();
     }
 
-    /**
-     * Stops the GUI update task and cleans up resources
-     */
     public synchronized void stopUpdateTask() {
         if (!isTaskRunning) {
             return;
@@ -109,10 +92,7 @@ public class SpawnerGuiUpdater implements Listener {
     //                      Spawner Main GUI
     // ===============================================================
 
-    /**
-     * Updates all currently open spawner GUIs
-     */
-    private void updateAllGuis() {
+    private void updateGuiForSpawnerInfo() {
         if (openSpawnerGuis.isEmpty()) {
             stopUpdateTask();
             return;
@@ -131,7 +111,7 @@ public class SpawnerGuiUpdater implements Listener {
             // Update the GUI if it's still open
             Inventory openInventory = player.getOpenInventory().getTopInventory();
             if (openInventory.getHolder() instanceof SpawnerMenuHolder) {
-                updateSpawnerGui(player, spawner, false);
+                updateSpawnerGuiInfo(player, spawner, false);
 
                 if (configManager.isDebugEnabled()) {
                     plugin.getLogger().log(Level.FINE, "Updated GUI for {0}", player.getName());
@@ -142,11 +122,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Handles when a player opens a spawner inventory
-     *
-     * @param event The inventory open event
-     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
         if (!(event.getInventory().getHolder() instanceof SpawnerMenuHolder)) {
@@ -162,11 +137,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Handles when a player closes a spawner inventory
-     *
-     * @param event The inventory close event
-     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof SpawnerMenuHolder)) {
@@ -182,20 +152,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Called when the plugin is disabled
-     * Cleans up resources and ensures task is stopped
-     */
-    public void cleanUp() {
-        stopUpdateTask();
-        clearAllTrackedGuis();
-    }
-
-    /**
-     * Updates the GUI for all players viewing a specific spawner
-     *
-     * @param spawner The spawner that was updated
-     */
     public void updateSpawnerGuiViewers(SpawnerData spawner) {
         for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
             if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
@@ -207,13 +163,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Updates the spawner GUI for a specific player
-     *
-     * @param player The player viewing the GUI
-     * @param spawner The spawner data to display
-     * @param forceUpdate Whether to force the update regardless of ID match
-     */
     public void updateSpawnerGui(Player player, SpawnerData spawner, boolean forceUpdate) {
         Inventory openInv = player.getOpenInventory().getTopInventory();
         if (openInv.getHolder() instanceof SpawnerMenuHolder) {
@@ -226,29 +175,26 @@ public class SpawnerGuiUpdater implements Listener {
             }
         }
     }
+    public void updateSpawnerGuiInfo(Player player, SpawnerData spawner, boolean forceUpdate) {
+        Inventory openInv = player.getOpenInventory().getTopInventory();
+        if (openInv.getHolder() instanceof SpawnerMenuHolder) {
+            SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
+            if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
+                updateSpawnerInfoItem(openInv, spawner);
+                player.updateInventory();
+            }
+        }
+    }
 
-    /**
-     * Tracks an open GUI for a player
-     *
-     * @param playerId The UUID of the player
-     * @param spawner The spawner data being viewed
-     */
+
     public void trackOpenGui(UUID playerId, SpawnerData spawner) {
         openSpawnerGuis.put(playerId, spawner);
     }
 
-    /**
-     * Stops tracking a GUI for a player
-     *
-     * @param playerId The UUID of the player
-     */
     public void untrackOpenGui(UUID playerId) {
         openSpawnerGuis.remove(playerId);
     }
 
-    /**
-     * Clears all tracked GUIs
-     */
     public void clearAllTrackedGuis() {
         openSpawnerGuis.clear();
         if (configManager.isDebugEnabled()) {
@@ -256,21 +202,11 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Gets all currently open spawner GUIs
-     *
-     * @return Map of player UUIDs to their open spawner data
-     */
+
     public Map<UUID, SpawnerData> getOpenSpawnerGuis() {
         return Collections.unmodifiableMap(openSpawnerGuis);
     }
 
-    /**
-     * Updates the chest item in the spawner GUI
-     *
-     * @param inventory The inventory to update
-     * @param spawner The spawner data
-     */
     private void updateChestItem(Inventory inventory, SpawnerData spawner) {
         ItemStack chestItem = inventory.getItem(11);
         if (chestItem == null || !chestItem.hasItemMeta()) return;
@@ -297,12 +233,6 @@ public class SpawnerGuiUpdater implements Listener {
         inventory.setItem(11, chestItem);
     }
 
-    /**
-     * Updates the experience item in the spawner GUI
-     *
-     * @param inventory The inventory to update
-     * @param spawner The spawner data
-     */
     private void updateExpItem(Inventory inventory, SpawnerData spawner) {
         ItemStack expItem = inventory.getItem(15);
         if (expItem == null || !expItem.hasItemMeta()) return;
@@ -334,12 +264,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Updates the spawner info item in the GUI
-     *
-     * @param inventory The inventory to update
-     * @param spawner The spawner data
-     */
     private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner) {
         ItemStack spawnerItem = inventory.getItem(13);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
@@ -386,12 +310,6 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    /**
-     * Gets the appropriate time display string based on spawn time
-     *
-     * @param timeUntilNextSpawn Time in milliseconds until next spawn
-     * @return Formatted display string
-     */
     private String getTimeDisplay(long timeUntilNextSpawn) {
         if (timeUntilNextSpawn == -1) {
             return languageManager.getMessage("spawner-info-item.lore-now");
@@ -403,12 +321,6 @@ public class SpawnerGuiUpdater implements Listener {
         return formatTime(timeUntilNextSpawn);
     }
 
-    /**
-     * Calculates the time until the next spawn for a spawner
-     *
-     * @param spawner The spawner data
-     * @return Time in milliseconds until next spawn
-     */
     private long calculateTimeUntilNextSpawn(SpawnerData spawner) {
         if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
             return -1;
@@ -419,12 +331,6 @@ public class SpawnerGuiUpdater implements Listener {
         return lastSpawnTime + spawnDelay - currentTime;
     }
 
-    /**
-     * Formats milliseconds into a MM:SS time format
-     *
-     * @param milliseconds Time in milliseconds
-     * @return Formatted time string
-     */
     private String formatTime(long milliseconds) {
         long seconds = milliseconds / 1000;
         long minutes = seconds / 60;
@@ -436,12 +342,6 @@ public class SpawnerGuiUpdater implements Listener {
     //                      Spawner Storage GUI
     // ===============================================================
 
-    /**
-     * Get a list of all viewers looking at a specific spawner's storage GUI
-     *
-     * @param spawner The spawner data
-     * @return List of viewers
-     */
     public List<HumanEntity> getViewersForSpawner(SpawnerData spawner) {
         List<HumanEntity> viewers = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -516,4 +416,8 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
+    public void cleanup() {
+        stopUpdateTask();
+        clearAllTrackedGuis();
+    }
 }

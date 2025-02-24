@@ -163,20 +163,12 @@ public class SpawnerClickManager implements Listener {
 
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
-//            if (spawner.isLocked()) {
-//                languageManager.sendMessage(player, "messages.spawner-in-use");
-//                return;
-//            }
             spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, heldItem);
             return;
         }
 
         // Handle spawner stacking
         if (itemType == Material.SPAWNER) {
-//            if (spawner.isLocked()) {
-//                languageManager.sendMessage(player, "messages.spawner-in-use");
-//                return;
-//            }
             spawnerStackHandler.handleSpawnerStacking(player, block, spawner, heldItem);
             return;
         }

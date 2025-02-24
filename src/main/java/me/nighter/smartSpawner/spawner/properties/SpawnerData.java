@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SpawnerData {
     private final SmartSpawner plugin;
@@ -42,6 +43,9 @@ public class SpawnerData {
     // Hologram properties
     private SpawnerHologram hologram;
 
+    // Other properties
+    private final ReentrantLock lock = new ReentrantLock();
+
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerId = id;
@@ -62,76 +66,6 @@ public class SpawnerData {
             this.hologram.createHologram();
             updateHologramData();
         }
-    }
-
-    public void updateHologramData() {
-        if (hologram != null) {
-            hologram.updateData(
-                    stackSize,
-                    entityType,
-                    spawnerExp,
-                    maxStoredExp,
-                    virtualInventory.getUsedSlots(),
-                    maxSpawnerLootSlots
-            );
-        }
-    }
-
-    public void reloadHologramData() {
-        if (hologram != null) {
-            hologram.remove();
-            this.hologram = new SpawnerHologram(spawnerLocation);
-            this.hologram.createHologram();
-            hologram.updateData(
-                    stackSize,
-                    entityType,
-                    spawnerExp,
-                    maxStoredExp,
-                    virtualInventory.getUsedSlots(),
-                    maxSpawnerLootSlots
-            );
-        }
-    }
-
-    public void refreshHologram() {
-        if (configManager.isHologramEnabled()) {
-            if (hologram == null) {
-                this.hologram = new SpawnerHologram(spawnerLocation);
-                this.hologram.createHologram();
-                updateHologramData();
-            }
-        } else {
-            if (hologram != null) {
-                hologram.remove();
-                hologram = null;
-            }
-        }
-    }
-
-    public void removeHologram() {
-        if (hologram != null) {
-            hologram.remove();
-            hologram = null;
-        }
-    }
-
-    public void removeGhostHologram() {
-        if (hologram != null && configManager.isHologramEnabled()) {
-            hologram.cleanupExistingHologram();
-        }
-    }
-
-    public VirtualInventory getVirtualInventory() {
-        return virtualInventory;
-    }
-
-    public void setVirtualInventory(VirtualInventory inventory) {
-        this.virtualInventory = inventory;
-    }
-
-    // Add method to get items for display in real inventory
-    public Map<Integer, ItemStack> getDisplayInventory() {
-        return virtualInventory.getDisplayInventory();
     }
 
     private void loadConfigValues() {
@@ -402,6 +336,91 @@ public class SpawnerData {
 
     public void setAllowEquipmentItems(boolean allowEquipmentItems) {
         this.allowEquipmentItems = allowEquipmentItems;
+    }
+
+// ===============================================================
+//                    Virtual Inventory
+// ===============================================================
+
+
+    public VirtualInventory getVirtualInventory() {
+        return virtualInventory;
+    }
+
+    public void setVirtualInventory(VirtualInventory inventory) {
+        this.virtualInventory = inventory;
+    }
+
+    public Map<Integer, ItemStack> getDisplayInventory() {
+        return virtualInventory.getDisplayInventory();
+    }
+
+// ===============================================================
+//                    Spawner Hologram
+// ===============================================================
+
+    public void updateHologramData() {
+        if (hologram != null) {
+            hologram.updateData(
+                    stackSize,
+                    entityType,
+                    spawnerExp,
+                    maxStoredExp,
+                    virtualInventory.getUsedSlots(),
+                    maxSpawnerLootSlots
+            );
+        }
+    }
+
+    public void reloadHologramData() {
+        if (hologram != null) {
+            hologram.remove();
+            this.hologram = new SpawnerHologram(spawnerLocation);
+            this.hologram.createHologram();
+            hologram.updateData(
+                    stackSize,
+                    entityType,
+                    spawnerExp,
+                    maxStoredExp,
+                    virtualInventory.getUsedSlots(),
+                    maxSpawnerLootSlots
+            );
+        }
+    }
+
+    public void refreshHologram() {
+        if (configManager.isHologramEnabled()) {
+            if (hologram == null) {
+                this.hologram = new SpawnerHologram(spawnerLocation);
+                this.hologram.createHologram();
+                updateHologramData();
+            }
+        } else {
+            if (hologram != null) {
+                hologram.remove();
+                hologram = null;
+            }
+        }
+    }
+
+    public void removeHologram() {
+        if (hologram != null) {
+            hologram.remove();
+            hologram = null;
+        }
+    }
+
+    public void removeGhostHologram() {
+        if (hologram != null && configManager.isHologramEnabled()) {
+            hologram.cleanupExistingHologram();
+        }
+    }
+// ===============================================================
+//                    Locking Mechanism
+// ===============================================================
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 
 }
