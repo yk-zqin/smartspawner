@@ -3,12 +3,10 @@ package me.nighter.smartSpawner.spawner.gui.stacker;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerStackerHolder;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerStackerUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.CreatureSpawner;
@@ -31,10 +29,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Handles all inventory click events and logic related to stacking and unstacking spawners.
- * This class manages the interaction between players and the spawner stacker GUI.
- */
 public class SpawnerStackerAction implements Listener {
     private static final Pattern SPAWNER_NAME_PATTERN = Pattern.compile("§9§l([A-Za-z]+(?: [A-Za-z]+)?) §rSpawner");
     private static final Sound STACK_OPERATION_SOUND = Sound.ENTITY_EXPERIENCE_ORB_PICKUP;
@@ -46,28 +40,18 @@ public class SpawnerStackerAction implements Listener {
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
-    private final SpawnerStackerUpdater spawnerStackerUpdater;
+    private final SpawnerStackerActionUpdater spawnerStackerActionUpdater;
     private final Map<String, Integer> changeAmountMap;
 
-    /**
-     * Constructs a new SpawnerStackerAction instance.
-     *
-     * @param plugin The main plugin instance
-     */
     public SpawnerStackerAction(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
-        this.spawnerStackerUpdater = new SpawnerStackerUpdater(plugin);
+        this.spawnerStackerActionUpdater = new SpawnerStackerActionUpdater(plugin);
         this.changeAmountMap = initializeChangeAmountMap();
     }
 
-    /**
-     * Initializes the map of display names to their corresponding stack change amounts.
-     *
-     * @return A map of button display names to their stack change values
-     */
     private Map<String, Integer> initializeChangeAmountMap() {
         Map<String, Integer> map = new HashMap<>();
         map.put("-64", -64);
@@ -79,11 +63,6 @@ public class SpawnerStackerAction implements Listener {
         return map;
     }
 
-    /**
-     * Handles the inventory click events within the spawner stacker GUI.
-     *
-     * @param event The inventory click event
-     */
     @EventHandler
     public void onStackControlClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
@@ -91,6 +70,13 @@ public class SpawnerStackerAction implements Listener {
 
         event.setCancelled(true);
         SpawnerData spawner = holder.getSpawnerData();
+
+        // Check for click cooldown to prevent spam clicking
+        if (spawnerStackerActionUpdater.isPlayerOnCooldown(player)) {
+            // Play error sound if clicking too fast
+            //player.playSound(player.getLocation(), ERROR_SOUND, SOUND_VOLUME, SOUND_PITCH);
+            return;
+        }
 
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null || !clicked.hasItemMeta()) return;
@@ -102,11 +88,14 @@ public class SpawnerStackerAction implements Listener {
         }
 
         ItemMeta meta = clicked.getItemMeta();
-        if (meta == null || meta.displayName() == null) return;
+        if (meta == null || meta.getDisplayName() == null) return;
 
         // Determine the change amount based on the clicked item's name
         int change = getChangeAmount(meta.getDisplayName());
         if (change == 0) return;
+
+        // Mark player as actively interacting with the GUI
+        spawnerStackerActionUpdater.markPlayerActive(player);
 
         // Handle stack change based on direction (increase or decrease)
         if (change > 0) {
@@ -115,8 +104,8 @@ public class SpawnerStackerAction implements Listener {
             handleStackDecrease(player, spawner, change);
         }
 
-        spawnerStackerUpdater.scheduleUpdateForAll(spawner, player);
-
+        // Only update for the player who clicked and other active interactors
+        spawnerStackerActionUpdater.scheduleUpdateForAll(spawner, player);
     }
 
     @EventHandler
@@ -125,7 +114,7 @@ public class SpawnerStackerAction implements Listener {
         if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder holder)) return;
 
         SpawnerData spawner = holder.getSpawnerData();
-        spawnerStackerUpdater.trackViewer(spawner.getSpawnerId(), player);
+        spawnerStackerActionUpdater.trackViewer(spawner.getSpawnerId(), player);
     }
 
     @EventHandler
@@ -140,42 +129,29 @@ public class SpawnerStackerAction implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Inventory topInventory = player.getOpenInventory().getTopInventory();
             if (!(topInventory.getHolder() instanceof SpawnerStackerHolder)) {
-                spawnerStackerUpdater.untrackViewer(spawner.getSpawnerId(), player);
+                spawnerStackerActionUpdater.untrackViewer(spawner.getSpawnerId(), player);
             }
         }, 1L);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        spawnerStackerUpdater.cleanup(event.getPlayer().getUniqueId());
+        spawnerStackerActionUpdater.cleanup(event.getPlayer().getUniqueId());
     }
 
     public void cleanup() {
-        spawnerStackerUpdater.cleanupAll();
+        spawnerStackerActionUpdater.cleanupAll();
     }
 
-    public SpawnerStackerUpdater getSpawnerStackerUpdater() {
-        return spawnerStackerUpdater;
+    public SpawnerStackerActionUpdater getSpawnerStackerUpdater() {
+        return spawnerStackerActionUpdater;
     }
 
-    /**
-     * Navigates the player back to the main spawner menu.
-     *
-     * @param player The player to show the menu to
-     * @param spawner The spawner data to display
-     */
     private void navigateToMainMenu(Player player, SpawnerData spawner) {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
         player.playSound(player.getLocation(), MENU_NAVIGATION_SOUND, SOUND_VOLUME, SOUND_PITCH);
     }
 
-    /**
-     * Handles decreasing the stack size of a spawner and gives the removed spawners to the player.
-     *
-     * @param player The player performing the operation
-     * @param spawner The spawner data being modified
-     * @param change The negative amount to change the stack by
-     */
     private void handleStackDecrease(Player player, SpawnerData spawner, int change) {
         int currentSize = spawner.getStackSize();
         int removeAmount = Math.abs(change);
@@ -198,13 +174,6 @@ public class SpawnerStackerAction implements Listener {
         player.playSound(player.getLocation(), STACK_OPERATION_SOUND, SOUND_VOLUME, SOUND_PITCH);
     }
 
-    /**
-     * Handles increasing the stack size of a spawner by taking spawners from the player.
-     *
-     * @param player The player performing the operation
-     * @param spawner The spawner data being modified
-     * @param change The positive amount to change the stack by
-     */
     private void handleStackIncrease(Player player, SpawnerData spawner, int change) {
         int currentSize = spawner.getStackSize();
         int maxStackSize = configManager.getMaxStackSize();
@@ -250,12 +219,6 @@ public class SpawnerStackerAction implements Listener {
         player.playSound(player.getLocation(), STACK_OPERATION_SOUND, SOUND_VOLUME, SOUND_PITCH);
     }
 
-    /**
-     * Extracts the EntityType from a spawner item.
-     *
-     * @param item The item to check
-     * @return The EntityType of the spawner, or null if not a valid spawner
-     */
     private Optional<EntityType> getSpawnerEntityType(ItemStack item) {
         if (item == null || item.getType() != Material.SPAWNER) {
             return Optional.empty();
@@ -289,13 +252,6 @@ public class SpawnerStackerAction implements Listener {
         return Optional.ofNullable(spawnerEntity);
     }
 
-    /**
-     * Checks if the player has any spawners of a different type than the required one.
-     *
-     * @param player The player to check
-     * @param requiredType The required EntityType
-     * @return true if player has spawners of a different type, false otherwise
-     */
     private boolean hasDifferentSpawnerType(Player player, EntityType requiredType) {
         for (ItemStack item : player.getInventory().getContents()) {
             if (item == null) continue;
@@ -307,13 +263,7 @@ public class SpawnerStackerAction implements Listener {
         }
         return false;
     }
-    /**
-     * Counts how many spawners of the required type the player has in their inventory.
-     *
-     * @param player The player to check
-     * @param requiredType The required EntityType
-     * @return The count of valid spawners
-     */
+
     private int countValidSpawnersInInventory(Player player, EntityType requiredType) {
         int count = 0;
 
@@ -329,13 +279,6 @@ public class SpawnerStackerAction implements Listener {
         return count;
     }
 
-    /**
-     * Removes a specific amount of spawners of the required type from the player's inventory.
-     *
-     * @param player The player to remove spawners from
-     * @param requiredType The required EntityType
-     * @param amountToRemove The amount to remove
-     */
     private void removeValidSpawnersFromInventory(Player player, EntityType requiredType, int amountToRemove) {
         int remainingToRemove = amountToRemove;
         ItemStack[] contents = player.getInventory().getContents();
@@ -360,12 +303,6 @@ public class SpawnerStackerAction implements Listener {
         player.updateInventory();
     }
 
-    /**
-     * Creates a spawner item with the specified EntityType.
-     *
-     * @param entityType The EntityType for the spawner
-     * @return The created spawner ItemStack
-     */
     private ItemStack createSpawnerItem(EntityType entityType) {
         ItemStack spawner = new ItemStack(Material.SPAWNER);
         ItemMeta meta = spawner.getItemMeta();
@@ -388,14 +325,6 @@ public class SpawnerStackerAction implements Listener {
         return spawner;
     }
 
-    /**
-     * Gives spawners to a player, merging with existing stacks where possible.
-     * If the inventory is full, excess spawners are dropped on the ground.
-     *
-     * @param player The player to give spawners to
-     * @param amount The amount of spawners to give
-     * @param entityType The EntityType of the spawners
-     */
     private synchronized void giveSpawnersToPlayer(Player player, int amount, EntityType entityType) {
         final int MAX_STACK_SIZE = 64;
         ItemStack[] contents = player.getInventory().getContents();
@@ -419,7 +348,6 @@ public class SpawnerStackerAction implements Listener {
 
         // Second pass: Create new stacks for remaining items
         if (remainingAmount > 0) {
-            Location dropLocation = player.getLocation();
             while (remainingAmount > 0) {
                 int stackSize = Math.min(MAX_STACK_SIZE, remainingAmount);
                 ItemStack spawnerItem = createSpawnerItem(entityType);
@@ -431,7 +359,7 @@ public class SpawnerStackerAction implements Listener {
                 // Drop any items that couldn't fit
                 if (!failedItems.isEmpty()) {
                     failedItems.values().forEach(item ->
-                            player.getWorld().dropItemNaturally(dropLocation, item)
+                            player.getWorld().dropItemNaturally(player.getLocation(), item)
                     );
                     languageManager.sendMessage(player, "messages.inventory-full-drop");
                 }
@@ -444,12 +372,6 @@ public class SpawnerStackerAction implements Listener {
         player.updateInventory();
     }
 
-    /**
-     * Parses the display name of a button to determine the change amount.
-     *
-     * @param displayName The display name to parse
-     * @return The change amount (positive or negative), or 0 if not recognized
-     */
     private int getChangeAmount(String displayName) {
         return changeAmountMap.entrySet().stream()
                 .filter(entry -> displayName.contains(entry.getKey()))

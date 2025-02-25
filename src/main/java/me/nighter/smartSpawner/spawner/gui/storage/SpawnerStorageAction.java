@@ -87,6 +87,7 @@ public class SpawnerStorageAction implements Listener {
             handler.handle(player, event.getInventory(), slot, clickedItem, holder.getSpawnerData());
         }
     }
+
     private void takeSingleItem(Player player, Inventory sourceInv, int slot, ItemStack item,
                                 SpawnerData spawner, boolean singleItem) {
         PlayerInventory playerInv = player.getInventory();
@@ -103,7 +104,21 @@ public class SpawnerStorageAction implements Listener {
             updateInventorySlot(sourceInv, slot, item, result.getAmountMoved());
             virtualInv.removeItems(result.getMovedItems());
             player.updateInventory();
+
+            // Update hologram and recalculate pages after item removal
             spawner.updateHologramData();
+
+            // Synchronize total pages after item removal
+            StoragePageHolder holder = (StoragePageHolder) sourceInv.getHolder();
+            if (holder != null) {
+                int newTotalPages = calculateTotalPages(spawner);
+                if (newTotalPages != holder.getTotalPages()) {
+                    holder.setTotalPages(newTotalPages);
+                    // Update the title to reflect new page count
+                    updateInventoryTitle(player, sourceInv, spawner, holder.getCurrentPage(), newTotalPages);
+                }
+                holder.updateOldUsedSlots();
+            }
         } else {
             languageManager.sendMessage(player, "messages.inventory-full");
         }
@@ -119,7 +134,6 @@ public class SpawnerStorageAction implements Listener {
         remaining.setAmount(item.getAmount() - amountMoved);
         sourceInv.setItem(slot, remaining);
     }
-
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
@@ -160,14 +174,18 @@ public class SpawnerStorageAction implements Listener {
         SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
 
-        holder.setCurrentPage(newPage);
-
+        // Always recalculate total pages to ensure synchronization
         int totalPages = calculateTotalPages(spawner);
-        if (totalPages != holder.getTotalPages()) {
-            holder.setTotalPages(totalPages);
-        }
 
+        // Update holder with latest values
+        holder.setTotalPages(totalPages);
+        holder.setCurrentPage(newPage);
+        holder.updateOldUsedSlots();
+
+        // Update inventory display
         lootManager.updateDisplay(inventory, spawner, newPage);
+
+        // Update inventory title to reflect current page and total pages
         updateInventoryTitle(player, inventory, spawner, newPage, totalPages);
 
         Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
@@ -175,6 +193,13 @@ public class SpawnerStorageAction implements Listener {
         player.playSound(player.getLocation(), sound, 1.0f, pitch);
     }
 
+    /**
+     * Calculates the total number of pages needed based on the items in the virtual inventory.
+     * This is a critical method that ensures consistency in page calculation across all UI interactions.
+     *
+     * @param spawner The spawner data containing the virtual inventory
+     * @return The total number of pages needed
+     */
     private int calculateTotalPages(SpawnerData spawner) {
         int usedSlots = spawner.getVirtualInventory().getUsedSlots();
         return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
@@ -187,8 +212,8 @@ public class SpawnerStorageAction implements Listener {
         try {
             player.getOpenInventory().setTitle(newTitle);
         } catch (Exception e) {
-            // Fallback
-            configManager.debug("Fallback: Opening loot page after selling all items");
+            // Fallback: if title update fails, recreate and reopen the inventory
+            configManager.debug("Fallback: Opening loot page due to title update failure");
             openLootPage(player, spawner, page, false);
         }
     }
@@ -203,14 +228,26 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
+        // Sell all items through shop integration
         if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
             Inventory inventory = holder.getInventory();
             if (inventory != null) {
-                updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
+                // Recalculate total pages after selling all items
+                int newTotalPages = calculateTotalPages(spawner);
+
+                // Reset to page 1 if current page is now invalid
+                int newPage = Math.min(holder.getCurrentPage(), newTotalPages);
+
+                // Update holder values
+                holder.setTotalPages(newTotalPages);
+                holder.setCurrentPage(newPage);
+
+                // Update display
+                updatePageContent(player, spawner, newPage, inventory, true);
             } else {
                 // Fallback
                 configManager.debug("Fallback: Opening loot page after selling all items");
-                openLootPage(player, spawner, holder.getCurrentPage(), true);
+                openLootPage(player, spawner, 1, true);
             }
         }
     }
@@ -233,6 +270,12 @@ public class SpawnerStorageAction implements Listener {
         SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
 
+        // Recalculate total pages to ensure consistency
+        int totalPages = calculateTotalPages(spawner);
+
+        // Ensure page is valid
+        page = Math.max(1, Math.min(page, totalPages));
+
         // Check if player already has an open inventory cache
         UUID playerId = player.getUniqueId();
         Inventory existingInventory = openStorageInventories.get(playerId);
@@ -240,6 +283,12 @@ public class SpawnerStorageAction implements Listener {
         // If the player already has an open inventory, update the content
         if (existingInventory != null && !refresh && existingInventory.getHolder() instanceof StoragePageHolder) {
             StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder();
+
+            // Update holder with latest values
+            holder.setTotalPages(totalPages);
+            holder.setCurrentPage(page);
+            holder.updateOldUsedSlots();
+
             updatePageContent(player, spawner, page, existingInventory, false);
             return;
         }
@@ -249,6 +298,7 @@ public class SpawnerStorageAction implements Listener {
 
         // Store the inventory in the cache
         openStorageInventories.put(playerId, pageInventory);
+
         Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
         float pitch = refresh ? 1.2f : 1.0f;
         player.playSound(player.getLocation(), sound, 1.0f, pitch);
@@ -277,6 +327,22 @@ public class SpawnerStorageAction implements Listener {
         TransferResult result = transferItems(player, sourceInventory, sourceItems, virtualInv);
         sendTransferMessage(player, result);
         player.updateInventory();
+
+        // After items are taken, recalculate pages and update the UI
+        if (result.anyItemMoved) {
+            // Recalculate total pages
+            int newTotalPages = calculateTotalPages(spawner);
+
+            // Update holder
+            holder.setTotalPages(newTotalPages);
+
+            // Ensure current page is valid
+            int currentPage = Math.min(holder.getCurrentPage(), newTotalPages);
+            holder.setCurrentPage(currentPage);
+
+            // Update the display and title
+            updatePageContent(player, spawner, currentPage, sourceInventory, true);
+        }
     }
 
     private TransferResult transferItems(Player player, Inventory sourceInventory,
@@ -343,10 +409,12 @@ public class SpawnerStorageAction implements Listener {
             virtualInv.removeItems(itemsToRemove);
             StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder();
             holder.getSpawnerData().updateHologramData();
+            holder.updateOldUsedSlots();
         }
 
         return new TransferResult(anyItemMoved, inventoryFull, totalAmountMoved);
     }
+
     private void sendTransferMessage(Player player, TransferResult result) {
         if (!result.anyItemMoved) {
             languageManager.sendMessage(player, "messages.inventory-full");
@@ -371,5 +439,5 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
-        private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
+    private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
 }

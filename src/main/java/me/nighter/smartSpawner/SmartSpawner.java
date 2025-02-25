@@ -18,7 +18,7 @@ import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerAction;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageAction;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerStackerUpdater;
+import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerActionUpdater;
 import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.interactions.SpawnerClickManager;
 import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerBreakListener;
@@ -425,7 +425,7 @@ public class SmartSpawner extends JavaPlugin {
         return spawnerStackerUI;
     }
 
-    public SpawnerStackerUpdater getSpawnerStackerUpdater() {
+    public SpawnerStackerActionUpdater getSpawnerStackerUpdater() {
         return spawnerStackerAction.getSpawnerStackerUpdater();
     }
 

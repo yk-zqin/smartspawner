@@ -64,7 +64,7 @@ public class SpawnerGuiUpdater implements Listener {
         isTaskRunning = true;
 
         if (configManager.isDebugEnabled()) {
-            plugin.getLogger().info("Started GUI update task");
+            //plugin.getLogger().info("Started GUI update task");
         }
     }
 
@@ -85,7 +85,7 @@ public class SpawnerGuiUpdater implements Listener {
         isTaskRunning = false;
 
         if (configManager.isDebugEnabled()) {
-            plugin.getLogger().info("Stopped GUI update task");
+            //plugin.getLogger().info("Stopped GUI update task");
         }
     }
 
@@ -179,6 +179,7 @@ public class SpawnerGuiUpdater implements Listener {
             }
         }
     }
+
     public void updateSpawnerGuiInfo(Player player, SpawnerData spawner, boolean forceUpdate) {
         Inventory openInv = player.getOpenInventory().getTopInventory();
         if (openInv.getHolder() instanceof SpawnerMenuHolder) {
@@ -189,7 +190,6 @@ public class SpawnerGuiUpdater implements Listener {
             }
         }
     }
-
 
     public void trackOpenGui(UUID playerId, SpawnerData spawner) {
         openSpawnerGuis.put(playerId, spawner);

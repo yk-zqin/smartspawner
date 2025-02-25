@@ -16,7 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SpawnerStorageUI implements SpawnerStorageDisplay {
+public class SpawnerStorageUI {
     private static final int NAVIGATION_ROW = 5;
     private static final int INVENTORY_SIZE = 54;
 
@@ -75,7 +75,6 @@ public class SpawnerStorageUI implements SpawnerStorageDisplay {
         equipmentToggleButtons.put(false, createEquipmentToggleButton(false));
     }
 
-    @Override
     public Inventory createInventory(SpawnerData spawner, String title, int page) {
         // Get total pages efficiently
         int totalPages = getTotalPages(spawner);
@@ -100,7 +99,6 @@ public class SpawnerStorageUI implements SpawnerStorageDisplay {
         return pageInv;
     }
 
-    @Override
     public void updateDisplay(Inventory inventory, SpawnerData spawner, int page) {
         // Track both changes and slots that need to be emptied
         Map<Integer, ItemStack> updates = new HashMap<>();
@@ -139,7 +137,7 @@ public class SpawnerStorageUI implements SpawnerStorageDisplay {
         int currentUsedSlots = spawner.getVirtualInventory().getUsedSlots();
 
         // Only recalculate total pages if there's a significant change
-        if (Math.abs(currentUsedSlots - oldUsedSlots) > StoragePageHolder.SLOTS_PER_PAGE / 4) {
+        if (oldUsedSlots != currentUsedSlots) {
             int newTotalPages = recalculateTotalPages(spawner);
             holder.setTotalPages(newTotalPages);
             holder.updateOldUsedSlots();
