@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
+import me.nighter.smartSpawner.utils.ItemUpdater;
 import me.nighter.smartSpawner.utils.LanguageManager;
 
 import org.bukkit.Bukkit;
@@ -98,27 +99,30 @@ public class SpawnerGuiUpdater implements Listener {
             return;
         }
 
-        for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
+        // Use iterator to avoid ConcurrentModificationException
+        Iterator<Map.Entry<UUID, SpawnerData>> iterator = openSpawnerGuis.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, SpawnerData> entry = iterator.next();
             UUID playerId = entry.getKey();
             SpawnerData spawner = entry.getValue();
             Player player = Bukkit.getPlayer(playerId);
 
             if (!isValidGuiSession(player)) {
-                untrackOpenGui(playerId);
+                iterator.remove();
                 continue;
             }
 
-            // Update the GUI if it's still open
             Inventory openInventory = player.getOpenInventory().getTopInventory();
             if (openInventory.getHolder() instanceof SpawnerMenuHolder) {
                 updateSpawnerGuiInfo(player, spawner, false);
-
-                if (configManager.isDebugEnabled()) {
-                    plugin.getLogger().log(Level.FINE, "Updated GUI for {0}", player.getName());
-                }
             } else {
-                untrackOpenGui(playerId);
+                iterator.remove();
             }
+        }
+
+        // Only stop if we've removed all entries
+        if (openSpawnerGuis.isEmpty()) {
+            stopUpdateTask();
         }
     }
 
@@ -211,10 +215,6 @@ public class SpawnerGuiUpdater implements Listener {
         ItemStack chestItem = inventory.getItem(11);
         if (chestItem == null || !chestItem.hasItemMeta()) return;
 
-        ItemMeta chestMeta = chestItem.getItemMeta();
-        chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
-
-        // Create replacements map
         int currentItems = spawner.getVirtualInventory().getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
@@ -224,13 +224,11 @@ public class SpawnerGuiUpdater implements Listener {
         replacements.put("%current_items%", String.valueOf(currentItems));
         replacements.put("%percent_storage%", String.valueOf(percentStorage));
 
-        // Get lore from language file with replacements
+        String name = languageManager.getMessage("spawner-loot-item.name");
         String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest", replacements);
-
         List<String> chestLore = Arrays.asList(loreMessageChest.split("\n"));
-        chestMeta.setLore(chestLore);
-        chestItem.setItemMeta(chestMeta);
-        inventory.setItem(11, chestItem);
+
+        ItemUpdater.updateItemMeta(chestItem, name, chestLore);
     }
 
     private void updateExpItem(Inventory inventory, SpawnerData spawner) {
@@ -239,14 +237,13 @@ public class SpawnerGuiUpdater implements Listener {
 
         long currentExp = spawner.getSpawnerExp();
         if (currentExp != previousExpValue) {
-            ItemMeta expMeta = expItem.getItemMeta();
             Map<String, String> nameReplacements = new HashMap<>();
             String formattedExp = languageManager.formatNumber(currentExp);
             String formattedMaxExp = languageManager.formatNumber(spawner.getMaxStoredExp());
             int percentExp = (int) ((double) spawner.getSpawnerExp() / spawner.getMaxStoredExp() * 100);
 
             nameReplacements.put("%current_exp%", String.valueOf(spawner.getSpawnerExp()));
-            expMeta.setDisplayName(languageManager.getMessage("exp-info-item.name", nameReplacements));
+            String name = languageManager.getMessage("exp-info-item.name", nameReplacements);
 
             Map<String, String> loreReplacements = new HashMap<>();
             loreReplacements.put("%current_exp%", formattedExp);
@@ -256,10 +253,9 @@ public class SpawnerGuiUpdater implements Listener {
 
             String lorePathExp = "exp-info-item.lore.exp-bottle";
             String loreMessageExp = languageManager.getMessage(lorePathExp, loreReplacements);
-            List<String> loreEx = Arrays.asList(loreMessageExp.split("\n"));
-            expMeta.setLore(loreEx);
-            expItem.setItemMeta(expMeta);
-            inventory.setItem(15, expItem);
+            List<String> loreExp = Arrays.asList(loreMessageExp.split("\n"));
+
+            ItemUpdater.updateItemMeta(expItem, name, loreExp);
             previousExpValue = currentExp;
         }
     }
@@ -269,44 +265,35 @@ public class SpawnerGuiUpdater implements Listener {
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
         ItemMeta meta = spawnerItem.getItemMeta();
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
 
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
         String timeDisplay = getTimeDisplay(timeUntilNextSpawn);
 
-        // Get template for next spawn line
         String nextSpawnTemplate = languageManager.getMessage("spawner-info-item.lore-change");
 
-        // Strip color for comparison
         String strippedTemplate = ChatColor.stripColor(nextSpawnTemplate);
 
-        // Optimize lore update
-        boolean updated = false;
+        int lineIndex = -1;
         for (int i = 0; i < lore.size(); i++) {
-            String line = lore.get(i);
-            // Strip color of current line for comparison
-            String strippedLine = ChatColor.stripColor(line);
-
-            // Compare stripped content
+            String strippedLine = ChatColor.stripColor(lore.get(i));
             if (strippedLine.startsWith(ChatColor.stripColor(strippedTemplate))) {
-                String newLine = nextSpawnTemplate + timeDisplay;
-                if (!line.equals(newLine)) {
-                    lore.set(i, newLine);
-                    updated = true;
-                }
+                lineIndex = i;
                 break;
             }
         }
 
-        // Only update ItemMeta if there are changes
-        if (updated || !lore.stream()
-                .map(ChatColor::stripColor)
-                .anyMatch(line -> line.startsWith(ChatColor.stripColor(strippedTemplate)))) {
-            if (!updated) {
-                lore.add(nextSpawnTemplate + timeDisplay);
+        // Cập nhật hoặc thêm dòng thông tin spawn time
+        String newLine = nextSpawnTemplate + timeDisplay;
+        if (lineIndex >= 0) {
+            // Nếu đã có dòng này, chỉ cập nhật dòng đó nếu nội dung thay đổi
+            if (!lore.get(lineIndex).equals(newLine)) {
+                ItemUpdater.updateLoreLine(spawnerItem, lineIndex, newLine);
             }
-            meta.setLore(lore);
-            spawnerItem.setItemMeta(meta);
+        } else {
+            // Nếu chưa có, thêm dòng mới vào lore
+            lore.add(newLine);
+            ItemUpdater.updateLore(spawnerItem, lore);
         }
     }
 
@@ -325,17 +312,23 @@ public class SpawnerGuiUpdater implements Listener {
         if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
             return -1;
         }
-        final long currentTime = System.currentTimeMillis();
-        final long lastSpawnTime = spawner.getLastSpawnTime();
-        final long spawnDelay = spawner.getSpawnDelay() * 50L;
-        return lastSpawnTime + spawnDelay - currentTime;
+        // Cache spawn delay calculation
+        if (spawner.getCachedSpawnDelay() == 0) {
+            spawner.setCachedSpawnDelay(spawner.getSpawnDelay() * 50L);
+        }
+
+        return spawner.getLastSpawnTime() + spawner.getCachedSpawnDelay() - System.currentTimeMillis();
     }
 
     private String formatTime(long milliseconds) {
         long seconds = milliseconds / 1000;
         long minutes = seconds / 60;
         seconds = seconds % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        return new StringBuilder()
+                .append(minutes < 10 ? "0" : "").append(minutes)
+                .append(':')
+                .append(seconds < 10 ? "0" : "").append(seconds)
+                .toString();
     }
 
     // ===============================================================
@@ -414,6 +407,19 @@ public class SpawnerGuiUpdater implements Listener {
                 }
             });
         }
+    }
+
+    public boolean hasLootInventoryViewers(SpawnerData spawner) {
+        return !getViewersForSpawner(spawner).isEmpty();
+    }
+
+    public boolean hasSpawnerGuiViewers(SpawnerData spawner) {
+        for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
+            if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void cleanup() {

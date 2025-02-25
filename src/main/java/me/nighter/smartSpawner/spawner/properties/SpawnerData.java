@@ -11,6 +11,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -45,6 +47,10 @@ public class SpawnerData {
 
     // Other properties
     private final ReentrantLock lock = new ReentrantLock();
+
+    // Cached values
+    private long cachedSpawnDelay = 0;
+    private Map<String, Object> cachedValues = new ConcurrentHashMap<>();
 
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;
@@ -421,6 +427,28 @@ public class SpawnerData {
 
     public ReentrantLock getLock() {
         return lock;
+    }
+
+// ===============================================================
+//                    Cached Values
+// ===============================================================
+
+    public long getCachedSpawnDelay() {
+        return cachedSpawnDelay;
+    }
+
+    public void setCachedSpawnDelay(long delay) {
+        this.cachedSpawnDelay = delay;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getCachedValue(String key, Supplier<T> supplier) {
+        return (T) cachedValues.computeIfAbsent(key, k -> supplier.get());
+    }
+
+    public void invalidateCache() {
+        cachedSpawnDelay = 0;
+        cachedValues.clear();
     }
 
 }

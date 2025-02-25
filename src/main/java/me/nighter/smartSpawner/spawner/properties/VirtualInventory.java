@@ -7,42 +7,25 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VirtualInventory {
     private final Map<ItemSignature, Long> consolidatedItems;
     private final int maxSlots;
-    private final Map<Integer, DisplayItem> displayCache;
+    private final Map<Integer, ItemStack> displayInventoryCache;
     private boolean displayCacheDirty;
-    private final Comparator<Map.Entry<ItemSignature, Long>> itemComparator;
+    private int usedSlotsCache;
+    private long totalItemsCache;
+    private boolean metricsCacheDirty;
+
+    // Simple item comparator that only sorts by material name
+    private static final Comparator<Map.Entry<ItemSignature, Long>> ITEM_COMPARATOR =
+            Comparator.comparing(e -> e.getKey().getTemplateRef().getType().name());
 
     public VirtualInventory(int maxSlots) {
         this.maxSlots = maxSlots;
         this.consolidatedItems = new ConcurrentHashMap<>();
-        this.displayCache = new ConcurrentHashMap<>();
+        this.displayInventoryCache = new HashMap<>();
         this.displayCacheDirty = true;
-
-        // Create a comparator for sorting items
-        this.itemComparator = (e1, e2) -> {
-            ItemStack item1 = e1.getKey().getTemplate();
-            ItemStack item2 = e2.getKey().getTemplate();
-
-            // First, compare if items have durability
-            boolean hasDurability1 = hasDurability(item1);
-            boolean hasDurability2 = hasDurability(item2);
-
-            if (hasDurability1 != hasDurability2) {
-                return hasDurability1 ? 1 : -1;
-            }
-
-            // Then sort by material name
-            int nameCompare = item1.getType().name().compareTo(item2.getType().name());
-            if (nameCompare != 0) return nameCompare;
-
-            // If same material, sort by amount (descending)
-            return e2.getValue().compareTo(e1.getValue());
-        };
+        this.metricsCacheDirty = true;
+        this.usedSlotsCache = 0;
+        this.totalItemsCache = 0;
     }
-
-    private boolean hasDurability(ItemStack item) {
-        return item.getType().getMaxDurability() > 0;
-    }
-
 
     public static class ItemSignature {
         private final ItemStack template;
@@ -78,48 +61,49 @@ public class VirtualInventory {
         public ItemStack getTemplate() {
             return template.clone();
         }
-    }
 
-    public static class DisplayItem {
-        private final ItemSignature signature;
-        private final int amount;
-
-        public DisplayItem(ItemSignature signature, int amount) {
-            this.signature = signature;
-            this.amount = amount;
+        // Non-cloning method for internal use
+        public ItemStack getTemplateRef() {
+            return template;
         }
     }
 
-    // Add items in bulk
+    // Add items in bulk with minimal operations
     public void addItems(List<ItemStack> items) {
         if (items.isEmpty()) return;
 
-        // Batch process items
-        Map<ItemSignature, Long> batchUpdates = new HashMap<>();
+        // Process items in a single batch
+        boolean updated = false;
         for (ItemStack item : items) {
+            if (item == null || item.getAmount() <= 0) continue;
+
             ItemSignature sig = new ItemSignature(item);
-            batchUpdates.merge(sig, (long) item.getAmount(), Long::sum);
+            consolidatedItems.merge(sig, (long) item.getAmount(), Long::sum);
+            updated = true;
         }
 
-        // Apply batch updates atomically
-        batchUpdates.forEach((sig, amount) ->
-                consolidatedItems.merge(sig, amount, Long::sum));
-
-        displayCacheDirty = true;
+        if (updated) {
+            displayCacheDirty = true;
+            metricsCacheDirty = true;
+        }
     }
 
-    // Remove items in bulk
+    // Remove items in bulk with minimal operations
     public boolean removeItems(List<ItemStack> items) {
+        if (items.isEmpty()) return true;
+
         Map<ItemSignature, Long> toRemove = new HashMap<>();
 
         // Calculate total amounts to remove in a single pass
         for (ItemStack item : items) {
-            if (item == null) continue;
+            if (item == null || item.getAmount() <= 0) continue;
             ItemSignature sig = new ItemSignature(item);
             toRemove.merge(sig, (long) item.getAmount(), Long::sum);
         }
 
-        // Verify amounts in a single atomic check
+        if (toRemove.isEmpty()) return true;
+
+        // Verify we have enough of each item
         for (Map.Entry<ItemSignature, Long> entry : toRemove.entrySet()) {
             Long currentAmount = consolidatedItems.getOrDefault(entry.getKey(), 0L);
             if (currentAmount < entry.getValue()) {
@@ -127,57 +111,80 @@ public class VirtualInventory {
             }
         }
 
-        // Perform removals in batch
-        toRemove.forEach((sig, amount) -> {
+        // Perform removals all at once
+        boolean updated = false;
+        for (Map.Entry<ItemSignature, Long> entry : toRemove.entrySet()) {
+            ItemSignature sig = entry.getKey();
+            long amountToRemove = entry.getValue();
+
             consolidatedItems.computeIfPresent(sig, (key, current) -> {
-                long newAmount = current - amount;
+                long newAmount = current - amountToRemove;
                 return newAmount <= 0 ? null : newAmount;
             });
-        });
 
-        displayCacheDirty = true;
+            updated = true;
+        }
+
+        if (updated) {
+            displayCacheDirty = true;
+            metricsCacheDirty = true;
+        }
+
         return true;
     }
 
-    // Get display inventory
+    // Optimized getDisplayInventory method
     public Map<Integer, ItemStack> getDisplayInventory() {
-        if (!displayCacheDirty && !displayCache.isEmpty()) {
-            return convertDisplayCacheToItemStacks();
+        // Return cached result if available
+        if (!displayCacheDirty) {
+            return new HashMap<>(displayInventoryCache);
         }
 
-        displayCache.clear();
+        // Clear the cache for a fresh rebuild
+        displayInventoryCache.clear();
 
-        // Sort items using our custom comparator
+        if (consolidatedItems.isEmpty()) {
+            displayCacheDirty = false;
+            usedSlotsCache = 0;
+            return Collections.emptyMap();
+        }
+
+        // Get and sort the items - only by material name as requested
         List<Map.Entry<ItemSignature, Long>> sortedItems = new ArrayList<>(consolidatedItems.entrySet());
-        sortedItems.sort(itemComparator);
+        sortedItems.sort(ITEM_COMPARATOR);
 
+        // Process items directly to the display inventory
         int currentSlot = 0;
+
         for (Map.Entry<ItemSignature, Long> entry : sortedItems) {
             if (currentSlot >= maxSlots) break;
 
             ItemSignature sig = entry.getKey();
             long totalAmount = entry.getValue();
+            ItemStack templateItem = sig.getTemplateRef();
+            int maxStackSize = templateItem.getMaxStackSize();
 
+            // Create as many stacks as needed for this item type
             while (totalAmount > 0 && currentSlot < maxSlots) {
-                int stackSize = (int) Math.min(totalAmount, sig.getTemplate().getMaxStackSize());
-                displayCache.put(currentSlot, new DisplayItem(sig, stackSize));
+                int stackSize = (int) Math.min(totalAmount, maxStackSize);
+
+                // Create the display item only once per slot
+                ItemStack displayItem = templateItem.clone();
+                displayItem.setAmount(stackSize);
+
+                // Store in cache
+                displayInventoryCache.put(currentSlot, displayItem);
+
                 totalAmount -= stackSize;
                 currentSlot++;
             }
         }
 
+        // Update cache state
         displayCacheDirty = false;
-        return convertDisplayCacheToItemStacks();
-    }
+        usedSlotsCache = displayInventoryCache.size();
 
-    private Map<Integer, ItemStack> convertDisplayCacheToItemStacks() {
-        Map<Integer, ItemStack> result = new HashMap<>();
-        displayCache.forEach((slot, displayItem) -> {
-            ItemStack item = displayItem.signature.getTemplate();
-            item.setAmount(displayItem.amount);
-            result.put(slot, item);
-        });
-        return result;
+        return new HashMap<>(displayInventoryCache);
     }
 
     public int getMaxSlots() {
@@ -185,7 +192,10 @@ public class VirtualInventory {
     }
 
     public long getTotalItems() {
-        return consolidatedItems.values().stream().mapToLong(Long::longValue).sum();
+        if (metricsCacheDirty) {
+            updateMetricsCache();
+        }
+        return totalItemsCache;
     }
 
     public Map<ItemSignature, Long> getConsolidatedItems() {
@@ -193,6 +203,37 @@ public class VirtualInventory {
     }
 
     public int getUsedSlots() {
-        return getDisplayInventory().size();
+        // If cache is dirty but we haven't regenerated the display inventory yet,
+        // calculate a quick estimate instead of rebuilding the whole display
+        if (displayCacheDirty) {
+            if (consolidatedItems.isEmpty()) {
+                return 0;
+            }
+
+            // Quick estimate - not perfectly accurate but avoids full rebuilds
+            int estimatedSlots = 0;
+            for (Map.Entry<ItemSignature, Long> entry : consolidatedItems.entrySet()) {
+                long amount = entry.getValue();
+                int maxStackSize = entry.getKey().getTemplateRef().getMaxStackSize();
+                estimatedSlots += (int) Math.ceil((double) amount / maxStackSize);
+                if (estimatedSlots >= maxSlots) {
+                    return maxSlots; // Cap at max slots
+                }
+            }
+            return estimatedSlots;
+        }
+
+        return usedSlotsCache;
+    }
+
+    private void updateMetricsCache() {
+        totalItemsCache = consolidatedItems.values().stream()
+                .mapToLong(Long::longValue)
+                .sum();
+        metricsCacheDirty = false;
+    }
+
+    public boolean isDirty() {
+        return displayCacheDirty;
     }
 }

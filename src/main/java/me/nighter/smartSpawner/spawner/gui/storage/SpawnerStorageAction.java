@@ -17,6 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -35,6 +36,7 @@ public class SpawnerStorageAction implements Listener {
     private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 53);
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
+    private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
 
     public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -46,10 +48,6 @@ public class SpawnerStorageAction implements Listener {
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
         Map<ClickType, ItemClickHandler> handlers = new EnumMap<>(ClickType.class);
-        handlers.put(ClickType.SHIFT_LEFT, (player, inv, slot, item, spawner) ->
-                handleTakeAllSimilarItems(player, inv, item, spawner));
-        handlers.put(ClickType.SHIFT_RIGHT, (player, inv, slot, item, spawner) ->
-                handleTakeAllSimilarItems(player, inv, item, spawner));
         handlers.put(ClickType.RIGHT, (player, inv, slot, item, spawner) ->
                 takeSingleItem(player, inv, slot, item, spawner, true));
         handlers.put(ClickType.LEFT, (player, inv, slot, item, spawner) ->
@@ -111,46 +109,6 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
-    private void handleTakeAllSimilarItems(Player player, Inventory sourceInv, ItemStack targetItem, SpawnerData spawner) {
-        // Lock to prevent race conditions
-        synchronized(spawner.getVirtualInventory()) {
-
-            // Save the cursor item before moving items
-            ItemStack cursorItem = player.getItemOnCursor();
-
-            Map<Integer, ItemStack> similarItems = findSimilarItems(sourceInv, targetItem);
-            if (similarItems.isEmpty()) return;
-
-            BatchItemMoveResult result = ItemMoveHelper.moveBatchItems(
-                    similarItems,
-                    player.getInventory(),
-                    spawner.getVirtualInventory()
-            );
-
-            if (result.getTotalMoved() > 0) {
-                updateBatchInventory(sourceInv, result.getSlotUpdates());
-                spawner.getVirtualInventory().removeItems(result.getMovedItems());
-                // Restore cursor position
-                player.getOpenInventory().setCursor(cursorItem);
-            }
-
-            if (result.isInventoryFull()) {
-                languageManager.sendMessage(player, "messages.inventory-full");
-            }
-        }
-    }
-
-    private static Map<Integer, ItemStack> findSimilarItems(Inventory sourceInv, ItemStack targetItem) {
-        Map<Integer, ItemStack> similarItems = new HashMap<>();
-        for (int i = 0; i < STORAGE_SLOTS; i++) {
-            ItemStack invItem = sourceInv.getItem(i);
-            if (invItem != null && invItem.getType() != Material.AIR && invItem.isSimilar(targetItem)) {
-                similarItems.put(i, invItem.clone());
-            }
-        }
-        return similarItems;
-    }
-
     private static void updateInventorySlot(Inventory sourceInv, int slot, ItemStack item, int amountMoved) {
         if (amountMoved >= item.getAmount()) {
             sourceInv.setItem(slot, null);
@@ -162,10 +120,6 @@ public class SpawnerStorageAction implements Listener {
         sourceInv.setItem(slot, remaining);
     }
 
-    private static void updateBatchInventory(Inventory sourceInv, Map<Integer, ItemUpdate> slotUpdates) {
-        slotUpdates.forEach((slot, update) ->
-                sourceInv.setItem(slot, update.getUpdatedItem()));
-    }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
@@ -179,12 +133,12 @@ public class SpawnerStorageAction implements Listener {
         switch (slot) {
             case 48:
                 if (holder.getCurrentPage() > 1) {
-                    openLootPage(player, spawner, holder.getCurrentPage() - 1, false);
+                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, false);
                 }
                 break;
             case 50:
                 if (holder.getCurrentPage() < holder.getTotalPages()) {
-                    openLootPage(player, spawner, holder.getCurrentPage() + 1, false);
+                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, false);
                 }
                 break;
             case 49:
@@ -197,8 +151,45 @@ public class SpawnerStorageAction implements Listener {
                 handleTakeAllItems(player, inventory);
                 break;
             case 46:
-                handleToggleEquipment(player, spawner, holder);
+                handleToggleEquipment(player, spawner, inventory);
                 break;
+        }
+    }
+
+    private void updatePageContent(Player player, SpawnerData spawner, int newPage, Inventory inventory, boolean refresh) {
+        SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+
+        holder.setCurrentPage(newPage);
+
+        int totalPages = calculateTotalPages(spawner);
+        if (totalPages != holder.getTotalPages()) {
+            holder.setTotalPages(totalPages);
+        }
+
+        lootManager.updateDisplay(inventory, spawner, newPage);
+        updateInventoryTitle(player, inventory, spawner, newPage, totalPages);
+
+        Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
+        float pitch = refresh ? 1.2f : 1.0f;
+        player.playSound(player.getLocation(), sound, 1.0f, pitch);
+    }
+
+    private int calculateTotalPages(SpawnerData spawner) {
+        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
+        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
+    }
+
+    private void updateInventoryTitle(Player player, Inventory inventory, SpawnerData spawner, int page, int totalPages) {
+        String baseTitle = languageManager.getGuiTitle("gui-title.loot-menu");
+        String newTitle = baseTitle + " - [" + page + "/" + totalPages + "]";
+
+        try {
+            player.getOpenInventory().setTitle(newTitle);
+        } catch (Exception e) {
+            // Fallback
+            configManager.debug("Fallback: Opening loot page after selling all items");
+            openLootPage(player, spawner, page, false);
         }
     }
 
@@ -213,7 +204,14 @@ public class SpawnerStorageAction implements Listener {
         }
 
         if (plugin.getShopIntegration().sellAllItems(player, spawner)) {
-            openLootPage(player, spawner, holder.getCurrentPage(), true);
+            Inventory inventory = holder.getInventory();
+            if (inventory != null) {
+                updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
+            } else {
+                // Fallback
+                configManager.debug("Fallback: Opening loot page after selling all items");
+                openLootPage(player, spawner, holder.getCurrentPage(), true);
+            }
         }
     }
 
@@ -222,18 +220,35 @@ public class SpawnerStorageAction implements Listener {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
     }
 
-    private void handleToggleEquipment(Player player, SpawnerData spawner, StoragePageHolder holder) {
+    private void handleToggleEquipment(Player player, SpawnerData spawner, Inventory inventory) {
         if (configManager.isAllowToggleEquipmentItems()) {
             spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
-            openLootPage(player, spawner, holder.getCurrentPage(), true);
+
+            StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+            updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
         }
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
         SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
+
+        // Check if player already has an open inventory cache
+        UUID playerId = player.getUniqueId();
+        Inventory existingInventory = openStorageInventories.get(playerId);
+
+        // If the player already has an open inventory, update the content
+        if (existingInventory != null && !refresh && existingInventory.getHolder() instanceof StoragePageHolder) {
+            StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder();
+            updatePageContent(player, spawner, page, existingInventory, false);
+            return;
+        }
+
+        // If there is no existing inventory or a refresh is needed, create a new inventory
         Inventory pageInventory = lootManager.createInventory(spawner, title, page);
 
+        // Store the inventory in the cache
+        openStorageInventories.put(playerId, pageInventory);
         Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
         float pitch = refresh ? 1.2f : 1.0f;
         player.playSound(player.getLocation(), sound, 1.0f, pitch);
@@ -344,6 +359,17 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
-    private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
-    private record TransferItemResult(int amountMoved, boolean inventoryFull) {}
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getInventory().getHolder() instanceof StoragePageHolder)) {
+            return;
+        }
+
+        if (event.getPlayer() instanceof Player) {
+            Player player = (Player) event.getPlayer();
+            openStorageInventories.remove(player.getUniqueId());
+        }
+    }
+
+        private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
 }

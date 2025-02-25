@@ -180,7 +180,7 @@ public class SpawnerManager {
 
 
     /**
-     * Loads all spawner data from file storage
+     * Loads all spawner data from file storage and removes ghost spawners
      */
     public void loadSpawnerData() {
         // Clear existing data
@@ -208,6 +208,10 @@ public class SpawnerManager {
             }
         }
 
+        // Check for ghost spawners after initial load, as the chunks may not have been loaded
+        // during the initial file loading process
+        Bukkit.getScheduler().runTaskLater(plugin, this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
+
         // Update holograms if enabled
         if (hologramEnabled && !spawners.isEmpty()) {
             removeAllGhostsHolograms();
@@ -215,6 +219,42 @@ public class SpawnerManager {
                 logger.info("Updating holograms for all spawners...");
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
+        }
+    }
+
+    /**
+     * Checks for and removes ghost spawners (spawners without physical blocks)
+     */
+    public void removeGhostSpawners() {
+        int removedCount = 0;
+        List<String> ghostSpawnerIds = new ArrayList<>();
+
+        // Find ghost spawners
+        for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
+            String spawnerId = entry.getKey();
+            SpawnerData spawner = entry.getValue();
+            Location loc = spawner.getSpawnerLocation();
+
+            // Check if the chunk is loaded, if not, load it temporarily
+            if (!loc.getChunk().isLoaded()) {
+                loc.getChunk().load(true);
+            }
+
+            // Check if the block at the location is a spawner
+            if (loc.getBlock().getType() != Material.SPAWNER) {
+                ghostSpawnerIds.add(spawnerId);
+            }
+        }
+
+        // Remove ghost spawners
+        for (String ghostId : ghostSpawnerIds) {
+            logger.info("Removing ghost spawner with ID: " + ghostId);
+            removeSpawner(ghostId);
+            removedCount++;
+        }
+
+        if (removedCount > 0) {
+            logger.info("Removed " + removedCount + " ghost spawners.");
         }
     }
 

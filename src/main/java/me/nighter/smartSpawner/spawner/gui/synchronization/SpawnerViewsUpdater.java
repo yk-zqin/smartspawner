@@ -19,6 +19,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class SpawnerViewsUpdater implements Listener {
     private final SmartSpawner plugin;
@@ -38,8 +39,9 @@ public class SpawnerViewsUpdater implements Listener {
     }
 
     public void trackViewer(String spawnerId, Player player) {
-        spawnerViewers.computeIfAbsent(spawnerId, k -> ConcurrentHashMap.newKeySet()).add(player.getUniqueId());
-        playerCurrentSpawner.put(player.getUniqueId(), spawnerId);
+        UUID playerId = player.getUniqueId();
+        spawnerViewers.computeIfAbsent(spawnerId, k -> ConcurrentHashMap.newKeySet()).add(playerId);
+        playerCurrentSpawner.put(playerId, spawnerId);
     }
 
     public void untrackViewer(Player player) {
@@ -56,17 +58,16 @@ public class SpawnerViewsUpdater implements Listener {
     }
 
     public Set<Player> getViewers(String spawnerId) {
-        Set<Player> players = new HashSet<>();
         Set<UUID> viewerIds = spawnerViewers.get(spawnerId);
-        if (viewerIds != null) {
-            viewerIds.forEach(uuid -> {
-                Player player = Bukkit.getPlayer(uuid);
-                if (player != null && player.isOnline()) {
-                    players.add(player);
-                }
-            });
+        if (viewerIds == null || viewerIds.isEmpty()) {
+            return Collections.emptySet();
         }
-        return players;
+
+        return viewerIds.stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .filter(Player::isOnline)
+                .collect(Collectors.toSet());
     }
 
     private int calculateTotalPages(int totalItems) {
@@ -76,17 +77,16 @@ public class SpawnerViewsUpdater implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
-        if (!isValidHolder(event.getInventory().getHolder())) return;
 
-        // Schedule check for inventory reopen
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        // Use runTask instead of runTaskLater when possible
+        Bukkit.getScheduler().runTask(plugin, () -> {
             if (!player.isOnline()) return;
 
             Inventory openInv = player.getOpenInventory().getTopInventory();
             if (openInv == null || !isValidHolder(openInv.getHolder())) {
                 untrackViewer(player);
             }
-        }, 1L);
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

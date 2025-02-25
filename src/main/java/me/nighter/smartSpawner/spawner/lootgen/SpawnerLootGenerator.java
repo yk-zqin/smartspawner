@@ -28,6 +28,9 @@ public class SpawnerLootGenerator {
     private final ConfigManager configManager;
     private final Random random;
     private final Map<String, EntityLootConfig> entityLootConfigs;
+    private final Map<String, String> effectNameCache = new HashMap<>();
+    private final Map<Integer, String> romanNumeralCache = new HashMap<>();
+    private static final Map<Material, ItemStack> itemTemplateCache = new ConcurrentHashMap<>();
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -37,6 +40,15 @@ public class SpawnerLootGenerator {
         this.random = new Random();
         this.entityLootConfigs = new ConcurrentHashMap<>();
         loadConfigurations();
+        initCaches();
+    }
+
+    private void initCaches() {
+        // Initialize Roman numeral cache
+        String[] romanNumerals = {"I", "II", "III", "IV", "V"};
+        for (int i = 1; i <= romanNumerals.length; i++) {
+            romanNumeralCache.put(i, " " + romanNumerals[i-1]);
+        }
     }
 
     // Cache for entity configurations
@@ -76,8 +88,14 @@ public class SpawnerLootGenerator {
             this.potionAmplifier = potionAmplifier;
         }
 
-        public ItemStack createItemStack(Random random) {
+        private ItemStack getItemTemplate(Material material) {
+            return itemTemplateCache.computeIfAbsent(material, ItemStack::new);
+        }
+
+        public ItemStack createItemStack(Random random, Map<String, String> effectNameCache, Map<Integer, String> romanNumeralCache) {
             ItemStack item = new ItemStack(material, 1);
+
+            // Apply durability only if needed
             if (minDurability != null && maxDurability != null) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta instanceof Damageable) {
@@ -87,55 +105,61 @@ public class SpawnerLootGenerator {
                 }
             }
 
+            // Handle potion effects for tipped arrows
             if (material == Material.TIPPED_ARROW && potionEffectType != null) {
-                PotionMeta meta = (PotionMeta) item.getItemMeta();
-                if (meta != null) {
-                    PotionEffectType effectType = PotionEffectType.getByName(potionEffectType);
-                    if (effectType != null && potionDuration != null && potionAmplifier != null) {
+                PotionEffectType effectType = PotionEffectType.getByName(potionEffectType);
+                if (effectType != null && potionDuration != null && potionAmplifier != null) {
+                    PotionMeta meta = (PotionMeta) item.getItemMeta();
+                    if (meta != null) {
+                        // Create potion effect
                         PotionEffect effect = new PotionEffect(
                                 effectType,
                                 potionDuration,
                                 potionAmplifier,
-                                true,  // ambient
-                                true,  // particles
-                                true   // icon
+                                true,
+                                true,
+                                true
                         );
                         meta.addCustomEffect(effect, true);
+
+                        // Format display attributes using cached values when possible
+                        String duration = formatMinecraftDuration(potionDuration);
+
+                        // Get or cache effect name
+                        String effectName = effectNameCache.computeIfAbsent(
+                                effectType.getName(),
+                                SpawnerLootGenerator::formatEffectName
+                        );
+
+                        // Get Roman numeral from cache or use fallback
+                        String level = potionAmplifier > 0 ?
+                                romanNumeralCache.getOrDefault(potionAmplifier + 1, " " + (potionAmplifier + 1)) :
+                                "";
+
+                        // Create lore
+                        List<String> lore = new ArrayList<>();
+                        lore.add(ChatColor.RED + effectName + level + " (" + duration + ")");
+                        meta.setLore(lore);
+                        meta.setDisplayName("Arrow of " + effectName);
+                        item.setItemMeta(meta);
                     }
-
-                    String duration = formatMinecraftDuration(potionDuration);
-                    String effectName = formatEffectName(effectType.getName());
-                    String level = potionAmplifier > 0 ? " " + toRomanNumeral(potionAmplifier + 1) : "";
-
-
-                    List<String> lore = new ArrayList<>();
-                    lore.add(ChatColor.RED + effectName + level + " (" + duration + ")");
-                    meta.setLore(lore);
-                    meta.setDisplayName("Arrow of " + effectName);
-                    item.setItemMeta(meta);
                 }
             }
 
             return item;
         }
+    }
 
-        private String formatMinecraftDuration(int ticks) {
-            // Minecraft thường hiển thị thời gian dưới dạng mm:ss
-            int totalSeconds = ticks / 20;
-            int minutes = totalSeconds / 60;
-            int seconds = totalSeconds % 60;
-            return String.format("%02d:%02d", minutes, seconds);
-        }
+    private static String formatMinecraftDuration(int ticks) {
+        int totalSeconds = ticks / 20;
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
 
-        private String formatEffectName(String name) {
-            String formatted = name.substring(0, 1).toUpperCase() + name.toLowerCase().substring(1);
-            return formatted.replace("_", " ");
-        }
-
-        private String toRomanNumeral(int number) {
-            String[] romanNumerals = {"I", "II", "III", "IV", "V"};
-            return " " + (number > 0 && number <= romanNumerals.length ? romanNumerals[number - 1] : String.valueOf(number));
-        }
+    private static String formatEffectName(String name) {
+        String formatted = name.substring(0, 1).toUpperCase() + name.toLowerCase().substring(1);
+        return formatted.replace("_", " ");
     }
 
     private void loadConfigurations() {
@@ -162,7 +186,7 @@ public class SpawnerLootGenerator {
                         Material material = Material.valueOf(itemKey.toUpperCase());
                         String[] amounts = itemSection.getString("amount", "1-1").split("-");
                         int minAmount = Integer.parseInt(amounts[0]);
-                        int maxAmount = Integer.parseInt(amounts[1]);
+                        int maxAmount = Integer.parseInt(amounts.length > 1 ? amounts[1] : amounts[0]);
                         double chance = itemSection.getDouble("chance", 100.0);
 
                         Integer minDurability = null;
@@ -170,7 +194,7 @@ public class SpawnerLootGenerator {
                         if (itemSection.contains("durability")) {
                             String[] durabilities = itemSection.getString("durability").split("-");
                             minDurability = Integer.parseInt(durabilities[0]);
-                            maxDurability = Integer.parseInt(durabilities[1]);
+                            maxDurability = Integer.parseInt(durabilities.length > 1 ? durabilities[1] : durabilities[0]);
                         }
 
                         String potionEffectType = null;
@@ -206,7 +230,6 @@ public class SpawnerLootGenerator {
         EntityLootConfig config = entityLootConfigs.get(entityName);
 
         if (config == null) {
-            configManager.debug("No loot config found for entity type: " + entityName);
             return new LootResult(Collections.emptyList(), 0);
         }
 
@@ -214,11 +237,17 @@ public class SpawnerLootGenerator {
         List<ItemStack> totalLoot = new ArrayList<>();
         int totalExperience = config.experience * mobCount;
 
+        boolean allowEquipment = spawner.isAllowEquipmentItems();
+
         // Pre-filter items based on equipment permission
         List<LootItem> validItems = config.possibleItems.stream()
-                .filter(item -> spawner.isAllowEquipmentItems() ||
+                .filter(item -> allowEquipment ||
                         (item.minDurability == null && item.maxDurability == null))
                 .collect(Collectors.toList());
+
+        if (validItems.isEmpty()) {
+            return new LootResult(Collections.emptyList(), totalExperience);
+        }
 
         // Process each mob individually for accurate drop rates
         for (int i = 0; i < mobCount; i++) {
@@ -226,7 +255,7 @@ public class SpawnerLootGenerator {
                 if (random.nextDouble() * 100 <= lootItem.chance) {
                     int amount = random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
                     if (amount > 0) {
-                        ItemStack item = lootItem.createItemStack(random);
+                        ItemStack item = lootItem.createItemStack(random, effectNameCache, romanNumeralCache);
                         if (item != null) {
                             item.setAmount(amount);
                             totalLoot.add(item);
@@ -239,59 +268,122 @@ public class SpawnerLootGenerator {
         return new LootResult(totalLoot, totalExperience);
     }
 
-    public void addLootToSpawner(SpawnerData spawner, LootResult lootResult) {
-        spawner.getVirtualInventory().addItems(lootResult.getItems());
-        spawner.setSpawnerExp(Math.min(
-                spawner.getSpawnerExp() + lootResult.getExperience(),
-                spawner.getMaxStoredExp()
-        ));
+    public boolean addLootToSpawner(SpawnerData spawner, LootResult lootResult) {
+        boolean hasItems = !lootResult.getItems().isEmpty();
+        boolean hasExp = lootResult.getExperience() > 0;
+
+        if (!hasItems && !hasExp) {
+            return false;
+        }
+
+        if (hasItems) {
+            spawner.getVirtualInventory().addItems(lootResult.getItems());
+        }
+
+        if (hasExp) {
+            int currentExp = spawner.getSpawnerExp();
+            int maxExp = spawner.getMaxStoredExp();
+            int newExp = Math.min(currentExp + lootResult.getExperience(), maxExp);
+
+            if (newExp != currentExp) {
+                spawner.setSpawnerExp(newExp);
+                return true;
+            }
+        }
+
+        return hasItems;
     }
 
     public void spawnLoot(SpawnerData spawner) {
-        if (System.currentTimeMillis() - spawner.getLastSpawnTime() >= spawner.getSpawnDelay()) {
-            // Run heavy calculations async
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                LootResult loot = generateLoot(
-                        spawner.getEntityType(),
-                        spawner.getMinMobs(),
-                        spawner.getMaxMobs(),
-                        spawner
-                );
+        long currentTime = System.currentTimeMillis();
+        long lastSpawnTime = spawner.getLastSpawnTime();
+        long spawnDelay = spawner.getSpawnDelay();
 
-                // Switch back to main thread for Bukkit API calls
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (configManager.isLootSpawnParticlesEnabled()) {
-                        Location loc = spawner.getSpawnerLocation();
-                        World world = loc.getWorld();
-                        world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                                loc.clone().add(0.5, 0.5, 0.5),
-                                10, 0.3, 0.3, 0.3, 0);
-                    }
-                    // Calculate pages before adding new loot
-                    int oldTotalPages = calculateTotalPages(spawner);
+        if (currentTime - lastSpawnTime < spawnDelay) {
+            return;
+        }
 
-                    addLootToSpawner(spawner, loot);
-                    spawner.setLastSpawnTime(System.currentTimeMillis());
+        // Update spawn time immediately
+        spawner.setLastSpawnTime(currentTime);
 
-                    // Calculate pages after adding new loot
-                    int newTotalPages = calculateTotalPages(spawner);
+        // Run heavy calculations async and batch updates
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            // Pre-check if spawner has reached capacity
+            if (spawner.getVirtualInventory().getUsedSlots() >= spawner.getMaxSpawnerLootSlots() &&
+                    spawner.getSpawnerExp() >= spawner.getMaxStoredExp()) {
+                return; // Skip generation if both exp and inventory are full
+            }
 
-                    spawnerGuiUpdater.updateLootInventoryViewers(spawner, oldTotalPages, newTotalPages);
-                    spawnerGuiUpdater.updateSpawnerGuiViewers(spawner);
+            LootResult loot = generateLoot(
+                    spawner.getEntityType(),
+                    spawner.getMinMobs(),
+                    spawner.getMaxMobs(),
+                    spawner
+            );
 
-                    if (configManager.isHologramEnabled()) {
-                        spawner.updateHologramData();
-                    }
-                    // Mark spawner as modified for saving
-                    spawnerManager.markSpawnerModified(spawner.getSpawnerId());
-                });
+            // Only proceed if we generated something
+            if (loot.getItems().isEmpty() && loot.getExperience() == 0) {
+                return;
+            }
+
+            // Switch back to main thread for Bukkit API calls
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                // Cache viewers state to avoid multiple checks
+                boolean hasLootViewers = spawnerGuiUpdater.hasLootInventoryViewers(spawner);
+                boolean hasSpawnerViewers = spawnerGuiUpdater.hasSpawnerGuiViewers(spawner);
+
+                // Cache pages calculation
+                int oldTotalPages = hasLootViewers ? calculateTotalPages(spawner) : 0;
+
+                // Add loot efficiently
+                boolean changed = addLootToSpawner(spawner, loot);
+
+                if (!changed) {
+                    return;
+                }
+
+                // Handle GUI updates in batches
+                handleGuiUpdates(spawner, hasLootViewers, hasSpawnerViewers, oldTotalPages);
+
+                // Mark for saving only once
+                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             });
+        });
+    }
+
+    private void handleGuiUpdates(SpawnerData spawner, boolean hasLootViewers,
+                                  boolean hasSpawnerViewers, int oldTotalPages) {
+        // Show particles if needed
+        if (configManager.isLootSpawnParticlesEnabled()) {
+            Location loc = spawner.getSpawnerLocation();
+            World world = loc.getWorld();
+            if (world != null) {
+                world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                        loc.clone().add(0.5, 0.5, 0.5),
+                        10, 0.3, 0.3, 0.3, 0);
+            }
+        }
+
+        // Batch GUI updates
+        if (hasLootViewers) {
+            if (spawner.getVirtualInventory().isDirty()) {
+                int newTotalPages = calculateTotalPages(spawner);
+                spawnerGuiUpdater.updateLootInventoryViewers(spawner, oldTotalPages, newTotalPages);
+            }
+        }
+
+        if (hasSpawnerViewers) {
+            spawnerGuiUpdater.updateSpawnerGuiViewers(spawner);
+        }
+
+        if (configManager.isHologramEnabled()) {
+            spawner.updateHologramData();
         }
     }
 
     private int calculateTotalPages(SpawnerData spawner) {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int totalItems = virtualInv.getDisplayInventory().size();
+        int totalItems = virtualInv.getUsedSlots();
         return Math.max(1, (int) Math.ceil((double) totalItems / 45));
     }
 }

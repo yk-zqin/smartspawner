@@ -6,9 +6,9 @@ import org.bukkit.inventory.InventoryHolder;
 
 public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
     private final SpawnerData spawnerData;
-    private final int currentPage;
-    private final int totalPages;
-    private final int oldUsedSlots;
+    private int currentPage;
+    private int totalPages;
+    private int oldUsedSlots;
 
     // Make these public static final for better performance and accessibility
     public static final int ROWS_PER_PAGE = 5;
@@ -43,15 +43,26 @@ public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
         return currentPage;
     }
 
+    public void setCurrentPage(int page) {
+        this.currentPage = Math.max(1, Math.min(page, totalPages));
+    }
+
     public int getTotalPages() {
         return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = Math.max(1, totalPages);
     }
 
     public int getOldUsedSlots() {
         return oldUsedSlots;
     }
 
-    // Add utility methods for page calculations
+    public void updateOldUsedSlots() {
+        this.oldUsedSlots = spawnerData.getVirtualInventory().getUsedSlots();
+    }
+
     public boolean hasNextPage() {
         return currentPage < totalPages;
     }
@@ -60,12 +71,10 @@ public class StoragePageHolder implements InventoryHolder, SpawnerHolder {
         return currentPage > 1;
     }
 
-    // Calculate slot index for given item position
     public int getSlotIndex(int itemIndex) {
         return itemIndex % MAX_ITEMS_PER_PAGE;
     }
 
-    // Calculate actual item index based on current page
     public int getItemIndex(int slotIndex) {
         return ((currentPage - 1) * MAX_ITEMS_PER_PAGE) + slotIndex;
     }

@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 import java.io.File;
 import java.io.IOException;
@@ -424,6 +425,13 @@ public class SpawnerFileHandler {
                 Integer.parseInt(locParts[2]),
                 Integer.parseInt(locParts[3]));
 
+        // Check if this is a ghost spawner - the block at the location should be a MOB_SPAWNER
+        if (!isSpawnerBlock(location)) {
+            logger.warning("Ghost spawner detected at " + locationString + " with ID " + spawnerId +
+                    " - No physical spawner block found.");
+            return null;
+        }
+
         // Load entity type
         String entityTypeString = spawnerData.getString(path + ".entityType");
         if (entityTypeString == null) {
@@ -496,6 +504,28 @@ public class SpawnerFileHandler {
 
         spawner.setVirtualInventory(virtualInv);
         return spawner;
+    }
+
+    /**
+     * Checks if the block at the given location is a MOB_SPAWNER
+     *
+     * @param location The location to check
+     * @return true if the block is a MOB_SPAWNER, false otherwise
+     */
+    private boolean isSpawnerBlock(Location location) {
+        // Make sure we run this on the main thread if needed
+        if (!Bukkit.isPrimaryThread()) {
+            // Return a default value when running async, will be checked properly during processing
+            return true;
+        }
+
+        // Check if the chunk is loaded
+        if (!location.getChunk().isLoaded()) {
+            // We can't check unloaded chunks, so we'll assume it's valid for now
+            return true;
+        }
+
+        return location.getBlock().getType() == Material.SPAWNER;
     }
 
     /**
