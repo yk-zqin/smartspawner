@@ -115,7 +115,7 @@ public class SpawnerMenuAction implements Listener {
      */
     private void handleChestClick(Player player, SpawnerData spawner) {
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
-        Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1);
+        Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1, -1);
 
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
         player.closeInventory();
@@ -172,7 +172,7 @@ public class SpawnerMenuAction implements Listener {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
 
         // Update all viewers instead of just current player
-        spawnerViewsUpdater.updateViewers(spawner);
+        spawnerViewsUpdater.updateSpawnerMenuViewers(spawner);
 
         // Send appropriate message based on exp distribution
         sendExpCollectionMessage(player, initialExp, expUsedForMending);

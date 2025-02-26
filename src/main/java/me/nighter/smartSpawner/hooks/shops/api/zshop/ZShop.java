@@ -6,6 +6,7 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -26,11 +27,12 @@ public class ZShop implements IShopIntegration {
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private ShopManager shopManager;
+    private final SpawnerGuiUpdater spawnerGuiUpdater;
     private Economy vaultEconomy;
 
     // Cooldown system
     private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
-    private static final long SELL_COOLDOWN_MS = 500; // 500ms cooldown
+    private static final long SELL_COOLDOWN_MS = 1000; // 1000ms cooldown
 
     // Transaction timeout
     private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout
@@ -43,6 +45,7 @@ public class ZShop implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
+        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
         setupVaultEconomy();
     }
 
@@ -177,17 +180,14 @@ public class ZShop implements IShopIntegration {
             return false;
         }
 
+        int oldTotalPages = calculateTotalPages(spawner);
         // Pre-remove items to improve UX
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             virtualInv.removeItems(calculation.getItemsToRemove());
             // Force inventory update
             if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
-                StoragePageHolder holder = (StoragePageHolder) player.getOpenInventory().getTopInventory().getHolder();
-                plugin.getSpawnerStorageUI().updateDisplay(
-                        player.getOpenInventory().getTopInventory(),
-                        holder.getSpawnerData(),
-                        holder.getCurrentPage()
-                );
+                int newTotalPages = calculateTotalPages(spawner);
+                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             }
         });
 
@@ -213,12 +213,8 @@ public class ZShop implements IShopIntegration {
                     languageManager.sendMessage(player, "messages.sell-failed");
                     // Force inventory update
                     if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
-                        StoragePageHolder holder = (StoragePageHolder) player.getOpenInventory().getTopInventory().getHolder();
-                        plugin.getSpawnerStorageUI().updateDisplay(
-                                player.getOpenInventory().getTopInventory(),
-                                holder.getSpawnerData(),
-                                holder.getCurrentPage()
-                        );
+                        int newTotalPages = calculateTotalPages(spawner);
+                        spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                     }
                 });
                 return false;
@@ -239,10 +235,17 @@ public class ZShop implements IShopIntegration {
             // Restore items on timeout/error
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 virtualInv.addItems(calculation.getItemsToRemove());
+                int newTotalPages = calculateTotalPages(spawner);
+                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 languageManager.sendMessage(player, "messages.sell-failed");
             });
             return false;
         }
+    }
+
+    private int calculateTotalPages(SpawnerData spawner) {
+        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
+        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 
     private void logSalesAsync(SaleCalculationResult calculation, String playerName) {
@@ -261,18 +264,21 @@ public class ZShop implements IShopIntegration {
         });
     }
 
+    private String formatMonetaryValue(double value) {
+        return formatPrice(value, configManager.isFormatedPrice());
+    }
+
     private void sendSuccessMessage(Player player, int totalAmount, double netAmount, double taxPercentage) {
-        String formattedPrice = String.format("%.2f", netAmount);
         if (taxPercentage > 0) {
             languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formattedPrice,
+                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(totalAmount)),
+                    "%price%", formatMonetaryValue(netAmount),
                     "%tax%", String.format("%.2f", taxPercentage)
             );
         } else {
             languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formattedPrice);
+                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(totalAmount)),
+                    "%price%", formatMonetaryValue(netAmount));
         }
     }
 

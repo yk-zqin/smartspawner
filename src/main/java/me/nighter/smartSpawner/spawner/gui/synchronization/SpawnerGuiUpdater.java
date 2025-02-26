@@ -25,7 +25,6 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
 /**
  * Controller responsible for managing spawner GUI interactions and updates.
@@ -156,18 +155,18 @@ public class SpawnerGuiUpdater implements Listener {
         }
     }
 
-    public void updateSpawnerGuiViewers(SpawnerData spawner) {
+    public void updateSpawnerMenuGuiViewers(SpawnerData spawner) {
         for (Map.Entry<UUID, SpawnerData> entry : openSpawnerGuis.entrySet()) {
             if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
                 Player viewer = Bukkit.getPlayer(entry.getKey());
                 if (viewer != null && viewer.isOnline()) {
-                    updateSpawnerGui(viewer, spawner, true);
+                    updateSpawnerMenuGui(viewer, spawner, true);
                 }
             }
         }
     }
 
-    public void updateSpawnerGui(Player player, SpawnerData spawner, boolean forceUpdate) {
+    public void updateSpawnerMenuGui(Player player, SpawnerData spawner, boolean forceUpdate) {
         Inventory openInv = player.getOpenInventory().getTopInventory();
         if (openInv.getHolder() instanceof SpawnerMenuHolder) {
             SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
@@ -283,15 +282,12 @@ public class SpawnerGuiUpdater implements Listener {
             }
         }
 
-        // Cập nhật hoặc thêm dòng thông tin spawn time
         String newLine = nextSpawnTemplate + timeDisplay;
         if (lineIndex >= 0) {
-            // Nếu đã có dòng này, chỉ cập nhật dòng đó nếu nội dung thay đổi
             if (!lore.get(lineIndex).equals(newLine)) {
                 ItemUpdater.updateLoreLine(spawnerItem, lineIndex, newLine);
             }
         } else {
-            // Nếu chưa có, thêm dòng mới vào lore
             lore.add(newLine);
             ItemUpdater.updateLore(spawnerItem, lore);
         }
@@ -349,12 +345,13 @@ public class SpawnerGuiUpdater implements Listener {
         return viewers;
     }
 
-    private record UpdateAction(Player player, SpawnerData spawner, int page, boolean requiresNewInventory) {
+    private record UpdateAction(Player player, SpawnerData spawner, int page, int totalPages, boolean requiresNewInventory) {
     }
 
-    public void updateLootInventoryViewers(SpawnerData spawner, int oldTotalPages, int newTotalPages) {
+    public void updateStorageGuiViewers(SpawnerData spawner, int oldTotalPages, int newTotalPages) {
         // Check if total pages changed
         boolean pagesChanged = oldTotalPages != newTotalPages;
+        //configManager.debug(" - Pages changed: " + pagesChanged);
 
         // Batch all viewers that need updates
         List<UpdateAction> updateQueue = new ArrayList<>();
@@ -370,17 +367,20 @@ public class SpawnerGuiUpdater implements Listener {
                     boolean needsNewInventory = false;
                     int targetPage = currentPage;
 
+                    //configManager.debug("Current page: " + currentPage + " - Total pages: " + newTotalPages);
+
                     // Determine if we need a new inventory
                     if (currentPage > newTotalPages) {
+                        // if current page is out of bounds, set to last page
                         targetPage = newTotalPages;
+                        holder.setCurrentPage(targetPage);
                         needsNewInventory = true;
                     } else if (pagesChanged) {
-                        // If total pages changed but current page is still valid,
-                        // we need new inventory just to update the title
+                        // If total pages changed but current page is still valid, update current page
                         needsNewInventory = true;
                     }
 
-                    updateQueue.add(new UpdateAction(player, spawner, targetPage, needsNewInventory));
+                    updateQueue.add(new UpdateAction(player, spawner, targetPage, newTotalPages, needsNewInventory));
                 }
             }
         }
@@ -390,18 +390,27 @@ public class SpawnerGuiUpdater implements Listener {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 for (UpdateAction action : updateQueue) {
                     if (action.requiresNewInventory) {
-                        // Need new inventory for title update
-                        Inventory newInv = spawnerStorageUI.createInventory(
-                                action.spawner,
-                                languageManager.getGuiTitle("gui-title.loot-menu"),
-                                action.page
-                        );
-                        action.player.closeInventory();
-                        action.player.openInventory(newInv);
+                        try {
+                            // Update inventory title and contents
+                            String newTitle = languageManager.getGuiTitle("gui-title.loot-menu") + " - [" + action.page + "/" + action.totalPages + "]";
+                            action.player.getOpenInventory().setTitle(newTitle);
+                            Inventory currentInv = action.player.getOpenInventory().getTopInventory();
+                            spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page, action.totalPages);
+                        } catch (Exception e) {
+                            // Fall back to creating a new inventory
+                            Inventory newInv = spawnerStorageUI.createInventory(
+                                    action.spawner,
+                                    languageManager.getGuiTitle("gui-title.loot-menu"),
+                                    action.page,
+                                    action.totalPages
+                            );
+                            action.player.closeInventory();
+                            action.player.openInventory(newInv);
+                        }
                     } else {
                         // Just update contents of current inventory
                         Inventory currentInv = action.player.getOpenInventory().getTopInventory();
-                        spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page);
+                        spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page, action.totalPages);
                         action.player.updateInventory();
                     }
                 }

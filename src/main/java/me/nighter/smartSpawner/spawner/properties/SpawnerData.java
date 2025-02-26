@@ -137,63 +137,33 @@ public class SpawnerData {
         // Get current consolidated items
         Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
-        // Calculate current and new max slots
+        // Calculate new max slots
         int maxStoragePages = configManager.getMaxStoragePages();
-        int currentMaxSlots = this.maxSpawnerLootSlots;
         int newMaxSlots = (45 * maxStoragePages) * stackSize;
-
-        // Check if we're reducing the size
-        boolean isReducingSize = newMaxSlots < currentMaxSlots;
 
         // Create new inventory with new size
         VirtualInventory newInventory = new VirtualInventory(newMaxSlots);
 
-        // If reducing size, we need to determine which items to keep
-        if (isReducingSize) {
-            // Get sorted inventory display (already sorted by material)
-            Map<Integer, ItemStack> displayItems = virtualInventory.getDisplayInventory();
-
-            // Create a list to hold items we'll keep
-            List<ItemStack> itemsToKeep = new ArrayList<>();
-
-            // Only keep items that fit in the new inventory
-            int slotCount = 0;
-            for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
-                if (slotCount < newMaxSlots) {
-                    itemsToKeep.add(entry.getValue());
-                    slotCount++;
-                } else {
-                    // We've reached the limit for the new inventory
-                    break;
-                }
+        // Convert consolidated items to ItemStack list for adding to new inventory
+        List<ItemStack> itemsToTransfer = new ArrayList<>();
+        currentItems.forEach((signature, amount) -> {
+            ItemStack template = signature.getTemplate();
+            while (amount > 0) {
+                int batchSize = (int) Math.min(amount, Integer.MAX_VALUE);
+                ItemStack batch = template.clone();
+                batch.setAmount(batchSize);
+                itemsToTransfer.add(batch);
+                amount -= batchSize;
             }
-
-            // Add the surviving items to the new inventory
-            newInventory.addItems(itemsToKeep);
-        } else {
-            // If maintaining or increasing size, we can keep all items
-            // Convert consolidated items to ItemStack list for adding to new inventory
-            List<ItemStack> itemsToTransfer = new ArrayList<>();
-            currentItems.forEach((signature, amount) -> {
-                ItemStack template = signature.getTemplate();
-                while (amount > 0) {
-                    int batchSize = (int) Math.min(amount, template.getMaxStackSize());
-                    ItemStack batch = template.clone();
-                    batch.setAmount(batchSize);
-                    itemsToTransfer.add(batch);
-                    amount -= batchSize;
-                }
-            });
-
-            // Add items to new inventory
-            newInventory.addItems(itemsToTransfer);
-        }
+        });
 
         // Update stack size and config values
         this.stackSize = stackSize;
         loadConfigValues();
         this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
 
+        // Add items to new inventory
+        newInventory.addItems(itemsToTransfer);
         this.virtualInventory = newInventory;
         updateHologramData();
     }
@@ -215,72 +185,42 @@ public class SpawnerData {
         // Get current consolidated items
         Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
-        // Calculate current and new max slots
+        // Calculate new max slots
         int maxStoragePages = configManager.getMaxStoragePages();
-        int currentMaxSlots = this.maxSpawnerLootSlots;
         int newMaxSlots = (45 * maxStoragePages) * stackSize;
 
-        // Check if we're reducing the size
-        boolean isReducingSize = newMaxSlots < currentMaxSlots;
-
-        // Calculate total items currently stored and new capacity
+        // Calculate total items currently stored
         long totalItems = virtualInventory.getTotalItems();
         long newCapacity = (long) newMaxSlots * 64; // Assuming 64 is max stack size
 
         // Check if we'll lose items
-        if (isReducingSize && totalItems > newCapacity) {
+        if (totalItems > newCapacity) {
             languageManager.sendMessage(player, "messages.items-lost");
         }
 
         // Create new inventory with new size
         VirtualInventory newInventory = new VirtualInventory(newMaxSlots);
 
-        // If reducing size, we need to determine which items to keep
-        if (isReducingSize) {
-            // Get sorted inventory display (already sorted by material)
-            Map<Integer, ItemStack> displayItems = virtualInventory.getDisplayInventory();
-
-            // Create a list to hold items we'll keep
-            List<ItemStack> itemsToKeep = new ArrayList<>();
-
-            // Only keep items that fit in the new inventory
-            int slotCount = 0;
-            for (Map.Entry<Integer, ItemStack> entry : displayItems.entrySet()) {
-                if (slotCount < newMaxSlots) {
-                    itemsToKeep.add(entry.getValue());
-                    slotCount++;
-                } else {
-                    // We've reached the limit for the new inventory
-                    break;
-                }
+        // Convert consolidated items to ItemStack list for adding to new inventory
+        List<ItemStack> itemsToTransfer = new ArrayList<>();
+        currentItems.forEach((signature, amount) -> {
+            ItemStack template = signature.getTemplate();
+            while (amount > 0) {
+                int batchSize = (int) Math.min(amount, Integer.MAX_VALUE);
+                ItemStack batch = template.clone();
+                batch.setAmount(batchSize);
+                itemsToTransfer.add(batch);
+                amount -= batchSize;
             }
-
-            // Add the surviving items to the new inventory
-            newInventory.addItems(itemsToKeep);
-        } else {
-            // If maintaining or increasing size, we can keep all items
-            // Convert consolidated items to ItemStack list for adding to new inventory
-            List<ItemStack> itemsToTransfer = new ArrayList<>();
-            currentItems.forEach((signature, amount) -> {
-                ItemStack template = signature.getTemplate();
-                while (amount > 0) {
-                    int batchSize = (int) Math.min(amount, template.getMaxStackSize());
-                    ItemStack batch = template.clone();
-                    batch.setAmount(batchSize);
-                    itemsToTransfer.add(batch);
-                    amount -= batchSize;
-                }
-            });
-
-            // Add items to new inventory
-            newInventory.addItems(itemsToTransfer);
-        }
+        });
 
         // Update stack size and config values
         this.stackSize = stackSize;
         loadConfigValues();
         this.lastSpawnTime = System.currentTimeMillis() + (long) this.spawnDelay;
 
+        // Add items to new inventory
+        newInventory.addItems(itemsToTransfer);
         this.virtualInventory = newInventory;
         updateHologramData();
     }
@@ -408,7 +348,6 @@ public class SpawnerData {
 //                    Virtual Inventory
 // ===============================================================
 
-
     public VirtualInventory getVirtualInventory() {
         return virtualInventory;
     }
@@ -419,6 +358,16 @@ public class SpawnerData {
 
     public Map<Integer, ItemStack> getDisplayInventory() {
         return virtualInventory.getDisplayInventory();
+    }
+
+// ===============================================================
+//                    Other Utility Methods
+// ===============================================================
+
+    public boolean isAtCapacity() {
+        // Cache result to avoid multiple recalculations in the same tick
+        return getVirtualInventory().getUsedSlots() >= getMaxSpawnerLootSlots() ||
+                getSpawnerExp() >= getMaxStoredExp();
     }
 
 // ===============================================================

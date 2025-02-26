@@ -12,6 +12,8 @@ public class VirtualInventory {
     private int usedSlotsCache;
     private long totalItemsCache;
     private boolean metricsCacheDirty;
+    // Cache sorted entries to avoid resorting when display isn't changing
+    private List<Map.Entry<ItemSignature, Long>> sortedEntriesCache;
 
     // Simple item comparator that only sorts by material name
     private static final Comparator<Map.Entry<ItemSignature, Long>> ITEM_COMPARATOR =
@@ -20,20 +22,24 @@ public class VirtualInventory {
     public VirtualInventory(int maxSlots) {
         this.maxSlots = maxSlots;
         this.consolidatedItems = new ConcurrentHashMap<>();
-        this.displayInventoryCache = new HashMap<>();
+        this.displayInventoryCache = new HashMap<>(maxSlots); // Pre-size the map
         this.displayCacheDirty = true;
         this.metricsCacheDirty = true;
         this.usedSlotsCache = 0;
         this.totalItemsCache = 0;
+        this.sortedEntriesCache = null;
     }
 
     public static class ItemSignature {
         private final ItemStack template;
         private final int hashCode;
+        // Cache material name to avoid repeatedly accessing it
+        private final String materialName;
 
         public ItemSignature(ItemStack item) {
             this.template = item.clone();
             this.template.setAmount(1);
+            this.materialName = item.getType().name();
             this.hashCode = calculateHashCode();
         }
 
@@ -66,6 +72,11 @@ public class VirtualInventory {
         public ItemStack getTemplateRef() {
             return template;
         }
+
+        // Getter for cached material name
+        public String getMaterialName() {
+            return materialName;
+        }
     }
 
     // Add items in bulk with minimal operations
@@ -85,6 +96,7 @@ public class VirtualInventory {
         if (updated) {
             displayCacheDirty = true;
             metricsCacheDirty = true;
+            sortedEntriesCache = null; // Invalidate sorted entries cache
         }
     }
 
@@ -128,6 +140,7 @@ public class VirtualInventory {
         if (updated) {
             displayCacheDirty = true;
             metricsCacheDirty = true;
+            sortedEntriesCache = null; // Invalidate sorted entries cache
         }
 
         return true;
@@ -137,10 +150,11 @@ public class VirtualInventory {
     public Map<Integer, ItemStack> getDisplayInventory() {
         // Return cached result if available
         if (!displayCacheDirty) {
-            return new HashMap<>(displayInventoryCache);
+            // Return a shallow copy to prevent modification of the cache
+            return Collections.unmodifiableMap(displayInventoryCache);
         }
 
-        // Clear the cache for a fresh rebuild
+        // Clear the cache for a fresh rebuild but reuse the existing map
         displayInventoryCache.clear();
 
         if (consolidatedItems.isEmpty()) {
@@ -149,14 +163,17 @@ public class VirtualInventory {
             return Collections.emptyMap();
         }
 
-        // Get and sort the items - only by material name as requested
-        List<Map.Entry<ItemSignature, Long>> sortedItems = new ArrayList<>(consolidatedItems.entrySet());
-        sortedItems.sort(ITEM_COMPARATOR);
+        // Get and sort the items - only use cached sort result if available
+        if (sortedEntriesCache == null) {
+            sortedEntriesCache = new ArrayList<>(consolidatedItems.entrySet());
+            // Use optimized comparator based on cached material name
+            sortedEntriesCache.sort(Comparator.comparing(e -> e.getKey().getMaterialName()));
+        }
 
         // Process items directly to the display inventory
         int currentSlot = 0;
 
-        for (Map.Entry<ItemSignature, Long> entry : sortedItems) {
+        for (Map.Entry<ItemSignature, Long> entry : sortedEntriesCache) {
             if (currentSlot >= maxSlots) break;
 
             ItemSignature sig = entry.getKey();
@@ -184,7 +201,8 @@ public class VirtualInventory {
         displayCacheDirty = false;
         usedSlotsCache = displayInventoryCache.size();
 
-        return new HashMap<>(displayInventoryCache);
+        // Return unmodifiable map to prevent external changes
+        return Collections.unmodifiableMap(displayInventoryCache);
     }
 
     public int getMaxSlots() {

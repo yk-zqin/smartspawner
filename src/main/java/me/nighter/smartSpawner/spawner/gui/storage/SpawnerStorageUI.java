@@ -31,8 +31,6 @@ public class SpawnerStorageUI {
     // Lightweight caches with better eviction strategies
     private final Map<String, ItemStack> navigationButtonCache;
     private final Map<String, ItemStack> pageIndicatorCache;
-    private final Map<String, Integer> totalPagesCache;
-    private final Map<String, Long> lastAccessTime;
 
     // Cache expiry time reduced for more responsive updates
     private static final long CACHE_EXPIRY_TIME = 30000; // 30 seconds
@@ -48,8 +46,6 @@ public class SpawnerStorageUI {
         this.equipmentToggleButtons = new HashMap<>(2);
         this.navigationButtonCache = new ConcurrentHashMap<>(16);
         this.pageIndicatorCache = new ConcurrentHashMap<>(16);
-        this.totalPagesCache = new ConcurrentHashMap<>(16);
-        this.lastAccessTime = new ConcurrentHashMap<>(16);
 
         initializeStaticButtons();
         startCleanupTask();
@@ -75,9 +71,12 @@ public class SpawnerStorageUI {
         equipmentToggleButtons.put(false, createEquipmentToggleButton(false));
     }
 
-    public Inventory createInventory(SpawnerData spawner, String title, int page) {
+    public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
+
         // Get total pages efficiently
-        int totalPages = getTotalPages(spawner);
+        if (totalPages == -1) {
+            totalPages = calculateTotalPages(spawner);
+        }
 
         // Clamp page number to valid range
         page = Math.max(1, Math.min(page, totalPages));
@@ -95,11 +94,16 @@ public class SpawnerStorageUI {
         holder.updateOldUsedSlots();
 
         // Populate the inventory
-        updateDisplay(pageInv, spawner, page);
+        updateDisplay(pageInv, spawner, page, totalPages);
         return pageInv;
     }
 
-    public void updateDisplay(Inventory inventory, SpawnerData spawner, int page) {
+    public void updateDisplay(Inventory inventory, SpawnerData spawner, int page, int totalPages) {
+
+        if (totalPages == -1) {
+            totalPages = calculateTotalPages(spawner);
+        }
+
         // Track both changes and slots that need to be emptied
         Map<Integer, ItemStack> updates = new HashMap<>();
         Set<Integer> slotsToEmpty = new HashSet<>();
@@ -113,7 +117,7 @@ public class SpawnerStorageUI {
         addPageItems(updates, slotsToEmpty, spawner, page);
 
         // Add navigation buttons
-        addNavigationButtons(updates, spawner, page);
+        addNavigationButtons(updates, spawner, page, totalPages);
 
         // Apply all updates in a batch
         for (int slot : slotsToEmpty) {
@@ -133,19 +137,15 @@ public class SpawnerStorageUI {
 
         // Check if we need to update total pages
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        assert holder != null;
         int oldUsedSlots = holder.getOldUsedSlots();
         int currentUsedSlots = spawner.getVirtualInventory().getUsedSlots();
 
         // Only recalculate total pages if there's a significant change
         if (oldUsedSlots != currentUsedSlots) {
-            int newTotalPages = recalculateTotalPages(spawner);
+            int newTotalPages = calculateTotalPages(spawner);
             holder.setTotalPages(newTotalPages);
             holder.updateOldUsedSlots();
-
-            // Update cache
-            String spawnerId = spawner.getSpawnerId();
-            totalPagesCache.put(spawnerId, newTotalPages);
-            lastAccessTime.put(spawnerId, System.currentTimeMillis());
         }
     }
 
@@ -175,9 +175,10 @@ public class SpawnerStorageUI {
         }
     }
 
-    private void addNavigationButtons(Map<Integer, ItemStack> updates, SpawnerData spawner, int page) {
-        int totalPages = getTotalPages(spawner);
-
+    private void addNavigationButtons(Map<Integer, ItemStack> updates, SpawnerData spawner, int page, int totalPages) {
+        if (totalPages == -1) {
+            totalPages = calculateTotalPages(spawner);
+        }
         // Add previous page button if not on first page
         if (page > 1) {
             String cacheKey = "prev-" + (page - 1);
@@ -196,14 +197,15 @@ public class SpawnerStorageUI {
 
         // Add page indicator with key metrics for spawner
         String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
+        int finalTotalPages = totalPages;
         ItemStack pageIndicator = pageIndicatorCache.computeIfAbsent(
-                indicatorKey, k -> createPageIndicator(page, totalPages, spawner)
+                indicatorKey, k -> createPageIndicator(page, finalTotalPages, spawner)
         );
         updates.put(NAVIGATION_ROW * 9 + 4, pageIndicator);
 
         // Add static buttons directly from cache
         updates.put(NAVIGATION_ROW * 9 + 8, staticButtons.get("return"));
-        updates.put(NAVIGATION_ROW * 9 + 0, staticButtons.get("takeAll"));
+        updates.put(NAVIGATION_ROW * 9, staticButtons.get("takeAll"));
 
         // Add equipment toggle button if enabled
         if (configManager.isAllowToggleEquipmentItems()) {
@@ -218,34 +220,9 @@ public class SpawnerStorageUI {
         return page + "-" + totalPages + "-" + usedSlots + "-" + maxSlots;
     }
 
-    private int getTotalPages(SpawnerData spawner) {
-        String spawnerId = spawner.getSpawnerId();
-        long currentTime = System.currentTimeMillis();
-
-        // Update access time
-        lastAccessTime.put(spawnerId, currentTime);
-
-        // Check for cached value
-        if (totalPagesCache.containsKey(spawnerId)) {
-            Long lastAccess = lastAccessTime.get(spawnerId);
-            if (lastAccess != null && currentTime - lastAccess < CACHE_EXPIRY_TIME) {
-                return totalPagesCache.get(spawnerId);
-            }
-        }
-
-        // Recalculate if no cache or expired
-        return recalculateTotalPages(spawner);
-    }
-
-    private int recalculateTotalPages(SpawnerData spawner) {
+    private int calculateTotalPages(SpawnerData spawner) {
         int usedSlots = spawner.getVirtualInventory().getUsedSlots();
-        int totalPages = Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
-
-        // Cache the result
-        totalPagesCache.put(spawner.getSpawnerId(), totalPages);
-        lastAccessTime.put(spawner.getSpawnerId(), System.currentTimeMillis());
-
-        return totalPages;
+        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 
     private ItemStack createButton(Material material, String name, List<String> lore) {
@@ -327,23 +304,6 @@ public class SpawnerStorageUI {
     }
 
     private void cleanupCaches() {
-        long currentTime = System.currentTimeMillis();
-        long expiryThreshold = CACHE_EXPIRY_TIME * 2; // Double the normal expiry time for cleanup
-
-        // Find expired entries for all caches
-        List<String> expiredIds = new ArrayList<>();
-        for (Map.Entry<String, Long> entry : lastAccessTime.entrySet()) {
-            if (currentTime - entry.getValue() > expiryThreshold) {
-                expiredIds.add(entry.getKey());
-            }
-        }
-
-        // Remove expired entries from all caches
-        for (String id : expiredIds) {
-            lastAccessTime.remove(id);
-            totalPagesCache.remove(id);
-        }
-
         // LRU-like cleanup for navigation buttons
         if (navigationButtonCache.size() > MAX_CACHE_SIZE) {
             int toRemove = navigationButtonCache.size() - (MAX_CACHE_SIZE / 2);
@@ -366,8 +326,6 @@ public class SpawnerStorageUI {
     public void cleanup() {
         navigationButtonCache.clear();
         pageIndicatorCache.clear();
-        totalPagesCache.clear();
-        lastAccessTime.clear();
 
         // Re-initialize static buttons (just in case language has changed)
         initializeStaticButtons();

@@ -4,6 +4,7 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
@@ -27,6 +28,7 @@ public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
+    private final SpawnerGuiUpdater spawnerGuiUpdater;
 
     // Cooldown system
     private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
@@ -43,6 +45,7 @@ public class EconomyShopGUI implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
+        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
     }
 
     private boolean isOnCooldown(Player player) {
@@ -137,10 +140,14 @@ public class EconomyShopGUI implements IShopIntegration {
             return false;
         }
 
+        int oldTotalPages = calculateTotalPages(spawner);
         // Pre-remove items to improve UX
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             virtualInv.removeItems(calculation.getItemsToRemove());
-            updateInventoryDisplay(player, spawner);
+            if (virtualInv.isDirty()) {
+                int newTotalPages = calculateTotalPages(spawner);
+                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+            }
         });
 
         try {
@@ -159,7 +166,8 @@ public class EconomyShopGUI implements IShopIntegration {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
                     languageManager.sendMessage(player, "messages.sell-failed");
-                    updateInventoryDisplay(player, spawner);
+                    int newTotalPages = calculateTotalPages(spawner);
+                    spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 });
                 return false;
             }
@@ -168,7 +176,6 @@ public class EconomyShopGUI implements IShopIntegration {
             updateShopStats(calculation.getSoldItems(), player.getUniqueId());
 
             // Send success message
-            double taxPercentage = configManager.getTaxPercentage();
             plugin.getServer().getScheduler().runTask(plugin, () ->
                     sendSuccessMessage(player, calculation));
 
@@ -179,21 +186,16 @@ public class EconomyShopGUI implements IShopIntegration {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 virtualInv.addItems(calculation.getItemsToRemove());
                 languageManager.sendMessage(player, "messages.sell-failed");
-                updateInventoryDisplay(player, spawner);
+                int newTotalPages = calculateTotalPages(spawner);
+                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             });
             return false;
         }
     }
 
-    private void updateInventoryDisplay(Player player, SpawnerData spawner) {
-        if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
-            StoragePageHolder holder = (StoragePageHolder) player.getOpenInventory().getTopInventory().getHolder();
-            plugin.getSpawnerStorageUI().updateDisplay(
-                    player.getOpenInventory().getTopInventory(),
-                    holder.getSpawnerData(),
-                    holder.getCurrentPage()
-            );
-        }
+    private int calculateTotalPages(SpawnerData spawner) {
+        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
+        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 
     private boolean processTransactions(Player player, SaleCalculationResult calculation) {
@@ -222,12 +224,12 @@ public class EconomyShopGUI implements IShopIntegration {
         double taxPercentage = configManager.getTaxPercentage();
         if (taxPercentage > 0) {
             languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(languageManager.formatNumber(calculation.getTotalAmount())),
+                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
                     "%price%", priceBuilder.toString(),
                     "%tax%", String.format("%.2f", taxPercentage));
         } else {
             languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(languageManager.formatNumber(calculation.getTotalAmount())),
+                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
                     "%price%", priceBuilder.toString());
         }
     }

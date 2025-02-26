@@ -231,7 +231,7 @@ public class HopperHandler implements Listener {
                         StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
                         int currentPage = holder.getCurrentPage();
                         Inventory newInv = spawnerStorageUI.createInventory(spawner,
-                                languageManager.getGuiTitle("gui-title.loot-menu"), currentPage);
+                                languageManager.getGuiTitle("gui-title.loot-menu"), currentPage, -1);
                         for (int i = 0; i < newInv.getSize(); i++) {
                             currentInv.setItem(i, newInv.getItem(i));
                         }
@@ -245,7 +245,7 @@ public class HopperHandler implements Listener {
                 if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
                     Player viewer = Bukkit.getPlayer(entry.getKey());
                     if (viewer != null && viewer.isOnline()) {
-                        spawnerGuiUpdater.updateSpawnerGui(viewer, spawner, true);
+                        spawnerGuiUpdater.updateSpawnerMenuGui(viewer, spawner, true);
                     }
                 }
             }

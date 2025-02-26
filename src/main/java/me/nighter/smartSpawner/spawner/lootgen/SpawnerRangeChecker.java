@@ -115,7 +115,7 @@ public class SpawnerRangeChecker {
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
                 () -> {
                     if (!spawner.getSpawnerStop()) {
-                        spawnerLootGenerator.spawnLoot(spawner);
+                        spawnerLootGenerator.spawnLootToSpawner(spawner);
                     }
                 },
                 0L, spawner.getSpawnDelay()
@@ -138,7 +138,7 @@ public class SpawnerRangeChecker {
                         .forEach(entry -> {
                             Player viewer = Bukkit.getPlayer(entry.getKey());
                             if (viewer != null && viewer.isOnline()) {
-                                spawnerGuiUpdater.updateSpawnerGui(viewer, spawner, true);
+                                spawnerGuiUpdater.updateSpawnerMenuGui(viewer, spawner, true);
                             }
                         })
         );

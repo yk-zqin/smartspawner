@@ -1,7 +1,6 @@
 package me.nighter.smartSpawner.spawner.gui.synchronization;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.holders.SpawnerHolder;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
@@ -10,7 +9,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
@@ -93,19 +91,7 @@ public class SpawnerViewsUpdater implements Listener {
         untrackViewer(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
-
-        InventoryHolder holder = event.getInventory().getHolder();
-        if (!isValidHolder(holder)) return;
-
-        // Get spawner ID and update all viewers
-        SpawnerData spawner = ((SpawnerHolder) holder).getSpawnerData();
-        updateViewers(spawner);
-    }
-
-    public void updateViewers(SpawnerData spawner) {
+    public void updateSpawnerMenuViewers(SpawnerData spawner) {
         Set<Player> viewers = getViewers(spawner.getSpawnerId());
         if (viewers.isEmpty()) return;
 
@@ -116,13 +102,13 @@ public class SpawnerViewsUpdater implements Listener {
                 Inventory openInv = viewer.getOpenInventory().getTopInventory();
                 if (openInv != null && isValidHolder(openInv.getHolder())) {
                     if (openInv.getHolder() instanceof SpawnerMenuHolder) {
-                        plugin.getSpawnerGuiUpdater().updateSpawnerGui(viewer, spawner, true);
+                        plugin.getSpawnerGuiUpdater().updateSpawnerMenuGui(viewer, spawner, true);
                     } else if (openInv.getHolder() instanceof StoragePageHolder) {
                         StoragePageHolder storageHolder = (StoragePageHolder) openInv.getHolder();
                         int oldTotalPages = calculateTotalPages(storageHolder.getOldUsedSlots());
                         int newTotalPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
 
-                        plugin.getSpawnerGuiUpdater().updateLootInventoryViewers(
+                        plugin.getSpawnerGuiUpdater().updateStorageGuiViewers(
                                 spawner, oldTotalPages, newTotalPages);
                     }
                 }
