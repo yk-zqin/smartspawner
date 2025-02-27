@@ -1,9 +1,10 @@
 package me.nighter.smartSpawner.spawner.lootgen;
 
 import me.nighter.smartSpawner.SmartSpawner;
+import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
@@ -11,6 +12,8 @@ import me.nighter.smartSpawner.utils.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -20,22 +23,22 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class SpawnerLootGenerator {
     private final SmartSpawner plugin;
-    private final SpawnerGuiUpdater spawnerGuiUpdater;
+    private final SpawnerGuiManager spawnerGuiManager;
     private final SpawnerManager spawnerManager;
     private final ConfigManager configManager;
     private final Random random;
     private final Map<String, EntityLootConfig> entityLootConfigs;
     private final Map<String, String> effectNameCache = new HashMap<>();
-    private final Map<Integer, String> romanNumeralCache = new HashMap<>();
-    private static final Map<Material, ItemStack> itemTemplateCache = new ConcurrentHashMap<>();
+    private final Map<Integer, String> romanNumeralCache = new HashMap<>();;
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
+        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.configManager = plugin.getConfigManager();
         this.random = new Random();
@@ -87,10 +90,6 @@ public class SpawnerLootGenerator {
             this.potionEffectType = potionEffectType;
             this.potionDuration = potionDuration;
             this.potionAmplifier = potionAmplifier;
-        }
-
-        private ItemStack getItemTemplate(Material material) {
-            return itemTemplateCache.computeIfAbsent(material, ItemStack::new);
         }
 
         public ItemStack createItemStack(Random random, Map<String, String> effectNameCache, Map<Integer, String> romanNumeralCache) {
@@ -270,96 +269,144 @@ public class SpawnerLootGenerator {
     }
 
     public void spawnLootToSpawner(SpawnerData spawner) {
-        long currentTime = System.currentTimeMillis();
-        long lastSpawnTime = spawner.getLastSpawnTime();
-        long spawnDelay = spawner.getSpawnDelay();
-
-        if (currentTime - lastSpawnTime < spawnDelay) {
+        // Try to acquire the lock, but don't block if it's already locked
+        // This ensures we don't block the server thread while waiting for the lock
+        boolean lockAcquired = spawner.getLock().tryLock();
+        if (!lockAcquired) {
+            // Lock is already held, which means stack size change is happening
+            // Skip this loot generation cycle
             return;
         }
 
-        // Get exact inventory slot usage
-        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
-        int maxSlots = spawner.getMaxSpawnerLootSlots();
+        try {
+            long currentTime = System.currentTimeMillis();
+            long lastSpawnTime = spawner.getLastSpawnTime();
+            long spawnDelay = spawner.getSpawnDelay();
 
-        // Check if both inventory and exp are full, only then skip loot generation
-        if (usedSlots >= maxSlots &&
-                spawner.getSpawnerExp() >= spawner.getMaxStoredExp()) {
-            return; // Skip generation if both exp and inventory are full
-        }
-
-        // Update spawn time immediately
-        spawner.setLastSpawnTime(currentTime);
-
-        // Run heavy calculations async and batch updates
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            // Generate loot with full mob count
-            LootResult loot = generateLoot(
-                    spawner.getEntityType(),
-                    spawner.getMinMobs(),
-                    spawner.getMaxMobs(),
-                    spawner
-            );
-
-            // Only proceed if we generated something
-            if (loot.getItems().isEmpty() && loot.getExperience() == 0) {
+            if (currentTime - lastSpawnTime < spawnDelay) {
                 return;
             }
 
-            // Switch back to main thread for Bukkit API calls
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                // Cache viewers state to avoid multiple checks
-                boolean hasLootViewers = spawnerGuiUpdater.hasLootInventoryViewers(spawner);
-                boolean hasSpawnerViewers = spawnerGuiUpdater.hasSpawnerGuiViewers(spawner);
+            // Get exact inventory slot usage
+            AtomicInteger usedSlots = new AtomicInteger(spawner.getVirtualInventory().getUsedSlots());
+            AtomicInteger maxSlots = new AtomicInteger(spawner.getMaxSpawnerLootSlots());
 
-                // Cache pages calculation
-                int oldTotalPages = hasLootViewers ? calculateTotalPages(spawner) : 0;
-
-                // Modified approach: Handle items and exp separately
-                boolean changed = false;
-
-                // Process experience if there's any to add and not at max
-                if (loot.getExperience() > 0 && spawner.getSpawnerExp() < spawner.getMaxStoredExp()) {
-                    int currentExp = spawner.getSpawnerExp();
-                    int maxExp = spawner.getMaxStoredExp();
-                    int newExp = Math.min(currentExp + loot.getExperience(), maxExp);
-
-                    if (newExp != currentExp) {
-                        spawner.setSpawnerExp(newExp);
-                        changed = true;
-                    }
+            // Check if both inventory and exp are full, only then skip loot generation
+            if (usedSlots.get() >= maxSlots.get() && spawner.getSpawnerExp() >= spawner.getMaxStoredExp()) {
+                if (!spawner.isAtCapacity()) {
+                    spawner.setAtCapacity(true);
                 }
+                return; // Skip generation if both exp and inventory are full
+            }
 
-                // Process items if there are any to add and inventory isn't completely full
-                if (!loot.getItems().isEmpty() && usedSlots < maxSlots) {
-                    List<ItemStack> itemsToAdd = new ArrayList<>(loot.getItems());
+            // Update spawn time immediately
+            spawner.setLastSpawnTime(currentTime);
 
-                    // Get exact calculation of slots with the new items
-                    int totalRequiredSlots = calculateRequiredSlots(itemsToAdd, spawner.getVirtualInventory());
-                    int currentUsedSlots = spawner.getVirtualInventory().getUsedSlots();
+            // Important: Store the current values we need for async processing
+            final EntityType entityType = spawner.getEntityType();
+            final int minMobs = spawner.getMinMobs();
+            final int maxMobs = spawner.getMaxMobs();
+            final String spawnerId = spawner.getSpawnerId();
 
-                    // If we'll exceed the limit, limit the items we're adding
-                    if (totalRequiredSlots > maxSlots) {
-                        itemsToAdd = limitItemsToAvailableSlots(itemsToAdd, spawner);
-                    }
+            // Run heavy calculations async and batch updates
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                // Generate loot with full mob count
+                LootResult loot = generateLoot(entityType, minMobs, maxMobs, spawner);
 
-                    if (!itemsToAdd.isEmpty()) {
-                        spawner.getVirtualInventory().addItems(itemsToAdd);
-                        changed = true;
-                    }
-                }
-
-                if (!changed) {
+                // Only proceed if we generated something
+                if (loot.getItems().isEmpty() && loot.getExperience() == 0) {
                     return;
                 }
 
-                // Handle GUI updates in batches
-                handleGuiUpdates(spawner, hasLootViewers, hasSpawnerViewers, oldTotalPages);
+                // Switch back to main thread for Bukkit API calls
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    // Re-acquire the lock for the update phase
+                    // This ensures the spawner hasn't been modified (like stack size changes)
+                    // between our async calculations and now
+                    boolean updateLockAcquired = spawner.getLock().tryLock();
+                    if (!updateLockAcquired) {
+                        // Lock is held, stack size is changing, skip this update
+                        return;
+                    }
 
-                // Mark for saving only once
-                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+                    try {
+                        // Cache viewers state to avoid multiple checks
+                        boolean hasLootViewers = false;
+                        boolean hasSpawnerViewers = false;
+
+                        Set<Player> viewers = spawnerGuiManager.getViewers(spawner.getSpawnerId());
+                        if (!viewers.isEmpty()) {
+                            for (Player viewer : viewers) {
+                                InventoryHolder holder = viewer.getOpenInventory().getTopInventory().getHolder();
+                                if (holder instanceof StoragePageHolder) {
+                                    hasLootViewers = true;
+                                } else if (holder instanceof SpawnerMenuHolder) {
+                                    hasSpawnerViewers = true;
+                                }
+
+                                if (hasLootViewers && hasSpawnerViewers) {
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Cache pages calculation
+                        int oldTotalPages = hasLootViewers ? calculateTotalPages(spawner) : 0;
+
+                        // Modified approach: Handle items and exp separately
+                        boolean changed = false;
+
+                        // Process experience if there's any to add and not at max
+                        if (loot.getExperience() > 0 && spawner.getSpawnerExp() < spawner.getMaxStoredExp()) {
+                            int currentExp = spawner.getSpawnerExp();
+                            int maxExp = spawner.getMaxStoredExp();
+                            int newExp = Math.min(currentExp + loot.getExperience(), maxExp);
+
+                            if (newExp != currentExp) {
+                                spawner.setSpawnerExp(newExp);
+                                changed = true;
+                            }
+                        }
+
+                        // Re-check max slots as it could have changed
+                        maxSlots.set(spawner.getMaxSpawnerLootSlots());
+                        usedSlots.set(spawner.getVirtualInventory().getUsedSlots());
+
+                        // Process items if there are any to add and inventory isn't completely full
+                        if (!loot.getItems().isEmpty() && usedSlots.get() < maxSlots.get()) {
+                            List<ItemStack> itemsToAdd = new ArrayList<>(loot.getItems());
+
+                            // Get exact calculation of slots with the new items
+                            int totalRequiredSlots = calculateRequiredSlots(itemsToAdd, spawner.getVirtualInventory());
+
+                            // If we'll exceed the limit, limit the items we're adding
+                            if (totalRequiredSlots > maxSlots.get()) {
+                                itemsToAdd = limitItemsToAvailableSlots(itemsToAdd, spawner);
+                            }
+
+                            if (!itemsToAdd.isEmpty()) {
+                                spawner.getVirtualInventory().addItems(itemsToAdd);
+                                changed = true;
+                            }
+                        }
+
+                        if (!changed) {
+                            return;
+                        }
+
+                        // Handle GUI updates in batches
+                        handleGuiUpdates(spawner, hasLootViewers, hasSpawnerViewers, oldTotalPages);
+
+                        // Mark for saving only once
+                        spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+                    } finally {
+                        spawner.getLock().unlock();
+                    }
+                });
             });
-        });
+        } finally {
+            spawner.getLock().unlock();
+        }
     }
 
     private List<ItemStack> limitItemsToAvailableSlots(List<ItemStack> items, SpawnerData spawner) {
@@ -482,12 +529,12 @@ public class SpawnerLootGenerator {
         if (hasLootViewers) {
             if (spawner.getVirtualInventory().isDirty()) {
                 int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             }
         }
 
         if (hasSpawnerViewers) {
-            spawnerGuiUpdater.updateSpawnerMenuGuiViewers(spawner);
+            spawnerGuiManager.updateSpawnerMenuViewers(spawner);
         }
 
         if (configManager.isHologramEnabled()) {

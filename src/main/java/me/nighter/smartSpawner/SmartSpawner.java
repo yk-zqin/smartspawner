@@ -13,13 +13,12 @@ import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.migration.SpawnerDataMigration;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuAction;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerAction;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageAction;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerActionUpdater;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.interactions.SpawnerClickManager;
 import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerBreakListener;
 import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerExplosionListener;
@@ -80,9 +79,8 @@ public class SmartSpawner extends JavaPlugin {
     private GlobalEventHandlers globalEventHandlers;
     private SpawnerLootGenerator spawnerLootGenerator;
     private SpawnerListGUI spawnerListGUI;
-    private SpawnerGuiUpdater spawnerGuiUpdater;
     private SpawnerRangeChecker rangeChecker;
-    private SpawnerViewsUpdater spawnerViewsUpdater;
+    private SpawnerGuiManager spawnerGuiManager;
     private SpawnerExplosionListener spawnerExplosionListener;
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
@@ -156,9 +154,9 @@ public class SmartSpawner extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.languageManager = new LanguageManager(this);
         this.spawnerStorageUI = new SpawnerStorageUI(this);
-        this.spawnerGuiUpdater = new SpawnerGuiUpdater(this);
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
+        this.spawnerGuiManager = new SpawnerGuiManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
 ;
@@ -173,7 +171,6 @@ public class SmartSpawner extends JavaPlugin {
         this.spawnerStackerUI = new SpawnerStackerUI(this);
 
         this.spawnEggHandler = new SpawnEggHandler(this);
-        this.spawnerViewsUpdater = new SpawnerViewsUpdater(this);
         this.spawnerStackHandler = new SpawnerStackHandler(this);
         this.spawnerClickManager = new SpawnerClickManager(this);
 
@@ -209,9 +206,8 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(spawnerBreakListener, this);
         pm.registerEvents(spawnerPlaceListener, this);
         pm.registerEvents(spawnerStorageAction, this);
-        pm.registerEvents(spawnerGuiUpdater, this);
         pm.registerEvents(spawnerExplosionListener, this);
-        pm.registerEvents(spawnerViewsUpdater, this);
+        pm.registerEvents(spawnerGuiManager, this);
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
         pm.registerEvents(spawnerStackerAction, this);
@@ -365,7 +361,7 @@ public class SmartSpawner extends JavaPlugin {
 
         // Clean up other resources
         if (rangeChecker != null) rangeChecker.cleanup();
-        if (spawnerGuiUpdater != null) spawnerGuiUpdater.cleanup();
+        if (spawnerGuiManager != null) spawnerGuiManager.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerAction != null) spawnerStackerAction.cleanup();
@@ -409,12 +405,8 @@ public class SmartSpawner extends JavaPlugin {
         return spawnerMenuUI;
     }
 
-    public SpawnerGuiUpdater getSpawnerGuiUpdater() {
-        return spawnerGuiUpdater;
-    }
-
-    public SpawnerViewsUpdater getSpawnerViewUpdater() {
-        return spawnerViewsUpdater;
+    public SpawnerGuiManager getSpawnerGuiManager() {
+        return spawnerGuiManager;
     }
 
     public SpawnEggHandler getSpawnEggHandler() {

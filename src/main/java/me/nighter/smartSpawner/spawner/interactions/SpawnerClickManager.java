@@ -4,7 +4,6 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.protections.CheckOpenMenu;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.interactions.stack.SpawnerStackHandler;
 import me.nighter.smartSpawner.spawner.interactions.type.SpawnEggHandler;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
@@ -47,7 +46,6 @@ public class SpawnerClickManager implements Listener {
     private final SpawnEggHandler spawnEggHandler;
     private final SpawnerStackHandler spawnerStackHandler;
     private final SpawnerMenuUI spawnerMenuUI;
-    private final SpawnerViewsUpdater spawnerViewsUpdater;
 
     // Use ConcurrentHashMap for thread safety without explicit synchronization
     private final Map<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
@@ -60,7 +58,6 @@ public class SpawnerClickManager implements Listener {
         this.spawnEggHandler = plugin.getSpawnEggHandler();
         this.spawnerStackHandler = plugin.getSpawnerStackHandler();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
-        this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
         initCleanupTask();
     }
 
@@ -198,9 +195,6 @@ public class SpawnerClickManager implements Listener {
      * Opens the spawner menu if possible
      */
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
-        // Track the viewer before opening the menu
-        spawnerViewsUpdater.trackViewer(spawner.getSpawnerId(), player);
-
         // Open the menu as normal
         spawnerMenuUI.openSpawnerMenu(player, spawner, false);
     }
@@ -306,7 +300,6 @@ public class SpawnerClickManager implements Listener {
     }
 
     public void cleanup() {
-        spawnerViewsUpdater.cleanup();
         playerCooldowns.clear();
     }
 }

@@ -333,8 +333,7 @@ spawner-info-item:
       &#81d4fa➜ &7Click to open stack menu
   lore-change: "&8▪ &#81d4faNext Spawn: &e"
   lore-inactive: "&cSpawner is inactive!"
-  lore-now: "&cNow!"
-  lore-error: "&cError! Please replace the spawner."
+  lore-full: "&cStorage is full!"
 
 exp-info-item:
   name: "&#00F898&lStored Exp: &e%current_exp%&#00F898"

@@ -3,7 +3,6 @@ package me.nighter.smartSpawner.spawner.interactions.stack;
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.hooks.protections.CheckStackBlock;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -31,7 +30,6 @@ public class SpawnerStackHandler {
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
-    private final SpawnerViewsUpdater spawnerViewsUpdater;
     private final Map<UUID, Long> lastStackTime;
     private final Map<Location, UUID> stackLocks;
     private final Cache<Location, EntityType> spawnerTypeCache;
@@ -41,7 +39,6 @@ public class SpawnerStackHandler {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
-        this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
         this.lastStackTime = new ConcurrentHashMap<>();
         this.stackLocks = new ConcurrentHashMap<>();
         this.spawnerTypeCache = new Cache<>(30); // 30 seconds cache
@@ -87,7 +84,6 @@ public class SpawnerStackHandler {
                     public void run() {
                         try {
                             plugin.getSpawnerStackerUpdater().scheduleUpdateForAll(spawnerData, player);
-                            // spawnerViewsUpdater.updateViewersIncludeTitle(spawnerData);
                             pendingUpdates.remove(spawnerData.getSpawnerId());
                         } catch (Exception e) {
                             plugin.getLogger().warning("Error updating spawner GUI: " + e.getMessage());
@@ -164,7 +160,6 @@ public class SpawnerStackHandler {
             return false;
         }
 
-        spawnerViewsUpdater.trackViewer(targetSpawner.getSpawnerId(), player);
         return processStackAddition(player, targetSpawner, itemInHand, stackAll, currentStack, maxStackSize);
     }
 
@@ -235,6 +230,10 @@ public class SpawnerStackHandler {
         int newStack = currentStack + amountToStack;
 
         targetSpawner.setStackSize(newStack);
+        // Check if we need to set the spawner to at capacity
+        if (targetSpawner.isAtCapacity() ) {
+            targetSpawner.setAtCapacity(false);
+        }
         updatePlayerInventory(player, itemInHand, amountToStack);
         showStackAnimation(targetSpawner, newStack, player);
 

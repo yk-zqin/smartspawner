@@ -37,7 +37,7 @@ public class SpawnerExplosionListener implements Listener {
                         // Add the spawner block to the list of blocks to remove
                         blocksToRemove.add(block);
                         // Close all viewers of the spawner
-                        plugin.getSpawnerViewUpdater().closeAllViewersInventory(spawnerData);
+                        plugin.getSpawnerGuiManager().closeAllViewersInventory(spawnerData);
                     } else {
                         String spawnerId = spawnerData.getSpawnerId();
                         spawnerManager.removeSpawner(spawnerId);

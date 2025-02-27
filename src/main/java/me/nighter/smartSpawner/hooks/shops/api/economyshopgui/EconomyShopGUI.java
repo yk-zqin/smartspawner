@@ -4,7 +4,7 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.hooks.shops.IShopIntegration;
 import me.nighter.smartSpawner.hooks.shops.SaleLogger;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
@@ -28,11 +28,11 @@ public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
-    private final SpawnerGuiUpdater spawnerGuiUpdater;
+    private final SpawnerGuiManager spawnerGuiManager;
 
     // Cooldown system
     private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
-    private static final long SELL_COOLDOWN_MS = 500; // 500ms cooldown
+    private static final long SELL_COOLDOWN_MS = 2000;
 
     // Transaction timeout
     private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout
@@ -45,7 +45,7 @@ public class EconomyShopGUI implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
-        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
+        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
     }
 
     private boolean isOnCooldown(Player player) {
@@ -146,7 +146,7 @@ public class EconomyShopGUI implements IShopIntegration {
             virtualInv.removeItems(calculation.getItemsToRemove());
             if (virtualInv.isDirty()) {
                 int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             }
         });
 
@@ -167,7 +167,7 @@ public class EconomyShopGUI implements IShopIntegration {
                     virtualInv.addItems(calculation.getItemsToRemove());
                     languageManager.sendMessage(player, "messages.sell-failed");
                     int newTotalPages = calculateTotalPages(spawner);
-                    spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                    spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 });
                 return false;
             }
@@ -187,7 +187,7 @@ public class EconomyShopGUI implements IShopIntegration {
                 virtualInv.addItems(calculation.getItemsToRemove());
                 languageManager.sendMessage(player, "messages.sell-failed");
                 int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiUpdater.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             });
             return false;
         }

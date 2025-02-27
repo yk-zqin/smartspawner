@@ -5,7 +5,7 @@ import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerViewsUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -47,7 +47,7 @@ public class SpawnerMenuAction implements Listener {
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStackerUI spawnerStackerUI;
     private final SpawnerStorageUI spawnerStorageUI;
-    private final SpawnerViewsUpdater spawnerViewsUpdater;
+    private final SpawnerGuiManager spawnerGuiManager;
 
     /**
      * Constructs a new SpawnerMenuAction with necessary dependencies.
@@ -61,7 +61,7 @@ public class SpawnerMenuAction implements Listener {
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStackerUI = plugin.getSpawnerStackerUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerViewsUpdater = plugin.getSpawnerViewUpdater();
+        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
     }
 
     /**
@@ -172,7 +172,7 @@ public class SpawnerMenuAction implements Listener {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
 
         // Update all viewers instead of just current player
-        spawnerViewsUpdater.updateSpawnerMenuViewers(spawner);
+        spawnerGuiManager.updateSpawnerMenuViewers(spawner);
 
         // Send appropriate message based on exp distribution
         sendExpCollectionMessage(player, initialExp, expUsedForMending);

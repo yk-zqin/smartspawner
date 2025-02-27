@@ -258,7 +258,6 @@ public class SpawnerManager {
         }
     }
 
-
     /**
      * Marks a spawner as modified for batch saving
      *

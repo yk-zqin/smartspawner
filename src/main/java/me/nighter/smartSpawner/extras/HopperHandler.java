@@ -1,19 +1,16 @@
 package me.nighter.smartSpawner.extras;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiUpdater;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
-import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Hopper;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -22,7 +19,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -36,7 +32,7 @@ public class HopperHandler implements Listener {
     private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
     private final SpawnerStorageUI spawnerStorageUI;
-    private final SpawnerGuiUpdater spawnerGuiUpdater;
+    private final SpawnerGuiManager spawnerGuiManager;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
@@ -45,7 +41,7 @@ public class HopperHandler implements Listener {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiUpdater = plugin.getSpawnerGuiUpdater();
+        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
 
@@ -221,48 +217,20 @@ public class HopperHandler implements Listener {
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
+        // Keep track of the old used slots for page calculation
+        int oldUsedSlots = spawner.getVirtualInventory().getUsedSlots();
+
         // Batch update - run every 2 ticks
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            for (HumanEntity viewer : getViewersForSpawner(spawner)) {
-                if (viewer instanceof Player) {
-                    Player player = (Player) viewer;
-                    Inventory currentInv = player.getOpenInventory().getTopInventory();
-                    if (currentInv.getHolder() instanceof StoragePageHolder) {
-                        StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
-                        int currentPage = holder.getCurrentPage();
-                        Inventory newInv = spawnerStorageUI.createInventory(spawner,
-                                languageManager.getGuiTitle("gui-title.loot-menu"), currentPage, -1);
-                        for (int i = 0; i < newInv.getSize(); i++) {
-                            currentInv.setItem(i, newInv.getItem(i));
-                        }
-                        player.updateInventory();
-                    }
-                }
-            }
+            // Calculate total pages before and after the inventory change
+            int oldTotalPages = (int) Math.ceil((double) oldUsedSlots / 45); // Using same ITEMS_PER_PAGE constant as in SpawnerGuiManager
+            int newTotalPages = (int) Math.ceil((double) spawner.getVirtualInventory().getUsedSlots() / 45);
 
-            Map<UUID, SpawnerData> openGuis = spawnerGuiUpdater.getOpenSpawnerGuis();
-            for (Map.Entry<UUID, SpawnerData> entry : openGuis.entrySet()) {
-                if (entry.getValue().getSpawnerId().equals(spawner.getSpawnerId())) {
-                    Player viewer = Bukkit.getPlayer(entry.getKey());
-                    if (viewer != null && viewer.isOnline()) {
-                        spawnerGuiUpdater.updateSpawnerMenuGui(viewer, spawner, true);
-                    }
-                }
-            }
+            // Update all storage GUI viewers
+            spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+
+            // Update all spawner menu GUI viewers
+            spawnerGuiManager.updateSpawnerMenuViewers(spawner);
         }, 2L);
-    }
-
-    private List<HumanEntity> getViewersForSpawner(SpawnerData spawner) {
-        List<HumanEntity> viewers = new ArrayList<>();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            Inventory openInv = player.getOpenInventory().getTopInventory();
-            if (openInv.getHolder() instanceof StoragePageHolder) {
-                StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
-                if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId())) {
-                    viewers.add(player);
-                }
-            }
-        }
-        return viewers;
     }
 }
