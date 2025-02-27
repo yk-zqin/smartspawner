@@ -296,7 +296,7 @@ public class LanguageManager {
         ));
         put("spawner-info-item.lore-change", "&8▪ &#81d4faNext Spawn: &e");
         put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
-        put("spawner-info-item.lore-full", "&cStorage is full!");
+        put("spawner-info-item.lore-full", "&cStorage & Exp is full!");
 
         // Experience Info
         put("exp-info-item.name", "&#00F898&lStored Exp: &e%current_exp%&#00F898");

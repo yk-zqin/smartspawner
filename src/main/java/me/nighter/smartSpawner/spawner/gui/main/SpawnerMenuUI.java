@@ -2,7 +2,7 @@ package me.nighter.smartSpawner.spawner.gui.main;
 
 import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.spawner.properties.utils.SpawnerMobHeadTexture;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
@@ -29,7 +29,7 @@ public class SpawnerMenuUI {
     private static final int TICKS_PER_SECOND = 20;
 
     private final LanguageManager languageManager;
-    private final SpawnerGuiManager spawnerGuiManager;
+    private final SpawnerGuiViewManager spawnerGuiViewManager;
 
     /**
      * Constructs the SpawnerMenuUI.
@@ -38,7 +38,7 @@ public class SpawnerMenuUI {
      */
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.languageManager = plugin.getLanguageManager();
-        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
     }
 
     /**
@@ -62,7 +62,7 @@ public class SpawnerMenuUI {
             player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
         }
         if (spawner.isAtCapacity()){
-            spawnerGuiManager.updateSpawnerGuiInfo(player, spawner, false);
+            spawnerGuiViewManager.updateSpawnerGuiInfo(player, spawner, false);
         }
     }
 

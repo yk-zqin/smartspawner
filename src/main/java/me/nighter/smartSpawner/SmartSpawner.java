@@ -13,12 +13,11 @@ import me.nighter.smartSpawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import me.nighter.smartSpawner.migration.SpawnerDataMigration;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuAction;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
-import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerAction;
+import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerHandler;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageAction;
-import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerActionUpdater;
 import me.nighter.smartSpawner.spawner.interactions.SpawnerClickManager;
 import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerBreakListener;
 import me.nighter.smartSpawner.spawner.interactions.destroy.SpawnerExplosionListener;
@@ -65,7 +64,7 @@ public class SmartSpawner extends JavaPlugin {
 
     // UI actions
     private SpawnerMenuAction spawnerMenuAction;
-    private SpawnerStackerAction spawnerStackerAction;
+    private SpawnerStackerHandler spawnerStackerHandler;
     private SpawnerStorageAction spawnerStorageAction;
 
     // Core managers
@@ -80,7 +79,7 @@ public class SmartSpawner extends JavaPlugin {
     private SpawnerLootGenerator spawnerLootGenerator;
     private SpawnerListGUI spawnerListGUI;
     private SpawnerRangeChecker rangeChecker;
-    private SpawnerGuiManager spawnerGuiManager;
+    private SpawnerGuiViewManager spawnerGuiViewManager;
     private SpawnerExplosionListener spawnerExplosionListener;
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
@@ -156,7 +155,7 @@ public class SmartSpawner extends JavaPlugin {
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
-        this.spawnerGuiManager = new SpawnerGuiManager(this);
+        this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
 ;
@@ -175,7 +174,7 @@ public class SmartSpawner extends JavaPlugin {
         this.spawnerClickManager = new SpawnerClickManager(this);
 
         this.spawnerMenuAction = new SpawnerMenuAction(this);
-        this.spawnerStackerAction = new SpawnerStackerAction(this);
+        this.spawnerStackerHandler = new SpawnerStackerHandler(this);
         this.spawnerStorageAction = new SpawnerStorageAction(this);
 
         this.globalEventHandlers = new GlobalEventHandlers(this);
@@ -207,10 +206,10 @@ public class SmartSpawner extends JavaPlugin {
         pm.registerEvents(spawnerPlaceListener, this);
         pm.registerEvents(spawnerStorageAction, this);
         pm.registerEvents(spawnerExplosionListener, this);
-        pm.registerEvents(spawnerGuiManager, this);
+        pm.registerEvents(spawnerGuiViewManager, this);
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
-        pm.registerEvents(spawnerStackerAction, this);
+        pm.registerEvents(spawnerStackerHandler, this);
 
         // Register shop integration listeners if available
         if (isShopGUIPlusEnabled()) {
@@ -361,10 +360,10 @@ public class SmartSpawner extends JavaPlugin {
 
         // Clean up other resources
         if (rangeChecker != null) rangeChecker.cleanup();
-        if (spawnerGuiManager != null) spawnerGuiManager.cleanup();
+        if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
-        if (spawnerStackerAction != null) spawnerStackerAction.cleanup();
+        if (spawnerStackerHandler != null) spawnerStackerHandler.cleanupAll();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
         if (updateChecker != null) updateChecker.shutdown();
     }
@@ -405,8 +404,8 @@ public class SmartSpawner extends JavaPlugin {
         return spawnerMenuUI;
     }
 
-    public SpawnerGuiManager getSpawnerGuiManager() {
-        return spawnerGuiManager;
+    public SpawnerGuiViewManager getSpawnerGuiManager() {
+        return spawnerGuiViewManager;
     }
 
     public SpawnEggHandler getSpawnEggHandler() {
@@ -417,8 +416,8 @@ public class SmartSpawner extends JavaPlugin {
         return spawnerStackerUI;
     }
 
-    public SpawnerStackerActionUpdater getSpawnerStackerUpdater() {
-        return spawnerStackerAction.getSpawnerStackerUpdater();
+    public SpawnerStackerHandler getSpawnerStackerHandler() {
+        return spawnerStackerHandler;
     }
 
     public SpawnerStorageUI getSpawnerStorageUI() {

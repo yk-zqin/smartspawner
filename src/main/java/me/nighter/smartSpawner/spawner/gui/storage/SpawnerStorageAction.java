@@ -3,7 +3,7 @@ package me.nighter.smartSpawner.spawner.gui.storage;
 import me.nighter.smartSpawner.*;
 import me.nighter.smartSpawner.spawner.gui.main.SpawnerMenuUI;
 import me.nighter.smartSpawner.spawner.gui.storage.utils.*;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.utils.ConfigManager;
@@ -32,7 +32,7 @@ public class SpawnerStorageAction implements Listener {
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStorageUI spawnerStorageUI;
-    private final SpawnerGuiManager spawnerGuiManager;
+    private final SpawnerGuiViewManager spawnerGuiViewManager;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
@@ -48,7 +48,7 @@ public class SpawnerStorageAction implements Listener {
         this.clickHandlers = initializeClickHandlers();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -121,8 +121,10 @@ public class SpawnerStorageAction implements Listener {
                     holder.setTotalPages(newTotalPages);
                 }
                 holder.updateOldUsedSlots();
-                spawnerGuiManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
-                if (spawner.isAtCapacity()) {
+                spawnerGuiViewManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
+
+                // Check if spawner is at capacity and update if necessary
+                if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
                     spawner.setAtCapacity(false);
                 }
             }
@@ -326,8 +328,11 @@ public class SpawnerStorageAction implements Listener {
             holder.setCurrentPage(currentPage);
 
             // Update the display and title
-            spawnerGuiManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
-            if (spawner.isAtCapacity()) {
+            spawnerGuiViewManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
+            holder.updateOldUsedSlots();
+
+            // Check if spawner is at capacity and update if necessary
+            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
                 spawner.setAtCapacity(false);
             }
         }

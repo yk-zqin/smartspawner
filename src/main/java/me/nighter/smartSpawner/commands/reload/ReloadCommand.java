@@ -58,7 +58,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             // Reload language files
             languageManager.reload();
 
-            // Refresh all holograms
+            // Refresh all holograms for configured changes
             spawnerManager.reloadAllHolograms();
 
             sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.success"));

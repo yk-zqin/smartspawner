@@ -6,7 +6,10 @@ import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
-import org.bukkit.*;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -15,9 +18,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,15 +29,12 @@ import java.util.regex.Pattern;
 public class SpawnerStackHandler {
     private static final Pattern ECONOMY_SHOP_GUI_PATTERN = Pattern.compile("§9§l([A-Za-z]+(?: [A-Za-z]+)?) §rSpawner");
     private static final long STACK_COOLDOWN = 250L; // 250ms cooldown between stacks
-    private static final long GUI_UPDATE_DELAY = 1L;
 
     private final SmartSpawner plugin;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final Map<UUID, Long> lastStackTime;
     private final Map<Location, UUID> stackLocks;
-    private final Cache<Location, EntityType> spawnerTypeCache;
-    private final Map<String, BukkitTask> pendingUpdates = new ConcurrentHashMap<>();
 
     public SpawnerStackHandler(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -41,7 +42,6 @@ public class SpawnerStackHandler {
         this.languageManager = plugin.getLanguageManager();
         this.lastStackTime = new ConcurrentHashMap<>();
         this.stackLocks = new ConcurrentHashMap<>();
-        this.spawnerTypeCache = new Cache<>(30); // 30 seconds cache
 
         // Start cleanup task
         startCleanupTask();
@@ -52,9 +52,10 @@ public class SpawnerStackHandler {
             @Override
             public void run() {
                 long now = System.currentTimeMillis();
-                lastStackTime.entrySet().removeIf(entry -> now - entry.getValue() > 10000); // Clear after 10 seconds
-                stackLocks.entrySet().removeIf(entry -> !Bukkit.getPlayer(entry.getValue()).isOnline());
-                spawnerTypeCache.cleanup();
+                // Clear entries older than 10 seconds
+                lastStackTime.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
+                // Remove locks for offline players
+                stackLocks.entrySet().removeIf(entry -> plugin.getServer().getPlayer(entry.getValue()) == null);
             }
         }.runTaskTimer(plugin, 200L, 200L); // Run every 10 seconds
     }
@@ -65,44 +66,16 @@ public class SpawnerStackHandler {
             return;
         }
 
-        // Cancel any pending updates for this spawner
-        cancelPendingUpdate(spawnerData.getSpawnerId());
-
         // Try to acquire lock
         if (!acquireStackLock(player, block.getLocation())) {
             return;
         }
 
         try {
-            boolean success = handleSpawnerStack(player, spawnerData, itemInHand, player.isSneaking());
-
-            if (success) {
-
-                // Schedule delayed GUI update
-                BukkitTask updateTask = new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            plugin.getSpawnerStackerUpdater().scheduleUpdateForAll(spawnerData, player);
-                            pendingUpdates.remove(spawnerData.getSpawnerId());
-                        } catch (Exception e) {
-                            plugin.getLogger().warning("Error updating spawner GUI: " + e.getMessage());
-                        }
-                    }
-                }.runTaskLater(plugin, GUI_UPDATE_DELAY);
-
-                pendingUpdates.put(spawnerData.getSpawnerId(), updateTask);
-            }
+            handleSpawnerStack(player, spawnerData, itemInHand, player.isSneaking());
         } finally {
             releaseStackLock(block.getLocation());
             updateLastStackTime(player);
-        }
-    }
-
-    private void cancelPendingUpdate(String spawnerId) {
-        BukkitTask pendingTask = pendingUpdates.remove(spawnerId);
-        if (pendingTask != null && !pendingTask.isCancelled()) {
-            pendingTask.cancel();
         }
     }
 
@@ -124,6 +97,7 @@ public class SpawnerStackHandler {
     }
 
     public boolean handleSpawnerStack(Player player, SpawnerData targetSpawner, ItemStack itemInHand, boolean stackAll) {
+        // Basic validation checks
         if (itemInHand.getType() != Material.SPAWNER) {
             return false;
         }
@@ -133,25 +107,23 @@ public class SpawnerStackHandler {
             return false;
         }
 
-        // Use cached entity type if available
-        Optional<EntityType> handEntityTypeOpt = spawnerTypeCache.get(location)
-                .map(Optional::of)
-                .orElseGet(() -> getEntityTypeFromItem(itemInHand));
-
+        // Always check the entity type directly without caching
+        Optional<EntityType> handEntityTypeOpt = getEntityTypeFromItem(itemInHand);
         if (!handEntityTypeOpt.isPresent()) {
             languageManager.sendMessage(player, "messages.invalid-spawner");
             return false;
         }
 
         EntityType handEntityType = handEntityTypeOpt.get();
-        spawnerTypeCache.put(location, handEntityType);
-
         EntityType targetEntityType = targetSpawner.getEntityType();
+
+        // Verify types match
         if (handEntityType != targetEntityType) {
             languageManager.sendMessage(player, "messages.different-type");
             return false;
         }
 
+        // Verify stack limits
         int maxStackSize = configManager.getMaxStackSize();
         int currentStack = targetSpawner.getStackSize();
 
@@ -162,7 +134,6 @@ public class SpawnerStackHandler {
 
         return processStackAddition(player, targetSpawner, itemInHand, stackAll, currentStack, maxStackSize);
     }
-
 
     private boolean hasStackPermissions(Player player, Location location) {
         if (!CheckStackBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
@@ -192,7 +163,11 @@ public class SpawnerStackHandler {
             return Optional.of(entityType);
         }
 
-        // Check for custom formats
+        // Fallback to checking display name formats if metadata is missing
+        if (!meta.hasDisplayName()) {
+            return Optional.empty();
+        }
+
         String displayName = meta.getDisplayName();
 
         // Try EconomyShopGUI format
@@ -229,16 +204,18 @@ public class SpawnerStackHandler {
         int amountToStack = stackAll ? Math.min(spaceLeft, itemAmount) : 1;
         int newStack = currentStack + amountToStack;
 
+        // Update spawner data
         targetSpawner.setStackSize(newStack);
-        // Check if we need to set the spawner to at capacity
-        if (targetSpawner.isAtCapacity() ) {
+        if (targetSpawner.isAtCapacity()) {
             targetSpawner.setAtCapacity(false);
         }
+
+        // Update player's inventory
         updatePlayerInventory(player, itemInHand, amountToStack);
+
+        // Visual feedback
         showStackAnimation(targetSpawner, newStack, player);
 
-        // Update all viewers after successful stacking
-        // spawnerViewsUpdater.updateViewersIncludeTitle(targetSpawner);
         return true;
     }
 
@@ -269,49 +246,5 @@ public class SpawnerStackHandler {
         }
 
         languageManager.sendMessage(player, "messages.hand-stack", "%amount%", String.valueOf(newStack));
-    }
-
-    private static class Cache<K, V> {
-        private final Map<K, CacheEntry<V>> map = new ConcurrentHashMap<>();
-        private final long expirationSeconds;
-
-        public Cache(long expirationSeconds) {
-            this.expirationSeconds = expirationSeconds;
-        }
-
-        public Optional<V> get(K key) {
-            CacheEntry<V> entry = map.get(key);
-            if (entry != null && !entry.isExpired(expirationSeconds)) {
-                return Optional.of(entry.getValue());
-            }
-            map.remove(key);
-            return Optional.empty();
-        }
-
-        public void put(K key, V value) {
-            map.put(key, new CacheEntry<>(value));
-        }
-
-        public void cleanup() {
-            map.entrySet().removeIf(entry -> entry.getValue().isExpired(expirationSeconds));
-        }
-
-        private static class CacheEntry<V> {
-            private final V value;
-            private final long timestamp;
-
-            public CacheEntry(V value) {
-                this.value = value;
-                this.timestamp = System.currentTimeMillis();
-            }
-
-            public V getValue() {
-                return value;
-            }
-
-            public boolean isExpired(long expirationSeconds) {
-                return System.currentTimeMillis() - timestamp > expirationSeconds * 1000;
-            }
-        }
     }
 }

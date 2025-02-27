@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Unified controller responsible for managing all spawner GUI interactions and updates.
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces.
  */
-public class SpawnerGuiManager implements Listener {
+public class SpawnerGuiViewManager implements Listener {
     private static final long UPDATE_INTERVAL_TICKS = 10L;
     private static final long INITIAL_DELAY_TICKS = 10L;
     private static final int ITEMS_PER_PAGE = 45; // Standard chest inventory size minus navigation items
@@ -51,7 +51,7 @@ public class SpawnerGuiManager implements Listener {
     private volatile boolean isTaskRunning;
     private long previousExpValue = 0;
 
-    public SpawnerGuiManager(SmartSpawner plugin) {
+    public SpawnerGuiViewManager(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
@@ -78,9 +78,9 @@ public class SpawnerGuiManager implements Listener {
                 INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS);
         isTaskRunning = true;
 
-        if (configManager.isDebugEnabled()) {
-            plugin.getLogger().info("Started GUI update task");
-        }
+//        if (configManager.isDebugEnabled()) {
+//            plugin.getLogger().info("Started GUI update task");
+//        }
     }
 
     public synchronized void stopUpdateTask() {
@@ -95,9 +95,9 @@ public class SpawnerGuiManager implements Listener {
 
         isTaskRunning = false;
 
-        if (configManager.isDebugEnabled()) {
-            plugin.getLogger().info("Stopped GUI update task");
-        }
+//        if (configManager.isDebugEnabled()) {
+//            plugin.getLogger().info("Stopped GUI update task");
+//        }
     }
 
     private boolean isValidGuiSession(Player player) {
@@ -517,7 +517,8 @@ public class SpawnerGuiManager implements Listener {
     // ===============================================================
 
     public void closeAllViewersInventory(SpawnerData spawner) {
-        Set<Player> viewers = getViewers(spawner.getSpawnerId());
+        String spawnerId = spawner.getSpawnerId();
+        Set<Player> viewers = getViewers(spawnerId);
         if (!viewers.isEmpty()) {
             for (Player viewer : viewers) {
                 if (viewer != null && viewer.isOnline()) {
@@ -527,16 +528,8 @@ public class SpawnerGuiManager implements Listener {
         }
 
         // Check for stacker viewers if that functionality exists
-        if (plugin.getSpawnerStackerUpdater() != null) {
-            Set<UUID> stackerViewers = plugin.getSpawnerStackerUpdater().getSpawnerViewers(spawner.getSpawnerId());
-            if (stackerViewers != null) {
-                for (UUID viewerId : stackerViewers) {
-                    Player viewer = Bukkit.getPlayer(viewerId);
-                    if (viewer != null && viewer.isOnline()) {
-                        viewer.closeInventory();
-                    }
-                }
-            }
+        if (plugin.getSpawnerStackerHandler() != null) {
+            plugin.getSpawnerStackerHandler().closeAllViewersInventory(spawnerId);
         }
     }
 

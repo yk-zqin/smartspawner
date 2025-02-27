@@ -198,14 +198,14 @@ public class SpawnerData {
             int maxStoragePages = configManager.getMaxStoragePages();
             int newMaxSlots = (45 * maxStoragePages) * stackSize;
 
-            // Calculate total items currently stored
-            long totalItems = virtualInventory.getTotalItems();
-            long newCapacity = (long) newMaxSlots * 64; // Assuming 64 is max stack size
-
-            // Check if we'll lose items
-            if (totalItems > newCapacity) {
-                languageManager.sendMessage(player, "messages.items-lost");
-            }
+//            // Calculate total items currently stored
+//            long totalItems = virtualInventory.getTotalItems();
+//            long newCapacity = (long) newMaxSlots * 64; // Assuming 64 is max stack size
+//
+//            // Check if we'll lose items
+//            if (totalItems > newCapacity) {
+//                languageManager.sendMessage(player, "messages.items-lost");
+//            }
 
             // Create new inventory with new size
             VirtualInventory newInventory = new VirtualInventory(newMaxSlots);

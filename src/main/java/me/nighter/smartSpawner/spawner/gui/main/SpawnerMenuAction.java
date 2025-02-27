@@ -5,7 +5,7 @@ import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
 import me.nighter.smartSpawner.spawner.gui.stacker.SpawnerStackerUI;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
@@ -47,7 +47,7 @@ public class SpawnerMenuAction implements Listener {
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStackerUI spawnerStackerUI;
     private final SpawnerStorageUI spawnerStorageUI;
-    private final SpawnerGuiManager spawnerGuiManager;
+    private final SpawnerGuiViewManager spawnerGuiViewManager;
 
     /**
      * Constructs a new SpawnerMenuAction with necessary dependencies.
@@ -61,7 +61,7 @@ public class SpawnerMenuAction implements Listener {
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStackerUI = plugin.getSpawnerStackerUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
     }
 
     /**
@@ -172,7 +172,14 @@ public class SpawnerMenuAction implements Listener {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
 
         // Update all viewers instead of just current player
-        spawnerGuiManager.updateSpawnerMenuViewers(spawner);
+        spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
+
+        // Update spawner capacity status
+        if (spawner.getSpawnerExp() < spawner.getMaxStoredExp()) {
+            if (spawner.isAtCapacity()){
+                spawner.setAtCapacity(false);
+            }
+        }
 
         // Send appropriate message based on exp distribution
         sendExpCollectionMessage(player, initialExp, expUsedForMending);

@@ -1,7 +1,7 @@
 package me.nighter.smartSpawner.extras;
 
 import me.nighter.smartSpawner.SmartSpawner;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.utils.ConfigManager;
 import me.nighter.smartSpawner.utils.LanguageManager;
 import me.nighter.smartSpawner.spawner.gui.storage.SpawnerStorageUI;
@@ -32,7 +32,7 @@ public class HopperHandler implements Listener {
     private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
     private final SpawnerStorageUI spawnerStorageUI;
-    private final SpawnerGuiManager spawnerGuiManager;
+    private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final LanguageManager languageManager;
     private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
@@ -41,7 +41,7 @@ public class HopperHandler implements Listener {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
 
@@ -227,10 +227,10 @@ public class HopperHandler implements Listener {
             int newTotalPages = (int) Math.ceil((double) spawner.getVirtualInventory().getUsedSlots() / 45);
 
             // Update all storage GUI viewers
-            spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+            spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
 
             // Update all spawner menu GUI viewers
-            spawnerGuiManager.updateSpawnerMenuViewers(spawner);
+            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
         }, 2L);
     }
 }

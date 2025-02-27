@@ -4,7 +4,7 @@ import me.nighter.smartSpawner.SmartSpawner;
 import me.nighter.smartSpawner.holders.SpawnerMenuHolder;
 import me.nighter.smartSpawner.holders.StoragePageHolder;
 import me.nighter.smartSpawner.nms.ParticleWrapper;
-import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiManager;
+import me.nighter.smartSpawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import me.nighter.smartSpawner.spawner.properties.SpawnerData;
 import me.nighter.smartSpawner.spawner.properties.SpawnerManager;
 import me.nighter.smartSpawner.spawner.properties.VirtualInventory;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 public class SpawnerLootGenerator {
     private final SmartSpawner plugin;
-    private final SpawnerGuiManager spawnerGuiManager;
+    private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final SpawnerManager spawnerManager;
     private final ConfigManager configManager;
     private final Random random;
@@ -38,7 +38,7 @@ public class SpawnerLootGenerator {
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.spawnerGuiManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.configManager = plugin.getConfigManager();
         this.random = new Random();
@@ -334,7 +334,7 @@ public class SpawnerLootGenerator {
                         boolean hasLootViewers = false;
                         boolean hasSpawnerViewers = false;
 
-                        Set<Player> viewers = spawnerGuiManager.getViewers(spawner.getSpawnerId());
+                        Set<Player> viewers = spawnerGuiViewManager.getViewers(spawner.getSpawnerId());
                         if (!viewers.isEmpty()) {
                             for (Player viewer : viewers) {
                                 InventoryHolder holder = viewer.getOpenInventory().getTopInventory().getHolder();
@@ -529,12 +529,12 @@ public class SpawnerLootGenerator {
         if (hasLootViewers) {
             if (spawner.getVirtualInventory().isDirty()) {
                 int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             }
         }
 
         if (hasSpawnerViewers) {
-            spawnerGuiManager.updateSpawnerMenuViewers(spawner);
+            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
         }
 
         if (configManager.isHologramEnabled()) {
