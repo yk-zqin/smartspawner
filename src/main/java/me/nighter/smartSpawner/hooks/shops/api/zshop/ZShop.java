@@ -32,7 +32,7 @@ public class ZShop implements IShopIntegration {
 
     // Cooldown system
     private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
-    private static final long SELL_COOLDOWN_MS = 2000; // 2000ms cooldown
+    private static final long SELL_COOLDOWN_MS = 1000; // 2000ms cooldown
 
     // Transaction timeout
     private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout

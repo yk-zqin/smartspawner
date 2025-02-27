@@ -25,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
@@ -37,6 +38,10 @@ public class SpawnerStorageAction implements Listener {
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
     private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 53);
+
+    // Add cooldown system properties
+    private static final long SELL_COOLDOWN_MS = 5000; // 5 second cooldown
+    private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
@@ -221,19 +226,61 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
+    private boolean isOnCooldown(Player player) {
+        long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
+        long currentTime = System.currentTimeMillis();
+        boolean onCooldown = (currentTime - lastSellTime) < SELL_COOLDOWN_MS;
+
+        // Debug information if needed
+        if (onCooldown) {
+            configManager.debug("Player " + player.getName() + " tried to sell items while on cooldown");
+        }
+
+        return onCooldown;
+    }
+
+    private void updateCooldown(Player player) {
+        sellCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
+    }
+
+    // Method to periodically clean up old cooldowns to prevent memory leaks
+    private void clearOldCooldowns() {
+        long currentTime = System.currentTimeMillis();
+        sellCooldowns.entrySet().removeIf(entry ->
+                (currentTime - entry.getValue()) > SELL_COOLDOWN_MS * 10);
+    }
+
     private void handleSellAllItems(Player player, SpawnerData spawner, StoragePageHolder holder) {
         if (!plugin.hasShopIntegration()) return;
 
+        // Play click sound
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
+        // Permission check
         if (!player.hasPermission("smartspawner.sellall")) {
             player.sendMessage(languageManager.getMessage("no-permission"));
             return;
         }
 
-        // Sell all items through shop integration
-        plugin.getShopIntegration().sellAllItems(player, spawner);
-        if (spawner.isAtCapacity()) {
+        // Anti-spam cooldown check
+        if (isOnCooldown(player)) {
+            languageManager.sendMessage(player, "messages.sell-cooldown");
+            return;
+        }
+
+        // Update cooldown timestamp before processing
+        updateCooldown(player);
+
+        // Clean up old cooldowns periodically (e.g., every 10th call)
+        if (Math.random() < 0.1) {
+            clearOldCooldowns();
+        }
+
+        // Process the sale through shop integration
+        boolean success = plugin.getShopIntegration().sellAllItems(player, spawner);
+
+        // Reset at capacity if successful
+        if (success && spawner.isAtCapacity()) {
             spawner.setAtCapacity(false);
         }
     }
