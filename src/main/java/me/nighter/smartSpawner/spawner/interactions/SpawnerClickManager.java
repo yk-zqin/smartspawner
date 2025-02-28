@@ -13,6 +13,8 @@ import me.nighter.smartSpawner.utils.LanguageManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -61,6 +63,78 @@ public class SpawnerClickManager implements Listener {
         initCleanupTask();
     }
 
+    /**
+     * Checks if a spawner is likely to be naturally generated based on surrounding blocks
+     * and efficient contextual analysis.
+     *
+     * @param spawnerBlock The spawner block to check
+     * @return true if it appears to be a natural spawner
+     */
+    private boolean isNaturalDungeonSpawner(Block spawnerBlock) {
+        // Check the block below first (most efficient check)
+        Block blockBelow = spawnerBlock.getRelative(BlockFace.DOWN);
+        Material belowMaterial = blockBelow.getType();
+
+        // Check common dungeon floor materials
+        if (belowMaterial == Material.COBBLESTONE ||
+                belowMaterial == Material.MOSSY_COBBLESTONE) {
+            return true;
+        }
+
+        // Check mineshaft materials (for cave spider spawners)
+        if (belowMaterial == Material.COBWEB ||
+                belowMaterial == Material.OAK_PLANKS ||
+                belowMaterial == Material.OAK_FENCE ||
+                belowMaterial == Material.RAIL ||
+                belowMaterial == Material.DEEPSLATE) {
+            return true;
+        }
+
+        // For floating spawners, check if there's no block below
+        if (belowMaterial == Material.AIR || belowMaterial == Material.CAVE_AIR) {
+            // Quick surroundings check for natural cave features
+            int naturalBlockCount = 0;
+            int cobwebCount = 0;
+
+            // Only check immediate surroundings (6 adjacent blocks) for better performance
+            for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST,
+                    BlockFace.SOUTH, BlockFace.WEST,
+                    BlockFace.UP}) {
+                Block adjacentBlock = spawnerBlock.getRelative(face);
+                Material material = adjacentBlock.getType();
+
+                // Count natural blocks and cobwebs
+                if (material.toString().contains("STONE") ||
+                        material.toString().contains("DEEPSLATE") ||
+                        material == Material.DIRT ||
+                        material == Material.GRAVEL) {
+                    naturalBlockCount++;
+                } else if (material == Material.COBWEB) {
+                    cobwebCount++;
+                }
+            }
+
+            // If surrounded by natural blocks or has cobwebs, likely natural
+            if (naturalBlockCount >= 3 || cobwebCount >= 1) {
+                return true;
+            }
+        }
+
+        // As a last check, examine the spawner type (lightweight operation)
+        BlockState state = spawnerBlock.getState();
+        if (state instanceof CreatureSpawner) {
+            CreatureSpawner cs = (CreatureSpawner) state;
+            EntityType entityType = cs.getSpawnedType();
+
+            // Cave spiders are almost always from natural mineshaft spawners
+            if (entityType == EntityType.CAVE_SPIDER) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onSpawnerClick(PlayerInteractEvent event) {
         // Quick validation checks
@@ -70,6 +144,12 @@ public class SpawnerClickManager implements Listener {
 
         Player player = event.getPlayer();
         Block block = event.getClickedBlock();
+
+        if (!configManager.getBoolean("natural-spawner-interaction")) {
+            if (isNaturalDungeonSpawner(block)) {
+                return;
+            }
+        }
 
         // Apply interaction cooldown
         if (!isInteractionAllowed(player)) {
@@ -149,6 +229,7 @@ public class SpawnerClickManager implements Listener {
      * Main handler for spawner interactions
      */
     private void handleSpawnerInteraction(Player player, Block block, ItemStack heldItem, Material itemType) {
+
         // Get or create spawner data
         SpawnerData spawner = getOrCreateSpawnerData(block, player);
 

@@ -180,11 +180,6 @@ public class LanguageManager {
         put("messages.hand-stack.type", "ACTION_BAR");
         put("messages.hand-stack.sound", "entity.experience_orb.pickup");
 
-        put("messages.items-lost.message", "&cSome items were lost due to unstacking!");
-        put("messages.items-lost.prefix", true);
-        put("messages.items-lost.type", "CHAT");
-        put("messages.items-lost.sound", "block.note_block.pling");
-
         put("messages.cannot-go-below-one.message", "&cCannot go below 1! Only decreasing by %amount%!");
         put("messages.cannot-go-below-one.prefix", true);
         put("messages.cannot-go-below-one.type", "CHAT");
@@ -609,6 +604,7 @@ public class LanguageManager {
         messageCache.put(path + "_" + currentLanguage.getCode(), message);
         return message;
     }
+
     // get message from path with replacements
     public String getMessage(String path, String... replacements) {
         String message = getMessage(path);
@@ -631,29 +627,6 @@ public class LanguageManager {
         messageCache.put(cacheKey.toString(), message);
         return message;
     }
-    // get message from path with replacements map
-//    public String getMessage(String path, Map<String, String> replacements) {
-//        String message = getMessage(path);
-//
-//        // Create cache key from path and all replacements
-//        StringBuilder cacheKey = new StringBuilder(path);
-//        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-//            cacheKey.append(entry.getKey()).append(entry.getValue());
-//        }
-//
-//        String cachedMessage = messageCache.get(cacheKey.toString());
-//        if (cachedMessage != null) {
-//            return cachedMessage;
-//        }
-//
-//        // Apply all replacements
-//        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-//            message = message.replace(entry.getKey(), entry.getValue());
-//        }
-//
-//        messageCache.put(cacheKey.toString(), message);
-//        return message;
-//    }
 
     // Get message from path with Map replacements
     public String getMessage(String path, Map<String, String> replacements) {
@@ -810,26 +783,6 @@ public class LanguageManager {
         StringBuilder cacheKey = new StringBuilder("prefix_").append(path);
         for (String replacement : replacements) {
             cacheKey.append(replacement);
-        }
-
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return cachedMessage;
-        }
-
-        String prefix = colorize(messages.getString("prefix", ""));
-        String message = getMessage(path, replacements);
-        String result = prefix.isEmpty() ? message : prefix + " " + message;
-
-        messageCache.put(cacheKey.toString(), result);
-        return result;
-    }
-
-    public String getMessageWithPrefix(String path, Map<String, String> replacements) {
-        // Create cache key from prefix, path and all replacements
-        StringBuilder cacheKey = new StringBuilder("prefix_").append(path);
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            cacheKey.append(entry.getKey()).append(entry.getValue());
         }
 
         String cachedMessage = messageCache.get(cacheKey.toString());

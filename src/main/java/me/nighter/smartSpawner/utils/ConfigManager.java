@@ -292,7 +292,7 @@ public class ConfigManager {
     private final Map<String, Object> defaultConfig = new HashMap<String, Object>() {{
         put("config-version", CURRENT_CONFIG_VERSION);
 
-        // Global Settings
+        // Plugin Settings
         put("settings.language", "en_US");
         put("settings.debug", false);
         put("settings.save-interval", 300);
@@ -310,6 +310,9 @@ public class ConfigManager {
         put("spawner.allow-toggle-equipment-drops", true);
         put("spawner.allow-grief", false);
         put("spawner.activate-on-place", true);
+
+        // Extra & Custom Mechanics
+        put("natural-spawner-interaction", false);
 
         // Spawner Breaking Mechanics
         put("spawner-break.enabled", true);
@@ -340,6 +343,7 @@ public class ConfigManager {
         // Economic Integration
         put("shop-integration", "auto");
         put("formated-price", true);
+        put("sell-cooldown", 3);
         put("tax.enabled", false);
         put("tax.rate", 10.0);
 

@@ -31,10 +31,6 @@ public class ShopGuiPlus implements IShopIntegration {
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final boolean isLoggingEnabled;
 
-    // Cooldown system
-    private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
-    private static final long SELL_COOLDOWN_MS = 1000;
-
     // Transaction timeout
     private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout
 
@@ -50,22 +46,6 @@ public class ShopGuiPlus implements IShopIntegration {
         this.isLoggingEnabled = configManager.isLoggingEnabled();
     }
 
-    private boolean isOnCooldown(Player player) {
-        long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
-        long currentTime = System.currentTimeMillis();
-        return (currentTime - lastSellTime) < SELL_COOLDOWN_MS;
-    }
-
-    private void updateCooldown(Player player) {
-        sellCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-    }
-
-    private void clearOldCooldowns() {
-        long currentTime = System.currentTimeMillis();
-        sellCooldowns.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue()) > SELL_COOLDOWN_MS * 10);
-    }
-
     @Override
     public boolean sellAllItems(Player player, SpawnerData spawner) {
         // Check if shop system is enabled
@@ -76,12 +56,6 @@ public class ShopGuiPlus implements IShopIntegration {
         // Prevent multiple concurrent sales for the same player
         if (pendingSales.containsKey(player.getUniqueId())) {
             languageManager.sendMessage(player, "messages.transaction-in-progress");
-            return false;
-        }
-
-        // Check cooldown
-        if (isOnCooldown(player)) {
-            languageManager.sendMessage(player, "messages.sell-cooldown");
             return false;
         }
 
@@ -103,7 +77,6 @@ public class ShopGuiPlus implements IShopIntegration {
             saleFuture.whenComplete((success, error) -> {
                 pendingSales.remove(player.getUniqueId());
                 lock.unlock();
-                updateCooldown(player);
 
                 if (error != null) {
                     plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);

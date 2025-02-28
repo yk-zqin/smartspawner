@@ -46,11 +46,6 @@ public class SpawnerBreakListener implements Listener {
     private final HopperHandler hopperHandler;
     private final Random random = new Random();
 
-    /**
-     * Creates a new spawner break handler with the given plugin instance.
-     *
-     * @param plugin The main plugin instance
-     */
     public SpawnerBreakListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
@@ -59,12 +54,6 @@ public class SpawnerBreakListener implements Listener {
         this.hopperHandler = plugin.getHopperHandler();
     }
 
-    /**
-     * Handles the spawner break event, enforcing permissions, silk touch requirements,
-     * and processing drops based on stack size.
-     *
-     * @param event The block break event
-     */
     @EventHandler(priority = EventPriority.HIGH)
     public void onSpawnerBreak(BlockBreakEvent event) {
         final Player player = event.getPlayer();
@@ -88,6 +77,20 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
+        // Get spawner data and check if it's a natural spawner
+        final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
+
+        // Check if natural spawner interaction is disabled
+        if (!configManager.getBoolean("natural-spawner-interaction")) {
+            // Check if this is likely a natural dungeon spawner (no SpawnerData and has cobblestone below)
+            if (spawner == null && isNaturalDungeonSpawner(block)) {
+                // Handle like vanilla - break with no drops
+                block.setType(Material.AIR);
+                event.setCancelled(true);
+                return;
+            }
+        }
+
         // Permission check
         if (!player.hasPermission("smartspawner.break")) {
             event.setCancelled(true);
@@ -95,8 +98,7 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        // Get spawner data and handle based on type
-        final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
+        // Handle spawner based on type
         if (spawner != null) {
             handleSpawnerBreak(block, spawner, player);
 
@@ -113,21 +115,85 @@ public class SpawnerBreakListener implements Listener {
 
         // Clean up associated hopper if present
         cleanupAssociatedHopper(block);
-
     }
 
     /**
-     * Handles the breaking of a tracked spawner with custom stacking behavior
+     * Checks if a spawner is likely to be naturally generated based on surrounding blocks
+     * and efficient contextual analysis.
      *
-     * @param block The spawner block
-     * @param spawner The spawner data
-     * @param player The player breaking the spawner
+     * @param spawnerBlock The spawner block to check
+     * @return true if it appears to be a natural spawner
      */
+    private boolean isNaturalDungeonSpawner(Block spawnerBlock) {
+        // Check the block below first (most efficient check)
+        Block blockBelow = spawnerBlock.getRelative(BlockFace.DOWN);
+        Material belowMaterial = blockBelow.getType();
+
+        // Check common dungeon floor materials
+        if (belowMaterial == Material.COBBLESTONE ||
+                belowMaterial == Material.MOSSY_COBBLESTONE) {
+            return true;
+        }
+
+        // Check mineshaft materials (for cave spider spawners)
+        if (belowMaterial == Material.COBWEB ||
+                belowMaterial == Material.OAK_PLANKS ||
+                belowMaterial == Material.OAK_FENCE ||
+                belowMaterial == Material.RAIL ||
+                belowMaterial == Material.DEEPSLATE) {
+            return true;
+        }
+
+        // For floating spawners, check if there's no block below
+        if (belowMaterial == Material.AIR || belowMaterial == Material.CAVE_AIR) {
+            // Quick surroundings check for natural cave features
+            int naturalBlockCount = 0;
+            int cobwebCount = 0;
+
+            // Only check immediate surroundings (6 adjacent blocks) for better performance
+            for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST,
+                    BlockFace.SOUTH, BlockFace.WEST,
+                    BlockFace.UP}) {
+                Block adjacentBlock = spawnerBlock.getRelative(face);
+                Material material = adjacentBlock.getType();
+
+                // Count natural blocks and cobwebs
+                if (material.toString().contains("STONE") ||
+                        material.toString().contains("DEEPSLATE") ||
+                        material == Material.DIRT ||
+                        material == Material.GRAVEL) {
+                    naturalBlockCount++;
+                } else if (material == Material.COBWEB) {
+                    cobwebCount++;
+                }
+            }
+
+            // If surrounded by natural blocks or has cobwebs, likely natural
+            if (naturalBlockCount >= 3 || cobwebCount >= 1) {
+                return true;
+            }
+        }
+
+        // As a last check, examine the spawner type (lightweight operation)
+        BlockState state = spawnerBlock.getState();
+        if (state instanceof CreatureSpawner) {
+            CreatureSpawner cs = (CreatureSpawner) state;
+            EntityType entityType = cs.getSpawnedType();
+
+            // Cave spiders are almost always from natural mineshaft spawners
+            if (entityType == EntityType.CAVE_SPIDER) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void handleSpawnerBreak(Block block, SpawnerData spawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
-        if (!validateBreakConditions(player, tool)) {
+        if (!validateBreakConditions(player, tool, spawner)) {
             return;
         }
 
@@ -149,18 +215,11 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Handles breaking of vanilla (non-tracked) spawners
-     *
-     * @param block The spawner block
-     * @param creatureSpawner The creature spawner state
-     * @param player The player breaking the spawner
-     */
     private void handleVanillaSpawnerBreak(Block block, CreatureSpawner creatureSpawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
-        if (!validateBreakConditions(player, tool)) {
+        if (!validateBreakConditions(player, tool, null)) {
             return;
         }
 
@@ -181,15 +240,7 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Validates if a player can break a spawner based on permissions,
-     * tool type, and enchantments.
-     *
-     * @param player The player attempting to break the spawner
-     * @param tool The tool being used
-     * @return true if the player is allowed to break the spawner
-     */
-    private boolean validateBreakConditions(Player player, ItemStack tool) {
+    private boolean validateBreakConditions(Player player, ItemStack tool, SpawnerData spawner) {
         // Skip validation for creative mode players
         if (player.getGameMode() == GameMode.CREATIVE) {
             return true;
@@ -216,14 +267,6 @@ public class SpawnerBreakListener implements Listener {
         return true;
     }
 
-    /**
-     * Processes drops for stacked spawners, always maintaining at least one spawner
-     * in the stack if starting with more than one.
-     *
-     * @param location The spawner location
-     * @param spawner The spawner data
-     * @return Result object containing success status and durability impact
-     */
     private SpawnerBreakResult processDrops(Location location, SpawnerData spawner) {
         final int currentStackSize = spawner.getStackSize();
         // Ensure at least 1 spawner remains (if initially > 1)
@@ -274,14 +317,6 @@ public class SpawnerBreakListener implements Listener {
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
     }
 
-    /**
-     * Efficiently drops multiple items using batch processing for larger quantities
-     *
-     * @param world The world to drop items in
-     * @param location The base location
-     * @param template The template item to clone
-     * @param amount The number of items to drop
-     */
     private void dropItems(World world, Location location, ItemStack template, int amount) {
         if (amount <= 0) {
             return;
@@ -318,13 +353,6 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Reduces tool durability based on spawner breaking cost
-     *
-     * @param tool The tool to reduce durability for
-     * @param player The player using the tool
-     * @param durabilityLoss The amount of durability to remove
-     */
     private void reduceDurability(ItemStack tool, Player player, int durabilityLoss) {
         if (tool.getType().getMaxDurability() == 0) {
             return;
@@ -347,12 +375,6 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Creates a spawner item with the specified entity type
-     *
-     * @param entityType The entity type to set for the spawner
-     * @return A configured spawner ItemStack
-     */
     private ItemStack createSpawnerItem(EntityType entityType) {
         ItemStack spawner = new ItemStack(Material.SPAWNER);
         ItemMeta meta = spawner.getItemMeta();
@@ -382,13 +404,6 @@ public class SpawnerBreakListener implements Listener {
         return spawner;
     }
 
-    /**
-     * Cleans up the spawner and its data when fully broken
-     *
-     * @param block The spawner block
-     * @param spawner The spawner data
-     * @param player The player breaking the spawner
-     */
     private void cleanupSpawner(Block block, SpawnerData spawner, Player player) {
         spawner.setSpawnerStop(true);
         block.setType(Material.AIR);
@@ -402,11 +417,6 @@ public class SpawnerBreakListener implements Listener {
         });
     }
 
-    /**
-     * Cleans up associated hopper tasks when a spawner is broken
-     *
-     * @param block The spawner block
-     */
     private void cleanupAssociatedHopper(Block block) {
         Block blockBelow = block.getRelative(BlockFace.DOWN);
         if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
@@ -414,12 +424,6 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Checks if a tool is valid for breaking spawners
-     *
-     * @param tool The tool to check
-     * @return true if the tool is valid
-     */
     private boolean isValidTool(ItemStack tool) {
         if (tool == null) {
             return false;
@@ -427,18 +431,10 @@ public class SpawnerBreakListener implements Listener {
         return configManager.getRequiredTools().contains(tool.getType().name());
     }
 
-    /**
-     * Logs debug information if debug mode is enabled
-     *
-     * @param message The debug message
-     */
     private void logDebugInfo(String message) {
         configManager.debug(message);
     }
 
-    /**
-     * Immutable container for spawner break result information
-     */
     private static class SpawnerBreakResult {
         private final boolean success;
         private final int droppedAmount;
@@ -463,12 +459,6 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    /**
-     * Handles the initial damage to a spawner block, providing feedback
-     * about requirements and permissions
-     *
-     * @param event The block damage event
-     */
     @EventHandler
     public void onSpawnerDamage(BlockDamageEvent event) {
         Block block = event.getBlock();
@@ -482,6 +472,15 @@ public class SpawnerBreakListener implements Listener {
         // Skip feedback in creative mode
         if (player.getGameMode() == GameMode.CREATIVE) {
             return;
+        }
+
+        // Check if it's a natural dungeon spawner and if natural spawner interaction is disabled
+        if (!configManager.getBoolean("natural-spawner-interaction")) {
+            SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
+            if (spawner == null && isNaturalDungeonSpawner(block)) {
+                // Don't show any message for natural spawners when interaction is disabled
+                return;
+            }
         }
 
         ItemStack tool = player.getInventory().getItemInMainHand();
@@ -505,7 +504,10 @@ public class SpawnerBreakListener implements Listener {
             }
 
             // Warn about breaking
-            languageManager.sendMessage(player, "messages.break-warning");
+            SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
+            if (spawner != null) {
+                languageManager.sendMessage(player, "messages.break-warning");
+            }
         } else {
             // Inform about required tools
             languageManager.sendMessage(player, "messages.required-tools");

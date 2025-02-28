@@ -168,7 +168,7 @@ messages:
     sound: block.note_block.pling
 
   sell-cooldown:
-    message: "&cPlease wait a moment before selling items again."
+    message: "&cPlease wait %seconds% second(s) before trying to sell items again."
     prefix: true
     type: CHAT
     sound: block.note_block.pling
@@ -187,12 +187,6 @@ messages:
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup
-
-  items-lost:
-    message: "&cSome items were lost due to unstacking!"
-    prefix: true
-    type: CHAT
-    sound: block.note_block.pling
 
   cannot-go-below-one:
     message: "&cCannot go below 1! Only decreasing by %amount%!"

@@ -1,5 +1,5 @@
 # ===============================================================
-#                       Global Settings
+#                       Plugin Settings
 # ===============================================================
 settings:
   # Language Selection
@@ -35,6 +35,15 @@ spawner:
   allow-toggle-equipment-drops: true
   allow-grief: false          # Prevent explosions destroying spawners
   activate-on-place: true     # Immediate spawner activation
+
+# ===============================================================
+#                  Extras & Custom Mechanics
+# ===============================================================
+
+# This will prevent players from interacting with natural spawners in the world
+# Including breaking, and activating them
+# This feature is useful for servers that want to prevent players from exploiting natural spawners
+natural-spawner-interaction: false
 
 # ===============================================================
 #                   Spawner Breaking Mechanics
@@ -85,6 +94,7 @@ particles:
 # ===============================================================
 #                     Economic Integration
 # ===============================================================
+# For selling items to directly from spawners
 # Available Options:
 # - auto: Automatically detect supported shop plugins
 # - EconomyShopGUI
@@ -96,6 +106,9 @@ shop-integration: auto
 
 # Formating price with currency symbol: K, M, B, T by default in the message file
 formated-price: true
+
+# Cooldown in seconds between selling items (default: 3 seconds)
+sell-cooldown: 3
 
 tax:
   enabled: false

@@ -40,7 +40,6 @@ public class SpawnerStorageAction implements Listener {
     private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 53);
 
     // Add cooldown system properties
-    private static final long SELL_COOLDOWN_MS = 5000; // 5 second cooldown
     private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
@@ -226,10 +225,20 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
+    private long getSellCooldownMs() {
+        return configManager.getInt("sell-cooldown") * 1000L;
+    }
+
     private boolean isOnCooldown(Player player) {
+        long cooldownMs = getSellCooldownMs();
+        // If cooldown is disabled (set to 0), always return false
+        if (cooldownMs <= 0) {
+            return false;
+        }
+
         long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
         long currentTime = System.currentTimeMillis();
-        boolean onCooldown = (currentTime - lastSellTime) < SELL_COOLDOWN_MS;
+        boolean onCooldown = (currentTime - lastSellTime) < cooldownMs;
 
         // Debug information if needed
         if (onCooldown) {
@@ -245,9 +254,16 @@ public class SpawnerStorageAction implements Listener {
 
     // Method to periodically clean up old cooldowns to prevent memory leaks
     private void clearOldCooldowns() {
+        long cooldownMs = getSellCooldownMs();
+        if (cooldownMs <= 0) {
+            // If cooldown is disabled, clear all entries
+            sellCooldowns.clear();
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
         sellCooldowns.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue()) > SELL_COOLDOWN_MS * 10);
+                (currentTime - entry.getValue()) > cooldownMs * 10);
     }
 
     private void handleSellAllItems(Player player, SpawnerData spawner, StoragePageHolder holder) {
@@ -264,7 +280,9 @@ public class SpawnerStorageAction implements Listener {
 
         // Anti-spam cooldown check
         if (isOnCooldown(player)) {
-            languageManager.sendMessage(player, "messages.sell-cooldown");
+            int cooldownSeconds = configManager.getInt("sell-cooldown");
+            languageManager.sendMessage(player, "messages.sell-cooldown",
+                    "%seconds%", String.valueOf(cooldownSeconds));
             return;
         }
 
