@@ -53,6 +53,21 @@ Transform your Minecraft server's spawner system with an elegant and powerful GU
 | `smartspawner.sellall` | Allow selling storage items directly   | true |
 | `smartspawner.changetype` | Allow changing spawner types with eggs | OP |
 
+## 🌍 Translations
+
+| Language | Locale Code | Contributor                                     | Version  |
+|----------|-------------|-------------------------------------------------|----------|
+| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Core language                                   | `Latest` |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | `v1.2.3` |
+| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
+
+> 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
+
+## 📊 Usage Statistics
+
+[![bStats](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
+
+
 ## 💻 Developer API
 <details>
 <summary>Smart Spawner API</summary>
@@ -137,20 +152,6 @@ public class YourPlugin extends JavaPlugin {
 For more detailed API documentation, visit our [Wiki](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Developer-API).
 
 </details>
-
-## 🌍 Translations
-
-| Language | Locale Code | Contributor                                     | Version  |
-|----------|-------------|-------------------------------------------------|----------|
-| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Core language                                   | `Latest` |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | `v1.2.3` |
-| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
-
-> 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
-
-## 📊 Usage Statistics
-
-[![bStats](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
 
 ## 🤝 Contributing
 
