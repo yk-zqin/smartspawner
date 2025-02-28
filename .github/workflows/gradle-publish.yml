@@ -2,9 +2,17 @@ name: Gradle Build and Publish
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch: # Allows manual triggering
 
 jobs:
@@ -13,7 +21,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+    
     steps:
     - uses: actions/checkout@v4
       with:
@@ -24,28 +32,55 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+        cache: gradle
+
+    - name: Validate Gradle wrapper
+      uses: gradle/wrapper-validation-action@v2
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: 8.8
-
+        
     - name: Make Gradle wrapper executable
       run: chmod +x ./gradlew
 
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build --no-daemon
+
+    - name: Run tests
+      run: ./gradlew test --no-daemon
 
     - name: Extract version
       id: extract_version
       run: |
         VERSION=$(grep 'version =' build.gradle | head -n 1 | awk -F "'" '{print $2}')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
-        echo "Version: $VERSION"
+        COMMIT_SHA_SHORT=$(git rev-parse --short HEAD)
+        echo "COMMIT_SHA_SHORT=$COMMIT_SHA_SHORT" >> $GITHUB_ENV
+        echo "Version: $VERSION (Commit: $COMMIT_SHA_SHORT)"
 
     - name: Upload plugin JAR as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: SmartSpawner-${{ env.VERSION }}
+        name: SmartSpawner-${{ env.VERSION }}-${{ env.COMMIT_SHA_SHORT }}
         path: build/libs/SmartSpawner-${{ env.VERSION }}.jar
         retention-days: 30
+
+    - name: Upload test reports on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports-${{ env.COMMIT_SHA_SHORT }}
+        path: build/reports/tests/
+        retention-days: 7
+
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
