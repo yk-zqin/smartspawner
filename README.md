@@ -53,6 +53,93 @@ Transform your Minecraft server's spawner system with an elegant and powerful GU
 | `smartspawner.sellall` | Allow selling storage items directly   | true |
 | `smartspawner.changetype` | Allow changing spawner types with eggs | OP |
 
+## 💻 Developer API
+<details>
+<summary>Smart Spawner API</summary>
+
+Smart Spawner offers a powerful API for developers to integrate with the plugin's functionality in their own plugins.
+
+### Installation
+
+#### Gradle
+
+```groovy
+repositories {
+    maven { url = 'https://maven.pkg.github.com/ptthanh02/smartspawner' }
+}
+
+dependencies {
+    compileOnly 'github.nighter:smartspawner-api:1.2.4'
+}
+```
+
+#### Maven
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/ptthanh02/smartspawner</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>github.nighter</groupId>
+        <artifactId>smartspawner-api</artifactId>
+        <version>1.2.4</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+### Usage Example
+
+```java
+import github.nighter.smartspawner.api.SmartSpawnerAPI;
+import github.nighter.smartspawner.api.SmartSpawnerProvider;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
+
+public class YourPlugin extends JavaPlugin {
+    
+    @Override
+    public void onEnable() {
+        // Check if SmartSpawner is installed
+        SmartSpawnerAPI api = SmartSpawnerProvider.getAPI();
+        if (api == null) {
+            getLogger().warning("SmartSpawner not found! Some features will be disabled.");
+            return;
+        }
+        
+        // Create a zombie spawner item
+        ItemStack zombieSpawner = api.createSpawnerItem(EntityType.ZOMBIE);
+        
+        // Create multiple creeper spawners
+        ItemStack creeperSpawners = api.createSpawnerItem(EntityType.CREEPER, 5);
+        
+        // Check spawner type
+        EntityType type = api.getSpawnerEntityType(zombieSpawner);
+        if (type == EntityType.ZOMBIE) {
+            getLogger().info("Successfully created a zombie spawner!");
+        }
+    }
+}
+```
+
+### Available API Methods
+
+| Method | Description |
+|--------|-------------|
+| `ItemStack createSpawnerItem(EntityType entityType)` | Creates a spawner item with the specified entity type |
+| `ItemStack createSpawnerItem(EntityType entityType, int amount)` | Creates a spawner item with the specified entity type and amount |
+| `EntityType getSpawnerEntityType(ItemStack item)` | Gets the entity type from a spawner item |
+| `boolean isValidSpawner(ItemStack item)` | Checks if an item is a valid spawner created by SmartSpawner |
+
+For more detailed API documentation, visit our [Wiki](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Developer-API).
+
+</details>
+
 ## 🌍 Translations
 
 | Language | Locale Code | Contributor                                     | Version  |
