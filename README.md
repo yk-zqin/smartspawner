@@ -57,8 +57,6 @@ Transform your Minecraft server's spawner system with an elegant and powerful GU
 <details>
 <summary>Smart Spawner API</summary>
 
-Smart Spawner offers a powerful API for developers to integrate with the plugin's functionality in their own plugins.
-
 ### Installation
 
 #### Gradle
