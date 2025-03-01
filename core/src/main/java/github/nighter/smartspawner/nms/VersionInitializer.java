@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class VersionInitializer {
     private final Logger logger;
     private final String serverVersion;
-    private final String basePackage = "me.nighter.smartSpawner";
+    private final String basePackage = "github.nighter.smartspawner";
 
     // Component definitions - each entry contains component type and initializer class name
     private final String[][] components = {
