@@ -17,6 +17,7 @@ softdepend:
   - Towny
   - SuperiorSkyblock2
   - BentoBox
+  - Multiverse-Core
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

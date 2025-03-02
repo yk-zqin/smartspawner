@@ -1,4 +1,5 @@
 package github.nighter.smartspawner;
+
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
@@ -10,9 +11,7 @@ import org.bukkit.event.entity.SpawnerSpawnEvent;
 public class GlobalEventHandlers implements Listener {
     private final SpawnerManager spawnerManager;
 
-    public GlobalEventHandlers(SmartSpawner plugin) {
-        this.spawnerManager = plugin.getSpawnerManager();
-    }
+    public GlobalEventHandlers(SmartSpawner plugin) { this.spawnerManager = plugin.getSpawnerManager(); }
 
     // Prevent spawner from spawning mobs
     @EventHandler(priority = EventPriority.HIGHEST)
