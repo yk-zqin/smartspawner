@@ -188,22 +188,31 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     private void sendSuccessMessage(Player player, SaleCalculationResult calculation) {
-        StringBuilder priceBuilder = new StringBuilder();
+        StringBuilder taxedPriceBuilder = new StringBuilder();
         calculation.getTaxedPrices().forEach((type, value) -> {
-            if (priceBuilder.length() > 0) priceBuilder.append(", ");
-            priceBuilder.append(formatMonetaryValue(value, type));
+            if (!taxedPriceBuilder.isEmpty()) taxedPriceBuilder.append(", ");
+            taxedPriceBuilder.append(formatMonetaryValue(value, type));
         });
 
-        double taxPercentage = configManager.getTaxPercentage();
-        if (taxPercentage > 0) {
+        StringBuilder originalPriceBuilder = new StringBuilder();
+        if (configManager.getBoolean("tax-enabled")) {
+            calculation.getOriginalPrices().forEach((type, value) -> {
+                if (!originalPriceBuilder.isEmpty()) originalPriceBuilder.append(", ");
+                originalPriceBuilder.append(formatMonetaryValue(value, type));
+            });
+        }
+
+        double taxPercentage = configManager.getDouble("tax-rate");
+        if (configManager.getBoolean("tax-enabled")) {
             languageManager.sendMessage(player, "messages.sell-all-tax",
                     "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
-                    "%price%", priceBuilder.toString(),
+                    "%price%", taxedPriceBuilder.toString(),
+                    "%gross%", originalPriceBuilder.toString(),
                     "%tax%", String.format("%.2f", taxPercentage));
         } else {
             languageManager.sendMessage(player, "messages.sell-all",
                     "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
-                    "%price%", priceBuilder.toString());
+                    "%price%", taxedPriceBuilder.toString());
         }
     }
 
@@ -240,7 +249,7 @@ public class EconomyShopGUI implements IShopIntegration {
             }
         }
 
-        Map<EcoType, Double> taxedPrices = configManager.getTaxPercentage() > 0
+        Map<EcoType, Double> taxedPrices = configManager.getBoolean("tax-enabled")
                 ? applyTax(prices)
                 : prices;
 
@@ -248,7 +257,7 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     private Map<EcoType, Double> applyTax(Map<EcoType, Double> originalPrices) {
-        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
+        double taxPercentage = plugin.getConfigManager().getDouble("tax-rate");
         Map<EcoType, Double> taxedPrices = new HashMap<>();
         for (Map.Entry<EcoType, Double> entry : originalPrices.entrySet()) {
             double originalPrice = entry.getValue();
@@ -287,7 +296,7 @@ public class EconomyShopGUI implements IShopIntegration {
                     .forEach((type, price) -> {
                         prices.put(type, prices.getOrDefault(type, 0d) + price);
                         // Log sale for each type of currency
-                        if (configManager.isLoggingEnabled()) {
+                        if (configManager.getBoolean("logging-enabled")) {
                             SaleLogger.getInstance().logSale(
                                     player.getName(),
                                     item.getType().name(),
@@ -301,7 +310,7 @@ public class EconomyShopGUI implements IShopIntegration {
             double sellPrice = EconomyShopGUIHook.getItemSellPrice(shopItem, item, player, amount, sold);
             prices.put(shopItem.getEcoType(), prices.getOrDefault(shopItem.getEcoType(), 0d) + sellPrice);
             // Log sale for single currency
-            if (configManager.isLoggingEnabled()) {
+            if (configManager.getBoolean("logging-enabled")) {
                 SaleLogger.getInstance().logSale(
                         player.getName(),
                         item.getType().name(),
@@ -345,7 +354,7 @@ public class EconomyShopGUI implements IShopIntegration {
         }
 
         try {
-            boolean useLanguageManager = ecoType.getType() == VAULT && configManager.isFormatedPrice()
+            boolean useLanguageManager = ecoType.getType() == VAULT && configManager.getBoolean("formated-price")
                     || ecoType.getType() == PLAYER_POINTS;
             String formattedValue = formatPrice(value, useLanguageManager);
 

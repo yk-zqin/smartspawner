@@ -54,7 +54,7 @@ public class UpdateChecker implements Listener {
     }
 
     public void initialize() {
-        if (!configManager.isUpdateCheckerEnabled()) {
+        if (!configManager.getBoolean("update-checker-enabled")) {
             return;
         }
 
@@ -65,7 +65,7 @@ public class UpdateChecker implements Listener {
                 checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L);
 
         // Schedule periodic checks
-        long intervalTicks = configManager.getUpdateCheckInterval() * 20L * 60L * 60L;
+        long intervalTicks = configManager.getInt("update-checker-interval") * 20L * 60L * 60L; // Convert hours to ticks
         updateTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
                 () -> checkForUpdate().thenAccept(this::handleUpdateResult),
                 intervalTicks,
@@ -80,7 +80,7 @@ public class UpdateChecker implements Listener {
     }
 
     private void handleUpdateResult(boolean hasUpdate) {
-        if (hasUpdate && configManager.shouldNotifyOps()) {
+        if (hasUpdate && configManager.getBoolean("update-checker-notify-console")) {
             printUpdateAlert();
         }
     }
@@ -224,7 +224,7 @@ public class UpdateChecker implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (!configManager.shouldNotifyOnJoin() || !hasUpdate) {
+        if (!configManager.getBoolean("update-checker-notify-on-join") || !hasUpdate) {
             return;
         }
 

@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.spawner.properties.utils;
+package github.nighter.smartspawner.spawner.utils;
 
 import github.nighter.smartspawner.nms.TextureWrapper;
 import org.bukkit.Bukkit;

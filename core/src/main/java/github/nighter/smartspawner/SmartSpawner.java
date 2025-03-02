@@ -29,7 +29,7 @@ import github.nighter.smartspawner.spawner.interactions.stack.SpawnerStackHandle
 import github.nighter.smartspawner.spawner.interactions.type.SpawnEggHandler;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerRangeChecker;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
-import github.nighter.smartspawner.spawner.properties.utils.SpawnerMobHeadTexture;
+import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
 import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.utils.LanguageManager;
@@ -199,7 +199,7 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
 
         // Initialize hopper handler if enabled in config
-        if (configManager.isHopperEnabled()) {
+        if (configManager.getBoolean("hopper-enabled")) {
             this.hopperHandler = new HopperHandler(this);
         }
 
@@ -255,7 +255,7 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      * Initializes the sale logging system if enabled in config.
      */
     private void initializeSaleLogging() {
-        if (configManager.isLoggingEnabled()) {
+        if (configManager.getBoolean("logging-enabled")) {
             SaleLogger.getInstance();
         }
     }
@@ -359,7 +359,7 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      * Shuts down the sale logger if it was enabled.
      */
     private void shutdownSaleLogger() {
-        if (configManager != null && configManager.isLoggingEnabled()) {
+        if (configManager != null && configManager.getBoolean("logging-enabled")) {
             SaleLogger.getInstance().shutdown();
         }
     }

@@ -69,7 +69,7 @@ public class SpawnerData {
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
         this.virtualInventory = new VirtualInventory(maxSpawnerLootSlots);
-        if (configManager.isHologramEnabled()) {
+        if (configManager.getBoolean("hologram-enabled")) {
             this.hologram = new SpawnerHologram(location);
             this.hologram.createHologram();
             updateHologramData();
@@ -77,11 +77,11 @@ public class SpawnerData {
     }
 
     private void loadConfigValues() {
-        int baseMaxStoredExp = configManager.getMaxStoredExp();
-        int baseMinMobs = configManager.getMinMobs();
-        int baseMaxMobs = configManager.getMaxMobs();
-        int baseSpawnerDelay = configManager.getSpawnerDelay();
-        int maxStoragePages = configManager.getMaxStoragePages();
+        int baseMaxStoredExp = configManager.getInt("max-stored-exp");
+        int baseMinMobs = configManager.getInt("min-mobs");
+        int baseMaxMobs = configManager.getInt("max-mobs");
+        int baseSpawnerDelay = configManager.getInt("delay");
+        int maxStoragePages = configManager.getInt("max-storage-pages");
 
         if (maxStoragePages <= 0) {
             logger.warning("Invalid max-storage-pages value. Setting to default: 1");
@@ -109,13 +109,13 @@ public class SpawnerData {
             this.maxMobs = this.minMobs + stackSize;
         }
 
-        this.spawnDelay = baseSpawnerDelay;
+        this.spawnDelay = baseSpawnerDelay * 20; // Convert seconds to ticks
         if (this.spawnDelay <= 0) {
-            logger.warning("Invalid delay value. Setting to default: 600");
-            this.spawnDelay = 600;
+            logger.warning("Invalid delay value. Setting to default: 20");
+            this.spawnDelay = 20;
         }
 
-        this.spawnerRange = configManager.getSpawnerRange();
+        this.spawnerRange = configManager.getInt("range");
         if (this.spawnerRange <= 0) {
             logger.warning("Invalid range value. Setting to default: 16");
             this.spawnerRange = 16;
@@ -125,7 +125,7 @@ public class SpawnerData {
     public void setStackSize(int stackSize) {
         lock.lock();
         try {
-            int maxAllowedStack = configManager.getMaxStackSize();
+            int maxAllowedStack = configManager.getInt("max-stack-size");
             if (stackSize <= 0) {
                 this.stackSize = 1;
                 logger.warning("Invalid stack size. Setting to 1");
@@ -142,7 +142,7 @@ public class SpawnerData {
             Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
             // Calculate new max slots
-            int maxStoragePages = configManager.getMaxStoragePages();
+            int maxStoragePages = configManager.getInt("max-storage-pages");
             int newMaxSlots = (45 * maxStoragePages) * stackSize;
 
             // Create new inventory with new size
@@ -178,7 +178,7 @@ public class SpawnerData {
     public void setStackSize(int stackSize, Player player) {
         lock.lock();
         try {
-            int maxAllowedStack = configManager.getMaxStackSize();
+            int maxAllowedStack = configManager.getInt("max-stack-size");
             if (stackSize <= 0) {
                 this.stackSize = 1;
                 configManager.debug("Invalid stack size. Setting to 1");
@@ -195,7 +195,7 @@ public class SpawnerData {
             Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
 
             // Calculate new max slots
-            int maxStoragePages = configManager.getMaxStoragePages();
+            int maxStoragePages = configManager.getInt("max-storage-pages");
             int newMaxSlots = (45 * maxStoragePages) * stackSize;
 
             // Create new inventory with new size
@@ -405,7 +405,7 @@ public class SpawnerData {
     }
 
     public void refreshHologram() {
-        if (configManager.isHologramEnabled()) {
+        if (configManager.getBoolean("hologram-enabled")) {
             if (hologram == null) {
                 this.hologram = new SpawnerHologram(spawnerLocation);
                 this.hologram.createHologram();
@@ -427,7 +427,7 @@ public class SpawnerData {
     }
 
     public void removeGhostHologram() {
-        if (hologram != null && configManager.isHologramEnabled()) {
+        if (hologram != null && configManager.getBoolean("hologram-enabled")) {
             hologram.cleanupExistingHologram();
         }
     }

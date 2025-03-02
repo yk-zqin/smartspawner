@@ -311,7 +311,7 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void handleToggleEquipment(Player player, SpawnerData spawner, Inventory inventory) {
-        if (configManager.isAllowToggleEquipmentItems()) {
+        if (configManager.getBoolean("allow-toggle-equipment-drops")) {
             spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
 
             StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();

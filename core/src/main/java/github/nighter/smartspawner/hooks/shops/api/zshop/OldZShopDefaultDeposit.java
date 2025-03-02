@@ -117,13 +117,13 @@ public class OldZShopDefaultDeposit implements IShopIntegration {
         });
 
         // Apply tax
-        double taxPercentage = plugin.getConfigManager().getTaxPercentage();
+        double taxPercentage = plugin.getConfigManager().getDouble("tax-rate");
         double finalPrice = taxPercentage > 0
                 ? totalPrice.get() * (1 - taxPercentage / 100.0)
                 : totalPrice.get();
 
         // Send success message
-        String formattedPrice = formatPrice(finalPrice, configManager.isFormatedPrice());
+        String formattedPrice = formatPrice(finalPrice, configManager.getBoolean("formated-price"));
         if (taxPercentage > 0) {
             plugin.getLanguageManager().sendMessage(player, "messages.sell-all-tax",
                     "%amount%", String.valueOf(languageManager.formatNumber(totalAmount.get())),

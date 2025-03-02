@@ -1,6 +1,6 @@
 #---------------------------------------------------
 # Language: Tiếng Việt (Vietnamese)
-# Plugin Version: 1.2.3
+# Plugin Version: 1.2.5
 #---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
@@ -18,28 +18,52 @@ format-number:
 # Tên sinh vật
 #---------------------------------------------------
 mob_names:
+  ALLAY: "Allay"
+  ARMADILLO: "Tatu"
+  AXOLOTL: "Axolotl"
+  BAT: "Dơi"
+  BEE: "Ong"
   BLAZE: "Quỷ Lửa"
   BOGGED: "Quái Vật Đầm Lầy"
   BREEZE: "Quỷ Gió"
+  CAMEL: "Lạc Đà"
+  CAT: "Mèo"
   CAVE_SPIDER: "Nhện Hang"
   CHICKEN: "Gà"
+  COD: "Cá Thu"
   COW: "Bò"
   CREEPER: "Creeper"
+  DOLPHIN: "Cá Heo"
+  DONKEY: "Lừa"
   DROWNED: "Kẻ Đuối Nước"
+  ELDER_GUARDIAN: "Giám Hộ Cổ"
   ENDERMAN: "Enderman"
+  ENDERMITE: "Rận Ender"
   EVOKER: "Kẻ Chiêu Hồn"
+  FOX: "Cáo"
+  FROG: "Ếch"
   GHAST: "Ghast"
   GLOW_SQUID: "Mực Phát Sáng"
+  GOAT: "Dê"
   GUARDIAN: "Giám Hộ"
   HOGLIN: "Hoglin"
+  HORSE: "Ngựa"
   HUSK: "Quái Khô Tàn"
   IRON_GOLEM: "Người Sắt"
+  LLAMA: "Lạc Đà Không Bướu"
   MAGMA_CUBE: "Khối Dung Nham"
   MOOSHROOM: "Bò Nấm"
+  MUSHROOM_COW: "Bò Nấm" # Fallback for 1.20 version compatibility
+  MULE: "La"
+  OCELOT: "Báo Đốm"
+  PANDA: "Gấu Trúc"
+  PARROT: "Vẹt"
+  PHANTOM: "Ma Cà Rồng"
   PIG: "Lợn"
   PIGLIN: "Piglin"
   PIGLIN_BRUTE: "Piglin Hung Bạo"
   PILLAGER: "Kẻ Cướp"
+  POLAR_BEAR: "Gấu Bắc Cực"
   PUFFERFISH: "Cá Nóc"
   RABBIT: "Thỏ"
   RAVAGER: "Quái Thú Cướp Bóc"
@@ -48,17 +72,30 @@ mob_names:
   SHULKER: "Shulker"
   SILVERFISH: "Cá Bạc"
   SKELETON: "Bộ Xương"
+  SKELETON_HORSE: "Ngựa Xương"
   SLIME: "Quái Vật Chất Nhờn"
+  SNIFFER: "Kẻ Đánh Hơi"
+  SNOW_GOLEM: "Người Tuyết"
+  SNOWMAN: "Người Tuyết" # Fallback for 1.20 version compatibility
   SPIDER: "Nhện"
   SQUID: "Mực"
   STRAY: "Quái Lang Thang"
   STRIDER: "Kẻ Sải Bước"
+  TADPOLE: "Nòng Nọc"
+  TRADER_LLAMA: "Lạc Đà Không Bướu Thương Nhân"
   TROPICAL_FISH: "Cá Nhiệt Đới"
+  TURTLE: "Rùa"
+  VEX: "Linh Hồn Bay"
+  VILLAGER: "Dân Làng"
   VINDICATOR: "Kẻ Biện Hộ"
+  WANDERING_TRADER: "Thương Nhân Lang Thang"
+  WARDEN: "Giám Ngục"
   WITCH: "Phù Thủy"
   WITHER_SKELETON: "Bộ Xương Khô Héo"
+  WOLF: "Sói"
   ZOGLIN: "Zoglin"
   ZOMBIE: "Xác Sống"
+  ZOMBIE_HORSE: "Ngựa Xác Sống"
   ZOMBIE_VILLAGER: "Dân Làng Thây Ma"
   ZOMBIFIED_PIGLIN: "Piglin Thây Ma"
 
@@ -142,7 +179,7 @@ messages:
     sound: block.note_block.bell
 
   sell-all-tax:
-    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a%price%$&#d6e7ed (Thuế: &c%tax%%&#d6e7ed)!"
+    message: "&#d6e7edBạn đã bán &#3287A9%amount% vật phẩm&#d6e7ed. Giá gốc: &a%gross%$&#d6e7ed, Sau thuế (&#ff6b6b-%tax%%&#d6e7ed): &a%price%$"
     prefix: true
     type: CHAT
     sound: block.note_block.bell
@@ -165,6 +202,18 @@ messages:
     type: CHAT
     sound: block.note_block.pling
 
+  sell-cooldown:
+    message: "&cBạn phải chờ &a%time%&c trước khi bán các vật phẩm tiếp theo!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
+  transaction-in-progress:
+    message: "&cGiao dịch bán đang được xử lý! Vui lòng chờ..."
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Chồng/Tách lồng spawn
   #---------------------------------------------------
@@ -173,12 +222,6 @@ messages:
     prefix: false
     type: ACTION_BAR
     sound: entity.experience_orb.pickup
-
-  items-lost:
-    message: "&cMột số vật phẩm đã bị mất khi tách lồng spawn!"
-    prefix: true
-    type: CHAT
-    sound: block.note_block.pling
 
   cannot-go-below-one:
     message: "&cKhông thể giảm xuống dưới 1! Chỉ giảm được %amount%!"
@@ -319,8 +362,7 @@ spawner-info-item:
       &#81d4fa➜ &7Nhấn để mở menu chồng
   lore-change: "&8▪ &#81d4faLần sinh tiếp: &e"
   lore-inactive: "&cLồng spawn đang không hoạt động!"
-  lore-now: "&cBây giờ!"
-  lore-error: "&cLỗi! Vui lòng đặt lại lồng spawn."
+  lore-full: "&cKho và exp đã đầy!"
 
 exp-info-item:
   name: "&#00F898KN đã lưu: &e%current_exp%&#00F898"

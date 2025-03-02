@@ -74,10 +74,10 @@ public class ZShop implements IShopIntegration {
     }
 
     private double calculateNetAmount(double grossAmount, double taxPercentage) {
-        if (taxPercentage <= 0) {
-            return grossAmount;
+        if (configManager.getBoolean("tax-enabled")) {
+            return grossAmount * (1 - taxPercentage / 100.0);
         }
-        return grossAmount * (1 - taxPercentage / 100.0);
+        return grossAmount;
     }
 
     @Override
@@ -165,7 +165,7 @@ public class ZShop implements IShopIntegration {
         });
 
         // Process payment
-        double taxPercentage = configManager.getTaxPercentage();
+        double taxPercentage = configManager.getDouble("tax-rate");
         double netAmount = calculateNetAmount(calculation.getTotalGrossPrice(), taxPercentage);
 
         try {
@@ -194,7 +194,7 @@ public class ZShop implements IShopIntegration {
             }
 
             // Log sales asynchronously
-            if (configManager.isLoggingEnabled()) {
+            if (configManager.getBoolean("logging-enabled")) {
                 logSalesAsync(calculation, player.getName());
             }
 
@@ -238,19 +238,21 @@ public class ZShop implements IShopIntegration {
     }
 
     private String formatMonetaryValue(double value) {
-        return formatPrice(value, configManager.isFormatedPrice());
+        return formatPrice(value, configManager.getBoolean("formated-price"));
     }
 
     private void sendSuccessMessage(Player player, int totalAmount, double netAmount, double taxPercentage) {
-        if (taxPercentage > 0) {
+        if (configManager.getBoolean("tax-enabled")) {
+            double netPrice = calculateNetAmount(netAmount, taxPercentage);
             languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(totalAmount)),
-                    "%price%", formatMonetaryValue(netAmount),
+                    "%amount%", String.valueOf(totalAmount),
+                    "%price%", formatMonetaryValue(netPrice),
+                    "%gross%", formatMonetaryValue(netAmount),
                     "%tax%", String.format("%.2f", taxPercentage)
             );
         } else {
             languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(totalAmount)),
+                    "%amount%", String.valueOf(totalAmount),
                     "%price%", formatMonetaryValue(netAmount));
         }
     }

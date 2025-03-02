@@ -156,7 +156,7 @@ public class SpawnerMenuAction implements Listener {
         int expUsedForMending = 0;
 
         // Apply mending first if enabled
-        if (configManager.isAllowExpMending()) {
+        if (configManager.getBoolean("allow-exp-mending")) {
             expUsedForMending = applyMendingFromExp(player, exp);
             exp -= expUsedForMending;
         }
@@ -236,8 +236,11 @@ public class SpawnerMenuAction implements Listener {
             int actualExpUsed = Math.min(expNeeded, availableExp);
             int actualRepair = actualExpUsed * 2;
 
+            // Ensure damage value does not go negative
+            int newDamage = Math.max(0, damage - actualRepair);
+
             Damageable meta = (Damageable) item.getItemMeta();
-            meta.setDamage(damage - actualRepair);
+            meta.setDamage(newDamage);
             item.setItemMeta(meta);
 
             availableExp -= actualExpUsed;

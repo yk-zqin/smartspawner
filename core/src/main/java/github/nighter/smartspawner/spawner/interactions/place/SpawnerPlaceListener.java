@@ -120,7 +120,7 @@ public class SpawnerPlaceListener implements Listener {
             spawner.update(true, false); // Force update
 
             // Activate spawner if configured
-            if (configManager.getActivateOnPlace()) {
+            if (configManager.getBoolean("activate-on-place")) {
                 createSmartSpawner(block, player, entityType);
             } else {
                 // Send confirmation message
@@ -138,6 +138,26 @@ public class SpawnerPlaceListener implements Listener {
                         }
                     }
                 }, 3L);
+                // Create spawner data but don't activate
+                String spawnerId = UUID.randomUUID().toString().substring(0, 8);
+
+                // Ensure the block state is properly updated
+                BlockState state = block.getState();
+                if (state instanceof CreatureSpawner) {
+                    CreatureSpawner cspawner = (CreatureSpawner) state;
+                    cspawner.setSpawnedType(entityType);
+                    cspawner.update(true, false);
+                }
+
+                // Create and configure new spawner
+                SpawnerData cspawner = new SpawnerData(spawnerId, block.getLocation(), entityType, plugin);
+                cspawner.setSpawnerActive(false);
+
+                // Register with manager
+                spawnerManager.addSpawner(spawnerId, cspawner);
+
+                // Save spawner data
+                spawnerManager.queueSpawnerForSaving(spawnerId);
             }
         }, 2L);
     }
@@ -201,7 +221,7 @@ public class SpawnerPlaceListener implements Listener {
         spawnerManager.queueSpawnerForSaving(spawnerId);
 
         // Visual effect if enabled
-        if (configManager.isSpawnerCreateParticlesEnabled()) {
+        if (configManager.getBoolean("particles-spawner-activate")) {
             showCreationParticles(block);
         }
 
@@ -231,7 +251,7 @@ public class SpawnerPlaceListener implements Listener {
      * @param block The spawner block
      */
     private void setupHopperIntegration(Block block) {
-        if (configManager.isHopperEnabled()) {
+        if (configManager.getBoolean("hopper-enabled")) {
             Block blockBelow = block.getRelative(BlockFace.DOWN);
             if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
                 hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());

@@ -124,7 +124,7 @@ public class SpawnerStackHandler {
         }
 
         // Verify stack limits
-        int maxStackSize = configManager.getMaxStackSize();
+        int maxStackSize = configManager.getInt("max-stack-size");
         int currentStack = targetSpawner.getStackSize();
 
         if (currentStack >= maxStackSize) {
@@ -232,7 +232,7 @@ public class SpawnerStackHandler {
     }
 
     private void showStackAnimation(SpawnerData spawner, int newStack, Player player) {
-        if (configManager.isSpawnerStackParticlesEnabled()) {
+        if (configManager.getBoolean("particles-spawner-stack")) {
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
 

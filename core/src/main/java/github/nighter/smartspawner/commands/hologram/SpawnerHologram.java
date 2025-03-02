@@ -54,9 +54,9 @@ public class SpawnerHologram {
     public void createHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        double offsetX = configManager.getHologramOffsetX();
-        double offsetY = configManager.getHologramHeight();
-        double offsetZ = configManager.getHologramOffsetZ();
+        double offsetX = configManager.getDouble("hologram-offset-x");
+        double offsetY = configManager.getDouble("hologram-height");
+        double offsetZ = configManager.getDouble("hologram-offset-z");
 
         Location holoLoc = spawnerLocation.clone().add(offsetX, offsetY, offsetZ);
 
@@ -65,10 +65,10 @@ public class SpawnerHologram {
                 display.setBillboard(Display.Billboard.CENTER);
                 display.setAlignment(TextDisplay.TextAlignment.CENTER);
                 display.setViewRange(16.0f);
-                display.setShadowed(configManager.isHologramShadowed());
+                display.setShadowed(configManager.getBoolean("hologram-shadowed-text"));
                 display.setDefaultBackground(false);
                 display.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
-                display.setSeeThrough(configManager.isHologramSeeThrough());
+                display.setSeeThrough(configManager.getBoolean("hologram-see-through"));
                 // Add custom name for identification
                 display.setCustomName(uniqueIdentifier);
                 display.setCustomNameVisible(false);
@@ -119,9 +119,9 @@ public class SpawnerHologram {
     public void cleanupExistingHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        double offsetX = configManager.getHologramOffsetX();
-        double offsetY = configManager.getHologramHeight();
-        double offsetZ = configManager.getHologramOffsetZ();
+        double offsetX = configManager.getDouble("hologram-offset-x");
+        double offsetY = configManager.getDouble("hologram-height");
+        double offsetZ = configManager.getDouble("hologram-offset-z");
 
         // Calculate efficient search area
         double searchRadius = Math.max(Math.max(Math.abs(offsetX), Math.abs(offsetY)), Math.abs(offsetZ)) + 1.0;

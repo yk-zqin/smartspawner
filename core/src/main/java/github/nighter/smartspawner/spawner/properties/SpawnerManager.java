@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.spawner.properties;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.spawner.properties.utils.SpawnerFileHandler;
+import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.utils.ConfigManager;
 import org.bukkit.*;
 import java.util.*;
@@ -190,7 +190,7 @@ public class SpawnerManager {
 
         // Load spawners from file handler
         Map<String, SpawnerData> loadedSpawners = fileHandler.loadAllSpawners();
-        boolean hologramEnabled = configManager.isHologramEnabled();
+        boolean hologramEnabled = configManager.getBoolean("hologram-enabled");
 
         // Add all loaded spawners to our indexes
         for (Map.Entry<String, SpawnerData> entry : loadedSpawners.entrySet()) {
@@ -299,7 +299,7 @@ public class SpawnerManager {
     }
 
     public void reloadAllHolograms() {
-        if (configManager.isHologramEnabled()) {
+        if (configManager.getBoolean("hologram-enabled")) {
             spawners.values().forEach(SpawnerData::reloadHologramData);
         }
     }

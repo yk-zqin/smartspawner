@@ -131,7 +131,7 @@ public class SpawnerStorageUI {
         }
 
         // Update hologram if enabled
-        if (configManager.isHologramEnabled()) {
+        if (configManager.getBoolean("hologram-enabled")) {
             spawner.updateHologramData();
         }
 
@@ -208,7 +208,7 @@ public class SpawnerStorageUI {
         updates.put(NAVIGATION_ROW * 9, staticButtons.get("takeAll"));
 
         // Add equipment toggle button if enabled
-        if (configManager.isAllowToggleEquipmentItems()) {
+        if (configManager.getBoolean("allow-toggle-equipment-drops")) {
             updates.put(NAVIGATION_ROW * 9 + 1, equipmentToggleButtons.get(spawner.isAllowEquipmentItems()));
         }
     }

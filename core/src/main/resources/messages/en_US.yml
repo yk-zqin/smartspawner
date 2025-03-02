@@ -1,6 +1,6 @@
 #---------------------------------------------------
 # Language: English (United States)
-# Plugin Version: 1.2.4
+# Plugin Version: 1.2.5
 #---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
@@ -18,28 +18,52 @@ format-number:
 # Formatted Mob Names
 #---------------------------------------------------
 mob_names:
+  ALLAY: "Allay"
+  ARMADILLO: "Armadillo"
+  AXOLOTL: "Axolotl"
+  BAT: "Bat"
+  BEE: "Bee"
   BLAZE: "Blaze"
   BOGGED: "Bogged"
   BREEZE: "Breeze"
+  CAMEL: "Camel"
+  CAT: "Cat"
   CAVE_SPIDER: "Cave Spider"
   CHICKEN: "Chicken"
+  COD: "Cod"
   COW: "Cow"
   CREEPER: "Creeper"
+  DOLPHIN: "Dolphin"
+  DONKEY: "Donkey"
   DROWNED: "Drowned"
+  ELDER_GUARDIAN: "Elder Guardian"
   ENDERMAN: "Enderman"
+  ENDERMITE: "Endermite"
   EVOKER: "Evoker"
+  FOX: "Fox"
+  FROG: "Frog"
   GHAST: "Ghast"
   GLOW_SQUID: "Glow Squid"
+  GOAT: "Goat"
   GUARDIAN: "Guardian"
   HOGLIN: "Hoglin"
+  HORSE: "Horse"
   HUSK: "Husk"
   IRON_GOLEM: "Iron Golem"
+  LLAMA: "Llama"
   MAGMA_CUBE: "Magma Cube"
   MOOSHROOM: "Mooshroom"
+  MUSHROOM_COW: "Mooshroom" # Fallback for 1.20 version compatibility
+  MULE: "Mule"
+  OCELOT: "Ocelot"
+  PANDA: "Panda"
+  PARROT: "Parrot"
+  PHANTOM: "Phantom"
   PIG: "Pig"
   PIGLIN: "Piglin"
   PIGLIN_BRUTE: "Piglin Brute"
   PILLAGER: "Pillager"
+  POLAR_BEAR: "Polar Bear"
   PUFFERFISH: "Pufferfish"
   RABBIT: "Rabbit"
   RAVAGER: "Ravager"
@@ -48,17 +72,30 @@ mob_names:
   SHULKER: "Shulker"
   SILVERFISH: "Silverfish"
   SKELETON: "Skeleton"
+  SKELETON_HORSE: "Skeleton Horse"
   SLIME: "Slime"
+  SNIFFER: "Sniffer"
+  SNOW_GOLEM: "Snow Golem"
+  SNOWMAN: "Snow Golem" # Fallback for 1.20 version compatibility
   SPIDER: "Spider"
   SQUID: "Squid"
   STRAY: "Stray"
   STRIDER: "Strider"
+  TADPOLE: "Tadpole"
+  TRADER_LLAMA: "Trader Llama"
   TROPICAL_FISH: "Tropical Fish"
+  TURTLE: "Turtle"
+  VEX: "Vex"
+  VILLAGER: "Villager"
   VINDICATOR: "Vindicator"
+  WANDERING_TRADER: "Wandering Trader"
+  WARDEN: "Warden"
   WITCH: "Witch"
   WITHER_SKELETON: "Wither Skeleton"
+  WOLF: "Wolf"
   ZOGLIN: "Zoglin"
   ZOMBIE: "Zombie"
+  ZOMBIE_HORSE: "Zombie Horse"
   ZOMBIE_VILLAGER: "Zombie Villager"
   ZOMBIFIED_PIGLIN: "Zombified Piglin"
 
@@ -76,12 +113,10 @@ spawner-hologram:
   # %used_slots% - Number of used storage slots
   # %max_slots% - Maximum storage slots
   format:
-    # First line - Title with decorative elements
     - "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆"
-    # Second line - Experience display
     - "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP"
-    # Third line - Storage information
     - "&#FCD05C&lStorage: &f%used_slots%&7/&f%max_slots% &7slots"
+
 #---------------------------------------------------
 # Spawner Interaction
 #---------------------------------------------------
@@ -150,7 +185,7 @@ messages:
     sound: block.note_block.pling
 
   sell-all-tax:
-    message: "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed (Tax: &#ff6b6b%tax%%&#d6e7ed)!"
+    message: "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a%gross%$&#d6e7ed, After tax (&#ff6b6b%tax%%&#d6e7ed): &a%price%$"
     prefix: true
     type: CHAT
     sound: block.note_block.bell
@@ -239,7 +274,7 @@ messages:
     type: CHAT
 
   exp-collected-with-mending:
-    message: "&#d6e7edUsed &a%exp-mending%&&#d6e7ed experience points to repair items! Collected &a%exp%&&#d6e7ed experience points!"
+    message: "&#d6e7edUsed &a%exp-mending%&#d6e7ed experience points to repair items! Collected &a%exp%&#d6e7ed experience points!"
     prefix: true
     type: CHAT
 

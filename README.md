@@ -58,7 +58,7 @@ Enhances spawner usage with an intuitive GUI, enabling automated mob drops and e
 | Language | Locale Code | Contributor                                     | Version  |
 |----------|-------------|-------------------------------------------------|----------|
 | [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Core language                                   | `Latest` |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | `v1.2.3` |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | `Latest` |
 | [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
 
 > 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
@@ -72,84 +72,10 @@ Enhances spawner usage with an intuitive GUI, enabling automated mob drops and e
 <details>
 <summary>Smart Spawner API</summary>
 
-### Installation
+### Installation & Documentation
 
-#### Gradle
-
-```groovy
-repositories {
-    maven { url = 'https://maven.pkg.github.com/ptthanh02/smartspawner' }
-}
-
-dependencies {
-    compileOnly 'github.nighter:smartspawner-api:1.2.4'
-}
-```
-
-#### Maven
-
-```xml
-<repositories>
-    <repository>
-        <id>github</id>
-        <url>https://maven.pkg.github.com/ptthanh02/smartspawner</url>
-    </repository>
-</repositories>
-
-<dependencies>
-    <dependency>
-        <groupId>github.nighter</groupId>
-        <artifactId>smartspawner-api</artifactId>
-        <version>1.2.4</version>
-        <scope>provided</scope>
-    </dependency>
-</dependencies>
-```
-
-### Usage Example
-
-```java
-import github.nighter.smartspawner.api.SmartSpawnerAPI;
-import github.nighter.smartspawner.api.SmartSpawnerProvider;
-import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.ItemStack;
-
-public class YourPlugin extends JavaPlugin {
-    
-    @Override
-    public void onEnable() {
-        // Check if SmartSpawner is installed
-        SmartSpawnerAPI api = SmartSpawnerProvider.getAPI();
-        if (api == null) {
-            getLogger().warning("SmartSpawner not found! Some features will be disabled.");
-            return;
-        }
-        
-        // Create a zombie spawner item
-        ItemStack zombieSpawner = api.createSpawnerItem(EntityType.ZOMBIE);
-        
-        // Create multiple creeper spawners
-        ItemStack creeperSpawners = api.createSpawnerItem(EntityType.CREEPER, 5);
-        
-        // Check spawner type
-        EntityType type = api.getSpawnerEntityType(zombieSpawner);
-        if (type == EntityType.ZOMBIE) {
-            getLogger().info("Successfully created a zombie spawner!");
-        }
-    }
-}
-```
-
-### Available API Methods
-
-| Method | Description |
-|--------|-------------|
-| `ItemStack createSpawnerItem(EntityType entityType)` | Creates a spawner item with the specified entity type |
-| `ItemStack createSpawnerItem(EntityType entityType, int amount)` | Creates a spawner item with the specified entity type and amount |
-| `EntityType getSpawnerEntityType(ItemStack item)` | Gets the entity type from a spawner item |
-| `boolean isValidSpawner(ItemStack item)` | Checks if an item is a valid spawner created by SmartSpawner |
-
-For more detailed API documentation, visit our [Wiki](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Developer-API).
+For API installation instructions, usage examples, and complete documentation, please visit:
+[Smart Spawner API Package](https://github.com/ptthanh02/Smart-Spawner/packages/2421916)
 
 </details>
 

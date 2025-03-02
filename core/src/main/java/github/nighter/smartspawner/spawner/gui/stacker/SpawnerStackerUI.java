@@ -123,7 +123,7 @@ public class SpawnerStackerUI {
 
         String[] lore = languageManager.getMessage("button.lore.spawner")
                 .replace("%stack_size%", String.valueOf(spawner.getStackSize()))
-                .replace("%max_stack_size%", String.valueOf(configManager.getMaxStackSize()))
+                .replace("%max_stack_size%", String.valueOf(configManager.getInt("max-stack-size")))
                 .replace("%entity%", entityName)
                 .split("\n");
 

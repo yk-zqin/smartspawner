@@ -38,7 +38,7 @@ public class GiveCommand {
             return true;
         }
 
-        // Kiểm tra số lượng tham số (hiện tại cần 3 hoặc 4 tham số: give, player, mobtype, [amount])
+        // Check number of arguments (currently requires 3 or 4 arguments: give, player, mobtype, [amount])
         if (args.length < 3 || args.length > 4) {
             sender.sendMessage(languageManager.getMessageWithPrefix("command.give.usage"));
             return true;
@@ -57,7 +57,7 @@ public class GiveCommand {
             return true;
         }
 
-        // Xử lý số lượng
+        // Handle amount
         int amount = 1;
         if (args.length == 4) {
             try {
@@ -83,11 +83,11 @@ public class GiveCommand {
             spawner.setAmount(amount);
             String entityName = languageManager.getLocalizedMobName(entityType);
 
-            // Kiểm tra không gian trong inventory
+            // Check inventory space
             HashMap<Integer, ItemStack> leftoverItems = target.getInventory().addItem(spawner);
 
             if (!leftoverItems.isEmpty()) {
-                // Nếu inventory đầy, thả những item còn lại xuống đất
+                // Drop remaining items on the ground if inventory is full
                 for (ItemStack leftover : leftoverItems.values()) {
                     target.getWorld().dropItemNaturally(target.getLocation(), leftover);
                 }
@@ -135,7 +135,7 @@ public class GiveCommand {
             return true;
         }
 
-        // Xử lý số lượng
+        // Handle amount
         int amount = 1;
         if (args.length == 4) {
             try {
@@ -161,11 +161,11 @@ public class GiveCommand {
             spawner.setAmount(amount);
             String entityName = languageManager.getLocalizedMobName(entityType);
 
-            // Kiểm tra không gian trong inventory
+            // Check inventory space
             HashMap<Integer, ItemStack> leftoverItems = target.getInventory().addItem(spawner);
 
             if (!leftoverItems.isEmpty()) {
-                // Nếu inventory đầy, thả những item còn lại xuống đất
+                // Drop remaining items on the ground if inventory is full
                 for (ItemStack leftover : leftoverItems.values()) {
                     target.getWorld().dropItemNaturally(target.getLocation(), leftover);
                 }

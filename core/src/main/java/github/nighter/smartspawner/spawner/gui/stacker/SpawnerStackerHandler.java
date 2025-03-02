@@ -269,7 +269,7 @@ public class SpawnerStackerHandler implements Listener {
 
     private void handleStackIncrease(Player player, SpawnerData spawner, int changeAmount) {
         int currentSize = spawner.getStackSize();
-        int maxStackSize = configManager.getMaxStackSize();
+        int maxStackSize = configManager.getInt("max-stack-size");
 
         // Calculate how many more can be added
         int spaceLeft = maxStackSize - currentSize;
@@ -369,7 +369,7 @@ public class SpawnerStackerHandler implements Listener {
         ItemMeta meta = infoItem.getItemMeta();
         String[] lore = languageManager.getMessage("button.lore.spawner")
                 .replace("%stack_size%", String.valueOf(spawner.getStackSize()))
-                .replace("%max_stack_size%", String.valueOf(configManager.getMaxStackSize()))
+                .replace("%max_stack_size%", String.valueOf(configManager.getInt("max-stack-size")))
                 .replace("%entity%", languageManager.getFormattedMobName(spawner.getEntityType()))
                 .split("\n");
 

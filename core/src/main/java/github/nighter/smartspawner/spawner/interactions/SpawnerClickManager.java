@@ -6,6 +6,7 @@ import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.interactions.stack.SpawnerStackHandler;
 import github.nighter.smartspawner.spawner.interactions.type.SpawnEggHandler;
+import github.nighter.smartspawner.spawner.utils.NaturalSpawnerDetector;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.utils.ConfigManager;
@@ -13,8 +14,6 @@ import github.nighter.smartspawner.utils.LanguageManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -63,78 +62,6 @@ public class SpawnerClickManager implements Listener {
         initCleanupTask();
     }
 
-    /**
-     * Checks if a spawner is likely to be naturally generated based on surrounding blocks
-     * and efficient contextual analysis.
-     *
-     * @param spawnerBlock The spawner block to check
-     * @return true if it appears to be a natural spawner
-     */
-    private boolean isNaturalDungeonSpawner(Block spawnerBlock) {
-        // Check the block below first (most efficient check)
-        Block blockBelow = spawnerBlock.getRelative(BlockFace.DOWN);
-        Material belowMaterial = blockBelow.getType();
-
-        // Check common dungeon floor materials
-        if (belowMaterial == Material.COBBLESTONE ||
-                belowMaterial == Material.MOSSY_COBBLESTONE) {
-            return true;
-        }
-
-        // Check mineshaft materials (for cave spider spawners)
-        if (belowMaterial == Material.COBWEB ||
-                belowMaterial == Material.OAK_PLANKS ||
-                belowMaterial == Material.OAK_FENCE ||
-                belowMaterial == Material.RAIL ||
-                belowMaterial == Material.DEEPSLATE) {
-            return true;
-        }
-
-        // For floating spawners, check if there's no block below
-        if (belowMaterial == Material.AIR || belowMaterial == Material.CAVE_AIR) {
-            // Quick surroundings check for natural cave features
-            int naturalBlockCount = 0;
-            int cobwebCount = 0;
-
-            // Only check immediate surroundings (6 adjacent blocks) for better performance
-            for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST,
-                    BlockFace.SOUTH, BlockFace.WEST,
-                    BlockFace.UP}) {
-                Block adjacentBlock = spawnerBlock.getRelative(face);
-                Material material = adjacentBlock.getType();
-
-                // Count natural blocks and cobwebs
-                if (material.toString().contains("STONE") ||
-                        material.toString().contains("DEEPSLATE") ||
-                        material == Material.DIRT ||
-                        material == Material.GRAVEL) {
-                    naturalBlockCount++;
-                } else if (material == Material.COBWEB) {
-                    cobwebCount++;
-                }
-            }
-
-            // If surrounded by natural blocks or has cobwebs, likely natural
-            if (naturalBlockCount >= 3 || cobwebCount >= 1) {
-                return true;
-            }
-        }
-
-        // As a last check, examine the spawner type (lightweight operation)
-        BlockState state = spawnerBlock.getState();
-        if (state instanceof CreatureSpawner) {
-            CreatureSpawner cs = (CreatureSpawner) state;
-            EntityType entityType = cs.getSpawnedType();
-
-            // Cave spiders are almost always from natural mineshaft spawners
-            if (entityType == EntityType.CAVE_SPIDER) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     @EventHandler(priority = EventPriority.HIGH)
     public void onSpawnerClick(PlayerInteractEvent event) {
         // Quick validation checks
@@ -145,8 +72,9 @@ public class SpawnerClickManager implements Listener {
         Player player = event.getPlayer();
         Block block = event.getClickedBlock();
 
+        SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
         if (!configManager.getBoolean("natural-spawner-interaction")) {
-            if (isNaturalDungeonSpawner(block)) {
+            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
                 return;
             }
         }
@@ -172,6 +100,10 @@ public class SpawnerClickManager implements Listener {
 
         // Prevent default interaction
         event.setCancelled(true);
+
+        if (spawner != null && !spawner.getSpawnerActive()) {
+            handleInactiveSpawnerInteraction(player, block, spawner, heldItem, itemType);
+        }
 
         // Process spawner interaction
         handleSpawnerInteraction(player, block, heldItem, itemType);
@@ -255,6 +187,35 @@ public class SpawnerClickManager implements Listener {
         openSpawnerMenu(player, spawner);
     }
 
+    private void handleInactiveSpawnerInteraction(Player player, Block block, SpawnerData spawner, ItemStack heldItem, Material itemType) {
+
+        // Check permission on claimed land
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
+            languageManager.sendMessage(player, "messages.spawner-protected");
+            return;
+        }
+
+        // Handle spawn egg usage
+        if (isSpawnEgg(itemType)) {
+            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, heldItem);
+            return;
+        }
+
+        // Activate the spawner
+        spawner.setSpawnerActive(true);
+        spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
+        languageManager.sendMessage(player, "messages.activated");
+
+        // Handle spawner stacking
+        if (itemType == Material.SPAWNER) {
+            spawnerStackHandler.handleSpawnerStacking(player, block, spawner, heldItem);
+            return;
+        }
+
+        // Open spawner menu if not using special items
+        openSpawnerMenu(player, spawner);
+    }
+
     /**
      * Gets existing spawner data or creates a new one
      */
@@ -303,7 +264,7 @@ public class SpawnerClickManager implements Listener {
         creatureSpawner.update();
 
         // Show particles if enabled
-        if (configManager.isSpawnerCreateParticlesEnabled()) {
+        if (configManager.getBoolean("particles-spawner-activate")) {
             spawnActivationParticles(block.getLocation());
         }
 

@@ -69,7 +69,7 @@ public class SaleLogger {
         ConfigManager configManager = plugin.getConfigManager();
         this.logQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
         this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        this.logFile = new File("plugins/SmartSpawner/" + configManager.getLogFilePath());
+        this.logFile = new File("plugins/SmartSpawner/" + configManager.getString("logging-file-path"));
         this.isRunning = true;
 
         // Ensure directory exists

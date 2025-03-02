@@ -11,6 +11,7 @@ import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.utils.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
@@ -163,14 +164,16 @@ public class SpawnerLootGenerator {
     }
 
     private void loadConfigurations() {
-        ConfigurationSection mobDropSection = configManager.getLootConfig().getConfigurationSection("per_mob_drop");
-        if (mobDropSection == null) {
-            configManager.debug("No mob drop section found in config");
-            return;
-        }
+        FileConfiguration lootConfig = configManager.getLootConfig();
 
-        for (String entityName : mobDropSection.getKeys(false)) {
-            ConfigurationSection entitySection = mobDropSection.getConfigurationSection(entityName);
+        // Iterate through all top-level keys (entity names)
+        for (String entityName : lootConfig.getKeys(false)) {
+            // Skip any sections that might be comments or other non-entity configs
+            if (entityName.startsWith("#") || entityName.equals("per_mob_drop")) {
+                continue;
+            }
+
+            ConfigurationSection entitySection = lootConfig.getConfigurationSection(entityName);
             if (entitySection == null) continue;
 
             int experience = entitySection.getInt("experience", 0);
@@ -204,9 +207,14 @@ public class SpawnerLootGenerator {
                         if (material == Material.TIPPED_ARROW && itemSection.contains("potion_effect")) {
                             ConfigurationSection potionSection = itemSection.getConfigurationSection("potion_effect");
                             if (potionSection != null) {
-                                potionEffectType = potionSection.getString("type");
-                                potionDuration = potionSection.getInt("duration", 200);
-                                potionAmplifier = potionSection.getInt("amplifier", 0);
+                                potionEffectType = potionSection.getString("effect"); // Changed from "type" to "effect"
+
+                                // Convert seconds to ticks (20 ticks = 1 second)
+                                int seconds = potionSection.getInt("duration", 5);
+                                potionDuration = seconds * 20;
+
+                                // Changed from "amplifier" to "level"
+                                potionAmplifier = potionSection.getInt("level", 0);
                             }
                         }
 
@@ -515,7 +523,7 @@ public class SpawnerLootGenerator {
     private void handleGuiUpdates(SpawnerData spawner, boolean hasLootViewers,
                                   boolean hasSpawnerViewers, int oldTotalPages) {
         // Show particles if needed
-        if (configManager.isLootSpawnParticlesEnabled()) {
+        if (configManager.getBoolean("particles-loot-spawn")) {
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
             if (world != null) {
@@ -537,7 +545,7 @@ public class SpawnerLootGenerator {
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
         }
 
-        if (configManager.isHologramEnabled()) {
+        if (configManager.getBoolean("hologram-enabled")) {
             spawner.updateHologramData();
         }
     }

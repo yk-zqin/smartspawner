@@ -51,28 +51,52 @@ public class LanguageManager {
         put("format-number.default", "%s");
 
         // Mob Names
+        put("mob_names.ALLAY", "Allay");
+        put("mob_names.ARMADILLO", "Armadillo");
+        put("mob_names.AXOLOTL", "Axolotl");
+        put("mob_names.BAT", "Bat");
+        put("mob_names.BEE", "Bee");
         put("mob_names.BLAZE", "Blaze");
         put("mob_names.BOGGED", "Bogged");
         put("mob_names.BREEZE", "Breeze");
+        put("mob_names.CAMEL", "Camel");
+        put("mob_names.CAT", "Cat");
         put("mob_names.CAVE_SPIDER", "Cave Spider");
         put("mob_names.CHICKEN", "Chicken");
+        put("mob_names.COD", "Cod");
         put("mob_names.COW", "Cow");
         put("mob_names.CREEPER", "Creeper");
+        put("mob_names.DOLPHIN", "Dolphin");
+        put("mob_names.DONKEY", "Donkey");
         put("mob_names.DROWNED", "Drowned");
+        put("mob_names.ELDER_GUARDIAN", "Elder Guardian");
         put("mob_names.ENDERMAN", "Enderman");
+        put("mob_names.ENDERMITE", "Endermite");
         put("mob_names.EVOKER", "Evoker");
+        put("mob_names.FOX", "Fox");
+        put("mob_names.FROG", "Frog");
         put("mob_names.GHAST", "Ghast");
         put("mob_names.GLOW_SQUID", "Glow Squid");
+        put("mob_names.GOAT", "Goat");
         put("mob_names.GUARDIAN", "Guardian");
         put("mob_names.HOGLIN", "Hoglin");
+        put("mob_names.HORSE", "Horse");
         put("mob_names.HUSK", "Husk");
         put("mob_names.IRON_GOLEM", "Iron Golem");
+        put("mob_names.LLAMA", "Llama");
         put("mob_names.MAGMA_CUBE", "Magma Cube");
         put("mob_names.MOOSHROOM", "Mooshroom");
+        put("mob_names.MUSHROOM_COW", "Mooshroom"); // Fallback for 1.20 version compatibility
+        put("mob_names.MULE", "Mule");
+        put("mob_names.OCELOT", "Ocelot");
+        put("mob_names.PANDA", "Panda");
+        put("mob_names.PARROT", "Parrot");
+        put("mob_names.PHANTOM", "Phantom");
         put("mob_names.PIG", "Pig");
         put("mob_names.PIGLIN", "Piglin");
         put("mob_names.PIGLIN_BRUTE", "Piglin Brute");
         put("mob_names.PILLAGER", "Pillager");
+        put("mob_names.POLAR_BEAR", "Polar Bear");
         put("mob_names.PUFFERFISH", "Pufferfish");
         put("mob_names.RABBIT", "Rabbit");
         put("mob_names.RAVAGER", "Ravager");
@@ -81,17 +105,30 @@ public class LanguageManager {
         put("mob_names.SHULKER", "Shulker");
         put("mob_names.SILVERFISH", "Silverfish");
         put("mob_names.SKELETON", "Skeleton");
+        put("mob_names.SKELETON_HORSE", "Skeleton Horse");
         put("mob_names.SLIME", "Slime");
+        put("mob_names.SNIFFER", "Sniffer");
+        put("mob_names.SNOW_GOLEM", "Snow Golem");
+        put("mob_names.SNOWMAN", "Snow Golem"); // Fallback for 1.20 version compatibility
         put("mob_names.SPIDER", "Spider");
         put("mob_names.SQUID", "Squid");
         put("mob_names.STRAY", "Stray");
         put("mob_names.STRIDER", "Strider");
+        put("mob_names.TADPOLE", "Tadpole");
+        put("mob_names.TRADER_LLAMA", "Trader Llama");
         put("mob_names.TROPICAL_FISH", "Tropical Fish");
+        put("mob_names.TURTLE", "Turtle");
+        put("mob_names.VEX", "Vex");
+        put("mob_names.VILLAGER", "Villager");
         put("mob_names.VINDICATOR", "Vindicator");
+        put("mob_names.WANDERING_TRADER", "Wandering Trader");
+        put("mob_names.WARDEN", "Warden");
         put("mob_names.WITCH", "Witch");
         put("mob_names.WITHER_SKELETON", "Wither Skeleton");
+        put("mob_names.WOLF", "Wolf");
         put("mob_names.ZOGLIN", "Zoglin");
         put("mob_names.ZOMBIE", "Zombie");
+        put("mob_names.ZOMBIE_HORSE", "Zombie Horse");
         put("mob_names.ZOMBIE_VILLAGER", "Zombie Villager");
         put("mob_names.ZOMBIFIED_PIGLIN", "Zombified Piglin");
 
@@ -153,6 +190,11 @@ public class LanguageManager {
         put("messages.no-items.prefix", true);
         put("messages.no-items.type", "CHAT");
         put("messages.no-items.sound", "block.note_block.pling");
+
+        put("messages.sell-all-tax.message", "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a%gross%$&#d6e7ed, After tax (&#ff6b6b-%tax%%&#d6e7ed): &a%price%$");
+        put("messages.sell-all-tax.prefix", true);
+        put("messages.sell-all-tax.type", "CHAT");
+        put("messages.sell-all-tax.sound", "block.note_block.bell");
 
         put("messages.no-sellable-items.message", "&cNo items can be sold from this spawner.");
         put("messages.no-sellable-items.prefix", true);
@@ -220,7 +262,7 @@ public class LanguageManager {
         put("messages.exp-collected.prefix", true);
         put("messages.exp-collected.type", "CHAT");
 
-        put("messages.exp-collected-with-mending.message", "&#d6e7edUsed &a%exp-mending%&d6e7ed experience points to repair items! Collected &a%exp%&d6e7ed experience points!");
+        put("messages.exp-collected-with-mending.message", "&#d6e7edUsed &a%exp-mending%&#d6e7ed experience points to repair items! Collected &a%exp%&#d6e7ed experience points!");
         put("messages.exp-collected-with-mending.prefix", true);
         put("messages.exp-collected-with-mending.type", "CHAT");
 

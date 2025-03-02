@@ -33,7 +33,7 @@ public class SpawnerExplosionListener implements Listener {
                 SpawnerData spawnerData = this.spawnerManager.getSpawnerByLocation(block.getLocation());
 
                 if (spawnerData != null) {
-                    if (!configManager.isAllowGrief()) {
+                    if (!configManager.getBoolean("allow-grief")) {
                         // Add the spawner block to the list of blocks to remove
                         blocksToRemove.add(block);
                         // Close all viewers of the spawner

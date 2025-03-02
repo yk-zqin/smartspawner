@@ -118,7 +118,7 @@ public class HopperHandler implements Listener {
     }
 
     public void startHopperTask(Location hopperLoc, Location spawnerLoc) {
-        if (!configManager.isHopperEnabled()) return;
+        if (!configManager.getBoolean("hopper-enabled")) return;
         if (activeHoppers.containsKey(hopperLoc)) return;
 
         BukkitTask task = new BukkitRunnable() {
@@ -130,7 +130,7 @@ public class HopperHandler implements Listener {
                 }
                 transferItems(hopperLoc, spawnerLoc);
             }
-        }.runTaskTimer(plugin, 0L, configManager.getHopperCheckInterval());
+        }.runTaskTimer(plugin, 0L, configManager.getInt("hopper-check-interval") * 20L); // Convert seconds to ticks
 
         activeHoppers.put(hopperLoc, task);
     }
@@ -162,7 +162,7 @@ public class HopperHandler implements Listener {
             VirtualInventory virtualInv = spawner.getVirtualInventory();
             Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
-            int itemsPerTransfer = configManager.getHopperItemsPerTransfer();
+            int itemsPerTransfer = configManager.getInt("hopper-items-per-transfer");
             int transferred = 0;
             boolean inventoryChanged = false;
 

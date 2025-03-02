@@ -5,6 +5,7 @@ import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.hooks.protections.CheckBreakBlock;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.spawner.utils.NaturalSpawnerDetector;
 import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.utils.LanguageManager;
 import org.bukkit.*;
@@ -72,7 +73,7 @@ public class SpawnerBreakListener implements Listener {
         }
 
         // Feature toggle check
-        if (!configManager.isSpawnerBreakEnabled()) {
+        if (!configManager.getBoolean("spawner-break-enabled")) {
             event.setCancelled(true);
             return;
         }
@@ -82,8 +83,8 @@ public class SpawnerBreakListener implements Listener {
 
         // Check if natural spawner interaction is disabled
         if (!configManager.getBoolean("natural-spawner-interaction")) {
-            // Check if this is likely a natural dungeon spawner (no SpawnerData and has cobblestone below)
-            if (spawner == null && isNaturalDungeonSpawner(block)) {
+            // Check if this is likely a natural dungeon spawner
+            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
                 // Handle like vanilla - break with no drops
                 block.setType(Material.AIR);
                 event.setCancelled(true);
@@ -115,78 +116,6 @@ public class SpawnerBreakListener implements Listener {
 
         // Clean up associated hopper if present
         cleanupAssociatedHopper(block);
-    }
-
-    /**
-     * Checks if a spawner is likely to be naturally generated based on surrounding blocks
-     * and efficient contextual analysis.
-     *
-     * @param spawnerBlock The spawner block to check
-     * @return true if it appears to be a natural spawner
-     */
-    private boolean isNaturalDungeonSpawner(Block spawnerBlock) {
-        // Check the block below first (most efficient check)
-        Block blockBelow = spawnerBlock.getRelative(BlockFace.DOWN);
-        Material belowMaterial = blockBelow.getType();
-
-        // Check common dungeon floor materials
-        if (belowMaterial == Material.COBBLESTONE ||
-                belowMaterial == Material.MOSSY_COBBLESTONE) {
-            return true;
-        }
-
-        // Check mineshaft materials (for cave spider spawners)
-        if (belowMaterial == Material.COBWEB ||
-                belowMaterial == Material.OAK_PLANKS ||
-                belowMaterial == Material.OAK_FENCE ||
-                belowMaterial == Material.RAIL ||
-                belowMaterial == Material.DEEPSLATE) {
-            return true;
-        }
-
-        // For floating spawners, check if there's no block below
-        if (belowMaterial == Material.AIR || belowMaterial == Material.CAVE_AIR) {
-            // Quick surroundings check for natural cave features
-            int naturalBlockCount = 0;
-            int cobwebCount = 0;
-
-            // Only check immediate surroundings (6 adjacent blocks) for better performance
-            for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST,
-                    BlockFace.SOUTH, BlockFace.WEST,
-                    BlockFace.UP}) {
-                Block adjacentBlock = spawnerBlock.getRelative(face);
-                Material material = adjacentBlock.getType();
-
-                // Count natural blocks and cobwebs
-                if (material.toString().contains("STONE") ||
-                        material.toString().contains("DEEPSLATE") ||
-                        material == Material.DIRT ||
-                        material == Material.GRAVEL) {
-                    naturalBlockCount++;
-                } else if (material == Material.COBWEB) {
-                    cobwebCount++;
-                }
-            }
-
-            // If surrounded by natural blocks or has cobwebs, likely natural
-            if (naturalBlockCount >= 3 || cobwebCount >= 1) {
-                return true;
-            }
-        }
-
-        // As a last check, examine the spawner type (lightweight operation)
-        BlockState state = spawnerBlock.getState();
-        if (state instanceof CreatureSpawner) {
-            CreatureSpawner cs = (CreatureSpawner) state;
-            EntityType entityType = cs.getSpawnedType();
-
-            // Cave spiders are almost always from natural mineshaft spawners
-            if (entityType == EntityType.CAVE_SPIDER) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void handleSpawnerBreak(Block block, SpawnerData spawner, Player player) {
@@ -232,7 +161,7 @@ public class SpawnerBreakListener implements Listener {
         if (world != null) {
             block.setType(Material.AIR);
             world.dropItemNaturally(location, spawnerItem);
-            reduceDurability(tool, player, configManager.getDurabilityLossPerSpawner());
+            reduceDurability(tool, player, configManager.getInt("durability-loss-per-spawner"));
 
             logDebugInfo("Player " + player.getName() + " broke " +
                     (entityType != null ? entityType + " spawner" : "empty spawner") +
@@ -256,8 +185,8 @@ public class SpawnerBreakListener implements Listener {
         }
 
         // Silk touch validation
-        if (configManager.isSilkTouchRequired()) {
-            int requiredLevel = configManager.getSilkTouchLevel();
+        if (configManager.getBoolean("silk-touch-required")) {
+            int requiredLevel = configManager.getInt("silk-touch-level");
             if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < requiredLevel) {
                 languageManager.sendMessage(player, "messages.silk-touch-required");
                 return false;
@@ -271,8 +200,8 @@ public class SpawnerBreakListener implements Listener {
         final int currentStackSize = spawner.getStackSize();
         // Ensure at least 1 spawner remains (if initially > 1)
         final int maxAllowedToDrop = currentStackSize > 1 ? currentStackSize - 1 : 1;
-        final int configDropAmount = configManager.getDropStackAmount();
-        final int durabilityLoss = configManager.getDurabilityLossPerSpawner();
+        final int configDropAmount = configManager.getInt("drop-stack-amount");
+        final int durabilityLoss = configManager.getInt("durability-loss-per-spawner");
 
         // Calculate actual drop amount
         final int dropAmount;
@@ -428,7 +357,7 @@ public class SpawnerBreakListener implements Listener {
         if (tool == null) {
             return false;
         }
-        return configManager.getRequiredTools().contains(tool.getType().name());
+        return configManager.getStringList("required-tools").contains(tool.getType().name());
     }
 
     private void logDebugInfo(String message) {
@@ -477,7 +406,7 @@ public class SpawnerBreakListener implements Listener {
         // Check if it's a natural dungeon spawner and if natural spawner interaction is disabled
         if (!configManager.getBoolean("natural-spawner-interaction")) {
             SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
-            if (spawner == null && isNaturalDungeonSpawner(block)) {
+            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
                 // Don't show any message for natural spawners when interaction is disabled
                 return;
             }
@@ -490,8 +419,8 @@ public class SpawnerBreakListener implements Listener {
 
         // Provide appropriate feedback based on tool and permissions
         if (isValidTool(tool)) {
-            if (configManager.isSilkTouchRequired()) {
-                int requiredLevel = configManager.getSilkTouchLevel();
+            if (configManager.getBoolean("silk-touch-required")) {
+                int requiredLevel = configManager.getInt("silk-touch-level");
                 if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < requiredLevel) {
                     languageManager.sendMessage(player, "messages.silk-touch-required");
                     return;

@@ -3,7 +3,7 @@ package github.nighter.smartspawner.spawner.gui.main;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.SpawnerMenuHolder;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
-import github.nighter.smartspawner.spawner.properties.utils.SpawnerMobHeadTexture;
+import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.utils.LanguageManager;

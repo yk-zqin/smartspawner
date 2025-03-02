@@ -43,7 +43,7 @@ public class ShopGuiPlus implements IShopIntegration {
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
-        this.isLoggingEnabled = configManager.isLoggingEnabled();
+        this.isLoggingEnabled = configManager.getBoolean("logging-enabled");
     }
 
     @Override
@@ -159,7 +159,7 @@ public class ShopGuiPlus implements IShopIntegration {
             }
 
             // Send success message
-            double taxPercentage = configManager.getTaxPercentage();
+            double taxPercentage = configManager.getDouble("tax-rate");
             plugin.getServer().getScheduler().runTask(plugin, () ->
                     sendSuccessMessage(player, calculation.getTotalAmount(), calculation.getTotalPrice(), taxPercentage));
 
@@ -182,7 +182,7 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private boolean processTransactions(Player player, SaleCalculationResult calculation) {
-        double taxPercentage = configManager.getTaxPercentage();
+        double taxPercentage = configManager.getDouble("tax-rate");
 
         for (Map.Entry<EconomyType, Double> entry : calculation.getPricesByEconomy().entrySet()) {
             EconomyType economyType = entry.getKey();
@@ -209,10 +209,10 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private double calculateNetAmount(double grossAmount, double taxPercentage) {
-        if (taxPercentage <= 0) {
-            return grossAmount;
+        if (configManager.getBoolean("tax-enabled")) {
+            return grossAmount * (1 - taxPercentage / 100.0);
         }
-        return grossAmount * (1 - taxPercentage / 100.0);
+        return grossAmount;
     }
 
     private void logSalesAsync(SaleCalculationResult calculation, String playerName) {
@@ -231,14 +231,16 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private String formatMonetaryValue(double value) {
-        return formatPrice(value, configManager.isFormatedPrice());
+        return formatPrice(value, configManager.getBoolean("formated-price"));
     }
 
     private void sendSuccessMessage(Player player, int totalAmount, double totalPrice, double taxPercentage) {
-        if (taxPercentage > 0) {
+        if (configManager.getBoolean("tax-enabled")) {
+            double netPrice = calculateNetAmount(totalPrice, taxPercentage);
             languageManager.sendMessage(player, "messages.sell-all-tax",
                     "%amount%", String.valueOf(totalAmount),
-                    "%price%", formatMonetaryValue(totalPrice),
+                    "%price%", formatMonetaryValue(netPrice),
+                    "%gross%", formatMonetaryValue(totalPrice),
                     "%tax%", String.format("%.2f", taxPercentage)
             );
         } else {

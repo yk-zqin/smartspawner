@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.spawner.properties.utils;
+package github.nighter.smartspawner.spawner.utils;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -110,7 +110,7 @@ public class SpawnerFileHandler {
      */
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
-        int intervalSeconds = configManager.getSaveInterval();
+        int intervalSeconds = configManager.getInt("save-interval");
 
         if (saveTaskId != -1) {
             Bukkit.getScheduler().cancelTask(saveTaskId);
