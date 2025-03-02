@@ -9,7 +9,7 @@
 [![Rating](https://img.shields.io/spiget/rating/120743?style=for-the-badge&logo=spigotmc&logoColor=white&label=Spigot&color=FF8800)](https://www.spigotmc.org/resources/120743/)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-7289DA?style=for-the-badge&logo=creative-commons&logoColor=white)](LICENSE)
 
-Transform your Minecraft server's spawner system with an elegant and powerful GUI solution
+Enhances spawner usage with an intuitive GUI, enabling automated mob drops and experience generation without spawning entities.
 
 [<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/modrinth_vector.svg" height="50">](https://modrinth.com/plugin/smart-spawner-plugin)
 [<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/supported/spigot_vector.svg" height="50">](https://www.spigotmc.org/resources/120743/)
@@ -66,6 +66,92 @@ Transform your Minecraft server's spawner system with an elegant and powerful GU
 ## 📊 Usage Statistics
 
 [![bStats](https://bstats.org/signatures/bukkit/SmartSpawner.svg)](https://bstats.org/plugin/bukkit/SmartSpawner)
+
+
+## 💻 Developer API
+<details>
+<summary>Smart Spawner API</summary>
+
+### Installation
+
+#### Gradle
+
+```groovy
+repositories {
+    maven { url = 'https://maven.pkg.github.com/ptthanh02/smartspawner' }
+}
+
+dependencies {
+    compileOnly 'github.nighter:smartspawner-api:1.2.4'
+}
+```
+
+#### Maven
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/ptthanh02/smartspawner</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>github.nighter</groupId>
+        <artifactId>smartspawner-api</artifactId>
+        <version>1.2.4</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+### Usage Example
+
+```java
+import github.nighter.smartspawner.api.SmartSpawnerAPI;
+import github.nighter.smartspawner.api.SmartSpawnerProvider;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
+
+public class YourPlugin extends JavaPlugin {
+    
+    @Override
+    public void onEnable() {
+        // Check if SmartSpawner is installed
+        SmartSpawnerAPI api = SmartSpawnerProvider.getAPI();
+        if (api == null) {
+            getLogger().warning("SmartSpawner not found! Some features will be disabled.");
+            return;
+        }
+        
+        // Create a zombie spawner item
+        ItemStack zombieSpawner = api.createSpawnerItem(EntityType.ZOMBIE);
+        
+        // Create multiple creeper spawners
+        ItemStack creeperSpawners = api.createSpawnerItem(EntityType.CREEPER, 5);
+        
+        // Check spawner type
+        EntityType type = api.getSpawnerEntityType(zombieSpawner);
+        if (type == EntityType.ZOMBIE) {
+            getLogger().info("Successfully created a zombie spawner!");
+        }
+    }
+}
+```
+
+### Available API Methods
+
+| Method | Description |
+|--------|-------------|
+| `ItemStack createSpawnerItem(EntityType entityType)` | Creates a spawner item with the specified entity type |
+| `ItemStack createSpawnerItem(EntityType entityType, int amount)` | Creates a spawner item with the specified entity type and amount |
+| `EntityType getSpawnerEntityType(ItemStack item)` | Gets the entity type from a spawner item |
+| `boolean isValidSpawner(ItemStack item)` | Checks if an item is a valid spawner created by SmartSpawner |
+
+For more detailed API documentation, visit our [Wiki](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Developer-API).
+
+</details>
 
 ## 🤝 Contributing
 
