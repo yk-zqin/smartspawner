@@ -35,6 +35,7 @@ import github.nighter.smartspawner.utils.ConfigManager;
 import github.nighter.smartspawner.utils.LanguageManager;
 import github.nighter.smartspawner.utils.UpdateChecker;
 import github.nighter.smartspawner.nms.VersionInitializer;
+
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import org.bukkit.Bukkit;
