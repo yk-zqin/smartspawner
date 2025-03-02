@@ -5,10 +5,8 @@ import github.nighter.smartspawner.utils.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -42,26 +40,40 @@ public class ListCommand {
         Inventory inv = Bukkit.createInventory(new WorldSelectionHolder(),
                 27, languageManager.getMessage("spawner-list.gui-title.world-selection"));
 
-        // World selection buttons with custom textures
-        ItemStack overworldButton = createWorldButton(Material.GRASS_BLOCK,
-                languageManager.getMessage("spawner-list.world-buttons.overworld.name"),
-                getWorldDescription("spawner-list.world-buttons.overworld.lore", "world"));
+        List<World> worlds = Bukkit.getWorlds();
+        int slot = 0; // Starting slot for world buttons
+        for (World world : worlds) {
+            Material icon = getWorldIcon(world.getEnvironment());
+            String worldName = world.getName();
+            String displayName;
+            List<String> description;
 
-        ItemStack netherButton = createWorldButton(Material.NETHERRACK,
-                languageManager.getMessage("spawner-list.world-buttons.nether.name"),
-                getWorldDescription("spawner-list.world-buttons.nether.lore", "world_nether"));
+            if (world.getEnvironment() == World.Environment.NORMAL) {
+                displayName = languageManager.getMessage("spawner-list.world-buttons.overworld.name");
+                description = getWorldDescription("spawner-list.world-buttons.overworld.lore", worldName);
+            } else if (world.getEnvironment() == World.Environment.NETHER) {
+                displayName = languageManager.getMessage("spawner-list.world-buttons.nether.name");
+                description = getWorldDescription("spawner-list.world-buttons.nether.lore", worldName);
+            } else {
+                displayName = languageManager.getMessage("spawner-list.world-buttons.end.name");
+                description = getWorldDescription("spawner-list.world-buttons.end.lore", worldName);
+            }
 
-        ItemStack endButton = createWorldButton(Material.END_STONE,
-                languageManager.getMessage("spawner-list.world-buttons.end.name"),
-                getWorldDescription("spawner-list.world-buttons.end.lore", "world_the_end"));
-
-
-        // Set buttons in a visually appealing layout
-        inv.setItem(11, overworldButton);
-        inv.setItem(13, netherButton);
-        inv.setItem(15, endButton);
+            ItemStack worldButton = createWorldButton(icon, displayName, description);
+            inv.setItem(slot, worldButton);
+            slot += 1; // Increment slot to place buttons with spacing
+        }
 
         player.openInventory(inv);
+    }
+
+    private Material getWorldIcon(World.Environment environment) {
+        return switch (environment) {
+            case NORMAL -> Material.GRASS_BLOCK;
+            case NETHER -> Material.NETHERRACK;
+            case THE_END -> Material.END_STONE;
+            default -> Material.BEDROCK;
+        };
     }
 
     private List<String> getWorldDescription(String path, String worldName) {
