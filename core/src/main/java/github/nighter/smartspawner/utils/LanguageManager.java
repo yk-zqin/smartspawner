@@ -473,6 +473,19 @@ public class LanguageManager {
             "&5▶ &7Click to view!"
         );
 
+        // Custom Worlds
+        put("spawner-list.world-buttons.custom-nether.name", "&c&l{world_name}");
+        put("spawner-list.world-buttons.custom-overworld.name", "&a&l{world_name}");
+        put("spawner-list.world-buttons.custom-end.name", "&5&l{world_name}");
+        put("spawner-list.world-buttons.custom-default.name", "&b&l{world_name}");
+        put("spawner-list.world-buttons.custom-default.lore",
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&7⮞ &fTotal Spawners: &b{total}\n" +
+            "&7⮞ &fTotal Stacked: &b{total_stacked}\n" +
+            "&8━━━━━━━━━━━━━━━━━━━━\n" +
+            "&b▶ &7Click to view!"
+        );
+
         // Spawner Item
         put("spawner-list.spawner-item.name", "&#4fc3f7&lSpawner #{id}");
         put("spawner-list.spawner-item.id_pattern", "Spawner #([A-Za-z0-9]+)");

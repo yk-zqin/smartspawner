@@ -486,6 +486,25 @@ spawner-list:
         &8━━━━━━━━━━━━━━━━━━━━
         &5▶ &7Nhấp để xem!
 
+    # Hỗ trợ cho các thế giới tùy chỉnh (nếu có)
+    custom-nether:
+      name: "&c&l{world_name}"
+
+    custom-overworld:
+      name: "&a&l{world_name}"
+
+    custom-end:
+      name: "&5&l{world_name}"
+
+    custom-default:
+      name: "&b&l{world_name}"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTổng số Spawner: &b{total}
+        &7⮞ &fTổng đã Stack: &b{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &b▶ &7Nhấp để xem!
+
   spawner-item:
     name: "&#4fc3f7&lSpawner #{id}"
     id_pattern: "Spawner #([A-Za-z0-9]+)"

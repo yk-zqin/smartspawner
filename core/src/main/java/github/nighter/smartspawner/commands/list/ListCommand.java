@@ -36,35 +36,178 @@ public class ListCommand {
             return;
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+
+        // Get all loaded worlds with spawners
+        List<World> worlds = Bukkit.getWorlds().stream()
+                .filter(world -> spawnerManager.countSpawnersInWorld(world.getName()) > 0)
+                .collect(Collectors.toList());
+
+        // Check if there are any custom worlds with spawners
+        List<World> customWorlds = worlds.stream()
+                .filter(world -> !isDefaultWorld(world.getName()))
+                .collect(Collectors.toList());
+
+        boolean hasCustomWorlds = !customWorlds.isEmpty();
+
+        // Calculate inventory size - use original 27 size if only default worlds, otherwise adapt
+        int size = hasCustomWorlds ? Math.max(27, (int) Math.ceil((worlds.size() + 2) / 7.0) * 9) : 27;
+
         Inventory inv = Bukkit.createInventory(new WorldSelectionHolder(),
-                27, languageManager.getMessage("spawner-list.gui-title.world-selection"));
+                size, languageManager.getMessage("spawner-list.gui-title.world-selection"));
 
-        // World selection buttons with custom textures
-        ItemStack overworldButton = createWorldButton(Material.GRASS_BLOCK,
-                languageManager.getMessage("spawner-list.world-buttons.overworld.name"),
-                getWorldDescription("spawner-list.world-buttons.overworld.lore", "world"));
+        // If we only have default worlds, use the original layout
+        if (!hasCustomWorlds) {
+            // Create buttons for default worlds
+            ItemStack overworldButton = createWorldButtonIfWorldExists("world", Material.GRASS_BLOCK,
+                    languageManager.getMessage("spawner-list.world-buttons.overworld.name"));
 
-        ItemStack netherButton = createWorldButton(Material.NETHERRACK,
-                languageManager.getMessage("spawner-list.world-buttons.nether.name"),
-                getWorldDescription("spawner-list.world-buttons.nether.lore", "world_nether"));
+            ItemStack netherButton = createWorldButtonIfWorldExists("world_nether", Material.NETHERRACK,
+                    languageManager.getMessage("spawner-list.world-buttons.nether.name"));
 
-        ItemStack endButton = createWorldButton(Material.END_STONE,
-                languageManager.getMessage("spawner-list.world-buttons.end.name"),
-                getWorldDescription("spawner-list.world-buttons.end.lore", "world_the_end"));
+            ItemStack endButton = createWorldButtonIfWorldExists("world_the_end", Material.END_STONE,
+                    languageManager.getMessage("spawner-list.world-buttons.end.name"));
 
+            // Set buttons in the original layout
+            if (overworldButton != null) inv.setItem(11, overworldButton);
+            if (netherButton != null) inv.setItem(13, netherButton);
+            if (endButton != null) inv.setItem(15, endButton);
+        }
+        // If we have custom worlds, use a more flexible layout
+        else {
+            int slot = 10; // Start at second row, second column
+            int row = 1;
 
-        // Set buttons in a visually appealing layout
-        inv.setItem(11, overworldButton);
-        inv.setItem(13, netherButton);
-        inv.setItem(15, endButton);
+            // Add default worlds first (if they exist)
+            if (addWorldButtonIfExists(inv, "world", Material.GRASS_BLOCK,
+                    languageManager.getMessage("spawner-list.world-buttons.overworld.name"), slot)) {
+                slot++;
+            }
+
+            if (addWorldButtonIfExists(inv, "world_nether", Material.NETHERRACK,
+                    languageManager.getMessage("spawner-list.world-buttons.nether.name"), slot)) {
+                slot++;
+            }
+
+            if (addWorldButtonIfExists(inv, "world_the_end", Material.END_STONE,
+                    languageManager.getMessage("spawner-list.world-buttons.end.name"), slot)) {
+                slot++;
+            }
+
+            // Add custom worlds
+            for (World world : customWorlds) {
+                // Move to next row if we've reached the end of this one
+                if (slot % 9 == 8) {
+                    row++;
+                    slot = 9 * row + 1; // First slot in the next row (skipping the border)
+                }
+
+                // Stop if we've filled the inventory
+                if (slot >= size) {
+                    break;
+                }
+
+                // Add the world button
+                Material material = getMaterialForWorldType(world.getEnvironment());
+                addWorldButton(inv, world.getName(), material, formatWorldName(world.getName()), slot++);
+            }
+
+            // Fill with decoration
+            ItemStack decoration = createDecorationItem();
+            for (int i = 0; i < size; i++) {
+                if (inv.getItem(i) == null) {
+                    inv.setItem(i, decoration);
+                }
+            }
+        }
 
         player.openInventory(inv);
     }
 
-    private List<String> getWorldDescription(String path, String worldName) {
+    private boolean isDefaultWorld(String worldName) {
+        return worldName.equals("world") || worldName.equals("world_nether") || worldName.equals("world_the_end");
+    }
+
+    private ItemStack createWorldButtonIfWorldExists(String worldName, Material material, String displayName) {
+        World world = Bukkit.getWorld(worldName);
+        if (world != null && spawnerManager.countSpawnersInWorld(worldName) > 0) {
+            return createWorldButton(material, displayName, getWorldDescription(worldName));
+        }
+        return null;
+    }
+
+    private boolean addWorldButtonIfExists(Inventory inv, String worldName, Material material, String displayName, int slot) {
+        World world = Bukkit.getWorld(worldName);
+        if (world != null && spawnerManager.countSpawnersInWorld(worldName) > 0) {
+            addWorldButton(inv, worldName, material, displayName, slot);
+            return true;
+        }
+        return false;
+    }
+
+    private void addWorldButton(Inventory inv, String worldName, Material material, String displayName, int slot) {
+        // For custom worlds, get formatted name with color based on environment
+        if (!isDefaultWorld(worldName)) {
+            World world = Bukkit.getWorld(worldName);
+            if (world != null) {
+                World.Environment environment = world.getEnvironment();
+                String namePath;
+                switch (environment) {
+                    case NORMAL -> namePath = "spawner-list.world-buttons.custom-overworld.name";
+                    case NETHER -> namePath = "spawner-list.world-buttons.custom-nether.name";
+                    case THE_END -> namePath = "spawner-list.world-buttons.custom-end.name";
+                    default -> namePath = "spawner-list.world-buttons.custom-default.name";
+                }
+                displayName = languageManager.getMessage(namePath).replace("{world_name}", displayName);
+            }
+        }
+
+        ItemStack button = createWorldButton(material, displayName, getWorldDescription(worldName));
+        inv.setItem(slot, button);
+    }
+
+    private Material getMaterialForWorldType(World.Environment environment) {
+        return switch (environment) {
+            case NORMAL -> Material.GRASS_BLOCK;
+            case NETHER -> Material.NETHERRACK;
+            case THE_END -> Material.END_STONE;
+            default -> Material.ENDER_PEARL; // For custom environments
+        };
+    }
+
+    private String formatWorldName(String worldName) {
+        // Convert something like "my_custom_world" to "My Custom World"
+        return Arrays.stream(worldName.replace('_', ' ').split(" "))
+                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
+    }
+
+
+    private List<String> getWorldDescription(String worldName) {
         List<String> description = new ArrayList<>();
         int physicalSpawners = spawnerManager.countSpawnersInWorld(worldName);
         int totalWithStacks = spawnerManager.countTotalSpawnersWithStacks(worldName);
+
+        // Use path for default worlds if available, otherwise use custom world description based on environment
+        String path;
+        if (worldName.equals("world")) {
+            path = "spawner-list.world-buttons.overworld.lore";
+        } else if (worldName.equals("world_nether")) {
+            path = "spawner-list.world-buttons.nether.lore";
+        } else if (worldName.equals("world_the_end")) {
+            path = "spawner-list.world-buttons.end.lore";
+        } else {
+            // Get environment for custom world
+            World world = Bukkit.getWorld(worldName);
+            World.Environment environment = world != null ? world.getEnvironment() : World.Environment.NORMAL;
+
+            // Select appropriate lore based on environment
+            switch (environment) {
+                case NORMAL -> path = "spawner-list.world-buttons.overworld.lore";
+                case NETHER -> path = "spawner-list.world-buttons.nether.lore";
+                case THE_END -> path = "spawner-list.world-buttons.end.lore";
+                default -> path = "spawner-list.world-buttons.custom-default.lore";
+            }
+        }
 
         for (String line : languageManager.getMessage(path).split("\n")) {
             description.add(line
@@ -104,12 +247,16 @@ public class ListCommand {
         int totalPages = (int) Math.ceil((double) worldSpawners.size() / SPAWNERS_PER_PAGE);
         page = Math.max(1, Math.min(page, totalPages));
 
-        String worldTitle = switch (worldName) {
-            case "world" -> languageManager.getMessage("spawner-list.world-buttons.overworld.name");
-            case "world_nether" -> languageManager.getMessage("spawner-list.world-buttons.nether.name");
-            case "world_the_end" -> languageManager.getMessage("spawner-list.world-buttons.end.name");
-            default -> worldName;
-        };
+        String worldTitle;
+        switch (worldName) {
+            case "world" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.overworld.name");
+            case "world_nether" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.nether.name");
+            case "world_the_end" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.end.name");
+            default -> {
+                // For custom worlds, format the name nicely
+                worldTitle = formatWorldName(worldName);
+            }
+        }
 
         String title = languageManager.getMessage("spawner-list.gui-title.page-title",
                 Map.of(

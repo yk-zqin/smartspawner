@@ -16,6 +16,7 @@ import org.bukkit.inventory.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class SpawnerListGUI implements Listener {
     private final ConfigManager configManager;
@@ -45,12 +46,49 @@ public class SpawnerListGUI implements Listener {
             return;
         }
         event.setCancelled(true);
-        if (event.getCurrentItem() == null) return;
-        switch (event.getSlot()) {
-            case 11 -> listCommand.openSpawnerListGUI(player, "world", 1);
-            case 13 -> listCommand.openSpawnerListGUI(player, "world_nether", 1);
-            case 15 -> listCommand.openSpawnerListGUI(player, "world_the_end", 1);
+
+        ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || !clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
+
+        String displayName = ChatColor.stripColor(clickedItem.getItemMeta().getDisplayName());
+
+        // Check for original layout slots first (for backward compatibility)
+        if (event.getSlot() == 11 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.overworld.name")))) {
+            listCommand.openSpawnerListGUI(player, "world", 1);
+            return;
+        } else if (event.getSlot() == 13 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.nether.name")))) {
+            listCommand.openSpawnerListGUI(player, "world_nether", 1);
+            return;
+        } else if (event.getSlot() == 15 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.end.name")))) {
+            listCommand.openSpawnerListGUI(player, "world_the_end", 1);
+            return;
         }
+
+        // For custom layout or any other slots, determine world by name
+        if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.overworld.name")))) {
+            listCommand.openSpawnerListGUI(player, "world", 1);
+        } else if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.nether.name")))) {
+            listCommand.openSpawnerListGUI(player, "world_nether", 1);
+        } else if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.end.name")))) {
+            listCommand.openSpawnerListGUI(player, "world_the_end", 1);
+        } else {
+            // For custom worlds, find the matching world
+            for (World world : Bukkit.getWorlds()) {
+                if (spawnerManager.countSpawnersInWorld(world.getName()) > 0 &&
+                        displayName.equals(formatWorldName(world.getName()))) {
+                    listCommand.openSpawnerListGUI(player, world.getName(), 1);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Helper method to format world name (same as in ListCommand)
+    private String formatWorldName(String worldName) {
+        // Convert something like "my_custom_world" to "My Custom World"
+        return Arrays.stream(worldName.replace('_', ' ').split(" "))
+                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
     }
 
     @EventHandler

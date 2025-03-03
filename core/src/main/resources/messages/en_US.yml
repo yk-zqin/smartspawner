@@ -449,7 +449,7 @@ equipment-toggle:
 #---------------------------------------------------
 spawner-list:
   gui-title:
-    world-selection: "&#3287A9&lSpawner List"
+    world-selection: "&#3287A9&lSpawner World List"
     page-title: "{world} &r- [{current}/{total}]"
 
   navigation:
@@ -458,7 +458,6 @@ spawner-list:
     back: "&c&lBack to World Selection"
 
   world-buttons:
-
     overworld:
       name: "&a&lOverworld"
       lore: |
@@ -485,6 +484,25 @@ spawner-list:
         &7⮞ &fTotal Stacked: &5{total_stacked}
         &8━━━━━━━━━━━━━━━━━━━━
         &5▶ &7Click to view!
+
+    # For custom worlds from other plugins
+    custom-nether:
+      name: "&c&l{world_name}"
+
+    custom-overworld:
+      name: "&a&l{world_name}"
+
+    custom-end:
+      name: "&5&l{world_name}"
+
+    custom-default:
+      name: "&b&l{world_name}"
+      lore: |
+        &8━━━━━━━━━━━━━━━━━━━━
+        &7⮞ &fTotal Spawners: &b{total}
+        &7⮞ &fTotal Stacked: &b{total_stacked}
+        &8━━━━━━━━━━━━━━━━━━━━
+        &b▶ &7Click to view!
 
   spawner-item:
     name: "&#4fc3f7&lSpawner #{id}"
