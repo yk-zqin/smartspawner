@@ -30,6 +30,7 @@ public class SpawnerMenuUI {
 
     private final LanguageManager languageManager;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
+    //private final SpawnerMenuFormUI spawnerMenuFormUI;
 
     /**
      * Constructs the SpawnerMenuUI.
@@ -39,6 +40,7 @@ public class SpawnerMenuUI {
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.languageManager = plugin.getLanguageManager();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        //this.spawnerMenuFormUI = new SpawnerMenuFormUI(plugin);
     }
 
     /**
@@ -49,6 +51,11 @@ public class SpawnerMenuUI {
      * @param refresh Whether this is a menu refresh (suppresses sound effects)
      */
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
+//        if (SpawnerMenuFormUI.isBedrockPlayer(player)) {
+//            spawnerMenuFormUI.openSpawnerForm(player, spawner);
+//            return;
+//        }
+
         Inventory menu = createMenu(player, spawner);
 
         // Populate menu items

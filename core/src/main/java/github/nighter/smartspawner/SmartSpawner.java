@@ -14,6 +14,7 @@ import github.nighter.smartspawner.hooks.shops.ShopIntegrationManager;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
+import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuFormUI;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerHandler;
@@ -269,16 +270,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
 
         // Initialize shop integrations
         shopIntegrationManager.initialize();
-
-        // Check for Floodgate (Bedrock support)
-        checkFloodgate();
-    }
-
-    /**
-     * Checks for Floodgate integration (for Bedrock players).
-     */
-    private void checkFloodgate() {
-        checkPlugin("Floodgate", () -> FloodgateApi.getInstance() != null, false);
     }
 
     /**
@@ -418,6 +409,10 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
 
     public SpawnerMenuUI getSpawnerMenuUI() {
         return spawnerMenuUI;
+    }
+
+    public SpawnerMenuAction getSpawnerMenuAction() {
+        return spawnerMenuAction;
     }
 
     public SpawnerGuiViewManager getSpawnerGuiManager() {

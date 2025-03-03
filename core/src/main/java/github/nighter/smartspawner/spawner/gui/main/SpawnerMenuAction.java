@@ -113,7 +113,7 @@ public class SpawnerMenuAction implements Listener {
      * @param player The player clicking the chest
      * @param spawner The spawner data for this menu
      */
-    private void handleChestClick(Player player, SpawnerData spawner) {
+    public void handleChestClick(Player player, SpawnerData spawner) {
         String title = languageManager.getGuiTitle("gui-title.loot-menu");
         Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1, -1);
 
@@ -144,7 +144,7 @@ public class SpawnerMenuAction implements Listener {
      * @param player The player clicking the EXP bottle
      * @param spawner The spawner data containing accumulated EXP
      */
-    private void handleExpBottleClick(Player player, SpawnerData spawner) {
+    public void handleExpBottleClick(Player player, SpawnerData spawner) {
         int exp = spawner.getSpawnerExp();
 
         if (exp <= 0) {
