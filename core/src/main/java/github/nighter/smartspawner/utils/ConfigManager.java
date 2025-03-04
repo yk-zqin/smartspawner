@@ -21,7 +21,7 @@ public class ConfigManager {
     private File configFile;
     private File lootConfigFile;
     private final Map<String, Object> configCache;
-    private final String CURRENT_CONFIG_VERSION = "1.2.5.0";
+    private final String CURRENT_CONFIG_VERSION = "1.2.5.1";
 
     public ConfigManager(SmartSpawner plugin) {
         this.plugin = plugin;
