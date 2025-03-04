@@ -205,7 +205,7 @@ public class ConfigManager {
                     // Create new lines with the header format
                     List<String> newLines = new ArrayList<>();
                     newLines.add("# Configuration version - Do not modify this value");
-                    newLines.add("config-version: ' + CURRENT_CONFIG_VERSION + '");
+                    newLines.add("config-version: " + CURRENT_CONFIG_VERSION);
                     newLines.add("");  // Add empty line for better readability
                     newLines.addAll(defaultLines);
 
