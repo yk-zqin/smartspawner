@@ -34,7 +34,7 @@ public class HologramCommand implements CommandExecutor {
 
         // Get main config and set new value
         FileConfiguration mainConfig = configManager.getMainConfig();
-        mainConfig.set("hologram.enabled", newValue);
+        mainConfig.set("hologram-enabled", newValue);
 
         // Save configs and reload
         configManager.saveMainConfig();

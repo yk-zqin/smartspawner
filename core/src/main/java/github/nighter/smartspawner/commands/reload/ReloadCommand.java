@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.commands.reload;
 
+import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
 import github.nighter.smartspawner.utils.LanguageManager;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.utils.ConfigManager;
@@ -17,10 +18,12 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
     private final SpawnerManager spawnerManager;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final SpawnerLootGenerator spawnerLootGenerator;
 
     public ReloadCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
+        this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
         this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
     }
@@ -54,6 +57,12 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.wait"));
             // Reload all configurations
             configManager.reloadConfigs();
+
+            // Reload Hopper feature
+            plugin.setUpHopperHandler();
+
+            // Reload loot tables configuration
+            spawnerLootGenerator.loadConfigurations();
 
             // Reload language files
             languageManager.reload();

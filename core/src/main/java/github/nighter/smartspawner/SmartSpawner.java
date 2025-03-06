@@ -44,7 +44,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -200,14 +199,23 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
 
         // Initialize hopper handler if enabled in config
-        if (configManager.getBoolean("hopper-enabled")) {
-            this.hopperHandler = new HopperHandler(this);
-        }
+        setUpHopperHandler();
 
         // Complete initialization
         return asyncInit.thenRunAsync(() -> {
             updateChecker.initialize();
         }, getServer().getScheduler().getMainThreadExecutor(this));
+    }
+
+    /**
+     * Sets up the hopper handler if enabled in the config.
+     */
+    public void setUpHopperHandler() {
+        if (configManager.getBoolean("hopper-enabled")) {
+            this.hopperHandler = new HopperHandler(this);
+        } else {
+            this.hopperHandler = null;
+        }
     }
 
     /**

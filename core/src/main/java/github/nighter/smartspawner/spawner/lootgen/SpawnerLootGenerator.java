@@ -163,7 +163,7 @@ public class SpawnerLootGenerator {
         return formatted.replace("_", " ");
     }
 
-    private void loadConfigurations() {
+    public void loadConfigurations() {
         FileConfiguration lootConfig = configManager.getLootConfig();
 
         // Iterate through all top-level keys (entity names)

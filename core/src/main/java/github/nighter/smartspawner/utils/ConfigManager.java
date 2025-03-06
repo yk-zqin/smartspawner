@@ -21,29 +21,68 @@ public class ConfigManager {
     private File configFile;
     private File lootConfigFile;
     private final Map<String, Object> configCache;
-    private final String CURRENT_CONFIG_VERSION = "1.2.5.1";
+    private final String CURRENT_CONFIG_VERSION;
 
     public ConfigManager(SmartSpawner plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.configCache = new ConcurrentHashMap<>();
+        this.CURRENT_CONFIG_VERSION = plugin.getDescription().getVersion();
+
+        // Create default configs if they don't exist
+        createDefaultConfigs();
+
+        // Load existing configs from disk
         loadConfigs();
+
+        // Initialize loot config with defaults if it's missing values
+        initializeLootConfig();
     }
 
     // ===============================================================
     //                      Utility Methods
     // ===============================================================
 
+    /**
+     * Create default configuration files if they don't exist
+     */
+    private void createDefaultConfigs() {
+        ensureDirectoryExists();
+
+        // Create config.yml if it doesn't exist
+        configFile = new File(plugin.getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            createNewConfig();
+        }
+
+        // Create mob_drops.yml if it doesn't exist
+        lootConfigFile = new File(plugin.getDataFolder(), "mob_drops.yml");
+        if (!lootConfigFile.exists()) {
+            logger.info("Creating default mob_drops.yml");
+            plugin.saveResource("mob_drops.yml", false);
+        }
+    }
+
+    /**
+     * Load all configuration files from disk
+     */
     private void loadConfigs() {
         loadMainConfig();
         loadLootConfig();
         initializeCache();
     }
 
+    /**
+     * Reload all configuration files from disk
+     */
     public void reloadConfigs() {
         loadConfigs();
+        debug("All configuration files reloaded from disk");
     }
 
+    /**
+     * Print debug messages if debug mode is enabled
+     */
     public void debug(String message) {
         if (isDebugEnabled()) {
             logger.info("[DEBUG] " + message);
@@ -54,14 +93,17 @@ public class ConfigManager {
     //                      Main Config Management
     // ===============================================================
 
+    /**
+     * Get the main configuration
+     */
     public FileConfiguration getMainConfig() {
         return config;
     }
 
+    /**
+     * Load the main configuration file
+     */
     private void loadMainConfig() {
-        ensureDirectoryExists();
-        configFile = new File(plugin.getDataFolder(), "config.yml");
-
         if (configFile.exists()) {
             config = YamlConfiguration.loadConfiguration(configFile);
             String configVersion = config.getString("config-version", "0.0.0.0");
@@ -75,6 +117,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Update config with comments while preserving user values
+     */
     private void updateConfigWithComments() {
         // Backup current values
         Map<String, Object> oldValues = backupCurrentConfig();
@@ -94,7 +139,7 @@ public class ConfigManager {
                     // Create new lines with the header format
                     List<String> newLines = new ArrayList<>();
                     newLines.add("# Configuration version - Do not modify this value");
-                    newLines.add("config-version: '" + CURRENT_CONFIG_VERSION + "'");
+                    newLines.add("config-version: " + CURRENT_CONFIG_VERSION);
                     newLines.add("");  // Add empty line for better readability
                     newLines.addAll(defaultLines);
 
@@ -132,7 +177,9 @@ public class ConfigManager {
         }
     }
 
-
+    /**
+     * Handle errors during config update by restoring from backup
+     */
     private void handleConfigUpdateError(Map<String, Object> backup) {
         logger.warning("Attempting to restore from backup due to update failure...");
         try {
@@ -156,6 +203,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Check if the config has all required values
+     */
     private boolean hasAllConfigValues() {
         List<String> missingValues = new ArrayList<>();
 
@@ -192,6 +242,9 @@ public class ConfigManager {
         return true;
     }
 
+    /**
+     * Create a new configuration file from the resource template
+     */
     private void createNewConfig() {
         try {
             // First get the default config content
@@ -231,6 +284,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Backup current configuration values
+     */
     private Map<String, Object> backupCurrentConfig() {
         Map<String, Object> oldValues = new HashMap<>();
         for (String key : config.getKeys(true)) {
@@ -242,6 +298,9 @@ public class ConfigManager {
         return oldValues;
     }
 
+    /**
+     * Restore values from backup to new configuration
+     */
     private void restoreConfigValues(Map<String, Object> oldValues, FileConfiguration newConfig) {
         for (Map.Entry<String, Object> entry : oldValues.entrySet()) {
             String key = entry.getKey();
@@ -263,6 +322,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Map old configuration structure to new flattened structure
+     */
     private String mapOldKeyToNewKey(String oldKey) {
         // Map from old nested structure to new flattened structure
         Map<String, String> keyMapping = new HashMap<String, String>() {{
@@ -332,6 +394,9 @@ public class ConfigManager {
         return keyMapping.getOrDefault(oldKey, oldKey);
     }
 
+    /**
+     * Save the main configuration to disk
+     */
     public void saveMainConfig() {
         try {
             config.save(configFile);
@@ -340,12 +405,18 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Ensure the plugin directory exists
+     */
     private void ensureDirectoryExists() {
         if (!plugin.getDataFolder().exists()) {
             plugin.getDataFolder().mkdirs();
         }
     }
 
+    /**
+     * Compare two version strings
+     */
     private int compareVersions(String version1, String version2) {
         String[] v1Parts = version1.split("\\.");
         String[] v2Parts = version2.split("\\.");
@@ -363,7 +434,6 @@ public class ConfigManager {
 
     // Updated to use flattened structure
     private final Map<String, Object> defaultConfig = new HashMap<String, Object>() {{
-        put("config-version", CURRENT_CONFIG_VERSION);
 
         // Plugin Settings
         put("language", "en_US");
@@ -385,7 +455,7 @@ public class ConfigManager {
         put("activate-on-place", true);
 
         // Extra & Custom Mechanics
-        put("natural-spawner-interaction", false);
+        put("natural-spawner-interaction", true);
 
         // Spawner Breaking Mechanics
         put("spawner-break-enabled", true);
@@ -436,6 +506,9 @@ public class ConfigManager {
         put("update-checker-notify-on-join", true);
     }};
 
+    /**
+     * Initialize the configuration cache
+     */
     private void initializeCache() {
         configCache.clear();
         for (String key : config.getKeys(true)) {
@@ -547,14 +620,13 @@ public class ConfigManager {
             plugin.getLogger().warning("Invalid default entity type: " + entityName);
             entityType = EntityType.PIG;
         }
-        configCache.put("spawner.default-entity", entityType);
+        configCache.put("default-entity", entityType);
         return entityType;
     }
 
     public boolean isDebugEnabled() {
         return getBoolean("debug");
     }
-
 
     // ===============================================================
     //                   Economic Integration
@@ -605,41 +677,172 @@ public class ConfigManager {
     //                      Loot Configs
     // ===============================================================
 
+    /**
+     * Get the loot configuration
+     */
     public FileConfiguration getLootConfig() {
         return lootConfig;
     }
 
+    /**
+     * Load the loot configuration from disk without merging defaults
+     * This fixes the issue with reload overwriting user changes
+     */
     public void loadLootConfig() {
-        lootConfigFile = new File(plugin.getDataFolder(), "mob_drops.yml");
-        if (!lootConfigFile.exists()) {
-            debug("Creating default mob_drops.yml");
-            plugin.saveResource("mob_drops.yml", false);
-        }
         lootConfig = YamlConfiguration.loadConfiguration(lootConfigFile);
-        mergeLootDefaults();
     }
 
-    private void mergeLootDefaults() {
+    /**
+     * Initialize loot configuration with defaults (only called when creating for the first time)
+     */
+    public void initializeLootConfig() {
+        boolean isMissingValues = false;
+        lootConfig = YamlConfiguration.loadConfiguration(lootConfigFile);
         try (InputStream defaultLootConfigStream = plugin.getResource("mob_drops.yml")) {
             if (defaultLootConfigStream != null) {
                 YamlConfiguration defaultLootConfig = YamlConfiguration.loadConfiguration(
                         new InputStreamReader(defaultLootConfigStream, StandardCharsets.UTF_8)
                 );
 
-                for (String key : defaultLootConfig.getKeys(true)) {
-                    if (!lootConfig.contains(key)) {
-                        debug("Adding missing default config value: " + key);
-                        lootConfig.set(key, defaultLootConfig.get(key));
+                // Get the top-level keys of the default loot config
+                Set<String> defaultEntityTypes = getTopLevelKeys(defaultLootConfig);
+                Set<String> currentEntityTypes = getTopLevelKeys(lootConfig);
+
+                // Only add new entity types if they are completely missing
+                for (String entityType : defaultEntityTypes) {
+                    if (!currentEntityTypes.contains(entityType)) {
+                        debug("Adding missing entity in loot config: " + entityType);
+                        isMissingValues = true;
+                    } else {
+                        // If the entity exists, check for missing top-level keys
+                        if (!lootConfig.contains(entityType + ".experience") &&
+                                defaultLootConfig.contains(entityType + ".experience")) {
+                            debug("Adding missing experience value for entity: " + entityType);
+                            lootConfig.set(entityType + ".experience", defaultLootConfig.get(entityType + ".experience"));
+                        }
+
+                        // Ensure the loot section exists, but don't add individual items
+                        if (!lootConfig.contains(entityType + ".loot") &&
+                                defaultLootConfig.contains(entityType + ".loot") &&
+                                defaultLootConfig.isConfigurationSection(entityType + ".loot")) {
+                            debug("Adding missing loot section for entity: " + entityType);
+                            lootConfig.set(entityType + ".loot", defaultLootConfig.get(entityType + ".loot"));
+                        }
+                        // Not adding individual items to the loot section if the section already exists
                     }
                 }
                 saveLootConfig();
+
+                // Save the loot config with comments like how we handle the main config
+                if (isMissingValues) {
+                    // If there are new entity types added by the user that are not in the default config
+                    updateLootConfigWithComments();
+                }
             }
         } catch (IOException e) {
-            plugin.getLogger().severe("Error loading default loot config: " + e.getMessage());
+            plugin.getLogger().severe("Error initializing loot config: " + e.getMessage());
         }
     }
 
-    private void saveLootConfig() {
+    private Set<String> getTopLevelKeys(FileConfiguration config) {
+        Set<String> keys = new HashSet<>();
+        for (String key : config.getKeys(false)) {
+            keys.add(key);
+        }
+        return keys;
+    }
+
+    private void updateLootConfigWithComments() {
+        // Backup current values
+        Map<String, Object> oldValues = backupCurrentLootConfig();
+
+        // Create temporary file for the new config
+        File tempFile = new File(plugin.getDataFolder(), "temp_mob_drops.yml");
+
+        try {
+            // Save the default config from resources to temp file
+            try (InputStream in = plugin.getResource("mob_drops.yml")) {
+                if (in != null) {
+                    // Read all lines from the default config
+                    List<String> defaultLines = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))
+                            .lines()
+                            .collect(Collectors.toList());
+
+                    // Write the content to temp file
+                    Files.write(tempFile.toPath(), defaultLines, StandardCharsets.UTF_8);
+                }
+            }
+
+            // Load the new config with comments
+            FileConfiguration newConfig = YamlConfiguration.loadConfiguration(tempFile);
+
+            // Restore old values
+            restoreLootConfigValues(oldValues, newConfig);
+
+            // Save the new config
+            newConfig.save(lootConfigFile);
+
+            // Delete temp file
+            tempFile.delete();
+
+            // Reload the config
+            lootConfig = YamlConfiguration.loadConfiguration(lootConfigFile);
+
+            logger.info("Loot config successfully updated with comments");
+
+        } catch (IOException e) {
+            logger.severe("Failed to update loot config with comments: " + e.getMessage());
+            handleLootConfigUpdateError(oldValues);
+        }
+    }
+
+    private Map<String, Object> backupCurrentLootConfig() {
+        Map<String, Object> oldValues = new HashMap<>();
+        for (String entityType : getTopLevelKeys(lootConfig)) {
+            oldValues.put(entityType, lootConfig.get(entityType));
+            //debug("Backed up loot config value for entity: " + entityType);
+        }
+        return oldValues;
+    }
+
+    private void restoreLootConfigValues(Map<String, Object> oldValues, FileConfiguration newConfig) {
+        for (Map.Entry<String, Object> entry : oldValues.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            // Only restore if it's a section or value we want to preserve
+            newConfig.set(key, value);
+            //debug("Restored loot config value: " + key);
+        }
+    }
+
+    private void handleLootConfigUpdateError(Map<String, Object> backup) {
+        logger.warning("Attempting to restore loot config from backup due to update failure...");
+        try {
+            // Create a new configuration
+            FileConfiguration recoveryConfig = new YamlConfiguration();
+
+            // Restore all backed up values
+            for (Map.Entry<String, Object> entry : backup.entrySet()) {
+                recoveryConfig.set(entry.getKey(), entry.getValue());
+            }
+
+            // Save the recovery config
+            recoveryConfig.save(lootConfigFile);
+
+            // Reload the config
+            lootConfig = YamlConfiguration.loadConfiguration(lootConfigFile);
+
+            logger.info("Successfully restored loot config from backup");
+        } catch (IOException e) {
+            logger.severe("Critical error: Failed to restore loot config from backup: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Save the loot configuration to disk
+     */
+    public void saveLootConfig() {
         try {
             lootConfig.save(lootConfigFile);
         } catch (IOException e) {

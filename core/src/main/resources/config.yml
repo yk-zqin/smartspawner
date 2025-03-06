@@ -51,8 +51,10 @@ activate-on-place: true
 #---------------------------------------------------
 #             Custom Mechanics
 #---------------------------------------------------
-# Prevent players from interacting with natural spawners
-natural-spawner-interaction: false
+# If false prevent players from interacting with natural spawners
+# This includes breaking & activating natural spawners
+# Useful for preventing players using ESP, X-ray, etc. to locate spawners unfairly
+natural-spawner-interaction: true
 
 #---------------------------------------------------
 #             Spawner Breaking Mechanics
@@ -119,9 +121,10 @@ logging-enabled: true
 logging-file-path: "shop-logs/sales.log"
 
 #---------------------------------------------------
-#           Hopper Mechanics (Experimental)
+#              Hopper Mechanics
 #---------------------------------------------------
 # Not recommended for large servers
+# May impact server performance
 hopper-enabled: false
 hopper-items-per-transfer: 4
 hopper-check-interval: 1 # seconds
