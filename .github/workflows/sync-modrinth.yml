@@ -149,7 +149,7 @@ jobs:
                 const releaseData = {
                   tag_name: version.version_number,
                   name: version.name || `Version ${version.version_number}`,
-                  body: `${version.changelog || 'No changelog provided.'}\n\nImported from Modrinth (published: ${new Date(version.date_published).toLocaleDateString()})`,
+                  body: `${version.changelog || 'No changelog provided.'}`,
                   draft: false,
                   prerelease: isPrerelease
                 };
