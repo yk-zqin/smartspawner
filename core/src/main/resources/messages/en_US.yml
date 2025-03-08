@@ -1,6 +1,6 @@
 #---------------------------------------------------
 # Language: English (United States)
-# Plugin Version: 1.2.5
+# Plugin Version: 1.2.6
 #---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
@@ -335,51 +335,52 @@ gui-title:
   loot-menu: "Spawner Storage"
 
 #---------------------------------------------------
-# Main Menu GUI
+# Spawner Main GUI
 #---------------------------------------------------
 spawner-loot-item:
-  name: "&#FCD05C&lLoot Storage"
+  name: "&#FCD05C&lStorage"
   lore:
     chest: |
+
+      &#FCD05C&l❖ &fSlots: &#ffeb3b%current_items%&7/&f%max_slots%
+      &#FCD05C&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full
       
-      &8▪ &#FCD05CSlots: &f%current_items%&7/&f%max_slots%
-      &8▪ &#FCD05CStorage: &a%percent_storage%&a%&f full
-      
-      &#FCD05C➜ &7Click to open storage
+      &#FCD05C&l➜ &7Click to open storage
 
 spawner-info-item:
-  name: "&#4fc3f7&lSpawner Info"
+  name: "&#4fc3f7&l%entity% Spawner"
   lore:
     spawner-info: |
 
-      &8▪ &#81d4faEntity: &f%entity%
-      &8▪ &#81d4faRange: &f%range% &7blocks
-      &8▪ &#81d4faStack Size: &f%stack_size%
-      &8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%
-      &8▪ &#81d4faSpawn Delay: &f%delay%&7s
-      &8▪ &#81d4faNext Spawn: &e
-      
-      &#81d4fa➜ &7Click to open stack menu
-  lore-change: "&8▪ &#81d4faNext Spawn: &e"
-  lore-inactive: "&cSpawner is inactive!"
-  lore-full: "&cStorage & Exp is full!"
+      &#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%
+      &#4fc3f7&l❖ &fRange: &#ffeb3b%range% &7blocks
+      &#4fc3f7&l❖ &fMob Rate: &#ffeb3b%min_mobs% &7- &#ffeb3b%max_mobs%
+      &#4fc3f7&l❖ &fSpawn Delay: &#ffeb3b%delay%&7s
+      &#4fc3f7&l❖ &fNext Spawn: &e
+
+      &#4fc3f7&l➜ &7Right-click to open &#4fc3f7Stacker GUI
+      &#4fc3f7&l➜ &7Click to &#FCD05CSell Items &7& &#00F898Collect XP
+
+  lore-change: '&#4fc3f7&l❖ &fNext Spawn: &e'
+  lore-full: '&cStorage & Exp is full!'
+  lore-inactive: '&cSpawner is inactive!'
 
 exp-info-item:
-  name: "&#00F898&lStored Exp: &e%current_exp%&#00F898"
+  name: "&#00F898&lExp: &e%current_exp%&#00F898"
   lore:
     exp-bottle: |
+
+      &#00F898&l❖ &fCurrent: &#ffeb3b%current_exp%&7/&f%max_exp% &7XP
+      &#00F898&l❖ &fStored: &#ffeb3b%percent_exp%% &7XP
       
-      &8▪ &#00E689Current: &e%current_exp%&7/&e%max_exp% &7XP
-      &8▪ &#00E689Stored: &e%percent_exp%&e% &7XP
-      
-      &#00E689➜ &7Click to collect XP
+      &#00F898&l➜ &7Click to collect XP
 
 #---------------------------------------------------
 # Spawner Stacker GUI
 #---------------------------------------------------
 button:
   name:
-    spawner: "&#4fc3f7%entity% Spawner"
+    spawner: "&#4fc3f7&l%entity% Spawner"
     decrease-64: "&c-64 Spawners"
     decrease-10: "&c-10 Spawners"
     decrease-1: "&c-1 Spawner"
@@ -388,61 +389,67 @@ button:
     increase-1: "&a+1 Spawner"
   lore:
     remove: |
-      &7Click to remove %amount% spawner
-      &7from the stack
-      &7Current stack: &e%stack_size%
+      
+      &#4fc3f7&l❖ &fRemove: &#ffeb3b%amount% &7spawner
+      &#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%
+      
+      &#4fc3f7&l➜ &7Click to remove from stack
     add: |
-      &7Click to add %amount% spawner
-      &7to the stack
-      &7Current stack: &e%stack_size%
+      
+      &#4fc3f7&l❖ &fAdd: &#ffeb3b%amount% &7spawner
+      &#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%
+      
+      &#4fc3f7&l➜ &7Click to add to stack
     spawner: |
       
-      &8▪ &#81d4faEntity: &f%entity%
-      &8▪ &#81d4faStack Size: &f%stack_size%
-      &8▪ &#81d4faMax Stack Size: &f%max_stack_size%
+      &#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%
+      &#4fc3f7&l❖ &fMax Stack: &#ffeb3b%max_stack_size%
       
-      &#81d4fa➜ &7Click to return main menu
+      &#4fc3f7&l➜ &7Click to return spawner menu
 
 #---------------------------------------------------
 # Spawner Storage GUI
 #---------------------------------------------------
 navigation-button:
   previous:
-    name: "&#81d4faPrevious Page"
+    name: "&#00E689&l❖ &#00E689Previous Page"
     lore: |
-      &#81d4faClick to go to page %target_page%
+      &#00E689&l➜ &7Click to go to page &#00E689&l%target_page%
+
   next:
-    name: "&#81d4faNext Page"
+    name: "&#00E689&l❖ &#00E689Next Page"
     lore: |
-      &#81d4faClick to go to page %target_page%
+      &#00E689&l➜ &7Click to go to page &#00E689&l%target_page%
 
 page-indicator:
-  name: "&#ffd700Page [%current_page%/&#ffd700%total_pages%]"
+  name: "&#ffd700&l❖ &#ffd700Page &f[&#ffd700%current_page%&f/&#ffd700%total_pages%&f]"
   lore: |
-    &7Used Slots: &a%used_slots%&7/&f%max_slots%
+
+    &#ffd700&l❖ &fUsed Slots: &#ffeb3b%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
-  name: "&#ffd700Sell All Items"
+  name: "&#ffd700&l❖ Sell All Items"
   lore: |
-    
-    &8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%
-    &8▪ &#ffd700Storage: &a%percent_storage%&a%&f full
-    
-    &#ffd700➜ &7Click to sell all items
+
+    &#ffd700&l❖ &fSlots: &#ffeb3b%used_slots%&7/&f%max_slots%
+    &#ffd700&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full
+
+    &#ffd700&l➜ &7Click to sell all items
 
 return-button:
-  name: "&#ff6b6b Return to Main Menu"
+  name: "&#ff6b6b&l❖ &fReturn to Main Menu"
 
 take-all-button:
-  name: "&#00E689Take All Items"
+  name: "&#00E689&l❖ &fTake All Items"
 
 equipment-toggle:
-  name: "&#f4d842Equipment Drops"
+  name: "&#f4d842&l❖ &fFilter Equipment Drops"
   lore:
     enabled: |
-      &7Status: &a&lAllowed
+      &#f4d842&l➥ &7Status: &#00E689&lAllowed
     disabled: |
-      &7Status: &c&lBlocked
+      &#f4d842&l➥ &7Status: &#ff6b6b&lBlocked
+
 
 #---------------------------------------------------
 # Spawner List GUI (Command)

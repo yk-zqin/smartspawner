@@ -168,7 +168,7 @@ public class SpawnerMenuFormUI {
      */
     private void handleExpCollection(Player player, SpawnerData spawner) {
         // This will execute the same logic as your handleExpBottleClick method
-        plugin.getSpawnerMenuAction().handleExpBottleClick(player, spawner);
+        plugin.getSpawnerMenuAction().handleExpBottleClick(player, spawner, false);
     }
 
     /**

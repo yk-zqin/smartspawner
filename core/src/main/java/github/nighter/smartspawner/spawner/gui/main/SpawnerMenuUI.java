@@ -140,11 +140,11 @@ public class SpawnerMenuUI {
         if (spawnerMeta == null) return spawnerItem;
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        spawnerMeta.setDisplayName(languageManager.getMessage("spawner-info-item.name"));
+        spawnerMeta.setDisplayName(languageManager.getMessage("spawner-info-item.name",
+                "%entity%", entityName));
 
         // Build vararg parameters for getMessage method
         String loreMessage = languageManager.getMessage("spawner-info-item.lore.spawner-info",
-                "%entity%", entityName,
                 "%stack_size%", String.valueOf(spawner.getStackSize()),
                 "%range%", String.valueOf(spawner.getSpawnerRange()),
                 "%delay%", String.valueOf(spawner.getSpawnDelay() / TICKS_PER_SECOND),

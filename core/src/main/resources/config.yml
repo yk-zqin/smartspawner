@@ -4,6 +4,7 @@
 # Language Selection
 # Supported: en_US (English), vi_VN (Vietnamese), zh_CN (Simplified Chinese)
 # You can also use custom language files by placing them in the messages folder
+# (Need a full server restart to apply changes)
 language: en_US
 
 # Debug Mode (for printing debug messages to console)

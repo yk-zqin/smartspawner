@@ -95,7 +95,7 @@ public class SpawnerHologram {
         replacements.put("%used_slots%",languageManager.formatNumberTenThousand(currentItems));
         replacements.put("%max_slots%", languageManager.formatNumberTenThousand(maxSlots));
 
-        String hologramText = languageManager.getMessage("spawner-hologram.format", replacements);
+        String hologramText = languageManager.displayHologramText("spawner-hologram.format", replacements);
         textDisplay.setText(hologramText);
     }
 

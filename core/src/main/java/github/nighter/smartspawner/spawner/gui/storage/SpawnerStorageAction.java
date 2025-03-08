@@ -4,6 +4,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemClickHandler;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveHelper;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveResult;
+import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
@@ -22,6 +23,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -36,16 +38,17 @@ public class SpawnerStorageAction implements Listener {
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
+    private final SpawnerMenuAction spawnerMenuAction;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
     private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 53);
 
-    // Add cooldown system properties
-    private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
-
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
+
+    // Anti spam click properties
+    private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
 
     public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -55,6 +58,7 @@ public class SpawnerStorageAction implements Listener {
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerMenuAction = plugin.getSpawnerMenuAction();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -227,49 +231,12 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
-    private long getSellCooldownMs() {
-        return configManager.getInt("sell-cooldown") * 1000L;
-    }
-
-    private boolean isOnCooldown(Player player) {
-        long cooldownMs = getSellCooldownMs();
-        // If cooldown is disabled (set to 0), always return false
-        if (cooldownMs <= 0) {
-            return false;
-        }
-
-        long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
-        long currentTime = System.currentTimeMillis();
-        boolean onCooldown = (currentTime - lastSellTime) < cooldownMs;
-
-        // Debug information if needed
-        if (onCooldown) {
-            configManager.debug("Player " + player.getName() + " tried to sell items while on cooldown");
-        }
-
-        return onCooldown;
-    }
-
-    private void updateCooldown(Player player) {
-        sellCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-    }
-
-    // Method to periodically clean up old cooldowns to prevent memory leaks
-    private void clearOldCooldowns() {
-        long cooldownMs = getSellCooldownMs();
-        if (cooldownMs <= 0) {
-            // If cooldown is disabled, clear all entries
-            sellCooldowns.clear();
-            return;
-        }
-
-        long currentTime = System.currentTimeMillis();
-        sellCooldowns.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue()) > cooldownMs * 10);
-    }
-
     private void handleSellAllItems(Player player, SpawnerData spawner, StoragePageHolder holder) {
         if (!plugin.hasShopIntegration()) return;
+
+        if (isClickTooFrequent(player)) {
+            return;
+        }
 
         // Play click sound
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -280,8 +247,8 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
-        // Anti-spam cooldown check
-        if (isOnCooldown(player)) {
+        // Use the cooldown system from SpawnerMenuAction
+        if (spawnerMenuAction.isSellCooldownActive(player)) {
             int cooldownSeconds = configManager.getInt("sell-cooldown");
             languageManager.sendMessage(player, "messages.sell-cooldown",
                     "%seconds%", String.valueOf(cooldownSeconds));
@@ -289,12 +256,7 @@ public class SpawnerStorageAction implements Listener {
         }
 
         // Update cooldown timestamp before processing
-        updateCooldown(player);
-
-        // Clean up old cooldowns periodically (e.g., every 10th call)
-        if (Math.random() < 0.1) {
-            clearOldCooldowns();
-        }
+        spawnerMenuAction.updateSellCooldown(player);
 
         // Process the sale through shop integration
         boolean success = plugin.getShopIntegration().sellAllItems(player, spawner);
@@ -305,12 +267,27 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
+    private boolean isClickTooFrequent(Player player) {
+        long now = System.currentTimeMillis();
+        long last = lastItemClickTime.getOrDefault(player.getUniqueId(), 0L);
+        lastItemClickTime.put(player.getUniqueId(), now);
+        return (now - last) < 300;
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        lastItemClickTime.remove(event.getPlayer().getUniqueId());
+    }
+
     private void openMainMenu(Player player, SpawnerData spawner) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
     }
 
     private void handleToggleEquipment(Player player, SpawnerData spawner, Inventory inventory) {
+        if (isClickTooFrequent(player)) {
+            return;
+        }
         if (configManager.getBoolean("allow-toggle-equipment-drops")) {
             spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
 
@@ -360,6 +337,9 @@ public class SpawnerStorageAction implements Listener {
     }
 
     public void handleTakeAllItems(Player player, Inventory sourceInventory) {
+        if (isClickTooFrequent(player)) {
+            return;
+        }
         StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder();
         SpawnerData spawner = holder.getSpawnerData();
         VirtualInventory virtualInv = spawner.getVirtualInventory();

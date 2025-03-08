@@ -308,45 +308,52 @@ public class LanguageManager {
         put("gui-title.stacker-menu", "Spawner Stacker");
         put("gui-title.loot-menu", "Spawner Storage");
 
-        // GUI Items - Spawner Loot
-        put("spawner-loot-item.name", "&#FCD05C&lLoot Storage");
+        //---------------------------------------------------
+        //              Spawner Main GUI
+        //---------------------------------------------------
+
+        // Storage
+        put("spawner-loot-item.name", "&#FCD05C&lStorage");
         put("spawner-loot-item.lore.chest", Arrays.asList(
                 "",
-                "&8▪ &#FCD05CSlots: &f%current_items%&7/&f%max_slots%",
-                "&8▪ &#FCD05CStorage: &a%percent_storage%&a%&f full",
+                "&#FCD05C&l❖ &fSlots: &#ffeb3b%current_items%&7/&f%max_slots%",
+                "&#FCD05C&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full",
                 "",
-                "&#FCD05C➜ &7Click to open"
+                "&#FCD05C&l➜ &7Click to open storage"
         ));
 
-        // GUI Items - Spawner Info
-        put("spawner-info-item.name", "&#4fc3f7&lSpawner Info");
+        // Spawner Info
+        put("spawner-info-item.name", "&#4fc3f7&l%entity% Spawner");
         put("spawner-info-item.lore.spawner-info", Arrays.asList(
                 "",
-                "&8▪ &#81d4faEntity: &f%entity%",
-                "&8▪ &#81d4faRange: &f%range% &7blocks",
-                "&8▪ &#81d4faStack Size: &f%stack_size%",
-                "&8▪ &#81d4faMob Rate: &f%min_mobs% &7- &f%max_mobs%",
-                "&8▪ &#81d4faSpawn Delay: &f%delay%&7s",
-                "&8▪ &#81d4faNext Spawn: &e",
-                "&8&m",
-                "&#81d4fa➜ &7Click to open stack menu"
+                "&#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%",
+                "&#4fc3f7&l❖ &fRange: &#ffeb3b%range% &7blocks",
+                "&#4fc3f7&l❖ &fMob Rate: &#ffeb3b%min_mobs% &7- &#ffeb3b%max_mobs%",
+                "&#4fc3f7&l❖ &fSpawn Delay: &#ffeb3b%delay%&7s",
+                "&#4fc3f7&l❖ &fNext Spawn: &e",
+                "",
+                "&#4fc3f7&l➜ &7Right-click to open &#4fc3f7Stacker GUI",
+                "&#4fc3f7&l➜ &7Click to &#FCD05CSell Items &7& &#00F898Collect XP"
         ));
-        put("spawner-info-item.lore-change", "&8▪ &#81d4faNext Spawn: &e");
-        put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
+        put("spawner-info-item.lore-change", "&#4fc3f7&l❖ &fNext Spawn: &e");
         put("spawner-info-item.lore-full", "&cStorage & Exp is full!");
+        put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
 
-        // Experience Info
-        put("exp-info-item.name", "&#00F898&lStored Exp: &e%current_exp%&#00F898");
+        // Experience
+        put("exp-info-item.name", "&#00F898&lExp: &e%current_exp%&#00F898");
         put("exp-info-item.lore.exp-bottle", Arrays.asList(
                 "",
-                "&8▪ &#00E689Current: &e%current_exp%&7/&e%max_exp% XP",
-                "&8▪ &#00E689Stored: &e%percent_exp%&e%&7 XP",
+                "&#00F898&l❖ &fCurrent: &#ffeb3b%current_exp%&7/&f%max_exp% &7XP",
+                "&#00F898&l❖ &fStored: &#ffeb3b%percent_exp%% &7XP",
                 "",
-                "&#00E689➜ &7Click to collect XP"
+                "&#00F898&l➜ &7Click to collect XP"
         ));
 
-        // Stacker GUI Buttons
-        put("button.name.spawner", "&#4fc3f7%entity% Spawner");
+        // ---------------------------------------------------
+        //              Spawner Stacker GUI
+        //---------------------------------------------------
+
+        put("button.name.spawner", "&l&#4fc3f7%entity% Spawner");
         put("button.name.decrease-64", "&c-64 Spawners");
         put("button.name.decrease-10", "&c-10 Spawners");
         put("button.name.decrease-1", "&c-1 Spawner");
@@ -355,52 +362,64 @@ public class LanguageManager {
         put("button.name.increase-1", "&a+1 Spawner");
 
         put("button.lore.remove", Arrays.asList(
-                "&7Click to remove %amount% spawner",
-                "&7from the stack",
-                "&7Current stack: &e%stack_size%"
+                "",
+                "&#4fc3f7&l❖ &fRemove: &#ffeb3b%amount% &7spawner",
+                "&#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%",
+                "",
+                "&#4fc3f7&l➜ &7Click to remove from stack"
         ));
 
         put("button.lore.add", Arrays.asList(
-                "&7Click to add %amount% spawner",
-                "&7to the stack",
-                "&7Current stack: &e%stack_size%"
+                "",
+                "&#4fc3f7&l❖ &fAdd: &#ffeb3b%amount% &7spawner",
+                "&#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%",
+                "",
+                "&#4fc3f7&l➜ &7Click to add to stack"
         ));
 
         put("button.lore.spawner", Arrays.asList(
                 "",
-                "&8▪ &#81d4faEntity: &f%entity%",
-                "&8▪ &#81d4faStack Size: &f%stack_size%",
-                "&8▪ &#81d4faMax Stack Size: &f%max_stack_size%",
+                "&#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%",
+                "&#4fc3f7&l❖ &fMax Stack: &#ffeb3b%max_stack_size%",
                 "",
-                "&#81d4fa➜ &7Click to return main menu"
+                "&#4fc3f7&l➜ &7Click to return spawner menu"
         ));
 
+        // ---------------------------------------------------
+        //               Spawner Storage GUI
+        // ---------------------------------------------------
+
         // Navigation Buttons
-        put("navigation-button.previous.name", "&#81d4faPrevious Page");
-        put("navigation-button.previous.lore", "&#81d4faClick to go to page %target_page%");
-        put("navigation-button.next.name", "&#81d4faNext Page");
-        put("navigation-button.next.lore", "&#81d4faClick to go to page %target_page%");
+        put("navigation-button.previous.name", "&#00E689&l❖ &#00E689Previous Page");
+        put("navigation-button.previous.lore", "&#00E689&l➜ &7Click to go to page &#00E689&l%target_page%");
+        put("navigation-button.next.name", "&#00E689&l❖ &#00E689Next Page");
+        put("navigation-button.next.lore", "&#00E689&l➜ &7Click to go to page &#00E689&l%target_page%");
 
         // Page Indicator
-        put("page-indicator.name", "&#f4d842Page %current_page%/&#f4d842%total_pages%");
-        put("page-indicator.lore", "&7Used Slots: &a%used_slots%&7/&f%max_slots%");
+        put("page-indicator.name", "&#ffd700&l❖ &#ffd700Page &f[&#ffd700%current_page%&f/&#ffd700%total_pages%&f]");
+        put("page-indicator.lore", "&#ffd700&l❖ &fUsed Slots: &#ffeb3b%used_slots%&7/&f%max_slots%");
 
         // Shop Page Indicator
-        put("shop-page-indicator.name", "&#ffd700Sell All Items");
+        put("shop-page-indicator.name", "&#ffd700&l❖ Sell All Items");
         put("shop-page-indicator.lore", Arrays.asList(
+                "&#ffd700&l❖ &fSlots: &#ffeb3b%used_slots%&7/&f%max_slots%",
+                "&#ffd700&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full",
                 "",
-                "&8▪ &#ffd700Slots: &a%used_slots%&7/&f%max_slots%",
-                "&8▪ &#ffd700Storage: &a%percent_storage%&a%&f full",
-                "",
-                "&#ffd700➜ &7Click to sell all items"
+                "&#ffd700&l➜ &7Click to sell all items"
         ));
 
         // Other GUI Buttons
-        put("return-button.name", "&#ff6b6b Return to Main Menu");
-        put("take-all-button.name", "&#00E689Take All Items");
-        put("equipment-toggle.name", "&#f4d842Equipment Drops");
-        put("equipment-toggle.lore.enabled", "&7Status: &a&lAllowed");
-        put("equipment-toggle.lore.disabled", "&7Status: &c&lBlocked");
+        put("return-button.name", "&#ff6b6b&l❖ &fReturn to Main Menu");
+        put("take-all-button.name", "&#00E689&l❖ &fTake All Items");
+
+        // Equipment Toggle
+        put("equipment-toggle.name", "&#f4d842&l❖ &fFilter Equipment Drops");
+        put("equipment-toggle.lore.enabled", "&#f4d842&l➥ &7Status: &#00E689&lAllowed");
+        put("equipment-toggle.lore.disabled", "&#f4d842&l➥ &7Status: &#ff6b6b&lBlocked");
+
+        // ---------------------------------------------------
+        //                    Commands
+        // ---------------------------------------------------
 
         // Command Messages
         put("command.usage", Arrays.asList(
@@ -535,7 +554,7 @@ public class LanguageManager {
         }
 
         // Get language from config
-        String configLang = plugin.getConfig().getString("settings.language", "en_US");
+        String configLang = plugin.getConfig().getString("language");
 
         // Check if it's a supported language
         SupportedLanguage supportedLang = SupportedLanguage.fromCode(configLang);
@@ -660,12 +679,14 @@ public class LanguageManager {
         return message;
     }
 
-    // get message from path with replacements
+    // get message from path with vararg replacements (optimized)
     public String getMessage(String path, String... replacements) {
-        String message = getMessage(path);
-        StringBuilder cacheKey = new StringBuilder(path);
+        // Build cache key from path and all replacements
+        StringBuilder cacheKey = new StringBuilder(path)
+                .append("_")
+                .append(currentLanguage.getCode());
         for (String replacement : replacements) {
-            cacheKey.append(replacement);
+            cacheKey.append("_").append(replacement);
         }
 
         String cachedMessage = messageCache.get(cacheKey.toString());
@@ -673,6 +694,7 @@ public class LanguageManager {
             return cachedMessage;
         }
 
+        String message = getMessage(path);
         for (int i = 0; i < replacements.length; i += 2) {
             if (i + 1 < replacements.length) {
                 message = message.replace(replacements[i], replacements[i + 1]);
@@ -683,9 +705,29 @@ public class LanguageManager {
         return message;
     }
 
-    // Get message from path with Map replacements
+    // Get message from path with Map replacements (optimized)
     public String getMessage(String path, Map<String, String> replacements) {
-        // Check if the message is a list format
+        // Build cache key from path and all replacements
+        StringBuilder cacheKey = new StringBuilder(path)
+                .append("_")
+                .append(currentLanguage.getCode());
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            cacheKey.append("_").append(entry.getKey()).append(entry.getValue());
+        }
+
+        String cachedMessage = messageCache.get(cacheKey.toString());
+        if (cachedMessage != null) {
+            return cachedMessage;
+        }
+
+        String message = getMessage(path);
+        message = applyReplacements(message, replacements);
+
+        messageCache.put(cacheKey.toString(), message);
+        return message;
+    }
+
+    public String displayHologramText(String path, Map<String, String> replacements) {
         if (messages.isList(path)) {
             List<String> messageList = messages.getStringList(path);
             return colorize(String.join("\n", messageList.stream()

@@ -1,6 +1,6 @@
 #---------------------------------------------------
 # Language: Tiếng Việt (Vietnamese)
-# Plugin Version: 1.2.5
+# Plugin Version: 1.2.6
 #---------------------------------------------------
 prefix: "&8[&#3287A9&lSmartSpawner&8]&r"
 
@@ -330,56 +330,57 @@ messages:
 #---------------------------------------------------
 gui-title:
   menu: "Lồng Spawn %entity%"
-  stacked-menu: "Lồng Spawn %entity% x%amount%"
+  stacked-menu: "%amount% Lồng Spawn %entity%"
   stacker-menu: "Chồng Lồng Spawn"
   loot-menu: "Kho Chứa Lồng Spawn"
 
 #---------------------------------------------------
-# Giao diện chính
+# Giao diện spawner chính (Spawner Main GUI)
 #---------------------------------------------------
 spawner-loot-item:
-  name: "&#FCD05CKho Chứa Vật Phẩm"
+  name: "&#FCD05C&lKho Chứa Vật Phẩm"
   lore:
     chest: |
       
-      &8▪ &#FCD05CSố ô: &f%current_items%&7/&f%max_slots%
-      &8▪ &#FCD05CĐã chứa &a%percent_storage%&a%&f ô 
+      &#FCD05C&l❖ &fSố ô: &#ffeb3b%current_items%&7/&f%max_slots%
+      &#FCD05C&l❖ &fĐã chứa: &#ffeb3b%percent_storage%%&f ô 
       
-      &#FCD05C➜ &7Nhấn để mở kho chứa
+      &#FCD05C&l➜ &7Nhấn để mở kho chứa
 
 spawner-info-item:
-  name: "&#4fc3f7✧ Thông Tin Lồng Spawn &#4fc3f7✧"
+  name: "&#4fc3f7&lLồng Spawn %entity%"
   lore:
     spawner-info: |
       
-      &8▪ &#81d4faLoại: &f%entity%
-      &8▪ &#81d4faPham vi: &f%range% &7khối
-      &8▪ &#81d4faSố lượng chồng: &f%stack_size%
-      &8▪ &#81d4faTỷ lệ sinh: &f%min_mobs% &7- &f%max_mobs%
-      &8▪ &#81d4faThời gian chờ: &f%delay%&7s
-      &8▪ &#81d4faLần sinh tiếp: &e
-      &8&m                       
-      &#81d4fa➜ &7Nhấn để mở menu chồng
-  lore-change: "&8▪ &#81d4faLần sinh tiếp: &e"
-  lore-inactive: "&cLồng spawn đang không hoạt động!"
-  lore-full: "&cKho và exp đã đầy!"
+      &#4fc3f7&l❖ &fSố lượng stack: &#81d4fa%stack_size%
+      &#4fc3f7&l❖ &fPhạm vi: &#81d4fa%range% &7khối
+      &#4fc3f7&l❖ &fSố mob: &#81d4fa%min_mobs% &7- &#81d4fa%max_mobs%
+      &#4fc3f7&l❖ &fThời gian chờ: &#81d4fa%delay%&7s
+      &#4fc3f7&l❖ &fLần sinh tiếp: &e
+      
+      &#4fc3f7&l➜ &7Phải chuột để mở &#4fc3f7Stacker GUI
+      &#4fc3f7&l➜ &7Nhấn để &#FCD05Cbán vật phẩm &7& &#00F898thu thập KN
+
+  lore-change: "&#4fc3f7&l❖ &fLần sinh tiếp: &e"
+  lore-inactive: "&#ff5252&l❖ &cLồng spawn đang không hoạt động!"
+  lore-full: "&#ff5252&l❖ &cKho và KN đã đầy!"
 
 exp-info-item:
-  name: "&#00F898KN đã lưu: &e%current_exp%&#00F898"
+  name: "&#00F898&lKinh nghiệm: &e%current_exp%&#00F898"
   lore:
     exp-bottle: |
       
-      &8▪ &#00E689Hiện tại: &e%current_exp%&7/&e%max_exp% KN
-      &8▪ &#00E689Lưu trữ: &e%percent_exp%&e%&f KN
+      &#00F898&l❖ &fHiện tại: &#ffeb3b%current_exp%&7/&f%max_exp% &7KN
+      &#00F898&l❖ &fLưu trữ: &#ffeb3b%percent_exp%% &7KN
       
-      &#00E689➜ &7Nhấn để thu thập KN
+      &#00F898&l➜ &7Nhấn để thu thập kinh nghiệp
 
 #---------------------------------------------------
-# Giao diện chồng lồng spawn
+# Giao diện chồng lồng spawn (Stacker GUI)
 #---------------------------------------------------
 button:
   name:
-    spawner: "&#4fc3f7Lồng Spawn %entity%"
+    spawner: "&#4fc3f7&lLồng Spawn %entity%"
     decrease-64: "&c-64 Lồng"
     decrease-10: "&c-10 Lồng"
     decrease-1: "&c-1 Lồng"
@@ -388,61 +389,66 @@ button:
     increase-1: "&a+1 Lồng"
   lore:
     remove: |
-      &7Nhấn để giảm %amount% lồng
-      &7khỏi stack
-      &7Hiện tại: &e%stack_size%
+      
+      &#4fc3f7&l❖ &fGiảm: &#ffeb3b%amount% &7lồng
+      &#4fc3f7&l❖ &fHiện tại: &#ffeb3b%stack_size%
+      
+      &#4fc3f7&l➜ &7Nhấn để giảm số lượng
     add: |
-      &7Nhấn để thêm %amount% lồng
-      &7vào stack
-      &7Hiện tại: &e%stack_size%
+      
+      &#4fc3f7&l❖ &fThêm: &#ffeb3b%amount% &7lồng
+      &#4fc3f7&l❖ &fHiện tại: &#ffeb3b%stack_size%
+      
+      &#4fc3f7&l➜ &7Nhấn để tăng số lượng
     spawner: |
       
-      &8▪ &#81d4faLoại: &f%entity%
-      &8▪ &#81d4faSố lượng chồng: &f%stack_size%
-      &8▪ &#81d4faSố lượng tối đa: &f%max_stack_size%
+      &#4fc3f7&l❖ &fSố lượng: &#ffeb3b%stack_size%
+      &#4fc3f7&l❖ &fTối đa: &#ffeb3b%max_stack_size%
       
-      &#81d4fa➜ &7Nhấn để quay lại menu chính
+      &#4fc3f7&l➜ &7Nhấn để quay lại menu chính
 
 #---------------------------------------------------
-# Giao diện kho chứa
+# Giao diện Kho Chứa (Storage GUI)
 #---------------------------------------------------
 navigation-button:
   previous:
-    name: "&#81d4faTrang Trước"
+    name: "&#00E689&l❖ &#00E689Trang Trước"
     lore: |
-      &#81d4faNhấn để đến trang %target_page%
+      &#00E689&l➜ &7Nhấn để đến trang &#00E689&l%target_page%
+
   next:
-    name: "&#81d4faTrang Sau"
+    name: "&#00E689&l❖ &#00E689Trang Sau"
     lore: |
-      &#81d4faNhấn để đến trang %target_page%
+      &#00E689&l➜ &7Nhấn để đến trang &#00E689&l%target_page%
 
 page-indicator:
-  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
+  name: "&#ffd700&l❖ &#ffd700Trang &f[&#ffd700%current_page%&f/&#ffd700%total_pages%&f]"
   lore: |
-    &7Số ô chứa: &a%used_slots%&7/&f%max_slots%
+    
+    &#ffd700&l❖ &fSố ô chứa: &#ffeb3b%used_slots%&7/&f%max_slots%
 
 shop-page-indicator:
-  name: "&#ffd700Trang [%current_page%/&#ffd700%total_pages%]"
+  name: "&#ffd700&l❖ Bán Tất Cả Vật Phẩm"
   lore: |
     
-    &8▪ &#ffd700Số ô chứa: &a%used_slots%&7/&f%max_slots%
-    &8▪ &#ffd700Kho: &a%percent_storage%&a%&f đầy
-    
-    &#ffd700➜ &7Nhấn để bán tất cả vật phẩm
+    &#ffd700&l❖ &fSố ô chứa: &#ffeb3b%used_slots%&7/&f%max_slots%
+    &#ffd700&l❖ &fKho: &#ffeb3b%percent_storage%%&f đầy
+
+    &#ffd700&l➜ &7Nhấn để bán tất cả vật phẩm
 
 return-button:
-  name: "&#ff6b6bQuay Lại Menu Chính"
+  name: "&#ff6b6b&l❖ &fQuay Lại Menu Chính"
 
 take-all-button:
-  name: "&#00E689Lấy Tất Cả Vật Phẩm"
+  name: "&#00E689&l❖ &fLấy Tất Cả Vật Phẩm"
 
 equipment-toggle:
-  name: "&#f4d842Vật Phẩm Trang Bị"
+  name: "&#f4d842&l❖ &fLọc Vật Phẩm Trang Bị"
   lore:
     enabled: |
-      &7Trạng thái: &a&lCho phép
+      &#f4d842&l➥ &7Trạng thái: &#00E689&lCho phép
     disabled: |
-      &7Trạng thái: &c&lChặn
+      &#f4d842&l➥ &7Trạng thái: &#ff6b6b&lChặn
 
 #---------------------------------------------------
 # Giao diện danh sách Spawner (Lệnh)

@@ -8,6 +8,11 @@ import org.bukkit.potion.PotionEffect;
 import java.util.*;
 
 public class ItemStackSerializer {
+    // Static lists for armor and tool materials
+    private static final List<String> ARMOR_MATERIALS = Arrays.asList("LEATHER", "CHAINMAIL", "IRON", "GOLDEN", "DIAMOND", "NETHERITE");
+    private static final List<String> ARMOR_PIECES = Arrays.asList("_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS");
+    private static final List<String> TOOL_TYPES = Arrays.asList("_SWORD", "_PICKAXE", "_AXE", "_SHOVEL", "_HOE");
+
     public static class ItemGroup {
         private final Material material;
         private final Map<Short, Integer> durabilityCount;
@@ -61,8 +66,12 @@ public class ItemStackSerializer {
                 if (meta != null && !meta.getCustomEffects().isEmpty()) {
                     group.addPotionArrow(meta.getCustomEffects().get(0), entry.getValue().intValue());
                 }
-            } else {
+            } else if (isDestructibleItem(material)) {
+                // Only add durability for items that can be damaged
                 group.addItem(template.getDurability(), entry.getValue().intValue());
+            } else {
+                // For non-destructible items, always use durability 0
+                group.addItem((short) 0, entry.getValue().intValue());
             }
         }
 
@@ -81,7 +90,7 @@ public class ItemStackSerializer {
                 }
                 serializedItems.add(sb.toString());
             } else if (isDestructibleItem(group.getMaterial())) {
-                // Existing format for destructible items
+                // Format for destructible items with durability
                 StringBuilder sb = new StringBuilder(group.getMaterial().name());
                 sb.append(';');
                 boolean first = true;
@@ -94,7 +103,7 @@ public class ItemStackSerializer {
                 }
                 serializedItems.add(sb.toString());
             } else {
-                // Existing format for normal items
+                // Format for normal items without durability
                 int totalCount = group.getDurabilityCount().values().stream()
                         .mapToInt(Integer::intValue).sum();
                 serializedItems.add(group.getMaterial().name() + ":" + totalCount);
@@ -129,7 +138,7 @@ public class ItemStackSerializer {
                     result.put(arrow, count);
                 }
             } else if (entry.contains(";")) {
-                // Existing logic for destructible items
+                // Logic for destructible items
                 String[] parts = entry.split(";");
                 Material material = Material.valueOf(parts[0]);
 
@@ -143,26 +152,40 @@ public class ItemStackSerializer {
                     result.put(item, count);
                 }
             } else {
-                // Existing logic for normal items
+                // Logic for normal items
                 String[] parts = entry.split(":");
                 Material material = Material.valueOf(parts[0]);
                 int count = Integer.parseInt(parts[1]);
 
                 ItemStack item = new ItemStack(material);
+                // No need to set durability for non-destructible items
                 result.put(item, count);
             }
         }
         return result;
     }
 
-    private static boolean isDestructibleItem(Material material) {
+    public static boolean isDestructibleItem(Material material) {
         String name = material.name();
-        return name.endsWith("_SWORD")
-                || name.endsWith("_PICKAXE")
-                || name.endsWith("_AXE")
-                || name.endsWith("_SPADE")
-                || name.endsWith("_HOE")
-                || name.equals("BOW")
+
+        // Check if it's a tool
+        for (String type : TOOL_TYPES) {
+            if (name.endsWith(type)) {
+                return true;
+            }
+        }
+
+        // Check if it's armor
+        for (String armorMaterial : ARMOR_MATERIALS) {
+            for (String armorPiece : ARMOR_PIECES) {
+                if (name.equals(armorMaterial + armorPiece)) {
+                    return true;
+                }
+            }
+        }
+
+        // Check specific items that can be damaged
+        return name.equals("BOW")
                 || name.equals("FISHING_ROD")
                 || name.equals("FLINT_AND_STEEL")
                 || name.equals("SHEARS")
@@ -170,11 +193,7 @@ public class ItemStackSerializer {
                 || name.equals("ELYTRA")
                 || name.equals("TRIDENT")
                 || name.equals("CROSSBOW")
-                || name.startsWith("LEATHER_")
-                || name.startsWith("CHAINMAIL_")
-                || name.startsWith("IRON_")
-                || name.startsWith("GOLDEN_")
-                || name.startsWith("DIAMOND_")
-                || name.startsWith("NETHERITE_");
+                || name.equals("CARROT_ON_A_STICK")
+                || name.equals("WARPED_FUNGUS_ON_A_STICK");
     }
 }

@@ -54,7 +54,7 @@ public class SpawnerStorageUI {
     private void initializeStaticButtons() {
         // Create return button
         staticButtons.put("return", createButton(
-                Material.SPAWNER,
+                Material.BARRIER,
                 languageManager.getMessage("return-button.name"),
                 Collections.emptyList()
         ));
@@ -256,7 +256,7 @@ public class SpawnerStorageUI {
                         .split("\n")
         );
 
-        return createButton(Material.ARROW, buttonName, buttonLore);
+        return createButton(Material.SPECTRAL_ARROW, buttonName, buttonLore);
     }
 
     private ItemStack createEquipmentToggleButton(boolean currentState) {
