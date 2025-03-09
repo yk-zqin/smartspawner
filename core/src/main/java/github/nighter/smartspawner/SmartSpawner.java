@@ -377,15 +377,17 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      * Saves all data and cleans up resources.
      */
     private void saveAndCleanup() {
-        // Save spawner data
+        // Save spawner data directly without using scheduler during shutdown
         if (spawnerManager != null) {
-            Scheduler.runTask(() -> {
+            try {
                 spawnerManager.saveSpawnerData();
                 spawnerManager.cleanupAllSpawners();
-            });
+            } catch (Exception e) {
+                getLogger().log(Level.SEVERE, "Error saving spawner data during shutdown", e);
+            }
         }
 
-        // Clean up other resources
+        // Clean up other resources directly without scheduling
         if (rangeChecker != null) rangeChecker.cleanup();
         if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();

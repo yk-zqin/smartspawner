@@ -85,7 +85,7 @@ drop-stack-amount: 64
 #---------------------------------------------------
 # Note: May impact server performance
 
-# Hologram Configuration
+# Hologram Configuration (Incompatible with Folia)
 hologram-enabled: false
 hologram-see-through: false
 hologram-shadowed-text: true

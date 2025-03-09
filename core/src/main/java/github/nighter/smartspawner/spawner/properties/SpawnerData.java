@@ -69,7 +69,7 @@ public class SpawnerData {
         this.languageManager = plugin.getLanguageManager();
         loadConfigValues();
         this.virtualInventory = new VirtualInventory(maxSpawnerLootSlots);
-        if (configManager.getBoolean("hologram-enabled")) {
+        if (configManager.getHologramEnabled("hologram-enabled")) {
             this.hologram = new SpawnerHologram(location);
             this.hologram.createHologram();
             updateHologramData();
@@ -405,7 +405,7 @@ public class SpawnerData {
     }
 
     public void refreshHologram() {
-        if (configManager.getBoolean("hologram-enabled")) {
+        if (configManager.getHologramEnabled("hologram-enabled")) {
             if (hologram == null) {
                 this.hologram = new SpawnerHologram(spawnerLocation);
                 this.hologram.createHologram();
@@ -427,7 +427,7 @@ public class SpawnerData {
     }
 
     public void removeGhostHologram() {
-        if (hologram != null && configManager.getBoolean("hologram-enabled")) {
+        if (hologram != null && configManager.getHologramEnabled("hologram-enabled")) {
             hologram.cleanupExistingHologram();
         }
     }

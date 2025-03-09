@@ -2,7 +2,7 @@ package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
@@ -142,9 +142,23 @@ public class SpawnerListGUI implements Listener {
             if (spawner != null) {
                 Player player = (Player) event.getWhoClicked();
                 Location loc = spawner.getSpawnerLocation();
-                player.teleport(loc);
-                languageManager.sendMessage(player, "messages.teleported",
-                        "%spawnerId%", spawnerId);
+
+                // Use the Scheduler to handle teleportation properly for both Bukkit and Folia
+                if (Scheduler.isFolia()) {
+                    player.teleportAsync(loc).thenAccept(success -> {
+                        if (success) {
+                            Scheduler.runEntityTask(player, () ->
+                                    languageManager.sendMessage(player, "messages.teleported",
+                                            "%spawnerId%", spawnerId)
+                            );
+                        }
+                    });
+                } else {
+                    // For non-Folia servers, teleport synchronously
+                    player.teleport(loc);
+                    languageManager.sendMessage(player, "messages.teleported",
+                            "%spawnerId%", spawnerId);
+                }
             } else {
                 Player player = (Player) event.getWhoClicked();
                 languageManager.sendMessage(player, "messages.not-found");

@@ -30,7 +30,7 @@ public class HologramCommand implements CommandExecutor {
         }
 
         // Toggle hologram state
-        boolean newValue = !configManager.getBoolean("hologram-enabled");
+        boolean newValue = !configManager.getHologramEnabled("hologram-enabled");
 
         // Get main config and set new value
         FileConfiguration mainConfig = configManager.getMainConfig();

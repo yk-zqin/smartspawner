@@ -222,7 +222,7 @@ public class SpawnerManager {
 
         // Load spawners from file handler
         Map<String, SpawnerData> loadedSpawners = spawnerFileHandler.loadAllSpawners();
-        boolean hologramEnabled = configManager.getBoolean("hologram-enabled");
+        boolean hologramEnabled = configManager.getHologramEnabled("hologram-enabled");
 
         // Add all loaded spawners to our indexes
         for (Map.Entry<String, SpawnerData> entry : loadedSpawners.entrySet()) {
@@ -242,9 +242,6 @@ public class SpawnerManager {
 
         // Check for ghost spawners after initial load using Scheduler
         Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
-
-        // Schedule validation after loading
-        Scheduler.runTaskLater(this::validateLoadedSpawners, 100L); // 5 seconds delay to let server finish startup
 
         // Update holograms if enabled
         if (hologramEnabled && !spawners.isEmpty()) {
@@ -345,10 +342,10 @@ public class SpawnerManager {
     }
 
     public void reloadAllHolograms() {
-        if (configManager.getBoolean("hologram-enabled")) {
+        if (configManager.getHologramEnabled("hologram-enabled")) {
             for (SpawnerData spawner : spawners.values()) {
                 Location loc = spawner.getSpawnerLocation();
-                github.nighter.smartspawner.Scheduler.runLocationTask(loc, spawner::reloadHologramData);
+                Scheduler.runLocationTask(loc, spawner::reloadHologramData);
             }
         }
     }
@@ -356,14 +353,17 @@ public class SpawnerManager {
     public void removeAllGhostsHolograms() {
         for (SpawnerData spawner : spawners.values()) {
             Location loc = spawner.getSpawnerLocation();
-            github.nighter.smartspawner.Scheduler.runLocationTask(loc, spawner::removeGhostHologram);
+            Scheduler.runLocationTask(loc, spawner::removeGhostHologram);
         }
     }
 
     public void cleanupAllSpawners() {
         for (SpawnerData spawner : spawners.values()) {
-            Location loc = spawner.getSpawnerLocation();
-            Scheduler.runLocationTask(loc, spawner::removeHologram);
+            try {
+                spawner.removeHologram();
+            } catch (Exception e) {
+                logger.warning("Failed to remove hologram for spawner during shutdown: " + e.getMessage());
+            }
         }
         spawners.clear();
         locationIndex.clear();

@@ -135,7 +135,7 @@ public class SpawnerStorageUI {
         }
 
         // Update hologram if enabled
-        if (configManager.getBoolean("hologram-enabled")) {
+        if (configManager.getHologramEnabled("hologram-enabled")) {
             spawner.updateHologramData();
         }
 

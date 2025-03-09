@@ -445,6 +445,16 @@ public final class Scheduler {
     }
 
     /**
+     * Checks if the plugin is enabled before scheduling tasks.
+     * This prevents IllegalPluginAccessException during shutdown.
+     *
+     * @return true if the plugin is enabled and tasks can be scheduled
+     */
+    private static boolean canScheduleTasks() {
+        return plugin != null && plugin.isEnabled();
+    }
+
+    /**
      * Determines if the server is running on Folia.
      *
      * @return true if the server is running on Folia

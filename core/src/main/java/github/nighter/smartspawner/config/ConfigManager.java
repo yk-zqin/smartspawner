@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.config;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
@@ -626,6 +627,26 @@ public class ConfigManager {
 
     public boolean isDebugEnabled() {
         return getBoolean("debug");
+    }
+
+    public boolean getHologramEnabled(String path) {
+        // Disable holograms if Folia is enabled
+        if (Scheduler.isFolia()) {
+            return false;
+        }
+
+        // First check if the path exists directly (backward compatibility)
+        if (config.contains(path)) {
+            return (boolean) configCache.computeIfAbsent(path,
+                    key -> config.getBoolean(key, defaultConfig.get(key) instanceof Boolean ?
+                            (boolean) defaultConfig.get(key) : false));
+        }
+
+        // Try with the mapped key for new flattened structure
+        String mappedKey = mapOldKeyToNewKey(path);
+        return (boolean) configCache.computeIfAbsent(mappedKey,
+                key -> config.getBoolean(key, defaultConfig.get(key) instanceof Boolean ?
+                        (boolean) defaultConfig.get(key) : false));
     }
 
     // ===============================================================

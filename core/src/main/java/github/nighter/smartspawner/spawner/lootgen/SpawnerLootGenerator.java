@@ -548,7 +548,7 @@ public class SpawnerLootGenerator {
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
         }
 
-        if (configManager.getBoolean("hologram-enabled")) {
+        if (configManager.getHologramEnabled("hologram-enabled")) {
             spawner.updateHologramData();
         }
     }
