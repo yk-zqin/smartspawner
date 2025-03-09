@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;

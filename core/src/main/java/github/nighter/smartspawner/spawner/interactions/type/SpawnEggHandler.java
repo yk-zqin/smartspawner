@@ -2,7 +2,7 @@ package github.nighter.smartspawner.spawner.interactions.type;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;

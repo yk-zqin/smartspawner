@@ -8,7 +8,7 @@ import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewMan
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;

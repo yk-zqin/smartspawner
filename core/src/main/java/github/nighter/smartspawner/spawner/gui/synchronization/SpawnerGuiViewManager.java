@@ -5,9 +5,9 @@ import github.nighter.smartspawner.holders.SpawnerMenuHolder;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.utils.ItemUpdater;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

@@ -2,7 +2,7 @@ package github.nighter.smartspawner.spawner.utils;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

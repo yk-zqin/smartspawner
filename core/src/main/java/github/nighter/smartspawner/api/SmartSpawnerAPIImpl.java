@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.api;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;

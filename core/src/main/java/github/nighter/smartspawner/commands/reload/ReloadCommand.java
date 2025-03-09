@@ -1,9 +1,9 @@
 package github.nighter.smartspawner.commands.reload;
 
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

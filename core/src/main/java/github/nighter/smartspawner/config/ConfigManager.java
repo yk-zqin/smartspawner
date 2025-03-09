@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.utils;
+package github.nighter.smartspawner.config;
 
 import github.nighter.smartspawner.SmartSpawner;
 import org.bukkit.configuration.file.FileConfiguration;

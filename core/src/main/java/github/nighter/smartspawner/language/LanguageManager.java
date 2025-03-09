@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.utils;
+package github.nighter.smartspawner.language;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;

@@ -1,8 +1,8 @@
 package github.nighter.smartspawner.hooks.shops;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.ConfigManager;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 
 import java.io.BufferedWriter;
 import java.io.File;

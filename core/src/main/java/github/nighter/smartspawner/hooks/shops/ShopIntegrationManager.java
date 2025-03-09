@@ -4,7 +4,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.shops.api.economyshopgui.EconomyShopGUI;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
 import github.nighter.smartspawner.hooks.shops.api.zshop.ZShop;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 

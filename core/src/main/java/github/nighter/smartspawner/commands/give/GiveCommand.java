@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.commands.give;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.nms.SpawnerWrapper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

@@ -9,8 +9,8 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.holders.StoragePageHolder;
-import github.nighter.smartspawner.utils.ConfigManager;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
 import org.bukkit.Material;

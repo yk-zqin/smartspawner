@@ -2,13 +2,11 @@ package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
 import org.geysermc.floodgate.api.FloodgateApi;
-
-import java.awt.*;
 
 /**
  * Manages form-based UI for Bedrock players using Floodgate

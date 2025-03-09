@@ -5,6 +5,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;

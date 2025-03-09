@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.spawner.lootgen;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;

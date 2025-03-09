@@ -6,7 +6,7 @@ import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewMan
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;

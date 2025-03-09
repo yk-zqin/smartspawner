@@ -1,6 +1,6 @@
 package github.nighter.smartspawner.hooks.shops;
 
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.entity.Player;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 

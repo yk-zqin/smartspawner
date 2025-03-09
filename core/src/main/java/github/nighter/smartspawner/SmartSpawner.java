@@ -14,7 +14,6 @@ import github.nighter.smartspawner.hooks.shops.ShopIntegrationManager;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
-import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuFormUI;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerHandler;
@@ -32,8 +31,8 @@ import github.nighter.smartspawner.spawner.lootgen.SpawnerRangeChecker;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
-import github.nighter.smartspawner.utils.ConfigManager;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.utils.UpdateChecker;
 import github.nighter.smartspawner.nms.VersionInitializer;
 

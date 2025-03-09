@@ -1,8 +1,8 @@
 package github.nighter.smartspawner.commands.hologram;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.ConfigManager;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Display;

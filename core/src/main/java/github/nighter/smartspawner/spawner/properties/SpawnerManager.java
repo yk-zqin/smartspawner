@@ -2,7 +2,7 @@ package github.nighter.smartspawner.spawner.properties;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
-import github.nighter.smartspawner.utils.ConfigManager;
+import github.nighter.smartspawner.config.ConfigManager;
 import org.bukkit.*;
 import java.util.*;
 import java.util.logging.Logger;

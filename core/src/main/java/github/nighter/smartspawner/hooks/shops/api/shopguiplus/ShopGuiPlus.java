@@ -6,8 +6,8 @@ import github.nighter.smartspawner.hooks.shops.IShopIntegration;
 import github.nighter.smartspawner.hooks.shops.SaleLogger;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.utils.ConfigManager;
-import github.nighter.smartspawner.utils.LanguageManager;
+import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;

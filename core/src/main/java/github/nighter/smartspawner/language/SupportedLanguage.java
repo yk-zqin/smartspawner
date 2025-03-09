@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.utils;
+package github.nighter.smartspawner.language;
 
 public enum SupportedLanguage {
     ENGLISH("en_US", "English", "messages/en_US.yml"),
