@@ -4,6 +4,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -18,8 +19,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -43,7 +46,8 @@ public class SpawnerFileHandler {
     private boolean isSaving = false;
 
     // Task ID for periodic save task
-    private int saveTaskId = -1;
+    // private int saveTaskId = -1;
+    private Scheduler.Task saveTask = null;
 
     /**
      * Creates a new file handler for spawner data
@@ -108,18 +112,22 @@ public class SpawnerFileHandler {
     /**
      * Starts periodic save task for all modified spawners
      */
+    /**
+     * Starts periodic save task for all modified spawners
+     */
     private void startSaveTask() {
         configManager.debug("Starting spawner data save task");
         int intervalSeconds = configManager.getInt("save-interval");
 
-        if (saveTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(saveTaskId);
+        if (saveTask != null) {
+            saveTask.cancel();
+            saveTask = null;
         }
 
-        saveTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+        saveTask = Scheduler.runTaskTimerAsync(() -> {
             configManager.debug("Running scheduled save task - interval: " + intervalSeconds + "s");
             saveModifiedSpawners();
-        }, intervalSeconds * 20L, intervalSeconds * 20L).getTaskId();
+        }, intervalSeconds * 20L, intervalSeconds * 20L);
     }
 
     /**
@@ -209,7 +217,7 @@ public class SpawnerFileHandler {
         if (isSaving || saveQueue.isEmpty()) return;
 
         isSaving = true;
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Scheduler.runTaskAsync(() -> {
             try {
                 String spawnerId = saveQueue.poll();
                 if (spawnerId != null) {
@@ -243,7 +251,7 @@ public class SpawnerFileHandler {
 
         if (!toSave.isEmpty()) {
             configManager.debug("Batch saving " + toSave.size() + " modified spawners");
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            Scheduler.runTaskAsync(() -> {
                 int savedCount = 0;
                 for (String id : toSave) {
                     SpawnerData spawner = plugin.getSpawnerManager().getSpawnerById(id);
@@ -376,6 +384,7 @@ public class SpawnerFileHandler {
 
         for (String spawnerId : spawnersSection.getKeys(false)) {
             try {
+                // Use a CompletableFuture to load each spawner safely
                 SpawnerData spawner = loadSpawnerFromConfig(spawnerId);
                 if (spawner != null) {
                     loadedSpawners.put(spawnerId, spawner);
@@ -391,6 +400,7 @@ public class SpawnerFileHandler {
         logger.info("Loaded " + loadedCount + " spawners. Errors: " + errorCount);
         return loadedSpawners;
     }
+
 
     /**
      * Loads a single spawner from the configuration
@@ -425,12 +435,8 @@ public class SpawnerFileHandler {
                 Integer.parseInt(locParts[2]),
                 Integer.parseInt(locParts[3]));
 
-        // Check if this is a ghost spawner - the block at the location should be a MOB_SPAWNER
-        if (!isSpawnerBlock(location)) {
-            logger.warning("Ghost spawner detected at " + locationString + " with ID " + spawnerId +
-                    " - No physical spawner block found.");
-            return null;
-        }
+        // Skip physical block check during initial load to avoid async chunk issues
+        // We'll validate spawners when they're actually accessed in-game
 
         // Load entity type
         String entityTypeString = spawnerData.getString(path + ".entityType");
@@ -508,24 +514,49 @@ public class SpawnerFileHandler {
 
     /**
      * Checks if the block at the given location is a MOB_SPAWNER
+     * This method must be called from the appropriate region thread
      *
      * @param location The location to check
      * @return true if the block is a MOB_SPAWNER, false otherwise
      */
-    private boolean isSpawnerBlock(Location location) {
-        // Make sure we run this on the main thread if needed
-        if (!Bukkit.isPrimaryThread()) {
-            // Return a default value when running async, will be checked properly during processing
-            return true;
+    public boolean validateSpawnerBlock(String spawnerId, Location location) {
+        if (location == null || location.getWorld() == null) {
+            return false;
         }
 
-        // Check if the chunk is loaded
-        if (!location.getChunk().isLoaded()) {
-            // We can't check unloaded chunks, so we'll assume it's valid for now
-            return true;
-        }
+        // Schedule the validation in the correct region
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
 
-        return location.getBlock().getType() == Material.SPAWNER;
+        Scheduler.runLocationTask(location, () -> {
+            try {
+                // Now we're in the correct thread for this location
+                boolean valid = location.getBlock().getType() == Material.SPAWNER;
+                if (!valid) {
+                    logger.warning("Invalid spawner at " + formatLocation(location) + " with ID " + spawnerId);
+                }
+                future.complete(valid);
+            } catch (Exception e) {
+                logger.warning("Error validating spawner block: " + e.getMessage());
+                future.complete(false);
+            }
+        });
+
+        try {
+            // Wait for the result with a timeout
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.warning("Timeout validating spawner at " + formatLocation(location));
+            return false;
+        }
+    }
+
+    /**
+     * Format a location for display in logs
+     */
+    private String formatLocation(Location loc) {
+        if (loc == null || loc.getWorld() == null) return "unknown";
+        return String.format("%s,%d,%d,%d",
+                loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
     }
 
     /**

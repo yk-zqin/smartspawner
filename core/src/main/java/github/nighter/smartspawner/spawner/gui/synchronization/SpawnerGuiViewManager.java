@@ -8,7 +8,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.utils.ItemUpdater;
 import github.nighter.smartspawner.language.LanguageManager;
-
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -47,7 +47,7 @@ public class SpawnerGuiViewManager implements Listener {
     private final Map<String, Set<UUID>> spawnerToPlayersMap; // SpawnerID -> Set of Player UUIDs
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
 
-    private BukkitTask updateTask;
+    private Object updateTask;
     private volatile boolean isTaskRunning;
     private long previousExpValue = 0;
 
@@ -74,13 +74,9 @@ public class SpawnerGuiViewManager implements Listener {
             return;
         }
 
-        updateTask = Bukkit.getScheduler().runTaskTimer(plugin, this::updateGuiForSpawnerInfo,
-                INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS);
+        updateTask = Scheduler.runTaskTimer(this::updateGuiForSpawnerInfo,
+                INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS).getTask();
         isTaskRunning = true;
-
-//        if (configManager.isDebugEnabled()) {
-//            plugin.getLogger().info("Started GUI update task");
-//        }
     }
 
     public synchronized void stopUpdateTask() {
@@ -89,15 +85,15 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         if (updateTask != null) {
-            updateTask.cancel();
+            if (updateTask instanceof BukkitTask) {
+                ((BukkitTask) updateTask).cancel();
+            } else if (updateTask instanceof io.papermc.paper.threadedregions.scheduler.ScheduledTask) {
+                ((io.papermc.paper.threadedregions.scheduler.ScheduledTask) updateTask).cancel();
+            }
             updateTask = null;
         }
 
         isTaskRunning = false;
-
-//        if (configManager.isDebugEnabled()) {
-//            plugin.getLogger().info("Stopped GUI update task");
-//        }
     }
 
     private boolean isValidGuiSession(Player player) {
@@ -196,7 +192,7 @@ public class SpawnerGuiViewManager implements Listener {
         if (!(event.getPlayer() instanceof Player player)) return;
 
         // Use runTask to check if player has another valid inventory open after closing this one
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Scheduler.runTask(() -> {
             if (!player.isOnline()) return;
 
             Inventory openInv = player.getOpenInventory().getTopInventory();
@@ -256,7 +252,7 @@ public class SpawnerGuiViewManager implements Listener {
         Set<Player> viewers = getViewers(spawner.getSpawnerId());
         if (viewers.isEmpty()) return;
 
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        Scheduler.runTask(() -> {
             for (Player viewer : viewers) {
                 if (!viewer.isOnline()) continue;
 
@@ -481,7 +477,7 @@ public class SpawnerGuiViewManager implements Listener {
 
         // Process all updates in one server tick
         if (!updateQueue.isEmpty()) {
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Scheduler.runTask(() -> {
                 for (UpdateAction action : updateQueue) {
                     if (action.requiresNewInventory) {
                         try {

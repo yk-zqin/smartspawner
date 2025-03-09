@@ -4,12 +4,11 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import org.bukkit.Bukkit;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +19,7 @@ public class SpawnerRangeChecker {
     private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerLootGenerator spawnerLootGenerator;
-    private final Map<String, BukkitTask> spawnerTasks;
+    private final Map<String, Scheduler.Task> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
@@ -34,9 +33,27 @@ public class SpawnerRangeChecker {
     }
 
     private void initializeRangeCheckTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () ->
-                        spawnerManager.getAllSpawners().forEach(this::updateSpawnerStatus),
+        // Using the global scheduler, but only for coordinating region-specific checks
+        Scheduler.runTaskTimer(() ->
+                        spawnerManager.getAllSpawners().forEach(this::scheduleRegionSpecificCheck),
                 CHECK_INTERVAL, CHECK_INTERVAL);
+    }
+
+    private void scheduleRegionSpecificCheck(SpawnerData spawner) {
+        Location spawnerLoc = spawner.getSpawnerLocation();
+        World world = spawnerLoc.getWorld();
+        if (world == null) return;
+
+        // Schedule the actual entity checking in the correct region
+        Scheduler.runLocationTask(spawnerLoc, () -> {
+            boolean playerFound = isPlayerInRange(spawner, spawnerLoc, world);
+            boolean shouldStop = !playerFound;
+
+            if (spawner.getSpawnerStop() != shouldStop) {
+                spawner.setSpawnerStop(shouldStop);
+                handleSpawnerStateChange(spawner, shouldStop);
+            }
+        });
     }
 
     private void updateSpawnerStatus(SpawnerData spawner) {
@@ -56,17 +73,15 @@ public class SpawnerRangeChecker {
     private boolean isPlayerInRange(SpawnerData spawner, Location spawnerLoc, World world) {
         int range = spawner.getSpawnerRange();
         double rangeSquared = range * range;
-        int chunkRadius = (range >> 4) + 1;
-        int baseX = spawnerLoc.getBlockX() >> 4;
-        int baseZ = spawnerLoc.getBlockZ() >> 4;
 
-        for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
-            for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
-                if (!world.isChunkLoaded(baseX + dx, baseZ + dz)) continue;
+        // In Folia, we're now running this in the correct region thread,
+        // so we can safely check for nearby entities
+        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range,
+                entity -> entity instanceof Player);
 
-                if (checkChunkForPlayers(world, spawnerLoc, range, rangeSquared)) {
-                    return true;
-                }
+        for (Entity entity : nearbyEntities) {
+            if (entity.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
+                return true;
             }
         }
         return false;
@@ -108,20 +123,17 @@ public class SpawnerRangeChecker {
         stopSpawnerTask(spawner);
 
         spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin,
-                () -> {
-                    if (!spawner.getSpawnerStop()) {
-                        spawnerLootGenerator.spawnLootToSpawner(spawner);
-                    }
-                },
-                0L, spawner.getSpawnDelay()
-        );
+        Scheduler.Task task = Scheduler.runTaskTimer(() -> {
+            if (!spawner.getSpawnerStop()) {
+                spawnerLootGenerator.spawnLootToSpawner(spawner);
+            }
+        }, 0L, spawner.getSpawnDelay());
 
         spawnerTasks.put(spawner.getSpawnerId(), task);
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {
-        BukkitTask task = spawnerTasks.remove(spawner.getSpawnerId());
+        Scheduler.Task task = spawnerTasks.remove(spawner.getSpawnerId());
         if (task != null) {
             task.cancel();
         }
@@ -132,7 +144,7 @@ public class SpawnerRangeChecker {
     }
 
     public void cleanup() {
-        spawnerTasks.values().forEach(BukkitTask::cancel);
+        spawnerTasks.values().forEach(Scheduler.Task::cancel);
         spawnerTasks.clear();
         playersInRange.clear();
     }

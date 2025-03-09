@@ -6,6 +6,7 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -53,7 +54,7 @@ public class SpawnerStackerHandler implements Listener {
 
     // Player interaction tracking
     private final Map<UUID, Long> lastClickTime = new ConcurrentHashMap<>();
-    private final Map<UUID, BukkitTask> pendingUpdates = new ConcurrentHashMap<>();
+    private final Map<UUID, Scheduler.Task> pendingUpdates = new ConcurrentHashMap<>();
     private final Map<String, Set<UUID>> activeViewers = new ConcurrentHashMap<>();
     private final Map<UUID, AtomicBoolean> updateLocks = new ConcurrentHashMap<>();
 
@@ -74,7 +75,7 @@ public class SpawnerStackerHandler implements Listener {
     }
 
     private void startCleanupTask() {
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        Scheduler.runTaskTimer(() -> {
             long now = System.currentTimeMillis();
             lastClickTime.entrySet().removeIf(entry -> now - entry.getValue() > 5000);
             updateLocks.entrySet().removeIf(entry -> !lastClickTime.containsKey(entry.getKey()));
@@ -148,7 +149,7 @@ public class SpawnerStackerHandler implements Listener {
         String spawnerId = holder.getSpawnerData().getSpawnerId();
 
         // Verify the player is really closing the GUI (not just inventory updates)
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Scheduler.runTaskLater(() -> {
             Inventory topInventory = player.getOpenInventory().getTopInventory();
             if (!(topInventory.getHolder() instanceof SpawnerStackerHolder)) {
                 // Remove viewer and cancel any pending updates
@@ -167,7 +168,7 @@ public class SpawnerStackerHandler implements Listener {
 
     private void cleanupPlayer(UUID playerId) {
         // Cancel any pending tasks
-        BukkitTask task = pendingUpdates.remove(playerId);
+        Scheduler.Task task = pendingUpdates.remove(playerId);
         if (task != null && !task.isCancelled()) {
             task.cancel();
         }
@@ -183,7 +184,9 @@ public class SpawnerStackerHandler implements Listener {
 
     public void cleanupAll() {
         pendingUpdates.values().forEach(task -> {
-            if (!task.isCancelled()) task.cancel();
+            if (task != null && !task.isCancelled()) {
+                task.cancel();
+            }
         });
         pendingUpdates.clear();
         lastClickTime.clear();
@@ -320,7 +323,7 @@ public class SpawnerStackerHandler implements Listener {
         if (viewers.isEmpty()) return;
 
         // Schedule single update task for all viewers
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        Scheduler.runTaskLater(() -> {
             for (UUID viewerId : viewers) {
                 Player viewer = plugin.getServer().getPlayer(viewerId);
                 if (viewer != null && viewer.isOnline()) {

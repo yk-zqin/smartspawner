@@ -7,7 +7,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
-import org.bukkit.Bukkit;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -105,8 +105,8 @@ public class SpawnerPlaceListener implements Listener {
      * @param storedEntityType The entity type from the item, or null
      */
     private void initializeSpawner(Block block, Player player, EntityType storedEntityType) {
-        // Run this with a longer delay to ensure block state is fully initialized
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        // We need to use location-based scheduling to avoid the "Cannot read world asynchronously" error
+        Scheduler.runLocationTaskLater(block.getLocation(), () -> {
             BlockState blockState = block.getState();
             if (!(blockState instanceof CreatureSpawner)) {
                 return;
@@ -127,7 +127,7 @@ public class SpawnerPlaceListener implements Listener {
                 languageManager.sendMessage(player, "messages.entity-spawner-placed");
 
                 // Double-check entity type after a short delay
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Scheduler.runLocationTaskLater(block.getLocation(), () -> {
                     BlockState recheckedState = block.getState();
                     if (recheckedState instanceof CreatureSpawner) {
                         CreatureSpawner recheckedSpawner = (CreatureSpawner) recheckedState;
@@ -138,6 +138,7 @@ public class SpawnerPlaceListener implements Listener {
                         }
                     }
                 }, 3L);
+
                 // Create spawner data but don't activate
                 String spawnerId = UUID.randomUUID().toString().substring(0, 8);
 
@@ -236,13 +237,16 @@ public class SpawnerPlaceListener implements Listener {
      * @param block The spawner block
      */
     private void showCreationParticles(Block block) {
-        Location particleLocation = block.getLocation().clone().add(
-                PARTICLE_OFFSET, PARTICLE_OFFSET, PARTICLE_OFFSET);
-        block.getWorld().spawnParticle(
-                ParticleWrapper.SPELL_WITCH,
-                particleLocation,
-                50, PARTICLE_OFFSET, PARTICLE_OFFSET, PARTICLE_OFFSET, 0
-        );
+        // Use location-based scheduling to ensure particles are shown in the right region
+        Scheduler.runLocationTask(block.getLocation(), () -> {
+            Location particleLocation = block.getLocation().clone().add(
+                    PARTICLE_OFFSET, PARTICLE_OFFSET, PARTICLE_OFFSET);
+            block.getWorld().spawnParticle(
+                    ParticleWrapper.SPELL_WITCH,
+                    particleLocation,
+                    50, PARTICLE_OFFSET, PARTICLE_OFFSET, PARTICLE_OFFSET, 0
+            );
+        });
     }
 
     /**
@@ -252,10 +256,13 @@ public class SpawnerPlaceListener implements Listener {
      */
     private void setupHopperIntegration(Block block) {
         if (configManager.getBoolean("hopper-enabled")) {
-            Block blockBelow = block.getRelative(BlockFace.DOWN);
-            if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
-                hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
-            }
+            // Run this task in the block's region
+            Scheduler.runLocationTask(block.getLocation(), () -> {
+                Block blockBelow = block.getRelative(BlockFace.DOWN);
+                if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
+                    hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
+                }
+            });
         }
     }
 

@@ -6,6 +6,7 @@ import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,7 +18,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -48,16 +48,13 @@ public class SpawnerStackHandler {
     }
 
     private void startCleanupTask() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                long now = System.currentTimeMillis();
-                // Clear entries older than 10 seconds
-                lastStackTime.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
-                // Remove locks for offline players
-                stackLocks.entrySet().removeIf(entry -> plugin.getServer().getPlayer(entry.getValue()) == null);
-            }
-        }.runTaskTimer(plugin, 200L, 200L); // Run every 10 seconds
+        Scheduler.runTaskTimer(() -> {
+            long now = System.currentTimeMillis();
+            // Clear entries older than 10 seconds
+            lastStackTime.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
+            // Remove locks for offline players
+            stackLocks.entrySet().removeIf(entry -> plugin.getServer().getPlayer(entry.getValue()) == null);
+        }, 200L, 200L); // Run every 10 seconds
     }
 
     public void handleSpawnerStacking(Player player, Block block, SpawnerData spawnerData, ItemStack itemInHand) {
@@ -237,11 +234,14 @@ public class SpawnerStackHandler {
             World world = loc.getWorld();
 
             if (world != null) {
-                world.spawnParticle(
-                        ParticleWrapper.VILLAGER_HAPPY,
-                        loc.clone().add(0.5, 0.5, 0.5),
-                        10, 0.3, 0.3, 0.3, 0
-                );
+                // Use location-based scheduling for particle effects
+                Scheduler.runLocationTask(loc, () -> {
+                    world.spawnParticle(
+                            ParticleWrapper.VILLAGER_HAPPY,
+                            loc.clone().add(0.5, 0.5, 0.5),
+                            10, 0.3, 0.3, 0.3, 0
+                    );
+                });
             }
         }
 

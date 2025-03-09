@@ -6,6 +6,8 @@ import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.Scheduler;
+import github.nighter.smartspawner.Scheduler.Task;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -33,8 +35,10 @@ public class SpawnerStorageUI {
     private final Map<String, ItemStack> pageIndicatorCache;
 
     // Cache expiry time reduced for more responsive updates
-    private static final long CACHE_EXPIRY_TIME = 30000; // 30 seconds
     private static final int MAX_CACHE_SIZE = 100;
+
+    // Cleanup task to remove stale entries from caches
+    private Task cleanupTask;
 
     public SpawnerStorageUI(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -295,12 +299,14 @@ public class SpawnerStorageUI {
     }
 
     private void startCleanupTask() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                cleanupCaches();
-            }
-        }.runTaskTimer(plugin, 20L * 30, 20L * 30); // Run every 30 seconds
+        cleanupTask = Scheduler.runTaskTimer(() -> cleanupCaches(), 20L * 30, 20L * 30); // Run every 30 seconds
+    }
+
+    public void cancelTasks() {
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
+            cleanupTask = null;
+        }
     }
 
     private void cleanupCaches() {
@@ -326,6 +332,9 @@ public class SpawnerStorageUI {
     public void cleanup() {
         navigationButtonCache.clear();
         pageIndicatorCache.clear();
+
+        // Cancel scheduled tasks
+        cancelTasks();
 
         // Re-initialize static buttons (just in case language has changed)
         initializeStaticButtons();

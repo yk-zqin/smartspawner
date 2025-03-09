@@ -9,6 +9,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -316,8 +317,8 @@ public class SpawnerLootGenerator {
             final int maxMobs = spawner.getMaxMobs();
             final String spawnerId = spawner.getSpawnerId();
 
-            // Run heavy calculations async and batch updates
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            // Run heavy calculations async and batch updates using the Scheduler
+            Scheduler.runTaskAsync(() -> {
                 // Generate loot with full mob count
                 LootResult loot = generateLoot(entityType, minMobs, maxMobs, spawner);
 
@@ -326,8 +327,8 @@ public class SpawnerLootGenerator {
                     return;
                 }
 
-                // Switch back to main thread for Bukkit API calls
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                // Switch back to main thread for Bukkit API calls using location-aware scheduling
+                Scheduler.runLocationTask(spawner.getSpawnerLocation(), () -> {
                     // Re-acquire the lock for the update phase
                     // This ensures the spawner hasn't been modified (like stack size changes)
                     // between our async calculations and now
@@ -527,9 +528,11 @@ public class SpawnerLootGenerator {
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
             if (world != null) {
-                world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
-                        loc.clone().add(0.5, 0.5, 0.5),
-                        10, 0.3, 0.3, 0.3, 0);
+                Scheduler.runLocationTask(loc, () -> {
+                    world.spawnParticle(ParticleWrapper.VILLAGER_HAPPY,
+                            loc.clone().add(0.5, 0.5, 0.5),
+                            10, 0.3, 0.3, 0.3, 0);
+                });
             }
         }
 

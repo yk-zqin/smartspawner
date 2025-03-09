@@ -3,6 +3,7 @@ package github.nighter.smartspawner.spawner.properties;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.*;
 import java.util.*;
 import java.util.logging.Logger;
@@ -17,7 +18,7 @@ public class SpawnerManager {
     private final Map<LocationKey, SpawnerData> locationIndex = new HashMap<>();
     private final ConfigManager configManager;
     private final Map<String, Set<SpawnerData>> worldIndex = new HashMap<>();
-    private final SpawnerFileHandler fileHandler;
+    private final SpawnerFileHandler spawnerFileHandler;
     private final Logger logger;
 
     /**
@@ -31,7 +32,7 @@ public class SpawnerManager {
         this.configManager = plugin.getConfigManager();
 
         // Initialize file handler
-        this.fileHandler = new SpawnerFileHandler(plugin);
+        this.spawnerFileHandler = new SpawnerFileHandler(plugin);
 
         // Load spawners from file
         loadSpawnerData();
@@ -83,7 +84,7 @@ public class SpawnerManager {
         worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
 
         // Queue for saving
-        fileHandler.queueSpawnerForSaving(id);
+        spawnerFileHandler.queueSpawnerForSaving(id);
     }
 
     /**
@@ -109,7 +110,7 @@ public class SpawnerManager {
 
             spawners.remove(id);
         }
-        fileHandler.deleteSpawnerFromFile(id);
+        spawnerFileHandler.deleteSpawnerFromFile(id);
     }
 
     /**
@@ -178,6 +179,37 @@ public class SpawnerManager {
         return new ArrayList<>(spawners.values());
     }
 
+    /**
+     * Validates loaded spawners to ensure they have valid blocks
+     * This should be called after all spawners are loaded
+     */
+    public void validateLoadedSpawners() {
+        Scheduler.runTaskAsync(() -> {
+            logger.info("Starting validation of " + spawners.size() + " loaded spawners...");
+            int invalidCount = 0;
+
+            List<String> invalidSpawners = new ArrayList<>();
+
+            for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
+                String id = entry.getKey();
+                SpawnerData data = entry.getValue();
+
+                boolean valid = spawnerFileHandler.validateSpawnerBlock(id, data.getSpawnerLocation());
+                if (!valid) {
+                    invalidSpawners.add(id);
+                    invalidCount++;
+                }
+            }
+
+            // Remove invalid spawners
+            for (String id : invalidSpawners) {
+                spawners.remove(id);
+                spawnerFileHandler.deleteSpawnerFromFile(id);
+            }
+
+            logger.info("Spawner validation complete. Found " + invalidCount + " invalid spawners.");
+        });
+    }
 
     /**
      * Loads all spawner data from file storage and removes ghost spawners
@@ -189,7 +221,7 @@ public class SpawnerManager {
         worldIndex.clear();
 
         // Load spawners from file handler
-        Map<String, SpawnerData> loadedSpawners = fileHandler.loadAllSpawners();
+        Map<String, SpawnerData> loadedSpawners = spawnerFileHandler.loadAllSpawners();
         boolean hologramEnabled = configManager.getBoolean("hologram-enabled");
 
         // Add all loaded spawners to our indexes
@@ -208,14 +240,16 @@ public class SpawnerManager {
             }
         }
 
-        // Check for ghost spawners after initial load, as the chunks may not have been loaded
-        // during the initial file loading process
-        Bukkit.getScheduler().runTaskLater(plugin, this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
+        // Check for ghost spawners after initial load using Scheduler
+        Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
+
+        // Schedule validation after loading
+        Scheduler.runTaskLater(this::validateLoadedSpawners, 100L); // 5 seconds delay to let server finish startup
 
         // Update holograms if enabled
         if (hologramEnabled && !spawners.isEmpty()) {
             removeAllGhostsHolograms();
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            Scheduler.runTask(() -> {
                 logger.info("Updating holograms for all spawners...");
                 spawners.values().forEach(SpawnerData::updateHologramData);
             });
@@ -235,27 +269,36 @@ public class SpawnerManager {
             SpawnerData spawner = entry.getValue();
             Location loc = spawner.getSpawnerLocation();
 
-            // Check if the chunk is loaded, if not, load it temporarily
-            if (!loc.getChunk().isLoaded()) {
-                loc.getChunk().load(true);
+            // Process each location with proper scheduling
+            Scheduler.runLocationTask(loc, () -> {
+                // Check if the chunk is loaded, if not, load it temporarily
+                if (!loc.getChunk().isLoaded()) {
+                    loc.getChunk().load(true);
+                }
+
+                // Check if the block at the location is a spawner
+                if (loc.getBlock().getType() != Material.SPAWNER) {
+                    synchronized (ghostSpawnerIds) {
+                        ghostSpawnerIds.add(spawnerId);
+                    }
+                }
+            });
+        }
+
+        // Use a delay to ensure all location checks have completed
+        Scheduler.runTaskLater(() -> {
+            // Remove ghost spawners
+            int removed = 0;
+            for (String ghostId : ghostSpawnerIds) {
+                logger.info("Removing ghost spawner with ID: " + ghostId);
+                removeSpawner(ghostId);
+                removed++;
             }
 
-            // Check if the block at the location is a spawner
-            if (loc.getBlock().getType() != Material.SPAWNER) {
-                ghostSpawnerIds.add(spawnerId);
+            if (removed > 0) {
+                logger.info("Removed " + removed + " ghost spawners.");
             }
-        }
-
-        // Remove ghost spawners
-        for (String ghostId : ghostSpawnerIds) {
-            logger.info("Removing ghost spawner with ID: " + ghostId);
-            removeSpawner(ghostId);
-            removedCount++;
-        }
-
-        if (removedCount > 0) {
-            logger.info("Removed " + removedCount + " ghost spawners.");
-        }
+        }, 10L); // Short delay to ensure location tasks complete
     }
 
     /**
@@ -264,7 +307,7 @@ public class SpawnerManager {
      * @param spawnerId The ID of the modified spawner
      */
     public void markSpawnerModified(String spawnerId) {
-        fileHandler.markSpawnerModified(spawnerId);
+        spawnerFileHandler.markSpawnerModified(spawnerId);
     }
 
     /**
@@ -273,21 +316,21 @@ public class SpawnerManager {
      * @param spawnerId The ID of the spawner to save
      */
     public void queueSpawnerForSaving(String spawnerId) {
-        fileHandler.queueSpawnerForSaving(spawnerId);
+        spawnerFileHandler.queueSpawnerForSaving(spawnerId);
     }
 
     /**
      * Saves all spawner data to file - mainly used for server shutdown
      */
     public void saveSpawnerData() {
-        fileHandler.saveAllSpawners(spawners);
+        spawnerFileHandler.saveAllSpawners(spawners);
     }
 
     /**
      * Saves only modified spawners
      */
     public void saveModifiedSpawners() {
-        fileHandler.saveModifiedSpawners();
+        spawnerFileHandler.saveModifiedSpawners();
     }
 
     // ===============================================================
@@ -295,24 +338,35 @@ public class SpawnerManager {
     // ===============================================================
 
     public void refreshAllHolograms() {
-        spawners.values().forEach(SpawnerData::refreshHologram);
+        for (SpawnerData spawner : spawners.values()) {
+            Location loc = spawner.getSpawnerLocation();
+            Scheduler.runLocationTask(loc, spawner::refreshHologram);
+        }
     }
 
     public void reloadAllHolograms() {
         if (configManager.getBoolean("hologram-enabled")) {
-            spawners.values().forEach(SpawnerData::reloadHologramData);
+            for (SpawnerData spawner : spawners.values()) {
+                Location loc = spawner.getSpawnerLocation();
+                github.nighter.smartspawner.Scheduler.runLocationTask(loc, spawner::reloadHologramData);
+            }
         }
     }
 
     public void removeAllGhostsHolograms() {
-        spawners.values().forEach(SpawnerData::removeGhostHologram);
+        for (SpawnerData spawner : spawners.values()) {
+            Location loc = spawner.getSpawnerLocation();
+            github.nighter.smartspawner.Scheduler.runLocationTask(loc, spawner::removeGhostHologram);
+        }
     }
 
     public void cleanupAllSpawners() {
         for (SpawnerData spawner : spawners.values()) {
-            spawner.removeHologram();
+            Location loc = spawner.getSpawnerLocation();
+            Scheduler.runLocationTask(loc, spawner::removeHologram);
         }
         spawners.clear();
         locationIndex.clear();
+        worldIndex.clear();
     }
 }

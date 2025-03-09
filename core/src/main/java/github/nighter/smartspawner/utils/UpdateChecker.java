@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.Scheduler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -38,7 +39,7 @@ public class UpdateChecker implements Listener {
     private static final int TIMEOUT_SECONDS = 5;
     private final ConfigManager configManager;
     private final LanguageManager languageManager;
-    private BukkitTask updateTask;
+    private Object updateTask;
 
     // Console colors
     private static final String CONSOLE_RESET = "\u001B[0m";
@@ -63,21 +64,25 @@ public class UpdateChecker implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Initial check after server starts (delayed by 1 minute)
-        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () ->
+        Scheduler.runTaskLaterAsync(() ->
                 checkForUpdate().thenAccept(this::handleUpdateResult), 20L * 60L);
 
         // Schedule periodic checks
         long intervalTicks = configManager.getInt("update-checker-interval") * 20L * 60L * 60L; // Convert hours to ticks
-        updateTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,
-                () -> checkForUpdate().thenAccept(this::handleUpdateResult),
+        updateTask = Scheduler.runTaskTimerAsync(() ->
+                        checkForUpdate().thenAccept(this::handleUpdateResult),
                 intervalTicks,
-                intervalTicks
-        );
+                intervalTicks).getTask();
     }
 
     public void shutdown() {
         if (updateTask != null) {
-            updateTask.cancel();
+            if (updateTask instanceof BukkitTask) {
+                ((BukkitTask) updateTask).cancel();
+            } else if (Scheduler.isFolia() &&
+                    updateTask instanceof io.papermc.paper.threadedregions.scheduler.ScheduledTask) {
+                ((io.papermc.paper.threadedregions.scheduler.ScheduledTask) updateTask).cancel();
+            }
         }
     }
 
@@ -232,10 +237,7 @@ public class UpdateChecker implements Listener {
 
         Player player = event.getPlayer();
         if (player.isOp() || player.hasPermission("smartspawner.update")) {
-            Bukkit.getScheduler().runTaskLater(plugin,
-                    () -> sendUpdateMessage(player),
-                    40L
-            );
+            Scheduler.runEntityTaskLater(player, () -> sendUpdateMessage(player), 40L);
         }
     }
 

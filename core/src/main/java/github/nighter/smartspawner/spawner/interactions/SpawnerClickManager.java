@@ -11,6 +11,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -294,11 +295,13 @@ public class SpawnerClickManager implements Listener {
      * Spawns particles at the given location to indicate spawner activation
      */
     private void spawnActivationParticles(Location location) {
-        location.getWorld().spawnParticle(
-                ParticleWrapper.SPELL_WITCH,
-                location.clone().add(0.5, 0.5, 0.5),
-                50, 0.5, 0.5, 0.5, 0
-        );
+        Scheduler.runLocationTask(location, () -> {
+            location.getWorld().spawnParticle(
+                    ParticleWrapper.SPELL_WITCH,
+                    location.clone().add(0.5, 0.5, 0.5),
+                    50, 0.5, 0.5, 0.5, 0
+            );
+        });
     }
 
     /**
@@ -325,12 +328,7 @@ public class SpawnerClickManager implements Listener {
      * Initializes the periodic cooldown cleanup task
      */
     private void initCleanupTask() {
-        plugin.getServer().getScheduler().runTaskTimer(
-                plugin,
-                this::cleanupCooldowns,
-                CLEANUP_INTERVAL_TICKS,
-                CLEANUP_INTERVAL_TICKS
-        );
+        Scheduler.runTaskTimer(this::cleanupCooldowns, CLEANUP_INTERVAL_TICKS, CLEANUP_INTERVAL_TICKS);
     }
 
     /**

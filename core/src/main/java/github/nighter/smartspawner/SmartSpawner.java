@@ -42,8 +42,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
@@ -114,18 +114,19 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         // Check for data migration needs
         migrateDataIfNeeded();
 
-        // Initialize core components async where possible
-        initializeComponents()
-                .thenRun(() -> {
-                    setupCommand();
-                    checkDependencies();
-                    setupBtatsMetrics();
-                    registerListeners();
-                    initializeSaleLogging();
+        // Initialize core components with Scheduler
+        initializeComponents().thenRun(() -> {
+            Scheduler.runTask(() -> {
+                setupCommand();
+                checkDependencies();
+                setupBtatsMetrics();
+                registerListeners();
+                initializeSaleLogging();
 
-                    long loadTime = System.currentTimeMillis() - startTime;
-                    getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
-                });
+                long loadTime = System.currentTimeMillis() - startTime;
+                getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
+            });
+        });
     }
 
     /**
@@ -173,11 +174,12 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
-;
+
         // Parallel initialization for components that can be initialized concurrently
-        CompletableFuture<Void> asyncInit = CompletableFuture.runAsync(() -> {
+        CompletableFuture<Void> asyncInit = Scheduler.supplyAsync(() -> {
             this.shopIntegrationManager = new ShopIntegrationManager(this);
             this.updateChecker = new UpdateChecker(this, "9tQwxSFr");
+            return null;
         });
 
         // Main thread initialization for components that need the main thread
@@ -200,10 +202,16 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         // Initialize hopper handler if enabled in config
         setUpHopperHandler();
 
-        // Complete initialization
-        return asyncInit.thenRunAsync(() -> {
-            updateChecker.initialize();
-        }, getServer().getScheduler().getMainThreadExecutor(this));
+        // Initialize API implementation
+        this.apiImpl = new SmartSpawnerAPIImpl(this);
+
+        // Complete initialization - use Scheduler instead of getServer().getScheduler()
+        return asyncInit.thenCompose(unused ->
+                Scheduler.supplyAsync(() -> {
+                    updateChecker.initialize();
+                    return null;
+                })
+        );
     }
 
     /**
@@ -246,17 +254,19 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      */
     private void setupCommand() {
         CommandHandler commandHandler = new CommandHandler(this);
-        getCommand("smartspawner").setExecutor(commandHandler);
-        getCommand("smartspawner").setTabCompleter(commandHandler);
+        Objects.requireNonNull(getCommand("smartspawner")).setExecutor(commandHandler);
+        Objects.requireNonNull(getCommand("smartspawner")).setTabCompleter(commandHandler);
     }
 
     /**
      * Sets up bStats metrics for plugin usage tracking.
      */
     private void setupBtatsMetrics() {
-        Metrics metrics = new Metrics(this, 24822);
-        metrics.addCustomChart(new Metrics.SimplePie("players",
-                () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
+        Scheduler.runTask(() -> {
+            Metrics metrics = new Metrics(this, 24822);
+            metrics.addCustomChart(new Metrics.SimplePie("players",
+                    () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
+        });
     }
 
     /**
@@ -272,12 +282,13 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      * Checks and initializes all plugin dependencies and integrations.
      */
     private void checkDependencies() {
-        // Run protection plugin checks in parallel
-        CompletableFuture.runAsync(this::checkProtectionPlugins);
+        // Run protection plugin checks using Scheduler
+        Scheduler.runTaskAsync(this::checkProtectionPlugins);
 
         // Initialize shop integrations
         shopIntegrationManager.initialize();
     }
+
 
     /**
      * Checks for protection plugin integrations.
@@ -368,8 +379,10 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
     private void saveAndCleanup() {
         // Save spawner data
         if (spawnerManager != null) {
-            spawnerManager.saveSpawnerData();
-            spawnerManager.cleanupAllSpawners();
+            Scheduler.runTask(() -> {
+                spawnerManager.saveSpawnerData();
+                spawnerManager.cleanupAllSpawners();
+            });
         }
 
         // Clean up other resources
@@ -386,10 +399,9 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
      * Runs a task asynchronously.
      *
      * @param runnable The task to run
-     * @return The BukkitTask representing the scheduled task
      */
-    public BukkitTask runTaskAsync(Runnable runnable) {
-        return getServer().getScheduler().runTaskAsynchronously(this, runnable);
+    public void runTaskAsync(Runnable runnable) {
+        Scheduler.runTaskAsync(runnable);
     }
 
     /**
