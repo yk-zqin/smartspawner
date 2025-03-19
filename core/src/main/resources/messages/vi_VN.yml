@@ -173,13 +173,13 @@ messages:
   # Bán vật phẩm từ Spawner
   #---------------------------------------------------
   sell-all:
-    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a%price%$&#d6e7ed!"
+    message: "&#d6e7edBạn đã bán tổng cộng &#3287A9%amount% vật phẩm&#d6e7ed với giá &a$%price%&#d6e7ed!"
     prefix: true
     type: CHAT
     sound: block.note_block.bell
 
   sell-all-tax:
-    message: "&#d6e7edBạn đã bán &#3287A9%amount% vật phẩm&#d6e7ed. Giá gốc: &a%gross%$&#d6e7ed, Sau thuế (&#ff6b6b-%tax%%&#d6e7ed): &a%price%$"
+    message: "&#d6e7edBạn đã bán &#3287A9%amount% vật phẩm&#d6e7ed. Giá gốc: &a$%gross%&#d6e7ed, Sau thuế (&#ff6b6b-%tax%%&#d6e7ed): &a$%price%"
     prefix: true
     type: CHAT
     sound: block.note_block.bell

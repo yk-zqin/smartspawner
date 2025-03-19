@@ -1,6 +1,8 @@
 package github.nighter.smartspawner.spawner.properties;
 
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,6 +20,16 @@ public class VirtualInventory {
     // Simple item comparator that only sorts by material name
     private static final Comparator<Map.Entry<ItemSignature, Long>> ITEM_COMPARATOR =
             Comparator.comparing(e -> e.getKey().getTemplateRef().getType().name());
+
+    // Add an LRU cache for expensive item operations
+    private static final int ITEM_CACHE_SIZE = 128;
+    private static final Map<ItemStack, ItemSignature> signatureCache =
+            Collections.synchronizedMap(new LinkedHashMap<ItemStack, ItemSignature>(ITEM_CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<ItemStack, ItemSignature> eldest) {
+                    return size() > ITEM_CACHE_SIZE;
+                }
+            });
 
     public VirtualInventory(int maxSlots) {
         this.maxSlots = maxSlots;
@@ -43,12 +55,21 @@ public class VirtualInventory {
             this.hashCode = calculateHashCode();
         }
 
+        // Replace the current calculateHashCode() method with:
         private int calculateHashCode() {
-            return Objects.hash(
-                    template.getType(),
-                    template.getDurability(),
-                    template.getItemMeta() != null ? template.getItemMeta().toString() : null
-            );
+            // Use a faster hash algorithm and cache more item properties
+            int result = 31 * template.getType().ordinal(); // Using ordinal() instead of name() hashing
+            result = 31 * result + (int)template.getDurability();
+
+            // Only access ItemMeta when needed
+            if (template.hasItemMeta()) {
+                ItemMeta meta = template.getItemMeta();
+                // Extract only the essential meta properties that determine similarity
+                result = 31 * result + (meta.hasDisplayName() ? meta.getDisplayName().hashCode() : 0);
+                result = 31 * result + (meta.hasLore() ? meta.getLore().hashCode() : 0);
+                result = 31 * result + (meta.hasEnchants() ? meta.getEnchants().hashCode() : 0);
+            }
+            return result;
         }
 
         @Override
@@ -56,6 +77,27 @@ public class VirtualInventory {
             if (this == o) return true;
             if (!(o instanceof ItemSignature)) return false;
             ItemSignature that = (ItemSignature) o;
+
+            // First compare cheap properties
+            if (template.getType() != that.template.getType() ||
+                    template.getDurability() != that.template.getDurability()) {
+                return false;
+            }
+
+            // Only check ItemMeta if types match
+            boolean thisHasMeta = template.hasItemMeta();
+            boolean thatHasMeta = that.template.hasItemMeta();
+
+            if (thisHasMeta != thatHasMeta) {
+                return false;
+            }
+
+            // If both have no meta, they're similar enough
+            if (!thisHasMeta) {
+                return true;
+            }
+
+            // For complex items, fall back to isSimilar but only as a last resort
             return template.isSimilar(that.template);
         }
 
@@ -79,27 +121,43 @@ public class VirtualInventory {
         }
     }
 
+    public static ItemSignature getSignature(ItemStack item) {
+        // First try to get from cache
+        ItemSignature cachedSig = signatureCache.get(item);
+        if (cachedSig != null) {
+            return cachedSig;
+        }
+
+        // Create new signature and cache it
+        ItemSignature newSig = new ItemSignature(item);
+        signatureCache.put(item.clone(), newSig);
+        return newSig;
+    }
+
     // Add items in bulk with minimal operations
     public void addItems(List<ItemStack> items) {
         if (items.isEmpty()) return;
 
-        // Process items in a single batch
-        boolean updated = false;
+        // Pre-allocate space for batch processing
+        Map<ItemSignature, Long> itemBatch = new HashMap<>(items.size());
+
+        // Consolidate all items first
         for (ItemStack item : items) {
             if (item == null || item.getAmount() <= 0) continue;
-
-            ItemSignature sig = new ItemSignature(item);
-            consolidatedItems.merge(sig, (long) item.getAmount(), Long::sum);
-            updated = true;
+            ItemSignature sig = getSignature(item); // Use cached signature
+            itemBatch.merge(sig, (long) item.getAmount(), Long::sum);
         }
 
-        if (updated) {
+        // Apply all changes in one operation
+        if (!itemBatch.isEmpty()) {
+            for (Map.Entry<ItemSignature, Long> entry : itemBatch.entrySet()) {
+                consolidatedItems.merge(entry.getKey(), entry.getValue(), Long::sum);
+            }
             displayCacheDirty = true;
             metricsCacheDirty = true;
-            sortedEntriesCache = null; // Invalidate sorted entries cache
+            sortedEntriesCache = null;
         }
     }
-
     // Remove items in bulk with minimal operations
     public boolean removeItems(List<ItemStack> items) {
         if (items.isEmpty()) return true;

@@ -181,7 +181,7 @@ public class LanguageManager {
         put("messages.spawner-protected.sound", "block.note_block.pling");
 
         // Selling Items from Spawner
-        put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a %price%$ &#d6e7ed!");
+        put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a $%price% &#d6e7ed!");
         put("messages.sell-all.prefix", true);
         put("messages.sell-all.type", "CHAT");
         put("messages.sell-all.sound", "block.note_block.bell");
@@ -191,7 +191,7 @@ public class LanguageManager {
         put("messages.no-items.type", "CHAT");
         put("messages.no-items.sound", "block.note_block.pling");
 
-        put("messages.sell-all-tax.message", "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a%gross%$&#d6e7ed, After tax (&#ff6b6b-%tax%%&#d6e7ed): &a%price%$");
+        put("messages.sell-all-tax.message", "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a$%gross%&#d6e7ed, After tax (&#ff6b6b-%tax%%&#d6e7ed): &a$%price%");
         put("messages.sell-all-tax.prefix", true);
         put("messages.sell-all-tax.type", "CHAT");
         put("messages.sell-all-tax.sound", "block.note_block.bell");

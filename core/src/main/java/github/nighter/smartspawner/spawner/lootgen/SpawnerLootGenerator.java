@@ -234,6 +234,7 @@ public class SpawnerLootGenerator {
         }
     }
 
+    // Modify the generateLoot method:
     public LootResult generateLoot(EntityType entityType, int minMobs, int maxMobs, SpawnerData spawner) {
         String entityName = entityType.name().toLowerCase();
         EntityLootConfig config = entityLootConfigs.get(entityName);
@@ -243,38 +244,70 @@ public class SpawnerLootGenerator {
         }
 
         int mobCount = random.nextInt(maxMobs - minMobs + 1) + minMobs;
-        List<ItemStack> totalLoot = new ArrayList<>();
         int totalExperience = config.experience * mobCount;
-
         boolean allowEquipment = spawner.isAllowEquipmentItems();
 
-        // Pre-filter items based on equipment permission
-        List<LootItem> validItems = config.possibleItems.stream()
-                .filter(item -> allowEquipment ||
-                        (item.minDurability == null && item.maxDurability == null))
-                .collect(Collectors.toList());
+        // Pre-filter items only once
+        List<LootItem> validItems = allowEquipment ? config.possibleItems :
+                config.possibleItems.stream()
+                        .filter(item -> item.minDurability == null && item.maxDurability == null)
+                        .collect(Collectors.toList());
 
         if (validItems.isEmpty()) {
             return new LootResult(Collections.emptyList(), totalExperience);
         }
 
-        // Process each mob individually for accurate drop rates
-        for (int i = 0; i < mobCount; i++) {
-            for (LootItem lootItem : validItems) {
+        // Use a Map to consolidate identical drops instead of List
+        Map<ItemStack, Integer> consolidatedLoot = new HashMap<>();
+
+        // Process mobs in batch rather than individually
+        for (LootItem lootItem : validItems) {
+            // Calculate the probability for the entire mob batch at once
+            int successfulDrops = 0;
+
+            // Calculate binomial distribution - how many mobs will drop this item
+            for (int i = 0; i < mobCount; i++) {
                 if (random.nextDouble() * 100 <= lootItem.chance) {
-                    int amount = random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
-                    if (amount > 0) {
-                        ItemStack item = lootItem.createItemStack(random, effectNameCache, romanNumeralCache);
-                        if (item != null) {
-                            item.setAmount(amount);
-                            totalLoot.add(item);
-                        }
+                    successfulDrops++;
+                }
+            }
+
+            if (successfulDrops > 0) {
+                // Create item just once per loot type
+                ItemStack prototype = lootItem.createItemStack(random, effectNameCache, romanNumeralCache);
+                if (prototype != null) {
+                    // Total amount across all mobs
+                    int totalAmount = 0;
+                    for (int i = 0; i < successfulDrops; i++) {
+                        totalAmount += random.nextInt(lootItem.maxAmount - lootItem.minAmount + 1) + lootItem.minAmount;
+                    }
+
+                    if (totalAmount > 0) {
+                        // Add to consolidated map
+                        consolidatedLoot.merge(prototype, totalAmount, Integer::sum);
                     }
                 }
             }
         }
 
-        return new LootResult(totalLoot, totalExperience);
+        // Convert consolidated map to item stacks
+        List<ItemStack> finalLoot = new ArrayList<>(consolidatedLoot.size());
+        for (Map.Entry<ItemStack, Integer> entry : consolidatedLoot.entrySet()) {
+            ItemStack item = entry.getKey().clone();
+            item.setAmount(Math.min(entry.getValue(), item.getMaxStackSize()));
+            finalLoot.add(item);
+
+            // Handle amounts exceeding max stack size
+            int remaining = entry.getValue() - item.getMaxStackSize();
+            while (remaining > 0) {
+                ItemStack extraStack = item.clone();
+                extraStack.setAmount(Math.min(remaining, item.getMaxStackSize()));
+                finalLoot.add(extraStack);
+                remaining -= extraStack.getAmount();
+            }
+        }
+
+        return new LootResult(finalLoot, totalExperience);
     }
 
     public void spawnLootToSpawner(SpawnerData spawner) {
@@ -484,13 +517,15 @@ public class SpawnerLootGenerator {
     }
 
     private int calculateSlots(Map<VirtualInventory.ItemSignature, Long> items) {
-        int slots = 0;
-        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
-            long amount = entry.getValue();
-            int maxStackSize = entry.getKey().getTemplateRef().getMaxStackSize();
-            slots += (int) Math.ceil((double) amount / maxStackSize);
-        }
-        return slots;
+        // Use a more efficient calculation approach
+        return items.entrySet().stream()
+                .mapToInt(entry -> {
+                    long amount = entry.getValue();
+                    int maxStackSize = entry.getKey().getTemplateRef().getMaxStackSize();
+                    // Use integer division with ceiling function
+                    return (int) ((amount + maxStackSize - 1) / maxStackSize);
+                })
+                .sum();
     }
 
     private int calculateRequiredSlots(List<ItemStack> items, VirtualInventory inventory) {
