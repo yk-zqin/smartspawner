@@ -216,7 +216,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerStackerHandler, this);
 
         // Register shop integration listeners if available
-        if (isShopGUIPlusEnabled()) {
+        if (shopIntegrationManager.isShopGUIPlusEnabled()) {
             pm.registerEvents(new SpawnerHook(this), this);
         }
     }
@@ -334,10 +334,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (updateChecker != null) updateChecker.shutdown();
     }
 
-    public void runTaskAsync(Runnable runnable) {
-        Scheduler.runTaskAsync(runnable);
-    }
-
     @FunctionalInterface
     private interface PluginCheck {
         boolean check();
@@ -347,14 +343,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         return shopIntegrationManager.hasShopIntegration();
     }
 
-    public boolean isShopGUIPlusEnabled() {
-        return shopIntegrationManager.isShopGUIPlusEnabled();
-    }
-
     public IShopIntegration getShopIntegration() {
         return shopIntegrationManager.getShopIntegration();
     }
 
+    // Spawner Provider for ShopGUI+ integration
     public SpawnerProvider getSpawnerProvider() {
         return new SpawnerProvider(this);
     }

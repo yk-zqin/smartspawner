@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.hooks.shops.api.economyshopgui;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.hooks.shops.IShopIntegration;
@@ -323,7 +324,7 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     private void updateShopStats(Map<ShopItem, Integer> items, UUID playerUUID) {
-        plugin.runTaskAsync(() -> {
+        Scheduler.runTaskAsync(() -> {
             for (Map.Entry<ShopItem, Integer> entry : items.entrySet()) {
                 ShopItem item = entry.getKey();
                 int amount = entry.getValue();

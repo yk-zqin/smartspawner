@@ -8,6 +8,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class UpdateChecker implements Listener {
     private final SmartSpawner plugin;
     private final String projectId;
+    @Getter
     private String latestVersion;
     private boolean hasUpdate = false;
     private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/project/%s/version";
@@ -196,7 +198,6 @@ public class UpdateChecker implements Listener {
                     }
 
                     if (latestVer != null && latestVer.compareTo(currentVer) > 0) {
-                        plugin.getLogger().info("Found new version: Current=" + currentVer + ", Latest=" + latestVer);
                         hasUpdate = true;
                         return true;
                     }
@@ -263,7 +264,7 @@ public class UpdateChecker implements Listener {
 
         Component downloadButton = Component.text(downloadMsg)
                 .color(TextColor.fromHexString("#ADF3FD"))
-                .clickEvent(ClickEvent.openUrl(MODRINTH_PROJECT_URL + projectId))
+                .clickEvent(ClickEvent.openUrl(MODRINTH_PROJECT_URL + "smart-spawner-plugin"))
                 .hoverEvent(HoverEvent.showText(
                         Component.text(downloadHoverMsg)
                                 .color(TextColor.fromHexString("#ADF3FD"))
@@ -284,7 +285,4 @@ public class UpdateChecker implements Listener {
         return hasUpdate;
     }
 
-    public String getLatestVersion() {
-        return latestVersion;
-    }
 }

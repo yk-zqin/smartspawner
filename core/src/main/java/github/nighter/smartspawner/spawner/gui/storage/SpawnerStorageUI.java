@@ -70,6 +70,13 @@ public class SpawnerStorageUI {
                 Collections.emptyList()
         ));
 
+        // Create discard all button
+        staticButtons.put("discardAll", createButton(
+                Material.LAVA_BUCKET,
+                languageManager.getMessage("discard-all-button.name"),
+                Arrays.asList(languageManager.getMessage("discard-all-button.lore").split("\n"))
+        ));
+
         // Pre-create equipment toggle buttons
         equipmentToggleButtons.put(true, createEquipmentToggleButton(true));
         equipmentToggleButtons.put(false, createEquipmentToggleButton(false));
@@ -209,6 +216,7 @@ public class SpawnerStorageUI {
 
         // Add static buttons directly from cache
         updates.put(NAVIGATION_ROW * 9 + 8, staticButtons.get("return"));
+        updates.put(NAVIGATION_ROW * 9 + 7, staticButtons.get("discardAll"));
         updates.put(NAVIGATION_ROW * 9, staticButtons.get("takeAll"));
 
         // Add equipment toggle button if enabled

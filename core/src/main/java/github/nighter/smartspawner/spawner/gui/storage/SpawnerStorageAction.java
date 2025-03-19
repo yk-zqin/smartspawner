@@ -42,7 +42,7 @@ public class SpawnerStorageAction implements Listener {
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
-    private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 53);
+    private static final Set<Integer> CONTROL_SLOTS = Set.of(45, 46, 48, 49, 50, 52, 53);
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
@@ -103,6 +103,44 @@ public class SpawnerStorageAction implements Listener {
         }
     }
 
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getInventory().getHolder() instanceof StoragePageHolder) {
+            event.setCancelled(true);
+        }
+    }
+
+    private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
+                                        SpawnerData spawner, Inventory inventory) {
+        switch (slot) {
+            case 48:
+                if (holder.getCurrentPage() > 1) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, false);
+                }
+                break;
+            case 50:
+                if (holder.getCurrentPage() < holder.getTotalPages()) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, false);
+                }
+                break;
+            case 49:
+                handleSellAllItems(player, spawner, holder);
+                break;
+            case 52:
+                handleDiscardAllItems(player, spawner, inventory);
+                break;
+            case 53:
+                openMainMenu(player, spawner);
+                break;
+            case 45:
+                handleTakeAllItems(player, inventory);
+                break;
+            case 46:
+                handleToggleEquipment(player, spawner, inventory);
+                break;
+        }
+    }
+
     private void takeSingleItem(Player player, Inventory sourceInv, int slot, ItemStack item,
                                 SpawnerData spawner, boolean singleItem) {
         PlayerInventory playerInv = player.getInventory();
@@ -152,41 +190,6 @@ public class SpawnerStorageAction implements Listener {
         ItemStack remaining = item.clone();
         remaining.setAmount(item.getAmount() - amountMoved);
         sourceInv.setItem(slot, remaining);
-    }
-
-    @EventHandler
-    public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof StoragePageHolder) {
-            event.setCancelled(true);
-        }
-    }
-
-    private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
-                                        SpawnerData spawner, Inventory inventory) {
-        switch (slot) {
-            case 48:
-                if (holder.getCurrentPage() > 1) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, false);
-                }
-                break;
-            case 50:
-                if (holder.getCurrentPage() < holder.getTotalPages()) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, false);
-                }
-                break;
-            case 49:
-                handleSellAllItems(player, spawner, holder);
-                break;
-            case 53:
-                openMainMenu(player, spawner);
-                break;
-            case 45:
-                handleTakeAllItems(player, inventory);
-                break;
-            case 46:
-                handleToggleEquipment(player, spawner, inventory);
-                break;
-        }
     }
 
     private void updatePageContent(Player player, SpawnerData spawner, int newPage, Inventory inventory, boolean refresh) {
@@ -294,6 +297,70 @@ public class SpawnerStorageAction implements Listener {
             StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
             updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
         }
+    }
+
+    private void handleDiscardAllItems(Player player, SpawnerData spawner, Inventory inventory) {
+        if (isClickTooFrequent(player)) {
+            return;
+        }
+        // Get the virtual inventory
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+
+        // Check if there are items to discard
+        if (virtualInv.getUsedSlots() == 0) {
+            languageManager.sendMessage(player, "messages.no-items-to-discard");
+            return;
+        }
+
+        // Count the total items being discarded for the message
+        long totalItems = virtualInv.getTotalItems();
+
+        // Clear all items from the virtual inventory
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
+        List<ItemStack> itemsToRemove = new ArrayList<>();
+
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
+
+            // Handle stacks efficiently by creating appropriate sized stacks
+            while (amount > 0) {
+                ItemStack stack = template.clone();
+                int stackSize = (int) Math.min(amount, template.getMaxStackSize());
+                stack.setAmount(stackSize);
+                itemsToRemove.add(stack);
+                amount -= stackSize;
+            }
+        }
+
+        // Remove all items at once
+        virtualInv.removeItems(itemsToRemove);
+
+        // Get the holder for updating
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        int oldTotalPages = calculateTotalPages(spawner);
+
+        // Update the spawner state
+        spawner.updateHologramData();
+        if (spawner.isAtCapacity()) {
+            spawner.setAtCapacity(false);
+        }
+
+        // Update the holder
+        int newTotalPages = calculateTotalPages(spawner);
+        holder.setTotalPages(newTotalPages);
+        holder.setCurrentPage(1); // Reset to first page after discarding all
+        holder.updateOldUsedSlots();
+
+        // Update all viewers
+        spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+
+        // Update the current inventory view
+        updatePageContent(player, spawner, 1, inventory, true);
+
+        // Send a confirmation message
+        languageManager.sendMessage(player, "messages.discard-all-success",
+                "%amount%", languageManager.formatNumberTenThousand(totalItems));
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {

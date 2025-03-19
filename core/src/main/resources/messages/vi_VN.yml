@@ -285,7 +285,7 @@ messages:
     sound: block.note_block.pling
 
   #---------------------------------------------------
-  # Tương tác với kho chứa
+  # Tương tác với kho chứa (Spawner Storage Interaction)
   #---------------------------------------------------
   no-items-to-take:
     message: "&cKhông có vật phẩm để lấy!"
@@ -309,6 +309,18 @@ messages:
     prefix: true
     type: CHAT
     sound: block.note_block.chime
+
+  discard-all-success:
+    message: "&#ff6b6bĐã hủy bỏ &f%amount% &#ff6b6bvật phẩm!"
+    prefix: true
+    type: CHAT
+    sound: entity.generic.burn
+
+  no-items-to-discard:
+    message: "&cKhông có vật phẩm để loại bỏ!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
 
   #---------------------------------------------------
   # Tin nhắn khi dịch chuyển bằng lệnh /ss list
@@ -449,6 +461,11 @@ equipment-toggle:
       &#f4d842&l➥ &7Trạng thái: &#00E689&lCho phép
     disabled: |
       &#f4d842&l➥ &7Trạng thái: &#ff6b6b&lChặn
+
+discard-all-button:
+  name: "&#ff6b6b&l❖ &fHủy Tất Cả Vật Phẩm"
+  lore: |
+    &#ff6b6b&l➥ &7Nhấn để&#ff6b6b xóa&7 tất cả vật phẩm
 
 #---------------------------------------------------
 # Giao diện danh sách Spawner (Lệnh)

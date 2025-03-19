@@ -310,6 +310,18 @@ messages:
     type: CHAT
     sound: block.note_block.chime
 
+  discard-all-success:
+    message: "&#ff6b6bDiscarded &f%amount% &#ff6b6bitems!"
+    prefix: true
+    type: CHAT
+    sound: entity.generic.burn
+
+  no-items-to-discard:
+    message: "&cThere are no items to discard!"
+    prefix: true
+    type: CHAT
+    sound: block.note_block.pling
+
   #---------------------------------------------------
   # Spawner List Teleport Message
   #---------------------------------------------------
@@ -450,6 +462,10 @@ equipment-toggle:
     disabled: |
       &#f4d842&l➥ &7Status: &#ff6b6b&lBlocked
 
+discard-all-button:
+  name: "&#ff6b6b&l❖ &fDiscard All Items"
+  lore: |
+    &#ff6b6b&l➥ &7Click to&#ff6b6b remove&7 all items
 
 #---------------------------------------------------
 # Spawner List GUI (Command)

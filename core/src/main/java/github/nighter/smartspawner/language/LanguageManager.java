@@ -271,7 +271,10 @@ public class LanguageManager {
         put("messages.no-exp.type", "CHAT");
         put("messages.no-exp.sound", "block.note_block.pling");
 
-        // Spawner Storage Interaction
+        // ---------------------------------------------------
+        //               Spawner Storage Interaction
+        // ---------------------------------------------------
+
         put("messages.no-items-to-take.message", "&cThere are no items to take!");
         put("messages.no-items-to-take.prefix", true);
         put("messages.no-items-to-take.type", "CHAT");
@@ -285,6 +288,17 @@ public class LanguageManager {
         put("messages.take-some-items.message", "&#d6e7edYou have taken &3287A9%amount%&d6e7ed items! Your inventory is now full!");
         put("messages.take-some-items.prefix", true);
         put("messages.take-some-items.type", "CHAT");
+
+        // Discard Messages
+        put("messages.discard-all-success.message", "&#ff6b6bDiscarded &f%amount% &#ff6b6bitems!");
+        put("messages.discard-all-success.prefix", true);
+        put("messages.discard-all-success.type", "CHAT");
+        put("messages.discard-all-success.sound", "entity.generic.burn");
+
+        put("messages.no-items-to-discard.message", "&cThere are no items to discard!");
+        put("messages.no-items-to-discard.prefix", true);
+        put("messages.no-items-to-discard.type", "CHAT");
+        put("messages.no-items-to-discard.sound", "block.note_block.pling");
 
         put("messages.take-all-items.message", "&#d6e7edSuccessfully taken &3287A9%amount%&d6e7ed items!");
         put("messages.take-all-items.prefix", true);
@@ -416,6 +430,10 @@ public class LanguageManager {
         put("equipment-toggle.name", "&#f4d842&l❖ &fFilter Equipment Drops");
         put("equipment-toggle.lore.enabled", "&#f4d842&l➥ &7Status: &#00E689&lAllowed");
         put("equipment-toggle.lore.disabled", "&#f4d842&l➥ &7Status: &#ff6b6b&lBlocked");
+
+        // Discard All Button
+        put("discard-all-button.name", "&#ff6b6b&l❖ &fDiscard All Items");
+        put("discard-all-button.lore", "&#ff6b6b&l➥ &7Click to&#ff6b6b remove&7 all items");
 
         // ---------------------------------------------------
         //                    Commands
