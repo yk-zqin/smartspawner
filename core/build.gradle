@@ -25,6 +25,7 @@ dependencies {
 
     // BStats
     implementation 'org.bstats:bstats-bukkit:3.1.0'
+
     // Guava
     implementation 'com.google.guava:guava:32.1.3-jre'
 }

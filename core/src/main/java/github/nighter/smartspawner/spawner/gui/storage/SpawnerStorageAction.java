@@ -13,6 +13,7 @@ import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -23,10 +24,12 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.event.inventory.InventoryAction;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +49,9 @@ public class SpawnerStorageAction implements Listener {
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
+
+    // Track currently selected slot for drop functionality
+    private final Map<UUID, SelectedItemInfo> selectedItems = new ConcurrentHashMap<>();
 
     // Anti spam click properties
     private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
@@ -77,18 +83,38 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
-        event.setCancelled(true);
-
         Player player = (Player) event.getWhoClicked();
         StoragePageHolder holder = (StoragePageHolder) event.getInventory().getHolder();
+        SpawnerData spawner = holder.getSpawnerData();
         int slot = event.getRawSlot();
+
+        // Handle drop actions specifically (Q key press)
+        if (event.getAction() == InventoryAction.DROP_ONE_SLOT ||
+                event.getAction() == InventoryAction.DROP_ALL_SLOT) {
+
+            if (slot >= 0 && slot < STORAGE_SLOTS) {
+                ItemStack clickedItem = event.getCurrentItem();
+                if (clickedItem != null && clickedItem.getType() != Material.AIR) {
+                    // Don't cancel the event yet
+                    event.setCancelled(true);
+
+                    // Handle the drop based on whether it's drop all or drop one
+                    boolean dropStack = event.getAction() == InventoryAction.DROP_ALL_SLOT;
+                    handleItemDrop(player, spawner, event.getInventory(), slot, clickedItem, dropStack);
+                    return;
+                }
+            }
+        }
+
+        // For all other actions, cancel and handle custom behavior
+        event.setCancelled(true);
 
         if (slot < 0 || slot >= INVENTORY_SIZE) {
             return;
         }
 
         if (CONTROL_SLOTS.contains(slot)) {
-            handleControlSlotClick(player, slot, holder, holder.getSpawnerData(), event.getInventory());
+            handleControlSlotClick(player, slot, holder, spawner, event.getInventory());
             return;
         }
 
@@ -99,7 +125,7 @@ public class SpawnerStorageAction implements Listener {
 
         ItemClickHandler handler = clickHandlers.get(event.getClick());
         if (handler != null) {
-            handler.handle(player, event.getInventory(), slot, clickedItem, holder.getSpawnerData());
+            handler.handle(player, event.getInventory(), slot, clickedItem, spawner);
         }
     }
 
@@ -109,6 +135,63 @@ public class SpawnerStorageAction implements Listener {
             event.setCancelled(true);
         }
     }
+
+    private void handleItemDrop(Player player, SpawnerData spawner, Inventory inventory,
+                                int slot, ItemStack item, boolean dropStack) {
+        // Determine amount to drop
+        int amountToDrop = dropStack ? item.getAmount() : 1;
+
+        // Create the item to drop
+        ItemStack droppedItem = item.clone();
+        droppedItem.setAmount(Math.min(amountToDrop, item.getAmount()));
+
+        // Update the virtual inventory
+        VirtualInventory virtualInv = spawner.getVirtualInventory();
+        List<ItemStack> itemsToRemove = new ArrayList<>();
+        itemsToRemove.add(droppedItem);
+        virtualInv.removeItems(itemsToRemove);
+
+        // Update the displayed inventory
+        int remaining = item.getAmount() - amountToDrop;
+        if (remaining <= 0) {
+            inventory.setItem(slot, null);
+        } else {
+            ItemStack remainingItem = item.clone();
+            remainingItem.setAmount(remaining);
+            inventory.setItem(slot, remainingItem);
+        }
+        // Most performant - just offset in the rough direction they're facing
+        Location dropLocation = player.getLocation().clone();
+
+        // Add a small offset in the direction of their yaw
+        double yaw = Math.toRadians(player.getLocation().getYaw());
+        dropLocation.add(-Math.sin(yaw) * 1.8, 0.1, Math.cos(yaw) * 1.8);
+
+        // Drop the item at the calculated location instead of directly on the player
+        player.getWorld().dropItem(dropLocation, droppedItem);
+        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
+
+        // Update hologram and capacity state
+        int oldTotalPages = calculateTotalPages(spawner);
+        spawner.updateHologramData();
+
+        // Synchronize total pages after item removal
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        if (holder != null) {
+            int newTotalPages = calculateTotalPages(spawner);
+            if (newTotalPages != holder.getTotalPages()) {
+                holder.setTotalPages(newTotalPages);
+            }
+            holder.updateOldUsedSlots();
+            spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+
+            // Check if spawner is at capacity and update if necessary
+            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
+                spawner.setAtCapacity(false);
+            }
+        }
+    }
+
 
     private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
                                         SpawnerData spawner, Inventory inventory) {
@@ -279,7 +362,9 @@ public class SpawnerStorageAction implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        lastItemClickTime.remove(event.getPlayer().getUniqueId());
+        UUID playerId = event.getPlayer().getUniqueId();
+        lastItemClickTime.remove(playerId);
+        selectedItems.remove(playerId);
     }
 
     private void openMainMenu(Player player, SpawnerData spawner) {
@@ -542,9 +627,13 @@ public class SpawnerStorageAction implements Listener {
 
         if (event.getPlayer() instanceof Player) {
             Player player = (Player) event.getPlayer();
-            openStorageInventories.remove(player.getUniqueId());
+            UUID playerId = player.getUniqueId();
+            openStorageInventories.remove(playerId);
+            selectedItems.remove(playerId);
         }
     }
 
     private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
+
+    private record SelectedItemInfo(SpawnerData spawnerData, Inventory inventory, int slot, ItemStack item) {}
 }
