@@ -39,7 +39,7 @@ public class SpawnerMenuUI {
      */
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.languageManager = plugin.getLanguageManager();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         //this.spawnerMenuFormUI = new SpawnerMenuFormUI(plugin);
     }
 

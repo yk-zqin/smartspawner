@@ -69,7 +69,7 @@ public class SpawnerMenuAction implements Listener {
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStackerUI = plugin.getSpawnerStackerUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
     }
 
     /**

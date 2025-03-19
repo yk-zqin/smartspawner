@@ -2,6 +2,7 @@ dependencies {
     api project(':api')
 
     compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    // Hook plugins
     compileOnly 'org.geysermc.floodgate:api:2.2.4-SNAPSHOT'
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.13-SNAPSHOT'
     compileOnly 'com.sk89q.worldedit:worldedit-bukkit:7.4.0-SNAPSHOT'
@@ -9,14 +10,23 @@ dependencies {
     compileOnly 'com.palmergames.bukkit.towny:towny:0.101.1.6'
     compileOnly 'com.bgsoftware:SuperiorSkyblockAPI:2024.4'
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
-    implementation 'org.bstats:bstats-bukkit:3.1.0'
-    implementation 'net.kyori:adventure-api:4.19.0'
-    implementation 'net.kyori:adventure-text-minimessage:4.19.0'
-    implementation 'com.google.guava:guava:32.1.3-jre'
-    implementation 'com.github.Gypopo:EconomyShopGUI-API:1.7.3'
+    compileOnly 'com.github.Gypopo:EconomyShopGUI-API:1.7.3'
     implementation 'com.github.maiminhdung:zShop-API:9cb1b3e140'
     implementation 'com.github.GriefPrevention:GriefPrevention:17.0.0'
     implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
+
+    // Adventure API
+    implementation 'net.kyori:adventure-api:4.19.0'
+    implementation 'net.kyori:adventure-text-minimessage:4.19.0'
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
+
+    // BStats
+    implementation 'org.bstats:bstats-bukkit:3.1.0'
+    // Guava
+    implementation 'com.google.guava:guava:32.1.3-jre'
 }
 
 jar {
@@ -27,7 +37,7 @@ jar {
     from { project(':v1_20').sourceSets.main.output }
     from { project(':v1_21').sourceSets.main.output }
 
-    //destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Folia\\plugins\\')
+    //destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Paper\\plugins\\')
     from sourceSets.main.output
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

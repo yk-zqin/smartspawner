@@ -57,7 +57,7 @@ public class SpawnerStorageAction implements Listener {
         this.clickHandlers = initializeClickHandlers();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.spawnerMenuAction = plugin.getSpawnerMenuAction();
     }
 

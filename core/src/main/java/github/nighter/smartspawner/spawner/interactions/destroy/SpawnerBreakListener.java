@@ -126,7 +126,7 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        plugin.getSpawnerGuiManager().closeAllViewersInventory(spawner);
+        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
 
         // Process drops optimally based on stack size
         SpawnerBreakResult result = processDrops(location, spawner);

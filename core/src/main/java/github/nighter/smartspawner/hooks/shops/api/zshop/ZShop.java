@@ -41,7 +41,7 @@ public class ZShop implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         setupVaultEconomy();
     }
 

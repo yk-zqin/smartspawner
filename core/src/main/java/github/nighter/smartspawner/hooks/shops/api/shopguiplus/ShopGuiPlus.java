@@ -42,7 +42,7 @@ public class ShopGuiPlus implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.isLoggingEnabled = configManager.getBoolean("logging-enabled");
     }
 

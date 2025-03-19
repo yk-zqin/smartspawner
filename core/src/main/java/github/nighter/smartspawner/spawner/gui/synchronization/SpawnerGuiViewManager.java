@@ -26,6 +26,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -350,31 +351,53 @@ public class SpawnerGuiViewManager implements Listener {
             return -1;
         }
 
-        // Cache spawn delay calculation
-        if (spawner.getCachedSpawnDelay() == 0) {
-            spawner.setCachedSpawnDelay(spawner.getSpawnDelay() * 50L);
+        // Cache spawn delay calculation outside of lock
+        long cachedDelay = spawner.getCachedSpawnDelay();
+        if (cachedDelay == 0) {
+            cachedDelay = spawner.getSpawnDelay() * 50L;
+            spawner.setCachedSpawnDelay(cachedDelay);
         }
 
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
-        long cachedDelay = spawner.getCachedSpawnDelay();
         long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+
+        // If time is negative, handle it carefully with proper locking
         if (timeUntilNextSpawn < 0) {
-            spawner.getLock().lock();
             try {
-                if (System.currentTimeMillis() - spawner.getLastSpawnTime() > cachedDelay) {
-                    spawner.setLastSpawnTime(currentTime - cachedDelay);
-                    plugin.getRangeChecker().activateSpawner(spawner);
-                    return 0;
+                // Try to acquire lock with timeout to prevent deadlock
+                if (spawner.getLock().tryLock(100, TimeUnit.MILLISECONDS)) {
+                    try {
+                        // Re-check conditions after acquiring lock
+                        currentTime = System.currentTimeMillis();
+                        lastSpawnTime = spawner.getLastSpawnTime();
+                        timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+
+                        if (timeUntilNextSpawn < 0) {
+                            spawner.setLastSpawnTime(currentTime - cachedDelay);
+
+                            // Schedule activation on appropriate thread for Folia compatibility
+                            Scheduler.runTask(() -> {
+                                plugin.getRangeChecker().activateSpawner(spawner);
+                            });
+                            return 0;
+                        }
+                    } finally {
+                        spawner.getLock().unlock();
+                    }
+                } else {
+                    // If can't acquire lock, just return current calculation without modifying state
+                    return Math.max(0, timeUntilNextSpawn) ;
                 }
-            } finally {
-                spawner.getLock().unlock();
+            } catch (InterruptedException e) {
+                // Handle interruption
+                Thread.currentThread().interrupt();
+                return Math.max(0, timeUntilNextSpawn);
             }
         }
 
         return timeUntilNextSpawn;
     }
-
 
     private String formatTime(long milliseconds) {
         if (milliseconds <= 0) {

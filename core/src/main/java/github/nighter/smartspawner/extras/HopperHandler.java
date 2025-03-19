@@ -41,7 +41,7 @@ public class HopperHandler implements Listener {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.languageManager = plugin.getLanguageManager();
         this.configManager = plugin.getConfigManager();
 

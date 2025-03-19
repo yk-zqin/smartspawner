@@ -36,6 +36,9 @@ import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.utils.UpdateChecker;
 import github.nighter.smartspawner.nms.VersionInitializer;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import org.bukkit.Bukkit;
@@ -47,13 +50,10 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
-/**
- * Main class for the SmartSpawner plugin.
- * Handles initialization, dependencies, and manages the lifecycle of the plugin.
- *
- */
-public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
-    // Singleton instance
+@Getter
+@Accessors(chain = false)
+public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
+    @Getter
     private static SmartSpawner instance;
 
     // Core UI components
@@ -99,10 +99,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
 
-    /**
-     * Called when the plugin is enabled.
-     * Initializes all components, checks dependencies, and registers listeners.
-     */
     @Override
     public void onEnable() {
         long startTime = System.currentTimeMillis();
@@ -129,17 +125,11 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         });
     }
 
-    /**
-     * Get the API implementation for other plugins to use
-     */
     @Override
     public SmartSpawnerAPI getAPI() {
         return apiImpl;
     }
 
-    /**
-     * Initializes version-specific components using the dedicated initializer class.
-     */
     private void initializeVersionComponents() {
         try {
             new VersionInitializer(this).initialize();
@@ -149,9 +139,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         }
     }
 
-    /**
-     * Checks for and performs data migration if needed.
-     */
     private void migrateDataIfNeeded() {
         SpawnerDataMigration migration = new SpawnerDataMigration(this);
         if (migration.checkAndMigrateData()) {
@@ -159,11 +146,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         }
     }
 
-    /**
-     * Initializes all plugin components with appropriate async operations.
-     *
-     * @return CompletableFuture that completes when initialization is done
-     */
     private CompletableFuture<Void> initializeComponents() {
         // Initialize core components in order
         this.configManager = new ConfigManager(this);
@@ -214,20 +196,10 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         );
     }
 
-    /**
-     * Sets up the hopper handler if enabled in the config.
-     */
     public void setUpHopperHandler() {
-        if (configManager.getBoolean("hopper-enabled")) {
-            this.hopperHandler = new HopperHandler(this);
-        } else {
-            this.hopperHandler = null;
-        }
+        this.hopperHandler = configManager.getBoolean("hopper-enabled") ? new HopperHandler(this) : null;
     }
 
-    /**
-     * Registers all event listeners.
-     */
     private void registerListeners() {
         PluginManager pm = getServer().getPluginManager();
 
@@ -249,18 +221,12 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         }
     }
 
-    /**
-     * Sets up and registers plugin commands.
-     */
     private void setupCommand() {
         CommandHandler commandHandler = new CommandHandler(this);
         Objects.requireNonNull(getCommand("smartspawner")).setExecutor(commandHandler);
         Objects.requireNonNull(getCommand("smartspawner")).setTabCompleter(commandHandler);
     }
 
-    /**
-     * Sets up bStats metrics for plugin usage tracking.
-     */
     private void setupBtatsMetrics() {
         Scheduler.runTask(() -> {
             Metrics metrics = new Metrics(this, 24822);
@@ -269,18 +235,12 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         });
     }
 
-    /**
-     * Initializes the sale logging system if enabled in config.
-     */
     private void initializeSaleLogging() {
         if (configManager.getBoolean("logging-enabled")) {
             SaleLogger.getInstance();
         }
     }
 
-    /**
-     * Checks and initializes all plugin dependencies and integrations.
-     */
     private void checkDependencies() {
         // Run protection plugin checks using Scheduler
         Scheduler.runTaskAsync(this::checkProtectionPlugins);
@@ -289,10 +249,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         shopIntegrationManager.initialize();
     }
 
-
-    /**
-     * Checks for protection plugin integrations.
-     */
     private void checkProtectionPlugins() {
         hasWorldGuard = checkPlugin("WorldGuard", () -> {
             try {
@@ -330,14 +286,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
                 Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2") != null, true);
     }
 
-    /**
-     * Checks if a plugin is available and functional.
-     *
-     * @param pluginName The name of the plugin to check
-     * @param checker A function that checks if the plugin is properly loaded
-     * @param logSuccess Whether to log successful integration
-     * @return true if the plugin is available and functional
-     */
     private boolean checkPlugin(String pluginName, PluginCheck checker, boolean logSuccess) {
         try {
             if (checker.check()) {
@@ -352,10 +300,6 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         return false;
     }
 
-    /**
-     * Called when the plugin is disabled.
-     * Saves data and cleans up resources.
-     */
     @Override
     public void onDisable() {
         saveAndCleanup();
@@ -364,20 +308,13 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         getLogger().info("SmartSpawner has been disabled!");
     }
 
-    /**
-     * Shuts down the sale logger if it was enabled.
-     */
     private void shutdownSaleLogger() {
         if (configManager != null && configManager.getBoolean("logging-enabled")) {
             SaleLogger.getInstance().shutdown();
         }
     }
 
-    /**
-     * Saves all data and cleans up resources.
-     */
     private void saveAndCleanup() {
-        // Save spawner data directly without using scheduler during shutdown
         if (spawnerManager != null) {
             try {
                 spawnerManager.saveSpawnerData();
@@ -387,7 +324,7 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
             }
         }
 
-        // Clean up other resources directly without scheduling
+        // Clean up resources
         if (rangeChecker != null) rangeChecker.cleanup();
         if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();
@@ -397,112 +334,27 @@ public class SmartSpawner extends JavaPlugin  implements SmartSpawnerPlugin {
         if (updateChecker != null) updateChecker.shutdown();
     }
 
-    /**
-     * Runs a task asynchronously.
-     *
-     * @param runnable The task to run
-     */
     public void runTaskAsync(Runnable runnable) {
         Scheduler.runTaskAsync(runnable);
     }
 
-    /**
-     * Functional interface for plugin availability checks.
-     */
     @FunctionalInterface
     private interface PluginCheck {
         boolean check();
     }
 
-    // Getters
-
-    public static SmartSpawner getInstance() {
-        return instance;
+    public boolean hasShopIntegration() {
+        return shopIntegrationManager.hasShopIntegration();
     }
 
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public LanguageManager getLanguageManager() {
-        return languageManager;
-    }
-
-    public SpawnerMenuUI getSpawnerMenuUI() {
-        return spawnerMenuUI;
-    }
-
-    public SpawnerMenuAction getSpawnerMenuAction() {
-        return spawnerMenuAction;
-    }
-
-    public SpawnerGuiViewManager getSpawnerGuiManager() {
-        return spawnerGuiViewManager;
-    }
-
-    public SpawnEggHandler getSpawnEggHandler() {
-        return spawnEggHandler;
-    }
-
-    public SpawnerStackerUI getSpawnerStackerUI() {
-        return spawnerStackerUI;
-    }
-
-    public SpawnerStackerHandler getSpawnerStackerHandler() {
-        return spawnerStackerHandler;
-    }
-
-    public SpawnerStorageUI getSpawnerStorageUI() {
-        return spawnerStorageUI;
-    }
-
-    public SpawnerLootGenerator getSpawnerLootGenerator() {
-        return spawnerLootGenerator;
-    }
-
-    public SpawnerManager getSpawnerManager() {
-        return spawnerManager;
-    }
-
-    public SpawnerRangeChecker getRangeChecker() {
-        return rangeChecker;
-    }
-
-    public SpawnerStackHandler getSpawnerStackHandler() {
-        return spawnerStackHandler;
-    }
-
-    public HopperHandler getHopperHandler() {
-        return hopperHandler;
+    public boolean isShopGUIPlusEnabled() {
+        return shopIntegrationManager.isShopGUIPlusEnabled();
     }
 
     public IShopIntegration getShopIntegration() {
         return shopIntegrationManager.getShopIntegration();
     }
 
-    /**
-     * Checks if any shop integration is available.
-     *
-     * @return true if a shop integration is available
-     */
-    public boolean hasShopIntegration() {
-        return shopIntegrationManager.hasShopIntegration();
-    }
-
-    /**
-     * Checks if ShopGUIPlus integration is enabled.
-     *
-     * @return true if ShopGUIPlus integration is enabled
-     */
-    public boolean isShopGUIPlusEnabled() {
-        return shopIntegrationManager.isShopGUIPlusEnabled();
-    }
-
-    /**
-     * Gets the spawner provider for shop integrations.
-     *
-     * @return A new SpawnerProvider instance
-     */
     public SpawnerProvider getSpawnerProvider() {
         return new SpawnerProvider(this);
     }

@@ -40,7 +40,7 @@ public class SpawnerLootGenerator {
 
     public SpawnerLootGenerator(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiManager();
+        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.configManager = plugin.getConfigManager();
         this.random = new Random();
