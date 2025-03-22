@@ -20,7 +20,7 @@ Enhances spawner usage with an intuitive GUI, enabling automated mob drops and e
 
 ### System Requirements
 
-- **Server**: Bukkit, Paper, or compatible forks
+- **Server**: Paper, Folia or compatible forks
 - **Minecraft Version**: 1.20 - 1.21.4
 - **Java**: Java 21 or newer
 
