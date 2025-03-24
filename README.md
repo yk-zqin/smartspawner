@@ -1,15 +1,15 @@
 <div align="center">
 
-# Smart Spawner
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/05e5f050-b661-40ed-a400-bcb7eea07430" alt="GUI Spawner Plugin for Minecraft Servers" />
 
-### Ultimate GUI Spawner Plugin for Minecraft Servers
+<br>
+
+Enhances spawner usage with an intuitive GUI, enabling automated mob drops and experience generation without spawning entities.
 
 [![Version](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?color=4B32C3&logo=github&style=for-the-badge)](https://github.com/ptthanh02/Smart-Spawner-Plugin/releases/latest)
 [![Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?style=for-the-badge&logo=modrinth&logoColor=white&label=Downloads&color=00AF5C)](https://modrinth.com/plugin/smart-spawner-plugin)
 [![Rating](https://img.shields.io/spiget/rating/120743?style=for-the-badge&logo=spigotmc&logoColor=white&label=Spigot&color=FF8800)](https://www.spigotmc.org/resources/120743/)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-7289DA?style=for-the-badge&logo=creative-commons&logoColor=white)](LICENSE)
-
-Enhances spawner usage with an intuitive GUI, enabling automated mob drops and experience generation without spawning entities.
 
 [<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/modrinth_vector.svg" height="50">](https://modrinth.com/plugin/smart-spawner-plugin)
 [<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/supported/spigot_vector.svg" height="50">](https://www.spigotmc.org/resources/120743/)
@@ -58,7 +58,7 @@ Enhances spawner usage with an intuitive GUI, enabling automated mob drops and e
 | Language | Locale Code | Contributor                                     | Version  |
 |----------|-------------|-------------------------------------------------|----------|
 | [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Core language                                   | `Latest` |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | Ptthanh02                                       | `Latest` |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | ptthanh02                                       | `Latest` |
 | [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
 
 > 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
@@ -100,13 +100,3 @@ We welcome contributions! Here's how you can help:
 ## 📜 License
 
 This project is licensed under the **CC BY-NC-SA 4.0 License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-**Created with ❤️ by Ptthanh02 & Contributors**
-
-[Website](https://github.com/ptthanh02/Smart-Spawner-Plugin) • [Documentation](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki) • [Support](https://discord.gg/zrnyG4CuuT)
-
-</div>
