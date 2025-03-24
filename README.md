@@ -1,20 +1,23 @@
 <div align="center">
-
+  
+<br>
+  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/05e5f050-b661-40ed-a400-bcb7eea07430" alt="GUI Spawner Plugin for Minecraft Servers" />
 
 <br>
 
-Enhances spawner usage with an intuitive GUI, enabling automated mob drops and experience generation without spawning entities.
+[![Release](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?logo=github&logoColor=white&label=release&labelColor=%230D597F&color=%23116BBF)](https://github.com/ptthanh02/Smart-Spawner-Plugin/releases/latest)
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?logo=modrinth&logoColor=white&label=downloads&labelColor=%23139549&color=%2318c25f)](https://modrinth.com/plugin/smart-spawner-plugin)
+[![Spigot Downloads](https://img.shields.io/spiget/downloads/120743?logo=spigotmc&logoColor=white&label=spigot%20downloads&labelColor=%23ED8106&color=%23FF994C)](https://www.spigotmc.org/resources/smart-spawner-gui-spawner-plugin%E2%9C%A8-1-21-1-21-3-%EF%B8%8F.120743/)
+[![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-brightgreen.svg)](LICENSE)
 
-[![Version](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?color=4B32C3&logo=github&style=for-the-badge)](https://github.com/ptthanh02/Smart-Spawner-Plugin/releases/latest)
-[![Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?style=for-the-badge&logo=modrinth&logoColor=white&label=Downloads&color=00AF5C)](https://modrinth.com/plugin/smart-spawner-plugin)
-[![Rating](https://img.shields.io/spiget/rating/120743?style=for-the-badge&logo=spigotmc&logoColor=white&label=Spigot&color=FF8800)](https://www.spigotmc.org/resources/120743/)
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-7289DA?style=for-the-badge&logo=creative-commons&logoColor=white)](LICENSE)
-
-[<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/available/modrinth_vector.svg" height="50">](https://modrinth.com/plugin/smart-spawner-plugin)
-[<img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/supported/spigot_vector.svg" height="50">](https://www.spigotmc.org/resources/120743/)
+[![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/modrinth_vector.svg)](https://modrinth.com/plugin/smart-spawner-plugin)
+[![Spigot](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/spigot_vector.svg)](https://www.spigotmc.org/resources/120743/)
+[![Hangar](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/hangar_vector.svg)](https://hangar.papermc.io/ptthanh02/SmartSpawner)
 
 </div>
+
+<br>
 
 ## 🚀 Getting Started
 
