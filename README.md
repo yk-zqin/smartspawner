@@ -58,11 +58,11 @@
 
 ## 🌍 Translations
 
-| Language | Locale Code | Contributor                                     | Version  |
-|----------|-------------|-------------------------------------------------|----------|
-| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US` | Core language                                   | `Latest` |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` | ptthanh02                                       | `Latest` |
-| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
+| Language | Locale Code          | Contributor                                     | Version  |
+|----------|----------------------|-------------------------------------------------|----------|
+| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US`              | Core language                                   | `Latest` |
+| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN` (deprecated) | ptthanh02                                       | `v1.2.7` |
+| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` (deprecated)             | [SnowCutieOwO](https://github.com/SnowCutieOwO) | `v1.2.3` |
 
 > 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
 
