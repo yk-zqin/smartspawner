@@ -16,8 +16,8 @@ dependencies {
     implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
 
     // Lombok
-    compileOnly("org.projectlombok:lombok:1.18.36")
-    annotationProcessor("org.projectlombok:lombok:1.18.36")
+    compileOnly("org.projectlombok:lombok:1.18.38")
+    annotationProcessor("org.projectlombok:lombok:1.18.38")
 
     // BStats
     implementation 'org.bstats:bstats-bukkit:3.1.0'
