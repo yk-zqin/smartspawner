@@ -16,11 +16,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Manages the user interface for spawner menu interactions.
- */
 public class SpawnerMenuUI {
     private static final int INVENTORY_SIZE = 27;
     private static final int CHEST_SLOT = 11;
@@ -28,35 +27,18 @@ public class SpawnerMenuUI {
     private static final int EXP_SLOT = 15;
     private static final int TICKS_PER_SECOND = 20;
 
-    private final LanguageManager languageManager;
+    private final SmartSpawner plugin;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
-    //private final SpawnerMenuFormUI spawnerMenuFormUI;
+    private final LanguageManager languageManager;
 
-    /**
-     * Constructs the SpawnerMenuUI.
-     *
-     * @param plugin The main plugin instance
-     */
     public SpawnerMenuUI(SmartSpawner plugin) {
-        this.languageManager = plugin.getLanguageManager();
+        this.plugin = plugin;
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
-        //this.spawnerMenuFormUI = new SpawnerMenuFormUI(plugin);
+        this.languageManager = plugin.getLanguageManager();
     }
 
-    /**
-     * Opens the spawner menu for a player.
-     *
-     * @param player The player to open the menu for
-     * @param spawner The spawner data to display
-     * @param refresh Whether this is a menu refresh (suppresses sound effects)
-     */
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
-//        if (SpawnerMenuFormUI.isBedrockPlayer(player)) {
-//            spawnerMenuFormUI.openSpawnerForm(player, spawner);
-//            return;
-//        }
-
-        Inventory menu = createMenu(player, spawner);
+        Inventory menu = createMenu(spawner);
 
         // Populate menu items
         menu.setItem(CHEST_SLOT, createLootStorageItem(spawner));
@@ -65,140 +47,119 @@ public class SpawnerMenuUI {
 
         // Open inventory and play sound if not refreshing
         player.openInventory(menu);
+
         if (!refresh) {
             player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
         }
-        if (spawner.isAtCapacity()){
+
+        if (spawner.getIsAtCapacity()) {
             spawnerGuiViewManager.updateSpawnerGuiInfo(player, spawner, false);
         }
     }
 
-    /**
-     * Creates the spawner menu inventory with appropriate title.
-     *
-     * @param player The player to create the menu for
-     * @param spawner The spawner data
-     * @return The created inventory
-     */
-    private Inventory createMenu(Player player, SpawnerData spawner) {
+    private Inventory createMenu(SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        String title;
+        String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
 
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", entityName);
+        placeholders.put("ᴇɴᴛɪᴛʏ", entityNameSmallCaps);
+        placeholders.put("amount", String.valueOf(spawner.getStackSize()));
+
+        String title;
         if (spawner.getStackSize() > 1) {
-            title = languageManager.getGuiTitle("gui-title.stacked-menu",
-                    "%amount%", String.valueOf(spawner.getStackSize()),
-                    "%entity%", entityName);
+            title = languageManager.getGuiTitle("gui_title_main.stacked_spawner", placeholders);
         } else {
-            title = languageManager.getGuiTitle("gui-title.menu",
-                    "%entity%", entityName);
+            title = languageManager.getGuiTitle("gui_title_main.single_spawner", placeholders);
         }
 
         return Bukkit.createInventory(new SpawnerMenuHolder(spawner), INVENTORY_SIZE, title);
     }
 
-    /**
-     * Creates the loot storage chest item with usage statistics.
-     *
-     * @param spawner The spawner data
-     * @return The configured chest item
-     */
     private ItemStack createLootStorageItem(SpawnerData spawner) {
         ItemStack chestItem = new ItemStack(Material.CHEST);
         ItemMeta chestMeta = chestItem.getItemMeta();
         if (chestMeta == null) return chestItem;
 
-        chestMeta.setDisplayName(languageManager.getMessage("spawner-loot-item.name"));
-
-        // Calculate storage usage stats
         VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = calculatePercentage(currentItems, maxSlots);
 
-        // Create lore with proper vararg method call
-        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest",
-                "%max_slots%", String.valueOf(maxSlots),
-                "%current_items%", String.valueOf(currentItems),
-                "%percent_storage%", String.valueOf(percentStorage));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("max_slots", String.valueOf(maxSlots));
+        placeholders.put("current_items", String.valueOf(currentItems));
+        placeholders.put("percent_storage", String.valueOf(percentStorage));
 
-        List<String> chestLore = Arrays.asList(loreMessageChest.split("\n"));
+        chestMeta.setDisplayName(languageManager.getGuiItemName("spawner_storage_item.name", placeholders));
+
+        String[] loreArray = languageManager.getGuiItemLore("spawner_storage_item.lore", placeholders);
+        List<String> chestLore = Arrays.asList(loreArray);
+
         chestMeta.setLore(chestLore);
         chestItem.setItemMeta(chestMeta);
         return chestItem;
     }
 
-    /**
-     * Creates the spawner info item with entity and configuration details.
-     *
-     * @param player The player viewing the menu
-     * @param spawner The spawner data
-     * @return The configured spawner info item
-     */
     private ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
         ItemStack spawnerItem = SpawnerMobHeadTexture.getCustomHead(spawner.getEntityType(), player);
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         if (spawnerMeta == null) return spawnerItem;
 
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        spawnerMeta.setDisplayName(languageManager.getMessage("spawner-info-item.name",
-                "%entity%", entityName));
+        String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
 
-        // Build vararg parameters for getMessage method
-        String loreMessage = languageManager.getMessage("spawner-info-item.lore.spawner-info",
-                "%stack_size%", String.valueOf(spawner.getStackSize()),
-                "%range%", String.valueOf(spawner.getSpawnerRange()),
-                "%delay%", String.valueOf(spawner.getSpawnDelay() / TICKS_PER_SECOND),
-                "%min_mobs%", String.valueOf(spawner.getMinMobs()),
-                "%max_mobs%", String.valueOf(spawner.getMaxMobs()));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", entityName);
+        placeholders.put("ᴇɴᴛɪᴛʏ", entityNameSmallCaps);
+        placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
+        placeholders.put("range", String.valueOf(spawner.getSpawnerRange()));
+        placeholders.put("delay", String.valueOf(spawner.getSpawnDelay() / TICKS_PER_SECOND));
+        placeholders.put("min_mobs", String.valueOf(spawner.getMinMobs()));
+        placeholders.put("max_mobs", String.valueOf(spawner.getMaxMobs()));
 
-        List<String> lore = Arrays.asList(loreMessage.split("\n"));
+        spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
+
+        // Select appropriate lore based on shop integration availability
+        String loreKey = plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall")
+                ? "spawner_info_item.lore"
+                : "spawner_info_item.lore_no_shop";
+
+        String[] loreArray = languageManager.getGuiItemLore(loreKey, placeholders);
+        List<String> lore = Arrays.asList(loreArray);
+
         spawnerMeta.setLore(lore);
         spawnerItem.setItemMeta(spawnerMeta);
         return spawnerItem;
     }
 
-    /**
-     * Creates the experience bottle item with experience stats.
-     *
-     * @param spawner The spawner data
-     * @return The configured experience item
-     */
     private ItemStack createExpItem(SpawnerData spawner) {
         ItemStack expItem = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta expMeta = expItem.getItemMeta();
         if (expMeta == null) return expItem;
 
-        // Format and calculate experience values
         long currentExp = spawner.getSpawnerExp();
         long maxExp = spawner.getMaxStoredExp();
         String formattedExp = languageManager.formatNumber(currentExp);
         String formattedMaxExp = languageManager.formatNumber(maxExp);
         int percentExp = calculatePercentage(currentExp, maxExp);
 
-        // Set item name using vararg method call
-        expMeta.setDisplayName(languageManager.getMessage("exp-info-item.name",
-                "%current_exp%", String.valueOf(currentExp)));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("current_exp", formattedExp);
+        placeholders.put("max_exp", formattedMaxExp);
+        placeholders.put("percent_exp", String.valueOf(percentExp));
+        placeholders.put("u_max_exp", String.valueOf(maxExp));
 
-        // Set item lore using vararg method call
-        String loreMessageExp = languageManager.getMessage("exp-info-item.lore.exp-bottle",
-                "%current_exp%", formattedExp,
-                "%max_exp%", formattedMaxExp,
-                "%percent_exp%", String.valueOf(percentExp),
-                "%u_max_exp%", String.valueOf(maxExp));
+        expMeta.setDisplayName(languageManager.getGuiItemName("exp_info_item.name", placeholders));
 
-        List<String> loreEx = Arrays.asList(loreMessageExp.split("\n"));
-        expMeta.setLore(loreEx);
+        String[] loreArray = languageManager.getGuiItemLore("exp_info_item.lore", placeholders);
+        List<String> loreExp = Arrays.asList(loreArray);
+
+        expMeta.setLore(loreExp);
         expItem.setItemMeta(expMeta);
         return expItem;
     }
 
-    /**
-     * Calculates a percentage safely (avoids division by zero).
-     *
-     * @param current Current value
-     * @param maximum Maximum value
-     * @return Percentage (0-100)
-     */
     private int calculatePercentage(long current, long maximum) {
         return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
     }

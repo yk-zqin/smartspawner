@@ -6,8 +6,8 @@ import github.nighter.smartspawner.hooks.shops.IShopIntegration;
 import github.nighter.smartspawner.hooks.shops.SaleLogger;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;
@@ -27,7 +27,7 @@ import java.util.logging.Level;
 public class ShopGuiPlus implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
-    private final ConfigManager configManager;
+    private final MessageService messageService;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final boolean isLoggingEnabled;
 
@@ -41,9 +41,9 @@ public class ShopGuiPlus implements IShopIntegration {
     public ShopGuiPlus(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
-        this.isLoggingEnabled = configManager.getBoolean("logging-enabled");
+        this.isLoggingEnabled = plugin.getConfig().getBoolean("log_transactions.enabled", true);
     }
 
     @Override
@@ -55,14 +55,14 @@ public class ShopGuiPlus implements IShopIntegration {
 
         // Prevent multiple concurrent sales for the same player
         if (pendingSales.containsKey(player.getUniqueId())) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
         // Get lock with timeout
         ReentrantLock lock = spawner.getLock();
         if (!lock.tryLock()) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
@@ -81,7 +81,7 @@ public class ShopGuiPlus implements IShopIntegration {
                 if (error != null) {
                     plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);
                     plugin.getServer().getScheduler().runTask(plugin, () ->
-                            languageManager.sendMessage(player, "messages.sell-failed"));
+                            messageService.sendMessage(player, "shop.sale_failed"));
                 }
             });
 
@@ -108,7 +108,7 @@ public class ShopGuiPlus implements IShopIntegration {
 
         if (items.isEmpty()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-items"));
+                    messageService.sendMessage(player, "shop.no_items"));
             return false;
         }
 
@@ -116,7 +116,7 @@ public class ShopGuiPlus implements IShopIntegration {
         SaleCalculationResult calculation = calculateSalePrices(player, items);
         if (!calculation.isValid()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-sellable-items"));
+                    messageService.sendMessage(player, "shop.no_sellable_items"));
             return false;
         }
 
@@ -146,7 +146,7 @@ public class ShopGuiPlus implements IShopIntegration {
                 // Restore items if payment fails
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
-                    languageManager.sendMessage(player, "messages.sell-failed");
+                    messageService.sendMessage(player, "shop.sale_failed");
                     int newTotalPages = calculateTotalPages(spawner);
                     spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 });
@@ -159,7 +159,7 @@ public class ShopGuiPlus implements IShopIntegration {
             }
 
             // Send success message
-            double taxPercentage = configManager.getDouble("tax-rate");
+            double taxPercentage = plugin.getConfig().getDouble("tax.percentage", 10.0);
             plugin.getServer().getScheduler().runTask(plugin, () ->
                     sendSuccessMessage(player, calculation.getTotalAmount(), calculation.getTotalPrice(), taxPercentage));
 
@@ -182,7 +182,7 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private boolean processTransactions(Player player, SaleCalculationResult calculation) {
-        double taxPercentage = configManager.getDouble("tax-rate");
+        double taxPercentage = plugin.getConfig().getDouble("tax.percentage", 10.0);
 
         for (Map.Entry<EconomyType, Double> entry : calculation.getPricesByEconomy().entrySet()) {
             EconomyType economyType = entry.getKey();
@@ -209,7 +209,7 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private double calculateNetAmount(double grossAmount, double taxPercentage) {
-        if (configManager.getBoolean("tax-enabled")) {
+        if (plugin.getConfig().getBoolean("tax.enabled", false)) {
             return grossAmount * (1 - taxPercentage / 100.0);
         }
         return grossAmount;
@@ -231,22 +231,21 @@ public class ShopGuiPlus implements IShopIntegration {
     }
 
     private String formatMonetaryValue(double value) {
-        return formatPrice(value, configManager.getBoolean("formated-price"));
+        return formatPrice(value, true);
     }
 
     private void sendSuccessMessage(Player player, int totalAmount, double totalPrice, double taxPercentage) {
-        if (configManager.getBoolean("tax-enabled")) {
-            double netPrice = calculateNetAmount(totalPrice, taxPercentage);
-            languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formatMonetaryValue(netPrice),
-                    "%gross%", formatMonetaryValue(totalPrice),
-                    "%tax%", String.format("%.2f", taxPercentage)
-            );
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", String.valueOf(languageManager.formatNumber(totalAmount)));
+        placeholders.put("price", formatMonetaryValue(totalPrice));
+
+        if (plugin.getConfig().getBoolean("tax.enabled", false)) {
+            double grossPrice = totalPrice / (1 - taxPercentage / 100.0);
+            placeholders.put("gross", formatMonetaryValue(grossPrice));
+            placeholders.put("tax", String.format("%.2f", taxPercentage));
+            messageService.sendMessage(player, "shop.sell_all_with_tax", placeholders);
         } else {
-            languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formatMonetaryValue(totalPrice));
+            messageService.sendMessage(player, "shop.sell_all", placeholders);
         }
     }
 

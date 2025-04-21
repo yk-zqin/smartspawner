@@ -1,8 +1,7 @@
 package github.nighter.smartspawner.api;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.language.LanguageManager;
-import org.bukkit.Material;
+import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -16,45 +15,21 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class SmartSpawnerAPIImpl implements SmartSpawnerAPI {
 
     private final SmartSpawner plugin;
+    private final SpawnerItemFactory itemFactory;
 
     public SmartSpawnerAPIImpl(SmartSpawner plugin) {
         this.plugin = plugin;
+        this.itemFactory = new SpawnerItemFactory(plugin);
     }
 
     @Override
     public ItemStack createSpawnerItem(EntityType entityType) {
-        return createSpawnerItem(entityType, 1);
+        return itemFactory.createSpawnerItem(entityType);
     }
 
     @Override
     public ItemStack createSpawnerItem(EntityType entityType, int amount) {
-        ItemStack spawner = new ItemStack(Material.SPAWNER, amount);
-        ItemMeta meta = spawner.getItemMeta();
-
-        if (meta != null) {
-            if (entityType != null && entityType != EntityType.UNKNOWN) {
-                // Set display name
-                LanguageManager languageManager = plugin.getLanguageManager();
-                String entityTypeName = languageManager.getFormattedMobName(entityType);
-                String displayName = languageManager.getMessage("spawner-name", "%entity%", entityTypeName);
-                meta.setDisplayName(displayName);
-
-                // Store entity type in BlockStateMeta
-                if (meta instanceof BlockStateMeta) {
-                    BlockStateMeta blockMeta = (BlockStateMeta) meta;
-                    BlockState blockState = blockMeta.getBlockState();
-
-                    if (blockState instanceof CreatureSpawner) {
-                        CreatureSpawner cs = (CreatureSpawner) blockState;
-                        cs.setSpawnedType(entityType);
-                        blockMeta.setBlockState(cs);
-                    }
-                }
-            }
-            spawner.setItemMeta(meta);
-        }
-
-        return spawner;
+        return itemFactory.createSpawnerItem(entityType, amount);
     }
 
     @Override
@@ -79,7 +54,7 @@ public class SmartSpawnerAPIImpl implements SmartSpawnerAPI {
 
     @Override
     public boolean isValidSpawner(ItemStack item) {
-        if (item == null || item.getType() != Material.SPAWNER) {
+        if (item == null || item.getType() != org.bukkit.Material.SPAWNER) {
             return false;
         }
 

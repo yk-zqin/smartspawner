@@ -3,150 +3,107 @@ package github.nighter.smartspawner.spawner.gui.stacker;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.SpawnerStackerHolder;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Arrays;
-import java.util.List;
 
-/**
- * Manages the user interface for spawner stacking functionality.
- * Provides methods to create and display spawner stacking GUI to players.
- */
 public class SpawnerStackerUI {
-    // GUI layout constants
     private static final int GUI_SIZE = 27;
     private static final int[] DECREASE_SLOTS = {9, 10, 11};
     private static final int[] INCREASE_SLOTS = {17, 16, 15};
     private static final int SPAWNER_INFO_SLOT = 13;
-
-    // Stack modification amounts
     private static final int[] STACK_AMOUNTS = {64, 10, 1};
+
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
 
-    /**
-     * Constructs a new SpawnerStackerUI with the given plugin instance.
-     *
-     * @param plugin The SmartSpawner plugin instance
-     */
     public SpawnerStackerUI(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
     }
 
-    /**
-     * Opens the spawner stacker GUI for a player.
-     * Displays information about the spawner and allows stack size modification.
-     *
-     * @param player The player to show the GUI to
-     * @param spawner The spawner data to display and modify
-     */
     public void openStackerGui(Player player, SpawnerData spawner) {
         if (player == null || spawner == null) {
             return;
         }
 
-        String title = languageManager.getMessage("gui-title.stacker-menu");
+        String title = languageManager.getGuiTitle("gui_title_stacker");
         Inventory gui = Bukkit.createInventory(new SpawnerStackerHolder(spawner), GUI_SIZE, title);
 
+        // Fill GUI with modifier buttons and spawner info
+        populateStackerGui(gui, spawner);
+
+        player.openInventory(gui);
+    }
+
+    private void populateStackerGui(Inventory gui, SpawnerData spawner) {
         // Add decrease buttons
         for (int i = 0; i < STACK_AMOUNTS.length; i++) {
-            gui.setItem(DECREASE_SLOTS[i], createDecreaseButton(spawner, STACK_AMOUNTS[i]));
+            gui.setItem(DECREASE_SLOTS[i], createActionButton("remove", spawner, STACK_AMOUNTS[i]));
         }
 
         // Add increase buttons
         for (int i = 0; i < STACK_AMOUNTS.length; i++) {
-            gui.setItem(INCREASE_SLOTS[i], createIncreaseButton(spawner, STACK_AMOUNTS[i]));
+            gui.setItem(INCREASE_SLOTS[i], createActionButton("add", spawner, STACK_AMOUNTS[i]));
         }
 
         // Add spawner info button
         gui.setItem(SPAWNER_INFO_SLOT, createSpawnerInfoButton(spawner));
-        player.openInventory(gui);
     }
 
-    /**
-     * Creates a button for decreasing stack size.
-     *
-     * @param spawner The spawner data
-     * @param amount The amount to decrease by
-     * @return The configured ItemStack for the decrease button
-     */
-    private ItemStack createDecreaseButton(SpawnerData spawner, int amount) {
-        String name = languageManager.getMessage("button.name.decrease-" + amount);
-        String[] lore = languageManager.getMessage("button.lore.remove")
-                .replace("%amount%", String.valueOf(amount))
-                .replace("%stack_size%", String.valueOf(spawner.getStackSize()))
-                .split("\n");
+    private ItemStack createActionButton(String action, SpawnerData spawner, int amount) {
+        Map<String, String> placeholders = createPlaceholders(spawner, amount);
 
-        ItemStack button = createButton(Material.RED_STAINED_GLASS_PANE, name, Arrays.asList(lore));
-        button.setAmount(amount);
+        String name = languageManager.getGuiItemName("button_" + action + ".name", placeholders);
+        String[] lore = languageManager.getGuiItemLore("button_" + action + ".lore", placeholders);
+
+        Material material = action.equals("add") ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+
+        ItemStack button = createButton(material, name, lore);
+        button.setAmount(Math.max(1, Math.min(amount, 64)));
         return button;
     }
 
-    /**
-     * Creates a button for increasing stack size.
-     *
-     * @param spawner The spawner data
-     * @param amount The amount to increase by
-     * @return The configured ItemStack for the increase button
-     */
-    private ItemStack createIncreaseButton(SpawnerData spawner, int amount) {
-        String name = languageManager.getMessage("button.name.increase-" + amount);
-        String[] lore = languageManager.getMessage("button.lore.add")
-                .replace("%amount%", String.valueOf(amount))
-                .replace("%stack_size%", String.valueOf(spawner.getStackSize()))
-                .split("\n");
-
-        ItemStack button = createButton(Material.LIME_STAINED_GLASS_PANE, name, Arrays.asList(lore));
-        button.setAmount(amount);
-        return button;
-    }
-
-    /**
-     * Creates the central spawner info button showing current stack information.
-     *
-     * @param spawner The spawner data to display
-     * @return The configured ItemStack for the spawner info button
-     */
     private ItemStack createSpawnerInfoButton(SpawnerData spawner) {
-        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        String name = languageManager.getMessage("button.name.spawner", "%entity%", entityName);
+        Map<String, String> placeholders = createPlaceholders(spawner, 0);
 
-        String[] lore = languageManager.getMessage("button.lore.spawner")
-                .replace("%stack_size%", String.valueOf(spawner.getStackSize()))
-                .replace("%max_stack_size%", String.valueOf(configManager.getInt("max-stack-size")))
-                .split("\n");
+        String name = languageManager.getGuiItemName("button_spawner.name", placeholders);
+        String[] lore = languageManager.getGuiItemLore("button_spawner.lore", placeholders);
 
-        return createButton(Material.SPAWNER
-                , name, Arrays.asList(lore));
+        return createButton(Material.SPAWNER, name, lore);
     }
 
-    /**
-     * Utility method to create a button with specified properties.
-     *
-     * @param material The material for the button
-     * @param name The display name for the button
-     * @param lore The lore text for the button
-     * @return The configured ItemStack
-     */
-    private ItemStack createButton(Material material, String name, List<String> lore) {
+    private Map<String, String> createPlaceholders(SpawnerData spawner, int amount) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", String.valueOf(amount));
+        placeholders.put("plural", amount > 1 ? "s" : "");
+        placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
+        placeholders.put("max_stack_size", String.valueOf(spawner.getMaxStackSize()));
+        placeholders.put("entity", languageManager.getFormattedMobName(spawner.getEntityType()));
+        placeholders.put("ᴇɴᴛɪᴛʏ", languageManager.getSmallCaps(placeholders.get("entity")));
+        return placeholders;
+    }
+
+    private ItemStack createButton(Material material, String name, String[] lore) {
         ItemStack button = new ItemStack(material);
         ItemMeta meta = button.getItemMeta();
 
         if (meta != null) {
             meta.setDisplayName(name);
-            if (lore != null && !lore.isEmpty()) {
-                meta.setLore(lore);
+            if (lore != null && lore.length > 0) {
+                meta.setLore(Arrays.asList(lore));
             }
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
             button.setItemMeta(meta);
         }
 

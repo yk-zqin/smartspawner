@@ -5,6 +5,7 @@ import github.nighter.smartspawner.commands.give.GiveCommand;
 import github.nighter.smartspawner.commands.hologram.HologramCommand;
 import github.nighter.smartspawner.commands.list.ListCommand;
 import github.nighter.smartspawner.commands.reload.ReloadCommand;
+import github.nighter.smartspawner.language.MessageService;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 
@@ -19,9 +20,11 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     private final ListCommand listCommand;
     private final HologramCommand hologramCommand;
     private final SmartSpawner plugin;
+    private final MessageService messageService;
 
     public CommandHandler(SmartSpawner plugin) {
         this.plugin = plugin;
+        this.messageService = plugin.getMessageService();
         this.reloadCommand = new ReloadCommand(plugin);
         this.giveCommand = new GiveCommand(plugin);
         this.listCommand = new ListCommand(plugin);
@@ -31,27 +34,33 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(plugin.getLanguageManager().getMessageWithPrefix("command.usage"));
+            messageService.sendMessage(sender, "command_usage");
             return true;
         }
 
-        if(sender instanceof ConsoleCommandSender && args[0].equalsIgnoreCase("give")) {
-            return giveCommand.executeCommand(args);
+        // Handle console commands
+        if (sender instanceof ConsoleCommandSender) {
+            if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("giveVanillaSpawner")) {
+                return giveCommand.executeCommand(args);
+            } else if (args[0].equalsIgnoreCase("reload")) {
+                return reloadCommand.onCommand(sender, command, label, args);
+            } else {
+                messageService.sendConsoleMessage("command_usage");
+                return true;
+            }
         }
 
-        if (!(sender instanceof Player)) {
+        // Handle player commands
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can use this command.");
             return true;
         }
 
-        Player player = (Player) sender;
-
-        String subCommand = args[0].toLowerCase();
-
-        switch (subCommand) {
+        switch (args[0].toLowerCase()) {
             case "reload":
                 return reloadCommand.onCommand(sender, command, label, args);
             case "give":
+            case "givevanillaspawner":
                 return giveCommand.executeCommand(sender, args);
             case "list":
                 listCommand.openWorldSelectionGUI(player);
@@ -59,7 +68,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             case "hologram":
                 return hologramCommand.onCommand(sender, command, label, args);
             default:
-                sender.sendMessage(plugin.getLanguageManager().getMessageWithPrefix("command.usage"));
+                messageService.sendMessage(sender, "command_usage");
                 return true;
         }
     }
@@ -73,6 +82,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
             }
             if (sender.hasPermission("smartspawner.give")) {
                 completions.add("give");
+                completions.add("giveVanillaSpawner");
             }
             if (sender.hasPermission("smartspawner.list")) {
                 completions.add("list");
@@ -88,7 +98,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         // Handle subcommand tab completions
         if (args[0].equalsIgnoreCase("reload")) {
             return reloadCommand.onTabComplete(sender, command, alias, args);
-        } else if (args[0].equalsIgnoreCase("give")) {
+        } else if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("giveVanillaSpawner")) {
             return giveCommand.tabComplete(sender, args);
         }
 

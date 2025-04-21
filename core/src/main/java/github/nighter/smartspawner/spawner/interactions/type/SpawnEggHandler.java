@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.interactions.type;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.GameMode;
@@ -20,13 +21,14 @@ import java.util.logging.Level;
  */
 public class SpawnEggHandler {
     private static final String PERMISSION_CHANGE_TYPE = "smartspawner.changetype";
-    private static final String NO_PERMISSION_KEY = "no-permission";
-    private static final String CHANGED_MESSAGE_KEY = "messages.changed";
-    private static final String INVALID_EGG_KEY = "messages.invalid-egg";
+    private static final String NO_PERMISSION_KEY = "no_permission";
+    private static final String CHANGED_MESSAGE_KEY = "entity_changed";
+    private static final String INVALID_EGG_KEY = "invalid_egg";
     private static final String SPAWN_EGG_SUFFIX = "_SPAWN_EGG";
 
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
+    private final MessageService messageService;
     private final Map<Material, EntityType> eggTypeCache;
 
     /**
@@ -37,6 +39,7 @@ public class SpawnEggHandler {
     public SpawnEggHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
         this.eggTypeCache = new HashMap<>();
         initializeEggTypeCache();
     }
@@ -58,7 +61,7 @@ public class SpawnEggHandler {
 
         // Check permission
         if (!player.hasPermission(PERMISSION_CHANGE_TYPE)) {
-            languageManager.sendMessage(player, NO_PERMISSION_KEY);
+            messageService.sendMessage(player, NO_PERMISSION_KEY);
             return;
         }
 
@@ -70,7 +73,7 @@ public class SpawnEggHandler {
             updateSpawner(player, spawner, spawnerData, newType);
             consumeItemIfSurvival(player, spawnEgg);
         } else {
-            languageManager.sendMessage(player, INVALID_EGG_KEY);
+            messageService.sendMessage(player, INVALID_EGG_KEY);
         }
     }
 
@@ -91,8 +94,10 @@ public class SpawnEggHandler {
         spawner.update();
 
         // Notify player
-        languageManager.sendMessage(player, CHANGED_MESSAGE_KEY,
-                "%type%", languageManager.getFormattedMobName(newType));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", languageManager.getFormattedMobName(newType));
+        placeholders.put("ᴇɴᴛɪᴛʏ", languageManager.getSmallCaps(placeholders.get("entity")));
+        messageService.sendMessage(player, CHANGED_MESSAGE_KEY, placeholders);
     }
 
     /**

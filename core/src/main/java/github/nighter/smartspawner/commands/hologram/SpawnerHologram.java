@@ -1,7 +1,8 @@
 package github.nighter.smartspawner.commands.hologram;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.config.ConfigManager;
+import github.nighter.smartspawner.language.ColorUtil;
 import github.nighter.smartspawner.language.LanguageManager;
 
 import org.bukkit.Location;
@@ -15,12 +16,12 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SpawnerHologram {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
-    private final ConfigManager configManager;
-    private TextDisplay textDisplay;
+    private final AtomicReference<TextDisplay> textDisplay = new AtomicReference<>(null);
     private final Location spawnerLocation;
     private int stackSize;
     private EntityType entityType;
@@ -29,7 +30,7 @@ public class SpawnerHologram {
     private int currentItems;
     private int maxSlots;
     private static final String HOLOGRAM_IDENTIFIER = "SmartSpawner-Holo";
-    private String uniqueIdentifier;
+    private final String uniqueIdentifier;
 
     private static final Vector3f SCALE = new Vector3f(1.0f, 1.0f, 1.0f);
     private static final Vector3f TRANSLATION = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -39,7 +40,6 @@ public class SpawnerHologram {
         this.plugin = SmartSpawner.getInstance();
         this.spawnerLocation = location;
         this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
         this.uniqueIdentifier = generateUniqueIdentifier(location);
     }
 
@@ -54,102 +54,132 @@ public class SpawnerHologram {
     public void createHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        double offsetX = configManager.getDouble("hologram-offset-x");
-        double offsetY = configManager.getDouble("hologram-height");
-        double offsetZ = configManager.getDouble("hologram-offset-z");
+        // Clean up any existing hologram for this spawner first
+        cleanupExistingHologram();
+
+        double offsetX = plugin.getConfig().getDouble("hologram.offset_x", 0.5);
+        double offsetY = plugin.getConfig().getDouble("hologram.offset_y", 0.5);
+        double offsetZ = plugin.getConfig().getDouble("hologram.offset_z", 0.5);
 
         Location holoLoc = spawnerLocation.clone().add(offsetX, offsetY, offsetZ);
 
         try {
-            textDisplay = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, display -> {
-                display.setBillboard(Display.Billboard.CENTER);
-                display.setAlignment(TextDisplay.TextAlignment.CENTER);
-                display.setViewRange(16.0f);
-                display.setShadowed(configManager.getBoolean("hologram-shadowed-text"));
-                display.setDefaultBackground(false);
-                display.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
-                display.setSeeThrough(configManager.getBoolean("hologram-see-through"));
+            TextDisplay display = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, td -> {
+                td.setBillboard(Display.Billboard.CENTER);
+                // Get alignment from config with CENTER as default
+                String alignmentStr = plugin.getConfig().getString("hologram.alignment", "CENTER");
+                TextDisplay.TextAlignment alignment;
+                try {
+                    alignment = TextDisplay.TextAlignment.valueOf(alignmentStr.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    alignment = TextDisplay.TextAlignment.CENTER;
+                    plugin.getLogger().warning("Invalid hologram alignment in config: " + alignmentStr + ". Using CENTER as default.");
+                }
+                td.setAlignment(alignment);
+                td.setViewRange(16.0f);
+                td.setShadowed(plugin.getConfig().getBoolean("hologram.shadowed_text", true));
+                td.setDefaultBackground(false);
+                td.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
+                td.setSeeThrough(plugin.getConfig().getBoolean("hologram.see_through", false));
                 // Add custom name for identification
-                display.setCustomName(uniqueIdentifier);
-                display.setCustomNameVisible(false);
+                td.setCustomName(uniqueIdentifier);
+                td.setCustomNameVisible(false);
             });
 
+            textDisplay.set(display);
             updateText();
         } catch (Exception e) {
+            plugin.getLogger().severe("Error creating hologram: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public void updateText() {
-        if (textDisplay == null || !textDisplay.isValid()) return;
-        if (entityType == null) return;
+        TextDisplay display = textDisplay.get();
+        if (display == null || !display.isValid() || entityType == null) return;
 
+        // Prepare the text content outside of the entity thread
         String entityTypeName = languageManager.getFormattedMobName(entityType);
 
-        // Get text from language file with replacements
+        // Create replacements map
         Map<String, String> replacements = new HashMap<>();
         replacements.put("%entity%", entityTypeName);
+        replacements.put("%ᴇɴᴛɪᴛʏ%", languageManager.getSmallCaps(entityTypeName));
         replacements.put("%stack_size%", String.valueOf(stackSize));
-        replacements.put("%current_exp%", languageManager.formatNumberTenThousand(currentExp));
-        replacements.put("%max_exp%", languageManager.formatNumberTenThousand(maxExp));
-        replacements.put("%used_slots%",languageManager.formatNumberTenThousand(currentItems));
-        replacements.put("%max_slots%", languageManager.formatNumberTenThousand(maxSlots));
+        replacements.put("%current_exp%", languageManager.formatNumber(currentExp));
+        replacements.put("%max_exp%", languageManager.formatNumber(maxExp));
+        replacements.put("%used_slots%", languageManager.formatNumber(currentItems));
+        replacements.put("%max_slots%", languageManager.formatNumber(maxSlots));
 
-        String hologramText = languageManager.displayHologramText("spawner-hologram.format", replacements);
-        textDisplay.setText(hologramText);
+        String hologramText = languageManager.getHologramText();
+
+        // Apply replacements
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            hologramText = hologramText.replace(entry.getKey(), entry.getValue());
+        }
+
+        // Apply color codes
+        final String finalText = ColorUtil.translateHexColorCodes(hologramText);
+
+        // Schedule the entity update on the entity's thread
+        // For Folia, we need to run this on the entity's thread
+        Scheduler.runEntityTask(display, () -> {
+            if (display.isValid()) {
+                display.setText(finalText);
+            }
+        });
     }
 
     public void updateData(int stackSize, EntityType entityType, int currentExp, int maxExp, int currentItems, int maxSlots) {
+        // First, ensure we have a valid hologram
+        TextDisplay display = textDisplay.get();
+        if (display == null || !display.isValid()) {
+            // If hologram doesn't exist or is invalid, recreate it
+            createHologram();
+        }
+
+        // Update data values
         this.stackSize = stackSize;
         this.entityType = entityType;
         this.currentExp = currentExp;
         this.maxExp = maxExp;
         this.currentItems = currentItems;
         this.maxSlots = maxSlots;
+
+        // Update the text display
         updateText();
     }
 
     public void remove() {
-        if (textDisplay != null && textDisplay.isValid()) {
-            textDisplay.remove();
-            textDisplay = null;
+        TextDisplay display = textDisplay.get();
+        if (display != null && display.isValid()) {
+            display.remove();
+            textDisplay.set(null);
         }
     }
 
     public void cleanupExistingHologram() {
         if (spawnerLocation == null || spawnerLocation.getWorld() == null) return;
 
-        double offsetX = configManager.getDouble("hologram-offset-x");
-        double offsetY = configManager.getDouble("hologram-height");
-        double offsetZ = configManager.getDouble("hologram-offset-z");
+        // First, check if our tracked hologram is still valid
+        TextDisplay display = textDisplay.get();
+        if (display != null) {
+            if (display.isValid()) {
+                // If it's valid but we're cleaning up, remove it
+                display.remove();
+            }
+            textDisplay.set(null);
+        }
 
-        // Calculate efficient search area
-        double searchRadius = Math.max(Math.max(Math.abs(offsetX), Math.abs(offsetY)), Math.abs(offsetZ)) + 1.0;
+        // Define a tighter search radius just to catch any potentially duplicated holograms
+        // with the same identifier (which shouldn't happen but being safe)
+        double searchRadius = 2.0;
 
-        // Use efficient entity lookup
+        // Look for any entity with our specific unique identifier
         spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, searchRadius, searchRadius, searchRadius)
                 .stream()
-                .filter(entity -> entity instanceof TextDisplay)
-                .filter(entity -> {
-                    String customName = entity.getCustomName();
-                    return customName != null &&
-                            customName.startsWith(HOLOGRAM_IDENTIFIER) &&
-                            (customName.equals(uniqueIdentifier) || isOldHologramForLocation(customName, spawnerLocation));
-                })
+                .filter(entity -> entity instanceof TextDisplay && entity.getCustomName() != null)
+                .filter(entity -> entity.getCustomName().equals(uniqueIdentifier))
                 .forEach(Entity::remove);
-    }
-
-    private boolean isOldHologramForLocation(String hologramName, Location location) {
-        try {
-            String[] parts = hologramName.split("-");
-            if (parts.length != 6) return false;
-
-            return parts[2].equals(location.getWorld().getName()) &&
-                    Integer.parseInt(parts[3]) == location.getBlockX() &&
-                    Integer.parseInt(parts[4]) == location.getBlockY() &&
-                    Integer.parseInt(parts[5]) == location.getBlockZ();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

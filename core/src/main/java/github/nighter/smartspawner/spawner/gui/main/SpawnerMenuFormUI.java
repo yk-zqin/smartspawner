@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.entity.Player;
@@ -8,12 +9,16 @@ import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
 import org.geysermc.floodgate.api.FloodgateApi;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Manages form-based UI for Bedrock players using Floodgate
  */
 public class SpawnerMenuFormUI {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
+    private final MessageService messageService;
 
     /**
      * Constructs the SpawnerMenuFormUI.
@@ -23,6 +28,7 @@ public class SpawnerMenuFormUI {
     public SpawnerMenuFormUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
     }
 
     /**
@@ -33,11 +39,16 @@ public class SpawnerMenuFormUI {
      */
     public void openSpawnerForm(Player player, SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        String title = spawner.getStackSize() > 1
-                ? languageManager.getGuiTitle("gui-title.stacked-menu",
-                "%amount%", String.valueOf(spawner.getStackSize()),
-                "%entity%", entityName)
-                : languageManager.getGuiTitle("gui-title.menu", "%entity%", entityName);
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", entityName);
+        placeholders.put("amount", String.valueOf(spawner.getStackSize()));
+
+        String title;
+        if (spawner.getStackSize() > 1) {
+            title = languageManager.getGuiTitle("gui_title_main.stacked_spawner", placeholders);
+        } else {
+            title = languageManager.getGuiTitle("gui_title_main.single_spawner", placeholders);
+        }
 
         // Directly set button text with Bedrock-compatible colors
         String lootButtonText = "Open Storage";
@@ -151,7 +162,7 @@ public class SpawnerMenuFormUI {
      */
     private void handleSpawnerInfo(Player player, SpawnerData spawner) {
         if (!player.hasPermission("smartspawner.stack")) {
-            languageManager.sendMessage(player, "messages.no-permission");
+            messageService.sendMessage(player, "no_permission");
             return;
         }
 

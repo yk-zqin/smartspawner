@@ -1,10 +1,7 @@
 package github.nighter.smartspawner.commands.reload;
 
-import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
-import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.config.ConfigManager;
-import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.utils.ItemUpdater;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -12,31 +9,19 @@ import org.bukkit.command.TabCompleter;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ReloadCommand implements CommandExecutor, TabCompleter {
     private final SmartSpawner plugin;
-    private final SpawnerManager spawnerManager;
-    private final ConfigManager configManager;
-    private final LanguageManager languageManager;
-    private final SpawnerLootGenerator spawnerLootGenerator;
 
     public ReloadCommand(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.spawnerManager = plugin.getSpawnerManager();
-        this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
-        this.configManager = plugin.getConfigManager();
-        this.languageManager = plugin.getLanguageManager();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("smartspawner.reload")) {
-            sender.sendMessage(languageManager.getMessageWithPrefix("no-permission"));
-            return true;
-        }
-
-        if (args.length == 0) {
-            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.usage"));
+            plugin.getMessageService().sendMessage(sender,"no_permission");
             return true;
         }
 
@@ -44,7 +29,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             if (args.length == 1) {
                 reloadAll(sender);
             } else {
-                sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.usage"));
+                plugin.getMessageService().sendMessage(sender, "reload_command_usage");
             }
             return true;
         }
@@ -54,28 +39,56 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
     private void reloadAll(CommandSender sender) {
         try {
-            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.wait"));
+            plugin.getMessageService().sendMessage(sender, "reload_command_start");
+
+            // Log current cache stats for debugging
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                logCacheStats();
+            }
+
+            // Clear all caches first to avoid using stale data during reload
+            ItemUpdater.clearCache();
+            plugin.getSpawnerItemFactory().clearAllCaches();
+
+            // Clear message service caches (add this line)
+            plugin.getMessageService().clearKeyExistsCache();
+
             // Reload all configurations
-            configManager.reloadConfigs();
+            plugin.reloadConfig();
+            plugin.refreshTimeCache();
 
-            // Reload Hopper feature
+            // Reload components in dependency order
             plugin.setUpHopperHandler();
+            plugin.getEntityLootRegistry().reload();
+            plugin.getLanguageManager().reloadLanguages();
 
-            // Reload loot tables configuration
-            spawnerLootGenerator.loadConfigurations();
-
-            // Reload language files
-            languageManager.reload();
+            // Reload factory AFTER its dependencies (loot registry, language manager)
+            plugin.getSpawnerItemFactory().reload();
 
             // Refresh all holograms for configured changes
-            spawnerManager.reloadAllHolograms();
+            plugin.getSpawnerManager().reloadAllHolograms();
 
-            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.success"));
-            configManager.debug("Plugin reloaded successfully by " + sender.getName());
+            plugin.getSpawnerMenuAction().updateCooldownSettings();
+
+            // Log new cache stats after reload if in debug mode
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                logCacheStats();
+            }
+
+            plugin.getMessageService().sendMessage(sender, "reload_command_success");
+            plugin.getLogger().info("Plugin reloaded successfully by " + sender.getName());
         } catch (Exception e) {
-            sender.sendMessage(languageManager.getMessageWithPrefix("command.reload.error"));
+            plugin.getMessageService().sendMessage(sender, "reload_command_error");
             plugin.getLogger().severe("Error reloading plugin: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void logCacheStats() {
+        Map<String, Object> stats = plugin.getLanguageManager().getCacheStats();
+        plugin.getLogger().info("Language cache statistics:");
+        for (Map.Entry<String, Object> entry : stats.entrySet()) {
+            plugin.getLogger().info("  " + entry.getKey() + ": " + entry.getValue());
         }
     }
 

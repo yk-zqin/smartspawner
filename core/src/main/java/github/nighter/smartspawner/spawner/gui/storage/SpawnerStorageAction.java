@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.gui.storage;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemClickHandler;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveHelper;
 import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveResult;
@@ -9,7 +10,6 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.holders.StoragePageHolder;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
@@ -24,7 +24,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -36,12 +35,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final SpawnerMenuAction spawnerMenuAction;
+    private final MessageService messageService;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
@@ -58,13 +57,13 @@ public class SpawnerStorageAction implements Listener {
 
     public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.clickHandlers = initializeClickHandlers();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.spawnerMenuAction = plugin.getSpawnerMenuAction();
+        this.messageService = plugin.getMessageService();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -186,12 +185,11 @@ public class SpawnerStorageAction implements Listener {
             spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
 
             // Check if spawner is at capacity and update if necessary
-            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
-                spawner.setAtCapacity(false);
+            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
+                spawner.setIsAtCapacity(false);
             }
         }
     }
-
 
     private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
                                         SpawnerData spawner, Inventory inventory) {
@@ -255,12 +253,12 @@ public class SpawnerStorageAction implements Listener {
                 spawnerGuiViewManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
 
                 // Check if spawner is at capacity and update if necessary
-                if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
-                    spawner.setAtCapacity(false);
+                if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
+                    spawner.setIsAtCapacity(false);
                 }
             }
         } else {
-            languageManager.sendMessage(player, "messages.inventory-full");
+            messageService.sendMessage(player, "inventory_full");
         }
     }
 
@@ -305,14 +303,13 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void updateInventoryTitle(Player player, Inventory inventory, SpawnerData spawner, int page, int totalPages) {
-        String baseTitle = languageManager.getGuiTitle("gui-title.loot-menu");
+        String baseTitle = languageManager.getGuiTitle("gui_title_storage");
         String newTitle = baseTitle + " - [" + page + "/" + totalPages + "]";
 
         try {
             player.getOpenInventory().setTitle(newTitle);
         } catch (Exception e) {
             // Fallback: if title update fails, recreate and reopen the inventory
-            configManager.debug("Fallback: Opening loot page due to title update failure");
             openLootPage(player, spawner, page, false);
         }
     }
@@ -329,15 +326,15 @@ public class SpawnerStorageAction implements Listener {
 
         // Permission check
         if (!player.hasPermission("smartspawner.sellall")) {
-            player.sendMessage(languageManager.getMessage("no-permission"));
+            messageService.sendMessage(player, "no_permission");
             return;
         }
 
         // Use the cooldown system from SpawnerMenuAction
         if (spawnerMenuAction.isSellCooldownActive(player)) {
-            int cooldownSeconds = configManager.getInt("sell-cooldown");
-            languageManager.sendMessage(player, "messages.sell-cooldown",
-                    "%seconds%", String.valueOf(cooldownSeconds));
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("time", spawnerMenuAction.getRemainingCooldownTimeFormatted(player));
+            messageService.sendMessage(player, "shop.sell_cooldown", placeholders);
             return;
         }
 
@@ -348,8 +345,8 @@ public class SpawnerStorageAction implements Listener {
         boolean success = plugin.getShopIntegration().sellAllItems(player, spawner);
 
         // Reset at capacity if successful
-        if (success && spawner.isAtCapacity()) {
-            spawner.setAtCapacity(false);
+        if (success && spawner.getIsAtCapacity()) {
+            spawner.setIsAtCapacity(false);
         }
     }
 
@@ -376,12 +373,10 @@ public class SpawnerStorageAction implements Listener {
         if (isClickTooFrequent(player)) {
             return;
         }
-        if (configManager.getBoolean("allow-toggle-equipment-drops")) {
-            spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
+        spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
 
-            StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
-            updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
-        }
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
     }
 
     private void handleDiscardAllItems(Player player, SpawnerData spawner, Inventory inventory) {
@@ -393,7 +388,7 @@ public class SpawnerStorageAction implements Listener {
 
         // Check if there are items to discard
         if (virtualInv.getUsedSlots() == 0) {
-            languageManager.sendMessage(player, "messages.no-items-to-discard");
+            messageService.sendMessage(player, "no_items_to_discard");
             return;
         }
 
@@ -427,8 +422,8 @@ public class SpawnerStorageAction implements Listener {
 
         // Update the spawner state
         spawner.updateHologramData();
-        if (spawner.isAtCapacity()) {
-            spawner.setAtCapacity(false);
+        if (spawner.getIsAtCapacity()) {
+            spawner.setIsAtCapacity(false);
         }
 
         // Update the holder
@@ -444,13 +439,14 @@ public class SpawnerStorageAction implements Listener {
         updatePageContent(player, spawner, 1, inventory, true);
 
         // Send a confirmation message
-        languageManager.sendMessage(player, "messages.discard-all-success",
-                "%amount%", languageManager.formatNumberTenThousand(totalItems));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", languageManager.formatNumber(totalItems));
+        messageService.sendMessage(player, "discard_all_success", placeholders);
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
         SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
-        String title = languageManager.getGuiTitle("gui-title.loot-menu");
+        String title = languageManager.getGuiTitle("gui_title_storage");
 
         // Recalculate total pages to ensure consistency
         int totalPages = calculateTotalPages(spawner);
@@ -505,7 +501,7 @@ public class SpawnerStorageAction implements Listener {
         }
 
         if (sourceItems.isEmpty()) {
-            languageManager.sendMessage(player, "messages.no-items-to-take");
+            messageService.sendMessage(player, "no_items_to_take");
             return;
         }
 
@@ -531,8 +527,8 @@ public class SpawnerStorageAction implements Listener {
             holder.updateOldUsedSlots();
 
             // Check if spawner is at capacity and update if necessary
-            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.isAtCapacity()) {
-                spawner.setAtCapacity(false);
+            if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
+                spawner.setIsAtCapacity(false);
             }
         }
     }
@@ -609,13 +605,11 @@ public class SpawnerStorageAction implements Listener {
 
     private void sendTransferMessage(Player player, TransferResult result) {
         if (!result.anyItemMoved) {
-            languageManager.sendMessage(player, "messages.inventory-full");
-        } else if (result.inventoryFull) {
-            languageManager.sendMessage(player, "messages.take-some-items",
-                    "%amount%", String.valueOf(result.totalMoved));
+            messageService.sendMessage(player, "inventory_full");
         } else {
-            languageManager.sendMessage(player, "messages.take-all-items",
-                    "%amount%", String.valueOf(result.totalMoved));
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("amount", String.valueOf(result.totalMoved));
+            messageService.sendMessage(player, "take_all_items", placeholders);
         }
     }
 

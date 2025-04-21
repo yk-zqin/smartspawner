@@ -5,7 +5,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
 import org.bukkit.profile.PlayerProfile;
@@ -34,6 +36,9 @@ public class SpawnerMobHeadTexture {
     }
 
     public static ItemStack getCustomHead(EntityType entityType, Player player) {
+        if (entityType == null) {
+            return createItemStack(Material.SPAWNER);
+        }
         switch (entityType) {
             case ZOMBIE:
                 return new ItemStack(Material.ZOMBIE_HEAD);
@@ -78,11 +83,14 @@ public class SpawnerMobHeadTexture {
             return head;
         } catch (Exception e) {
             e.printStackTrace();
-            return new ItemStack(Material.SPAWNER);
+            return createItemStack(Material.SPAWNER);
         }
     }
 
     public static ItemStack getCustomHead(EntityType entityType) {
+        if (entityType == null) {
+            return createItemStack(Material.SPAWNER);
+        }
         switch (entityType) {
             case ZOMBIE:
                 return new ItemStack(Material.ZOMBIE_HEAD);
@@ -126,6 +134,15 @@ public class SpawnerMobHeadTexture {
             e.printStackTrace();
             return new ItemStack(Material.SPAWNER);
         }
+    }
+
+    public static ItemStack createItemStack(Material material) {
+        ItemStack itemStack = new ItemStack(material);
+        ItemMeta meta = itemStack.getItemMeta();
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+        itemStack.setItemMeta(meta);
+        return itemStack;
     }
 
     public static void clearCache() {

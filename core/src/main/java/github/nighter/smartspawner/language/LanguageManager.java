@@ -1,1121 +1,1027 @@
 package github.nighter.smartspawner.language;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
-
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
-import org.bukkit.Sound;
-import org.bukkit.configuration.file.FileConfiguration;
+import github.nighter.smartspawner.SmartSpawner;
+import lombok.Getter;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 public class LanguageManager {
-    private final Plugin plugin;
-    private final Logger logger;
-    private final Map<String, FileConfiguration> languageMessages;
-    private FileConfiguration messages;
-    private SupportedLanguage currentLanguage;
-    private final Map<String, String> messageCache;
-    private static final int CACHE_SIZE = 100;
+    private final JavaPlugin plugin;
+    @Getter private String defaultLocale;
+    private final Map<String, LocaleData> localeMap = new HashMap<>();
+    private final Set<String> activeLocales = new HashSet<>();
+    private final Set<LanguageFileType> activeFileTypes = new HashSet<>();
+    private LocaleData cachedDefaultLocaleData;
+    private static final Map<String, String> EMPTY_PLACEHOLDERS = Collections.emptyMap();
 
-    public enum MessageType {
-        CHAT,
-        ACTION_BAR,
-        BOTH
+    // Enhanced cache implementation
+    private final LRUCache<String, String> formattedStringCache;
+    private final LRUCache<String, String[]> loreCache;
+    private final LRUCache<String, List<String>> loreListCache;
+
+    private final LRUCache<String, String> guiItemNameCache;
+    private final LRUCache<String, String[]> guiItemLoreCache;
+    private final LRUCache<String, List<String>> guiItemLoreListCache;
+
+    private final LRUCache<String, String> entityNameCache;
+    private final LRUCache<String, String> smallCapsCache;
+    private final LRUCache<String, String> materialNameCache;
+
+    // Cache statistics
+    private final AtomicInteger cacheHits = new AtomicInteger(0);
+    private final AtomicInteger cacheMisses = new AtomicInteger(0);
+
+    // Cache configuration
+    private static final int DEFAULT_STRING_CACHE_SIZE = 1000;
+    private static final int DEFAULT_LORE_CACHE_SIZE = 250;
+    private static final int DEFAULT_LORE_LIST_CACHE_SIZE = 250;
+
+    // Enum to represent the different language file types
+    @Getter
+    public enum LanguageFileType {
+        MESSAGES("messages.yml"),
+        GUI("gui.yml"),
+        FORMATTING("formatting.yml"),
+        ITEMS("items.yml");
+        private final String fileName;
+        LanguageFileType(String fileName) {
+            this.fileName = fileName;
+        }
     }
 
-    private final Map<String, Object> defaultMessages = new HashMap<String, Object>() {{
-        // Prefix
-        put("prefix", "&8[&#3287A9&lSmartSpawner&8]&r");
-
-        // Format Numbers
-        put("format-number.thousand", "%sK");
-        put("format-number.million", "%sM");
-        put("format-number.billion", "%sB");
-        put("format-number.trillion", "%sT");
-        put("format-number.default", "%s");
-
-        // Mob Names
-        put("mob_names.ALLAY", "Allay");
-        put("mob_names.ARMADILLO", "Armadillo");
-        put("mob_names.AXOLOTL", "Axolotl");
-        put("mob_names.BAT", "Bat");
-        put("mob_names.BEE", "Bee");
-        put("mob_names.BLAZE", "Blaze");
-        put("mob_names.BOGGED", "Bogged");
-        put("mob_names.BREEZE", "Breeze");
-        put("mob_names.CAMEL", "Camel");
-        put("mob_names.CAT", "Cat");
-        put("mob_names.CAVE_SPIDER", "Cave Spider");
-        put("mob_names.CHICKEN", "Chicken");
-        put("mob_names.COD", "Cod");
-        put("mob_names.COW", "Cow");
-        put("mob_names.CREEPER", "Creeper");
-        put("mob_names.DOLPHIN", "Dolphin");
-        put("mob_names.DONKEY", "Donkey");
-        put("mob_names.DROWNED", "Drowned");
-        put("mob_names.ELDER_GUARDIAN", "Elder Guardian");
-        put("mob_names.ENDERMAN", "Enderman");
-        put("mob_names.ENDERMITE", "Endermite");
-        put("mob_names.EVOKER", "Evoker");
-        put("mob_names.FOX", "Fox");
-        put("mob_names.FROG", "Frog");
-        put("mob_names.GHAST", "Ghast");
-        put("mob_names.GLOW_SQUID", "Glow Squid");
-        put("mob_names.GOAT", "Goat");
-        put("mob_names.GUARDIAN", "Guardian");
-        put("mob_names.HOGLIN", "Hoglin");
-        put("mob_names.HORSE", "Horse");
-        put("mob_names.HUSK", "Husk");
-        put("mob_names.IRON_GOLEM", "Iron Golem");
-        put("mob_names.LLAMA", "Llama");
-        put("mob_names.MAGMA_CUBE", "Magma Cube");
-        put("mob_names.MOOSHROOM", "Mooshroom");
-        put("mob_names.MUSHROOM_COW", "Mooshroom"); // Fallback for 1.20 version compatibility
-        put("mob_names.MULE", "Mule");
-        put("mob_names.OCELOT", "Ocelot");
-        put("mob_names.PANDA", "Panda");
-        put("mob_names.PARROT", "Parrot");
-        put("mob_names.PHANTOM", "Phantom");
-        put("mob_names.PIG", "Pig");
-        put("mob_names.PIGLIN", "Piglin");
-        put("mob_names.PIGLIN_BRUTE", "Piglin Brute");
-        put("mob_names.PILLAGER", "Pillager");
-        put("mob_names.POLAR_BEAR", "Polar Bear");
-        put("mob_names.PUFFERFISH", "Pufferfish");
-        put("mob_names.RABBIT", "Rabbit");
-        put("mob_names.RAVAGER", "Ravager");
-        put("mob_names.SALMON", "Salmon");
-        put("mob_names.SHEEP", "Sheep");
-        put("mob_names.SHULKER", "Shulker");
-        put("mob_names.SILVERFISH", "Silverfish");
-        put("mob_names.SKELETON", "Skeleton");
-        put("mob_names.SKELETON_HORSE", "Skeleton Horse");
-        put("mob_names.SLIME", "Slime");
-        put("mob_names.SNIFFER", "Sniffer");
-        put("mob_names.SNOW_GOLEM", "Snow Golem");
-        put("mob_names.SNOWMAN", "Snow Golem"); // Fallback for 1.20 version compatibility
-        put("mob_names.SPIDER", "Spider");
-        put("mob_names.SQUID", "Squid");
-        put("mob_names.STRAY", "Stray");
-        put("mob_names.STRIDER", "Strider");
-        put("mob_names.TADPOLE", "Tadpole");
-        put("mob_names.TRADER_LLAMA", "Trader Llama");
-        put("mob_names.TROPICAL_FISH", "Tropical Fish");
-        put("mob_names.TURTLE", "Turtle");
-        put("mob_names.VEX", "Vex");
-        put("mob_names.VILLAGER", "Villager");
-        put("mob_names.VINDICATOR", "Vindicator");
-        put("mob_names.WANDERING_TRADER", "Wandering Trader");
-        put("mob_names.WARDEN", "Warden");
-        put("mob_names.WITCH", "Witch");
-        put("mob_names.WITHER_SKELETON", "Wither Skeleton");
-        put("mob_names.WOLF", "Wolf");
-        put("mob_names.ZOGLIN", "Zoglin");
-        put("mob_names.ZOMBIE", "Zombie");
-        put("mob_names.ZOMBIE_HORSE", "Zombie Horse");
-        put("mob_names.ZOMBIE_VILLAGER", "Zombie Villager");
-        put("mob_names.ZOMBIFIED_PIGLIN", "Zombified Piglin");
-
-        // Spawner Name With Entity
-        put("spawner-name", "&d%entity% Spawner");
-        put("spawner-hologram.format", Arrays.asList(
-                "&#FCD05C◆  [&fx%stack_size%&#FCD05C] &d%entity%  &#FCD05C◆",
-                "&#00E689&lExp: &e%current_exp%&7/&e%max_exp% &7XP",
-                "&#FCD05C&lStorage: &f%used_slots%&7/&f%max_slots% &7slots"
-        ));
-
-        // Spawner Interaction Messages
-        put("messages.activated.message", "&#d6e7edSpawner &#3287A9activated&#d6e7ed! Mobs won’t spawn naturally, collect loot and XP through the GUI instead.");
-        put("messages.activated.prefix", true);
-        put("messages.activated.type", "CHAT");
-        put("messages.activated.sound", "entity.experience_orb.pickup");
-
-        put("messages.entity-spawner-placed.message", "&#d6e7edThis spawner is &#3287A9not activated&#d6e7ed! Mobs will spawn naturally.");
-        put("messages.entity-spawner-placed.prefix", true);
-        put("messages.entity-spawner-placed.type", "CHAT");
-        put("messages.entity-spawner-placed.sound", "block.note_block.pling");
-
-        put("messages.changed.message", "&#d6e7edSpawner changed to &#3287A9%type%&#d6e7ed!");
-        put("messages.changed.prefix", true);
-        put("messages.changed.type", "CHAT");
-        put("messages.changed.sound", "block.note_block.pling");
-
-        put("messages.invalid-egg.message", "&cInvalid spawn egg! or spawn egg not supported!");
-        put("messages.invalid-egg.prefix", true);
-        put("messages.invalid-egg.type", "CHAT");
-
-        put("messages.break-warning.message", "&c[!] Warning! All items and xp will be lost!");
-        put("messages.break-warning.prefix", false);
-        put("messages.break-warning.type", "ACTION_BAR");
-        put("messages.break-warning.sound", "block.note_block.chime");
-
-        put("messages.required-tools.message", "&c[!] Can't break spawner with this tool!");
-        put("messages.required-tools.prefix", false);
-        put("messages.required-tools.type", "ACTION_BAR");
-        put("messages.required-tools.sound", "item.shield.block");
-
-        put("messages.silk-touch-required.message", "&c[!] Required &#3287A9Silk Touch&c to break this spawner!");
-        put("messages.silk-touch-required.prefix", false);
-        put("messages.silk-touch-required.type", "ACTION_BAR");
-        put("messages.silk-touch-required.sound", "block.note_block.pling");
-
-        put("messages.spawner-protected.message", "&c[!] This spawner is protected!");
-        put("messages.spawner-protected.prefix", false);
-        put("messages.spawner-protected.type", "ACTION_BAR");
-        put("messages.spawner-protected.sound", "block.note_block.pling");
-
-        // Selling Items from Spawner
-        put("messages.sell-all.message", "&#d6e7edYou sold a total of &#3287A9%amount% items&#d6e7ed for&a $%price% &#d6e7ed!");
-        put("messages.sell-all.prefix", true);
-        put("messages.sell-all.type", "CHAT");
-        put("messages.sell-all.sound", "block.note_block.bell");
-
-        put("messages.no-items.message", "&cThere are no items to sell in the spawner.");
-        put("messages.no-items.prefix", true);
-        put("messages.no-items.type", "CHAT");
-        put("messages.no-items.sound", "block.note_block.pling");
-
-        put("messages.sell-all-tax.message", "&#d6e7edYou have sold &#3287A9%amount% items&#d6e7ed. Original price: &a$%gross%&#d6e7ed, After tax (&#ff6b6b-%tax%%&#d6e7ed): &a$%price%");
-        put("messages.sell-all-tax.prefix", true);
-        put("messages.sell-all-tax.type", "CHAT");
-        put("messages.sell-all-tax.sound", "block.note_block.bell");
-
-        put("messages.no-sellable-items.message", "&cNo items can be sold from this spawner.");
-        put("messages.no-sellable-items.prefix", true);
-        put("messages.no-sellable-items.type", "CHAT");
-        put("messages.no-sellable-items.sound", "block.note_block.pling");
-
-        put("messages.sell-failed.message", "&cFailed to sell items! Please try again.");
-        put("messages.sell-failed.prefix", true);
-        put("messages.sell-failed.type", "CHAT");
-        put("messages.sell-failed.sound", "block.note_block.pling");
-
-        put("messages.sell-cooldown.message", "&cPlease wait a moment before selling items again.");
-        put("messages.sell-cooldown.prefix", true);
-        put("messages.sell-cooldown.type", "CHAT");
-        put("messages.sell-cooldown.sound", "block.note_block.pling");
-
-        put("messages.transaction-in-progress.message", "&cA transaction is already in progress! Please wait.");
-        put("messages.transaction-in-progress.prefix", true);
-        put("messages.transaction-in-progress.type", "CHAT");
-        put("messages.transaction-in-progress.sound", "block.note_block.pling");
-
-        // Spawner Stacking/Unstacking Messages
-        put("messages.hand-stack.message", "&f[&#00E689✔&f] &fSuccessfully stacked &#00E689%amount%&f spawners!");
-        put("messages.hand-stack.prefix", false);
-        put("messages.hand-stack.type", "ACTION_BAR");
-        put("messages.hand-stack.sound", "entity.experience_orb.pickup");
-
-        put("messages.cannot-go-below-one.message", "&cCannot go below 1! Only decreasing by %amount%!");
-        put("messages.cannot-go-below-one.prefix", true);
-        put("messages.cannot-go-below-one.type", "CHAT");
-        put("messages.cannot-go-below-one.sound", "block.note_block.pling");
-
-        put("messages.stack-full.message", "&cStack limit reached! Cannot increase anymore!");
-        put("messages.stack-full.prefix", true);
-        put("messages.stack-full.type", "CHAT");
-        put("messages.stack-full.sound", "block.note_block.pling");
-
-        put("messages.not-enough-spawners.message", "&cYou don't have enough spawners! Need %amountChange% but only have %amountAvailable%!");
-        put("messages.not-enough-spawners.prefix", true);
-        put("messages.not-enough-spawners.type", "CHAT");
-        put("messages.not-enough-spawners.sound", "block.note_block.pling");
-
-        put("messages.stack-full-overflow.message", "&cStack limit reached! Only stack %amount% spawners!");
-        put("messages.stack-full-overflow.prefix", true);
-        put("messages.stack-full-overflow.type", "CHAT");
-        put("messages.stack-full-overflow.sound", "block.note_block.pling");
-
-        put("messages.inventory-full-drop.message", "&cSome spawners were dropped at your feet due to full inventory!");
-        put("messages.inventory-full-drop.prefix", true);
-        put("messages.inventory-full-drop.type", "CHAT");
-        put("messages.inventory-full-drop.sound", "block.note_block.pling");
-
-        put("messages.invalid-spawner.message", "&cInvalid spawner type!");
-        put("messages.invalid-spawner.prefix", true);
-        put("messages.invalid-spawner.type", "CHAT");
-        put("messages.invalid-spawner.sound", "block.note_block.pling");
-
-        put("messages.different-type.message", "&cYou can only stack spawners of the same type!");
-        put("messages.different-type.prefix", true);
-        put("messages.different-type.type", "CHAT");
-        put("messages.different-type.sound", "block.note_block.pling");
-
-        // Spawner Experience Collection
-        put("messages.exp-collected.message", "&#d6e7edCollected &a%exp%&#d6e7ed experience points!");
-        put("messages.exp-collected.prefix", true);
-        put("messages.exp-collected.type", "CHAT");
-
-        put("messages.exp-collected-with-mending.message", "&#d6e7edUsed &a%exp-mending%&#d6e7ed experience points to repair items! Collected &a%exp%&#d6e7ed experience points!");
-        put("messages.exp-collected-with-mending.prefix", true);
-        put("messages.exp-collected-with-mending.type", "CHAT");
-
-        put("messages.no-exp.message", "&cThere is no experience to take!");
-        put("messages.no-exp.prefix", true);
-        put("messages.no-exp.type", "CHAT");
-        put("messages.no-exp.sound", "block.note_block.pling");
-
-        // ---------------------------------------------------
-        //               Spawner Storage Interaction
-        // ---------------------------------------------------
-
-        put("messages.no-items-to-take.message", "&cThere are no items to take!");
-        put("messages.no-items-to-take.prefix", true);
-        put("messages.no-items-to-take.type", "CHAT");
-        put("messages.no-items-to-take.sound", "block.note_block.pling");
-
-        put("messages.inventory-full.message", "&cYour inventory is full!");
-        put("messages.inventory-full.prefix", true);
-        put("messages.inventory-full.type", "CHAT");
-        put("messages.inventory-full.sound", "block.note_block.pling");
-
-        put("messages.take-some-items.message", "&#d6e7edYou have taken &3287A9%amount%&d6e7ed items! Your inventory is now full!");
-        put("messages.take-some-items.prefix", true);
-        put("messages.take-some-items.type", "CHAT");
-
-        // Discard Messages
-        put("messages.discard-all-success.message", "&#ff6b6bDiscarded &f%amount% &#ff6b6bitems!");
-        put("messages.discard-all-success.prefix", true);
-        put("messages.discard-all-success.type", "CHAT");
-        put("messages.discard-all-success.sound", "entity.generic.burn");
-
-        put("messages.no-items-to-discard.message", "&cThere are no items to discard!");
-        put("messages.no-items-to-discard.prefix", true);
-        put("messages.no-items-to-discard.type", "CHAT");
-        put("messages.no-items-to-discard.sound", "block.note_block.pling");
-
-        put("messages.take-all-items.message", "&#d6e7edSuccessfully taken &3287A9%amount%&d6e7ed items!");
-        put("messages.take-all-items.prefix", true);
-        put("messages.take-all-items.type", "CHAT");
-        put("messages.take-all-items.sound", "block.note_block.chime");
-
-        // Spawner List Teleport Message
-        put("messages.teleported.message", "&aSuccessfully teleported to &6Spawner #%spawnerId%");
-        put("messages.teleported.prefix", true);
-        put("messages.teleported.type", "CHAT");
-        put("messages.teleported.sound", "entity.enderman.teleport");
-
-        put("messages.not-found.message", "&cCould not teleport to that Spawner! Spawner not found.");
-        put("messages.not-found.prefix", true);
-        put("messages.not-found.type", "CHAT");
-        put("messages.not-found.sound", "block.note_block.pling");
-
-        // GUI Titles
-        put("gui-title.menu", "%entity% Spawner");
-        put("gui-title.stacked-menu", "%amount% %entity% Spawner");
-        put("gui-title.stacker-menu", "Spawner Stacker");
-        put("gui-title.loot-menu", "Spawner Storage");
-
-        //---------------------------------------------------
-        //              Spawner Main GUI
-        //---------------------------------------------------
-
-        // Storage
-        put("spawner-loot-item.name", "&#FCD05C&lStorage");
-        put("spawner-loot-item.lore.chest", Arrays.asList(
-                "",
-                "&#FCD05C&l❖ &fSlots: &#ffeb3b%current_items%&7/&f%max_slots%",
-                "&#FCD05C&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full",
-                "",
-                "&#FCD05C&l➜ &7Click to open storage"
-        ));
-
-        // Spawner Info
-        put("spawner-info-item.name", "&#4fc3f7&l%entity% Spawner");
-        put("spawner-info-item.lore.spawner-info", Arrays.asList(
-                "",
-                "&#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%",
-                "&#4fc3f7&l❖ &fRange: &#ffeb3b%range% &7blocks",
-                "&#4fc3f7&l❖ &fMob Rate: &#ffeb3b%min_mobs% &7- &#ffeb3b%max_mobs%",
-                "&#4fc3f7&l❖ &fSpawn Delay: &#ffeb3b%delay%&7s",
-                "&#4fc3f7&l❖ &fNext Spawn: &e",
-                "",
-                "&#4fc3f7&l➜ &7Right-click to open &#4fc3f7Stacker GUI",
-                "&#4fc3f7&l➜ &7Click to &#FCD05CSell Items &7& &#00F898Collect XP"
-        ));
-        put("spawner-info-item.lore-change", "&#4fc3f7&l❖ &fNext Spawn: &e");
-        put("spawner-info-item.lore-full", "&cStorage & Exp is full!");
-        put("spawner-info-item.lore-inactive", "&cSpawner is inactive!");
-
-        // Experience
-        put("exp-info-item.name", "&#00F898&lExp: &e%current_exp%&#00F898");
-        put("exp-info-item.lore.exp-bottle", Arrays.asList(
-                "",
-                "&#00F898&l❖ &fCurrent: &#ffeb3b%current_exp%&7/&f%max_exp% &7XP",
-                "&#00F898&l❖ &fStored: &#ffeb3b%percent_exp%% &7XP",
-                "",
-                "&#00F898&l➜ &7Click to collect XP"
-        ));
-
-        // ---------------------------------------------------
-        //              Spawner Stacker GUI
-        //---------------------------------------------------
-
-        put("button.name.spawner", "&l&#4fc3f7%entity% Spawner");
-        put("button.name.decrease-64", "&c-64 Spawners");
-        put("button.name.decrease-10", "&c-10 Spawners");
-        put("button.name.decrease-1", "&c-1 Spawner");
-        put("button.name.increase-64", "&a+64 Spawners");
-        put("button.name.increase-10", "&a+10 Spawners");
-        put("button.name.increase-1", "&a+1 Spawner");
-
-        put("button.lore.remove", Arrays.asList(
-                "",
-                "&#4fc3f7&l❖ &fRemove: &#ffeb3b%amount% &7spawner",
-                "&#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%",
-                "",
-                "&#4fc3f7&l➜ &7Click to remove from stack"
-        ));
-
-        put("button.lore.add", Arrays.asList(
-                "",
-                "&#4fc3f7&l❖ &fAdd: &#ffeb3b%amount% &7spawner",
-                "&#4fc3f7&l❖ &fCurrent Stack: &#ffeb3b%stack_size%",
-                "",
-                "&#4fc3f7&l➜ &7Click to add to stack"
-        ));
-
-        put("button.lore.spawner", Arrays.asList(
-                "",
-                "&#4fc3f7&l❖ &fStack Size: &#ffeb3b%stack_size%",
-                "&#4fc3f7&l❖ &fMax Stack: &#ffeb3b%max_stack_size%",
-                "",
-                "&#4fc3f7&l➜ &7Click to return spawner menu"
-        ));
-
-        // ---------------------------------------------------
-        //               Spawner Storage GUI
-        // ---------------------------------------------------
-
-        // Navigation Buttons
-        put("navigation-button.previous.name", "&#00E689&l❖ &#00E689Previous Page");
-        put("navigation-button.previous.lore", "&#00E689&l➜ &7Click to go to page &#00E689&l%target_page%");
-        put("navigation-button.next.name", "&#00E689&l❖ &#00E689Next Page");
-        put("navigation-button.next.lore", "&#00E689&l➜ &7Click to go to page &#00E689&l%target_page%");
-
-        // Page Indicator
-        put("page-indicator.name", "&#ffd700&l❖ &#ffd700Page &f[&#ffd700%current_page%&f/&#ffd700%total_pages%&f]");
-        put("page-indicator.lore", "&#ffd700&l❖ &fUsed Slots: &#ffeb3b%used_slots%&7/&f%max_slots%");
-
-        // Shop Page Indicator
-        put("shop-page-indicator.name", "&#ffd700&l❖ Sell All Items");
-        put("shop-page-indicator.lore", Arrays.asList(
-                "&#ffd700&l❖ &fSlots: &#ffeb3b%used_slots%&7/&f%max_slots%",
-                "&#ffd700&l❖ &fStorage: &#ffeb3b%percent_storage%%&f full",
-                "",
-                "&#ffd700&l➜ &7Click to sell all items"
-        ));
-
-        // Other GUI Buttons
-        put("return-button.name", "&#ff6b6b&l❖ &fReturn to Main Menu");
-        put("take-all-button.name", "&#00E689&l❖ &fTake All Items");
-
-        // Equipment Toggle
-        put("equipment-toggle.name", "&#f4d842&l❖ &fFilter Equipment Drops");
-        put("equipment-toggle.lore.enabled", "&#f4d842&l➥ &7Status: &#00E689&lAllowed");
-        put("equipment-toggle.lore.disabled", "&#f4d842&l➥ &7Status: &#ff6b6b&lBlocked");
-
-        // Discard All Button
-        put("discard-all-button.name", "&#ff6b6b&l❖ &fDiscard All Items");
-        put("discard-all-button.lore", "&#ff6b6b&l➥ &7Click to&#ff6b6b remove&7 all items");
-
-        // ---------------------------------------------------
-        //                    Commands
-        // ---------------------------------------------------
-
-        // Command Messages
-        put("command.usage", Arrays.asList(
-                "&#00E689SmartSpawner Commands:",
-                "&f/smartspawner reload &7- Reload the plugin configuration",
-                "&f/smartspawner list &7- Open the spawner list (for admin management)",
-                "&f/smartspawner give <player> <mobtype> <amount> &7- Give spawners to a player",
-                "&f/smartspawner hologram &7- Toggle hologram visibility"
-        ));
-        put("command.reload.usage", "&cUsage: /smartspawner reload");
-        put("command.reload.wait", "&eReloading plugin please wait...");
-        put("command.reload.success", "&aPlugin reloaded successfully!");
-        put("command.reload.error", "&cError reloading plugin. Check console for details.");
-
-        put("command.give.usage", "&cUsage: /smartspawner give <player> <mobtype> <amount>");
-        put("command.give.player-not-found", "&cPlayer not found!");
-        put("command.give.invalid-mob-type", "&cInvalid mob type! Use tab completion to see available types.");
-        put("command.give.invalid-amount", "&cInvalid amount! Please enter a number between 1 and 64.");
-        put("command.give.amount-too-large", "&cMaximum amount allowed is %max%!");
-        put("command.give.inventory-full", "&eYour inventory is full! Some items have been dropped on the ground.");
-        put("command.give.spawner-received", "&aYou have received %amount% %entity% spawner(s)!");
-        put("command.give.spawner-given", "&aYou have given %player% %amount% %entity% spawner(s)!");
-        put("command.give.spawner-given-dropped", "&eYou have given %player% %amount% %entity% spawner(s) (some items were dropped on the ground)");
-
-        put("command.hologram.enabled", "&#00E689Holograms have been &aenabled&7!");
-        put("command.hologram.disabled", "&cHolograms have been &cdisabled&7!");
-
-        // No Permission Message
-        put("no-permission.message", "&cYou do not have permission to do that!");
-        put("no-permission.prefix", true);
-        put("no-permission.type", "CHAT");
-        put("no-permission.sound", "block.note_block.pling");
-
-        //---------------------------------------------------
-        // Spawner List GUI (Command)
-        //---------------------------------------------------
-        put("spawner-list.gui-title.world-selection", "&#3287A9&lSpawner List");
-        put("spawner-list.gui-title.page-title", "{world} &r- [{current}/{total}]");
-
-        // Navigation
-        put("spawner-list.navigation.previous-page", "&e&lPrevious Page");
-        put("spawner-list.navigation.next-page", "&e&lNext Page");
-        put("spawner-list.navigation.back", "&c&lBack to World Selection");
-
-        // World Buttons
-        put("spawner-list.world-buttons.overworld.name", "&a&lOverworld");
-        put("spawner-list.world-buttons.overworld.lore",
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&7⮞ &fTotal Spawners: &a{total}\n" +
-            "&7⮞ &fTotal Stacked: &a{total_stacked}\n" +
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&a▶ &7Click to view!"
-        );
-
-        put("spawner-list.world-buttons.nether.name", "&c&lNether");
-        put("spawner-list.world-buttons.nether.lore",
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&7⮞ &fTotal Spawners: &c{total}\n" +
-            "&7⮞ &fTotal Stacked: &c{total_stacked}\n" +
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&c▶ &7Click to view!"
-        );
-
-        put("spawner-list.world-buttons.end.name", "&5&lThe End");
-        put("spawner-list.world-buttons.end.lore",
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&7⮞ &fTotal Spawners: &5{total}\n" +
-            "&7⮞ &fTotal Stacked: &5{total_stacked}\n" +
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&5▶ &7Click to view!"
-        );
-
-        // Custom Worlds
-        put("spawner-list.world-buttons.custom-nether.name", "&c&l{world_name}");
-        put("spawner-list.world-buttons.custom-overworld.name", "&a&l{world_name}");
-        put("spawner-list.world-buttons.custom-end.name", "&5&l{world_name}");
-        put("spawner-list.world-buttons.custom-default.name", "&b&l{world_name}");
-        put("spawner-list.world-buttons.custom-default.lore",
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&7⮞ &fTotal Spawners: &b{total}\n" +
-            "&7⮞ &fTotal Stacked: &b{total_stacked}\n" +
-            "&8━━━━━━━━━━━━━━━━━━━━\n" +
-            "&b▶ &7Click to view!"
-        );
-
-        // Spawner Item
-        put("spawner-list.spawner-item.name", "&#4fc3f7&lSpawner #{id}");
-        put("spawner-list.spawner-item.id_pattern", "Spawner #([A-Za-z0-9]+)");
-        put("spawner-list.spawner-item.lore.separator", "&7&m―――――――――――――――――――――――");
-        put("spawner-list.spawner-item.lore.entity", "&f⮞ &7Entity: &f{entity}");
-        put("spawner-list.spawner-item.lore.stack_size", "&f⮞ &7Stack Size: &#4fc3f7{size}");
-
-        put("spawner-list.spawner-item.lore.status.active", "&f⮞ &7Status: &a&lACTIVE");
-        put("spawner-list.spawner-item.lore.status.inactive", "&f⮞ &7Status: &c&lINACTIVE");
-
-        put("spawner-list.spawner-item.lore.location", "&f⮞ &7Location: &#4fc3f7{x}, {y}, {z}");
-        put("spawner-list.spawner-item.lore.teleport", "&#4fc3f7▶ &fClick to teleport");
-
-    }};
-
-    public LanguageManager(Plugin plugin) {
+    public LanguageManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.logger = plugin.getLogger();
-        this.languageMessages = new HashMap<>();
-        this.messageCache = Collections.synchronizedMap(
-                new LinkedHashMap<String, String>(CACHE_SIZE + 1, .75F, true) {
-                    @Override
-                    protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-                        return size() > CACHE_SIZE;
-                    }
-                }
-        );
+        this.defaultLocale = plugin.getConfig().getString("language", "en_US");
+        activeFileTypes.addAll(Arrays.asList(LanguageFileType.values()));
+
+        this.formattedStringCache = new LRUCache<>(DEFAULT_STRING_CACHE_SIZE);
+        this.loreCache = new LRUCache<>(DEFAULT_LORE_CACHE_SIZE);
+        this.loreListCache = new LRUCache<>(DEFAULT_LORE_LIST_CACHE_SIZE);
+
+        this.guiItemNameCache = new LRUCache<>(DEFAULT_STRING_CACHE_SIZE);
+        this.guiItemLoreCache = new LRUCache<>(DEFAULT_LORE_CACHE_SIZE);
+        this.guiItemLoreListCache = new LRUCache<>(DEFAULT_LORE_LIST_CACHE_SIZE);
+
+        this.entityNameCache = new LRUCache<>(250);
+        this.smallCapsCache = new LRUCache<>(500);
+        this.materialNameCache = new LRUCache<>(250);
+
         loadLanguages();
+        // saveDefaultFiles();
+        cacheDefaultLocaleData();
     }
 
-    private void loadLanguages() {
-        File messagesDir = new File(plugin.getDataFolder(), "messages");
-        if (!messagesDir.exists()) {
-            messagesDir.mkdirs();
-            saveDefaultLanguageFiles();
+    public LanguageManager(SmartSpawner plugin, LanguageFileType... fileTypes) {
+        this.plugin = plugin;
+        this.defaultLocale = plugin.getConfig().getString("language", "en_US");
+        activeFileTypes.addAll(Arrays.asList(fileTypes));
+
+        this.formattedStringCache = new LRUCache<>(DEFAULT_STRING_CACHE_SIZE);
+        this.loreCache = new LRUCache<>(DEFAULT_LORE_CACHE_SIZE);
+        this.loreListCache = new LRUCache<>(DEFAULT_LORE_LIST_CACHE_SIZE);
+
+        this.guiItemNameCache = new LRUCache<>(DEFAULT_STRING_CACHE_SIZE);
+        this.guiItemLoreCache = new LRUCache<>(DEFAULT_LORE_CACHE_SIZE);
+        this.guiItemLoreListCache = new LRUCache<>(DEFAULT_LORE_LIST_CACHE_SIZE);
+
+        this.entityNameCache = new LRUCache<>(250);
+        this.smallCapsCache = new LRUCache<>(500);
+        this.materialNameCache = new LRUCache<>(250);
+
+        loadLanguages(fileTypes);
+        // saveDefaultFiles();
+        cacheDefaultLocaleData();
+    }
+
+    //---------------------------------------------------
+    //                 Core Methods
+    //---------------------------------------------------
+
+    private void saveDefaultFiles() {
+        saveResource("language/vi_VN/messages.yml");
+        saveResource("language/vi_VN/gui.yml");
+        saveResource("language/vi_VN/formatting.yml");
+        saveResource("language/vi_VN/items.yml");
+    }
+
+    private void saveResource(String resourcePath) {
+        File resourceFile = new File(plugin.getDataFolder(), resourcePath);
+        if (!resourceFile.exists()) {
+            resourceFile.getParentFile().mkdirs();
+            plugin.saveResource(resourcePath, false);
+        }
+    }
+
+    public void loadLanguages() {
+        loadLanguages(activeFileTypes.toArray(new LanguageFileType[0]));
+    }
+
+    public void loadLanguages(LanguageFileType... fileTypes) {
+        File langDir = new File(plugin.getDataFolder(), "language");
+        if (!langDir.exists() && !langDir.mkdirs()) {
+            plugin.getLogger().severe("Failed to create language directory!");
+            return;
         }
 
-        messageCache.clear();
-        languageMessages.clear();
+        // Clear existing locale data for the default locale to ensure a fresh load
+        localeMap.remove(defaultLocale);
 
-        // Load all .yml files in messages directory
-        File[] languageFiles = messagesDir.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (languageFiles != null) {
-            for (File file : languageFiles) {
-                loadLanguageFile(file);
+        // Load only the default locale
+        loadLocale(defaultLocale, fileTypes);
+        activeLocales.add(defaultLocale);
+    }
+
+    private void cacheDefaultLocaleData() {
+        cachedDefaultLocaleData = localeMap.get(defaultLocale);
+        if (cachedDefaultLocaleData == null) {
+            plugin.getLogger().severe("Failed to cache default locale data for " + defaultLocale);
+            // Create empty configs as fallback
+            cachedDefaultLocaleData = new LocaleData(
+                    new YamlConfiguration(),
+                    new YamlConfiguration(),
+                    new YamlConfiguration(),
+                    new YamlConfiguration()
+            );
+            localeMap.put(defaultLocale, cachedDefaultLocaleData);
+        }
+    }
+
+    public void reloadLanguages() {
+        // Clear all caches first to avoid using stale data
+        clearCache();
+
+        // Get the previous default locale
+        String previousDefaultLocale = this.defaultLocale;
+
+        // Update the default locale from config
+        this.defaultLocale = plugin.getConfig().getString("language", "en_US");
+
+        // Force reload all locale files for all active locales
+        for (String locale : activeLocales) {
+            // Remove current locale data to ensure fresh load
+            localeMap.remove(locale);
+            // Force reload all file types for this locale
+            for (LanguageFileType fileType : activeFileTypes) {
+                YamlConfiguration config = loadOrCreateFile(locale, fileType.getFileName(), true);
+                updateLocaleData(locale, fileType, config);
             }
         }
 
-        // Get language from config
-        String configLang = plugin.getConfig().getString("language");
+        // Load the new default locale if it's not already loaded
+        if (!activeLocales.contains(this.defaultLocale)) {
+            loadLocale(this.defaultLocale, activeFileTypes.toArray(new LanguageFileType[0]));
+            activeLocales.add(this.defaultLocale);
+        }
 
-        // Check if it's a supported language
-        SupportedLanguage supportedLang = SupportedLanguage.fromCode(configLang);
+        // Re-cache the default locale data
+        cacheDefaultLocaleData();
 
-        // Try to load the configured language
-        messages = languageMessages.get(configLang);
+        plugin.getLogger().info("Successfully reloaded language files for language " + this.defaultLocale);
+    }
 
-        if (messages == null) {
-            if (supportedLang != SupportedLanguage.ENGLISH) {
-                // If it's a supported language but file doesn't exist, create it
-                if (supportedLang != null) {
-                    createLanguageFile(supportedLang);
-                    messages = languageMessages.get(configLang);
-                } else {
-                    // If it's not a supported language, fall back to English
-                    logger.warning("Language '" + configLang + "' is not supported, falling back to English");
-                    messages = getOrCreateEnglishLanguage();
+    // Add this helper method to update locale data
+    private void updateLocaleData(String locale, LanguageFileType fileType, YamlConfiguration config) {
+        LocaleData existingData = localeMap.getOrDefault(locale,
+                new LocaleData(new YamlConfiguration(), new YamlConfiguration(),
+                        new YamlConfiguration(), new YamlConfiguration()));
+
+        switch (fileType) {
+            case MESSAGES:
+                localeMap.put(locale, new LocaleData(config, existingData.gui(),
+                        existingData.formatting(), existingData.items()));
+                break;
+            case GUI:
+                localeMap.put(locale, new LocaleData(existingData.messages(), config,
+                        existingData.formatting(), existingData.items()));
+                break;
+            case FORMATTING:
+                localeMap.put(locale, new LocaleData(existingData.messages(), existingData.gui(),
+                        config, existingData.items()));
+                break;
+            case ITEMS:
+                localeMap.put(locale, new LocaleData(existingData.messages(), existingData.gui(),
+                        existingData.formatting(), config));
+                break;
+        }
+    }
+
+    // Modify the loadOrCreateFile method to add a parameter to force reload
+    private YamlConfiguration loadOrCreateFile(String locale, String fileName, boolean forceReload) {
+        File file = new File(plugin.getDataFolder(), "language/" + locale + "/" + fileName);
+        YamlConfiguration defaultConfig = new YamlConfiguration();
+        YamlConfiguration userConfig = new YamlConfiguration();
+
+        // Check if the default resource exists before trying to load it
+        boolean defaultResourceExists = plugin.getResource("language/" + defaultLocale + "/" + fileName) != null;
+
+        // Load default configuration from resources if it exists
+        if (defaultResourceExists) {
+            try (InputStream inputStream = plugin.getResource("language/" + defaultLocale + "/" + fileName)) {
+                if (inputStream != null) {
+                    defaultConfig.loadFromString(new String(inputStream.readAllBytes()));
                 }
-            } else {
-                // If English is missing, create it
-                messages = getOrCreateEnglishLanguage();
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load default " + fileName, e);
             }
         }
 
-        currentLanguage = supportedLang != null ? supportedLang : SupportedLanguage.ENGLISH;
-        logger.info("Loaded language: " + currentLanguage.getDisplayName() + " (" + currentLanguage.getCode() + ")");
-    }
-
-    private FileConfiguration getOrCreateEnglishLanguage() {
-        FileConfiguration englishMessages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
-        if (englishMessages == null) {
-            createLanguageFile(SupportedLanguage.ENGLISH);
-            englishMessages = languageMessages.get(SupportedLanguage.ENGLISH.getCode());
-        }
-        return englishMessages;
-    }
-
-    private void loadLanguageFile(File file) {
-        String langCode = file.getName().replace(".yml", "");
-        FileConfiguration langConfig = YamlConfiguration.loadConfiguration(file);
-
-        // Merge default messages
-        boolean hasChanges = mergeDefaultMessages(langConfig);
-        if (hasChanges) {
-            try {
-                langConfig.save(file);
-                logger.info("Updated language file: " + file.getName());
+        // Create file if it doesn't exist and the default resource exists
+        if (!file.exists() && defaultResourceExists) {
+            try (InputStream inputStream = plugin.getResource("language/" + defaultLocale + "/" + fileName)) {
+                if (inputStream != null) {
+                    file.getParentFile().mkdirs(); // Ensure parent directory exists
+                    Files.copy(inputStream, file.toPath());
+                }
             } catch (IOException e) {
-                logger.severe("Could not save updated language file " + file.getName() + ": " + e.getMessage());
+                plugin.getLogger().log(Level.SEVERE, "Failed to create " + fileName + " for locale " + locale, e);
+                return new YamlConfiguration(); // Return empty config to avoid further errors
             }
         }
 
-        languageMessages.put(langCode, langConfig);
-    }
-
-    private void createLanguageFile(SupportedLanguage language) {
-        File langFile = new File(plugin.getDataFolder(), language.getResourcePath());
-
-        // First try to load from jar resources
-        InputStream resourceStream = plugin.getResource(language.getResourcePath());
-        if (resourceStream != null) {
+        // Load user configuration if file exists
+        if (file.exists()) {
             try {
-                Files.copy(resourceStream, langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                loadLanguageFile(langFile);
-                //logger.info("Created language file from resource: " + language.getResourcePath());
-                return;
-            } catch (IOException e) {
-                logger.warning("Failed to copy resource for " + language.getCode() + ": " + e.getMessage());
+                // When forceReload is true, we always create a new YamlConfiguration
+                // instance to ensure we're not using any cached data
+                if (forceReload) {
+                    userConfig = new YamlConfiguration();
+                }
+
+                // Use loadConfiguration for a fresh load from disk when forceReload is true
+                if (forceReload) {
+                    userConfig = YamlConfiguration.loadConfiguration(file);
+                } else {
+                    userConfig.load(file);
+                }
+
+                // Log reload information
+                if (forceReload) {
+                    plugin.getLogger().info("Force reloaded " + fileName + " for locale " + locale);
+                }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to load " + fileName + " for locale " + locale + ". Using defaults.", e);
+                return defaultConfig; // Return default config if user config can't be loaded
+            }
+
+            // Merge configurations (add missing keys from default to user config)
+            boolean updated = false;
+            for (String key : defaultConfig.getKeys(false)) {
+                if (!userConfig.contains(key)) {
+                    userConfig.set(key, defaultConfig.get(key));
+                    updated = true;
+                }
+            }
+
+            // Save if updated
+            if (updated) {
+                try {
+                    userConfig.save(file);
+                    plugin.getLogger().info("Updated " + fileName + " for locale " + locale);
+                } catch (IOException e) {
+                    plugin.getLogger().log(Level.WARNING, "Failed to save updated " + fileName + " for locale " + locale, e);
+                }
+            }
+
+            return userConfig;
+        } else {
+            // If file doesn't exist and we couldn't create it, return empty config
+            return new YamlConfiguration();
+        }
+    }
+
+    // Overload for backward compatibility
+    private YamlConfiguration loadOrCreateFile(String locale, String fileName) {
+        return loadOrCreateFile(locale, fileName, false);
+    }
+
+    private void loadLocale(String locale, LanguageFileType... fileTypes) {
+        File localeDir = new File(plugin.getDataFolder(), "language/" + locale);
+        if (!localeDir.exists() && !localeDir.mkdirs()) {
+            plugin.getLogger().severe("Failed to create locale directory for " + locale);
+            return;
+        }
+
+        // Create and load or update only the specified files
+        YamlConfiguration messages = null;
+        YamlConfiguration gui = null;
+        YamlConfiguration formatting = null;
+        YamlConfiguration items = null;
+
+        for (LanguageFileType fileType : fileTypes) {
+            switch (fileType) {
+                case MESSAGES:
+                    messages = loadOrCreateFile(locale, fileType.getFileName());
+                    break;
+                case GUI:
+                    gui = loadOrCreateFile(locale, fileType.getFileName());
+                    break;
+                case FORMATTING:
+                    formatting = loadOrCreateFile(locale, fileType.getFileName());
+                    break;
+                case ITEMS:
+                    items = loadOrCreateFile(locale, fileType.getFileName());
+                    break;
             }
         }
 
-        // If resource doesn't exist, create from default messages
-        FileConfiguration langConfig = new YamlConfiguration();
-        for (Map.Entry<String, Object> entry : defaultMessages.entrySet()) {
-            langConfig.set(entry.getKey(), entry.getValue());
-        }
+        // If a file wasn't specified, create an empty configuration
+        if (messages == null) messages = new YamlConfiguration();
+        if (gui == null) gui = new YamlConfiguration();
+        if (formatting == null) formatting = new YamlConfiguration();
+        if (items == null) items = new YamlConfiguration();
 
-        try {
-            langConfig.save(langFile);
-            languageMessages.put(language.getCode(), langConfig);
-            logger.info("Created new language file: " + language.getResourcePath());
-        } catch (IOException e) {
-            logger.severe("Could not create language file " + language.getResourcePath() + ": " + e.getMessage());
-        }
+        localeMap.put(locale, new LocaleData(messages, gui, formatting, items));
     }
 
-    private void saveDefaultLanguageFiles() {
-        for (SupportedLanguage lang : SupportedLanguage.values()) {
-            File langFile = new File(plugin.getDataFolder(), lang.getResourcePath());
-            if (!langFile.exists()) {
-                createLanguageFile(lang);
-            }
+    //---------------------------------------------------
+    //               Messages Methods
+    //---------------------------------------------------
+
+    public String getMessage(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
         }
+
+        String message = cachedDefaultLocaleData.messages().getString(key + ".message");
+
+        if (message == null) {
+            return "Missing message: " + key;
+        }
+
+        // Apply prefix
+        String prefix = getPrefix();
+        message = prefix + message;
+
+        // Apply placeholders and color formatting
+        return applyPlaceholdersAndColors(message, placeholders);
     }
 
-    private boolean mergeDefaultMessages(FileConfiguration config) {
-        boolean changed = false;
-        for (Map.Entry<String, Object> entry : defaultMessages.entrySet()) {
-            if (!config.contains(entry.getKey())) {
-                config.set(entry.getKey(), entry.getValue());
-                changed = true;
-                logger.info("Added missing message: " + entry.getKey());
-            }
+    public String getTitle(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
         }
-        return changed;
+        return getRawMessage(key + ".title", placeholders);
     }
 
-    // get message from path
-    public String getMessage(String path) {
-        String cachedMessage = messageCache.get(path + "_" + currentLanguage.getCode());
-        if (cachedMessage != null) {
-            return cachedMessage;
+    public String getSubtitle(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
         }
-
-        String message = messages.getString(path);
-        if (message == null && currentLanguage != SupportedLanguage.ENGLISH) {
-            message = languageMessages.get(SupportedLanguage.ENGLISH.getCode()).getString(path);
-        }
-
-        message = message == null ? "Message not found: " + path : colorize(message);
-        messageCache.put(path + "_" + currentLanguage.getCode(), message);
-        return message;
+        return getRawMessage(key + ".subtitle", placeholders);
     }
 
-    // get message from path with vararg replacements (optimized)
-    public String getMessage(String path, String... replacements) {
-        // Build cache key from path and all replacements
-        StringBuilder cacheKey = new StringBuilder(path)
-                .append("_")
-                .append(currentLanguage.getCode());
-        for (String replacement : replacements) {
-            cacheKey.append("_").append(replacement);
+    public String getActionBar(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
         }
-
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return cachedMessage;
-        }
-
-        String message = getMessage(path);
-        for (int i = 0; i < replacements.length; i += 2) {
-            if (i + 1 < replacements.length) {
-                message = message.replace(replacements[i], replacements[i + 1]);
-            }
-        }
-
-        messageCache.put(cacheKey.toString(), message);
-        return message;
+        return getRawMessage(key + ".action_bar", placeholders);
     }
 
-    // Get message from path with Map replacements (optimized)
-    public String getMessage(String path, Map<String, String> replacements) {
-        // Build cache key from path and all replacements
-        StringBuilder cacheKey = new StringBuilder(path)
-                .append("_")
-                .append(currentLanguage.getCode());
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            cacheKey.append("_").append(entry.getKey()).append(entry.getValue());
+    public String getSound(String key) {
+        if (!isMessageEnabled(key)) {
+            return null;
         }
 
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return cachedMessage;
-        }
-
-        String message = getMessage(path);
-        message = applyReplacements(message, replacements);
-
-        messageCache.put(cacheKey.toString(), message);
-        return message;
+        return cachedDefaultLocaleData.messages().getString(key + ".sound");
     }
 
-    public String displayHologramText(String path, Map<String, String> replacements) {
-        if (messages.isList(path)) {
-            List<String> messageList = messages.getStringList(path);
-            return colorize(String.join("\n", messageList.stream()
-                    .map(line -> applyReplacements(line, replacements))
-                    .collect(Collectors.toList())));
-        }
-
-        // Create cache key from path and all replacements
-        StringBuilder cacheKey = new StringBuilder(path);
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            cacheKey.append(entry.getKey()).append(entry.getValue());
-        }
-
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return cachedMessage;
-        }
-
-        String message = getMessage(path);
-        message = applyReplacements(message, replacements);
-        message = colorize(message);
-
-        messageCache.put(cacheKey.toString(), message);
-        return message;
+    private String getPrefix() {
+        return cachedDefaultLocaleData.messages().getString("prefix", "&7[Server] &r");
     }
 
-    // Helper method to apply replacements
-    private String applyReplacements(String message, Map<String, String> replacements) {
-        String result = message;
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
+    String getRawMessage(String path, Map<String, String> placeholders) {
+        String message = cachedDefaultLocaleData.messages().getString(path);
+
+        if (message == null) {
+            return null;  // Return null instead of error message
         }
-        return result;
+
+        return applyPlaceholdersAndColors(message, placeholders);
     }
 
-    public String getConsoleMessage(String path) {
-        String cachedMessage = messageCache.get(path + "_" + currentLanguage.getCode());
-        if (cachedMessage != null) {
-            return applyColorToConsole(cachedMessage);
-        }
-
-        String message = messages.getString(path);
-        if (message == null && currentLanguage != SupportedLanguage.ENGLISH) {
-            message = languageMessages.get(SupportedLanguage.ENGLISH.getCode()).getString(path);
-        }
-
-        message = message == null ? "Message not found: " + path : applyColorToConsole(message);
-        messageCache.put(path + "_" + currentLanguage.getCode(), message);
-        return message;
+    private boolean isMessageEnabled(String key) {
+        // Check if this message has an enabled flag, default to true if not specified
+        return cachedDefaultLocaleData.messages().getBoolean(key + ".enabled", true);
     }
 
-    // get console message from path with replacements
-    public String getConsoleMessage(String path, String... replacements) {
-        String message = getConsoleMessage(path);
-        StringBuilder cacheKey = new StringBuilder(path);
-        for (String replacement : replacements) {
-            cacheKey.append(replacement);
-        }
-
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return applyColorToConsole(cachedMessage);
-        }
-
-        for (int i = 0; i < replacements.length; i += 2) {
-            if (i + 1 < replacements.length) {
-                message = message.replace(replacements[i], replacements[i + 1]);
-            }
-        }
-
-        messageCache.put(cacheKey.toString(), message);
-        return message;
+    public boolean keyExists(String key) {
+        return cachedDefaultLocaleData.messages().contains(key);
     }
 
-    // get console message from path with replacements map
-    public String getConsoleMessage(String path, Map<String, String> replacements) {
-        String message = getConsoleMessage(path);
+    //---------------------------------------------------
+    //                  GUI Methods
+    //---------------------------------------------------
 
-        // Create cache key from path and all replacements
-        StringBuilder cacheKey = new StringBuilder(path);
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            cacheKey.append(entry.getKey()).append(entry.getValue());
-        }
-
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return applyColorToConsole(cachedMessage);  // Chuyển đổi màu nếu đã có trong cache
-        }
-
-        // Apply all replacements
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            message = message.replace(entry.getKey(), entry.getValue());
-        }
-
-        messageCache.put(cacheKey.toString(), message);
-        return message;
+    public String getGuiTitle(String key) {
+        return getGuiTitle(key, EMPTY_PLACEHOLDERS);
     }
 
-    private String applyColorToConsole(String message) {
-        // Remove hex color codes (e.g., &#FFFFFF)
-        // This regular expression removes all hex color codes like &#RRGGBB
-        message = message.replaceAll("&#[0-9a-fA-F]{6}", "");
-
-        // Replace Minecraft color codes (e.g., &a, &c, etc.) with ANSI color codes for console
-        message = message.replaceAll("(?i)&0", "\u001B[30m"); // &0 - black
-        message = message.replaceAll("(?i)&1", "\u001B[34m"); // &1 - blue
-        message = message.replaceAll("(?i)&2", "\u001B[32m"); // &2 - green
-        message = message.replaceAll("(?i)&3", "\u001B[36m"); // &3 - cyan
-        message = message.replaceAll("(?i)&4", "\u001B[31m"); // &4 - red
-        message = message.replaceAll("(?i)&5", "\u001B[35m"); // &5 - purple
-        message = message.replaceAll("(?i)&6", "\u001B[33m"); // &6 - yellow
-        message = message.replaceAll("(?i)&7", "\u001B[37m"); // &7 - white
-        message = message.replaceAll("(?i)&8", "\u001B[90m"); // &8 - gray
-        message = message.replaceAll("(?i)&9", "\u001B[94m"); // &9 - light blue
-        message = message.replaceAll("(?i)&a", "\u001B[32m"); // &a - light green
-        message = message.replaceAll("(?i)&b", "\u001B[96m"); // &b - light cyan
-        message = message.replaceAll("(?i)&c", "\u001B[91m"); // &c - light red
-        message = message.replaceAll("(?i)&d", "\u001B[95m"); // &d - pink
-        message = message.replaceAll("(?i)&e", "\u001B[93m"); // &e - light yellow
-        message = message.replaceAll("(?i)&f", "\u001B[97m"); // &f - bright white
-
-        // Replace Minecraft text effects (e.g., &k, &l, &n, &o, &r) with corresponding ANSI codes
-        message = message.replaceAll("(?i)&k", "\u001B[8m");  // &k - obfuscated (text scramble)
-        message = message.replaceAll("(?i)&l", "\u001B[1m");  // &l - bold
-        message = message.replaceAll("(?i)&m", "\u001B[9m");  // &m - strikethrough
-        message = message.replaceAll("(?i)&n", "\u001B[4m");  // &n - underline
-        message = message.replaceAll("(?i)&o", "\u001B[3m");  // &o - italic
-        message = message.replaceAll("(?i)&r", "\u001B[0m");  // &r - reset all effects (reset to default)
-
-        // Append reset color to ensure the console defaults back to normal after this message
-        return message + "\u001B[0m";
-    }
-
-
-    public String getMessageWithPrefix(String path) {
-        String cacheKey = "prefix_" + path + "_" + currentLanguage;
-        String cachedMessage = messageCache.get(cacheKey);
-        if (cachedMessage != null) {
-            return cachedMessage;
+    public String getGuiTitle(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return null;
         }
 
-        String prefix = colorize(messages.getString("prefix", ""));
-        String message = getMessage(path);
-        String result = prefix.isEmpty() ? message : prefix + " " + message;
-        messageCache.put(cacheKey, result);
-        return result;
-    }
+        String title = cachedDefaultLocaleData.gui().getString(key);
 
-    public String getMessageWithPrefix(String path, String... replacements) {
-        StringBuilder cacheKey = new StringBuilder("prefix_").append(path);
-        for (String replacement : replacements) {
-            cacheKey.append(replacement);
+        if (title == null) {
+            return "Missing GUI title: " + key;
         }
 
-        String cachedMessage = messageCache.get(cacheKey.toString());
-        if (cachedMessage != null) {
-            return cachedMessage;
-        }
-
-        String prefix = colorize(messages.getString("prefix", ""));
-        String message = getMessage(path, replacements);
-        String result = prefix.isEmpty() ? message : prefix + " " + message;
-
-        messageCache.put(cacheKey.toString(), result);
-        return result;
+        return applyPlaceholdersAndColors(title, placeholders);
     }
 
-    public String colorize(String message) {
-        if (message == null) return "";
-
-        // Process Hex color (&#RRGGBB)
-        Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
-        Matcher matcher = hexPattern.matcher(message);
-        StringBuffer buffer = new StringBuffer(message.length() + 4 * 8);
-
-        while (matcher.find()) {
-            String group = matcher.group(1);
-            matcher.appendReplacement(buffer, ChatColor.of("#" + group).toString());
-        }
-        matcher.appendTail(buffer);
-
-        // Process Minecraft color codes
-        return ChatColor.translateAlternateColorCodes('&', buffer.toString());
+    public String getGuiItemName(String key) {
+        return getGuiItemName(key, EMPTY_PLACEHOLDERS);
     }
 
-    public String getLocalizedMobName(EntityType type) {
-        String cacheKey = "mob_" + type.name() + "_" + currentLanguage;
-        String cachedName = messageCache.get(cacheKey);
+    public String getGuiItemName(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return null;
+        }
+
+        // Generate cache key
+        String cacheKey = key + "|" + generateCacheKey("", placeholders);
+
+        // Check cache first
+        String cachedName = guiItemNameCache.get(cacheKey);
         if (cachedName != null) {
+            cacheHits.incrementAndGet();
             return cachedName;
         }
 
-        String path = "mob_names." + type.name();
-        String localizedName = messages.getString(path);
+        // Cache miss, generate the name
+        cacheMisses.incrementAndGet();
+        String name = cachedDefaultLocaleData.gui().getString(key);
 
-        if (localizedName == null && !currentLanguage.equals("en")) {
-            localizedName = languageMessages.get("en").getString(path);
+        if (name == null) {
+            return "Missing item name: " + key;
         }
 
-        localizedName = localizedName != null ? localizedName : type.name();
-        messageCache.put(cacheKey, localizedName);
-        return localizedName;
+        String result = applyPlaceholdersAndColors(name, placeholders);
+
+        // Cache the result
+        guiItemNameCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    public String[] getGuiItemLore(String key) {
+        return getGuiItemLore(key, EMPTY_PLACEHOLDERS);
+    }
+
+    public String[] getGuiItemLore(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return new String[0];
+        }
+
+        // Generate cache key
+        String cacheKey = key + "|" + generateCacheKey("", placeholders);
+
+        // Check cache first
+        String[] cachedLore = guiItemLoreCache.get(cacheKey);
+        if (cachedLore != null) {
+            cacheHits.incrementAndGet();
+            return cachedLore;
+        }
+
+        // Cache miss, generate the lore
+        cacheMisses.incrementAndGet();
+        List<String> loreList = cachedDefaultLocaleData.gui().getStringList(key);
+        String[] result = loreList.stream()
+                .map(line -> applyPlaceholdersAndColors(line, placeholders))
+                .toArray(String[]::new);
+
+        // Cache the result
+        guiItemLoreCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    public List<String> getGuiItemLoreAsList(String key) {
+        return getGuiItemLoreAsList(key, EMPTY_PLACEHOLDERS);
+    }
+
+    public List<String> getGuiItemLoreAsList(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return Collections.emptyList();
+        }
+
+        // Generate cache key
+        String cacheKey = key + "|" + generateCacheKey("", placeholders);
+
+        // Check cache first
+        List<String> cachedLore = guiItemLoreListCache.get(cacheKey);
+        if (cachedLore != null) {
+            cacheHits.incrementAndGet();
+            return cachedLore;
+        }
+
+        // Cache miss, generate the lore
+        cacheMisses.incrementAndGet();
+        List<String> loreList = cachedDefaultLocaleData.gui().getStringList(key);
+        List<String> result = loreList.stream()
+                .map(line -> applyPlaceholdersAndColors(line, placeholders))
+                .toList();
+
+        // Cache the result
+        guiItemLoreListCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    //---------------------------------------------------
+    //               Formatting Methods
+    //---------------------------------------------------
+
+
+    public String formatNumber(double number) {
+        if (!activeFileTypes.contains(LanguageFileType.FORMATTING)) {
+            // Return a default format if formatting file type is not active
+            if (number >= 1_000_000_000_000L) {
+                double value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "T";
+            } else if (number >= 1_000_000_000L) {
+                double value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "B";
+            } else if (number >= 1_000_000L) {
+                double value = Math.round(number / 1_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "M";
+            } else if (number >= 1_000L) {
+                double value = Math.round(number / 1_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "K";
+            } else {
+                double value = Math.round(number * 10) / 10.0;
+                return formatDecimal(value);
+            }
+        }
+
+        String format;
+        double value;
+
+        if (number >= 1_000_000_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.trillion", "%s%T");
+            value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.billion", "%s%B");
+            value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.million", "%s%M");
+            value = Math.round(number / 1_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.thousand", "%s%K");
+            value = Math.round(number / 1_000.0 * 10) / 10.0;
+        } else {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.default", "%s%");
+            value = Math.round(number * 10) / 10.0;
+        }
+
+        // Replace %s% with the formatted value and escape any other % characters
+        return format.replace("%s%", formatDecimal(value));
+    }
+
+    private String formatDecimal(double value) {
+        // Check if the value is a whole number (after our rounding)
+        if (value == Math.floor(value)) {
+            return String.valueOf((int)value);
+        } else {
+            return String.valueOf(value);
+        }
     }
 
     public String getFormattedMobName(EntityType type) {
-        return colorize(getLocalizedMobName(type));
-    }
-
-    public SupportedLanguage getCurrentLanguage() {
-        return currentLanguage;
-    }
-
-    public List<SupportedLanguage> getSupportedLanguages() {
-        return Arrays.asList(SupportedLanguage.values());
-    }
-
-    public void reload() {
-        loadLanguages();
-    }
-
-    private MessageType getMessageType(String path) {
-        String typePath = path + ".type";
-        String typeStr = messages.getString(typePath, "CHAT");
-        try {
-            return MessageType.valueOf(typeStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            logger.warning("Invalid message type specified for path: " + path + ". Defaulting to CHAT");
-            return MessageType.CHAT;
-        }
-    }
-
-    public void sendMessage(Player player, String path) {
-        if (path == null) return;
-
-        String messagePath = path + ".message";
-        String message;
-
-        // Check if this message should use prefix
-        boolean usePrefix = messages.getBoolean(path + ".prefix", false);
-        if (usePrefix) {
-            message = getMessageWithPrefix(messagePath);
-        } else {
-            message = getMessage(messagePath);
+        if (type == null || type == EntityType.UNKNOWN) {
+            return "Unknown";
         }
 
-        if (message == null || message.isEmpty()) return;
+        // Get the internal name key of the entity type
+        String mobNameKey = type.name();
 
-        MessageType type = getMessageType(path);
-        String soundPath = path + ".sound";
-        String sound = messages.getString(soundPath);
+        // Create a special cache key for mob names
+        String cacheKey = "mob_name|" + mobNameKey;
 
-        switch (type) {
-            case CHAT:
-                player.sendMessage(message);
-                break;
-            case ACTION_BAR:
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                break;
-            case BOTH:
-                player.sendMessage(message);
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                break;
+        // Check cache first
+        String cachedName = entityNameCache.get(cacheKey);
+        if (cachedName != null) {
+            cacheHits.incrementAndGet();
+            return cachedName;
         }
 
-        if (sound != null && !sound.isEmpty()) {
-            try {
-                Sound soundEnum = Registry.SOUNDS.get(NamespacedKey.minecraft(sound));
-                if (soundEnum != null) {
-                    player.playSound(player.getLocation(), soundEnum, 1.0f, 1.0f);
-                } else {
-                    logger.warning("Invalid sound specified for message path: " + path);
-                }
-            } catch (IllegalArgumentException e) {
-                logger.warning("Error with sound for message path: " + path);
-                logger.warning(e.getMessage());
+        // Cache miss, generate the name
+        cacheMisses.incrementAndGet();
+        String result;
+
+        // Try to get from formatting.yml first
+        if (activeFileTypes.contains(LanguageFileType.FORMATTING)) {
+            String formattedName = cachedDefaultLocaleData.formatting().getString("mob_names." + mobNameKey);
+
+            if (formattedName != null) {
+                result = applyPlaceholdersAndColors(formattedName, null);
+                entityNameCache.put(cacheKey, result);
+                return result;
             }
         }
+
+        // Default fallback: convert SNAKE_CASE to Title Case
+        result = formatEnumName(mobNameKey);
+
+        // Cache the result
+        entityNameCache.put(cacheKey, result);
+
+        return result;
     }
 
-    public void sendMessage(Player player, String path, String... replacements) {
-        if (path == null) return;
-        String messagePath = path + ".message";
-        String message = "";
+    // Helper method to convert enum names like "CAVE_SPIDER" to "Cave Spider"
+    public String formatEnumName(String enumName) {
+        String[] words = enumName.split("_");
+        StringBuilder result = new StringBuilder();
 
-        // Check if this message should use prefix
-        boolean usePrefix = messages.getBoolean(path + ".prefix", false);
-        if (usePrefix) {
-            message = getMessageWithPrefix(messagePath, replacements);
-        } else {
-            message = getMessage(messagePath, replacements);
-        }
-
-        if (message == null || message.isEmpty()) return;
-
-        MessageType type = getMessageType(path);
-        String soundPath = path + ".sound";
-        String sound = messages.getString(soundPath);
-
-        switch (type) {
-            case CHAT:
-                player.sendMessage(message);
-                break;
-            case ACTION_BAR:
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                break;
-            case BOTH:
-                player.sendMessage(message);
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                break;
-        }
-
-        if (sound != null && !sound.isEmpty()) {
-            try {
-                Sound soundEnum = Registry.SOUNDS.get(NamespacedKey.minecraft(sound));
-                if (soundEnum != null) {
-                    player.playSound(player.getLocation(), soundEnum, 1.0f, 1.0f);
-                } else {
-                    logger.warning("Invalid sound specified for message path: " + path);
-                }
-            } catch (IllegalArgumentException e) {
-                logger.warning("Error with sound for message path: " + path);
-                logger.warning(e.getMessage());
+        for (String word : words) {
+            if (word.length() > 0) {
+                result.append(word.charAt(0))
+                        .append(word.substring(1).toLowerCase())
+                        .append(" ");
             }
         }
+
+        return result.toString().trim();
     }
 
-    // For gui titles
-    public String getGuiTitle(String path) {
-        return messages.getString(path);
-    }
+    //---------------------------------------------------
+    //                  Items Methods
+    //---------------------------------------------------
 
-    public String getGuiTitle(String path, String... replacements) {
-        return getMessage(path, replacements);
-    }
-
-    public String formatNumber(long number) {
-        String formatNumberPath = "format-number.";
-        if (number >= 1_000_000_000_000L) {
-            return String.format(getMessage(formatNumberPath + "trillion"), formatNumberWithDecimals(number / 1_000_000_000_000D));
-        } else if (number >= 1_000_000_000) {
-            return String.format(getMessage(formatNumberPath + "billion"), formatNumberWithDecimals(number / 1_000_000_000D));
-        } else if (number >= 1_000_000) {
-            return String.format(getMessage(formatNumberPath + "million"), formatNumberWithDecimals(number / 1_000_000D));
-        } else if (number >= 1_000) {
-            return String.format(getMessage(formatNumberPath + "thousand"), formatNumberWithDecimals(number / 1_000D));
-        } else {
-            return String.format(getMessage(formatNumberPath + "default"), number);
+    public String getVanillaItemName(Material material) {
+        if (material == null) {
+            return "Unknown Item";
         }
+
+        // Generate cache key
+        String cacheKey = "material|" + material.name();
+
+        // Check cache first
+        String cachedName = materialNameCache.get(cacheKey);
+        if (cachedName != null) {
+            cacheHits.incrementAndGet();
+            return cachedName;
+        }
+
+        // Cache miss, generate the name
+        cacheMisses.incrementAndGet();
+
+        // Generate the key using the material name directly
+        String key = "item." + material.name() + ".name";
+
+        // Get from items.yml if available
+        String name = null;
+        if (activeFileTypes.contains(LanguageFileType.ITEMS)) {
+            name = cachedDefaultLocaleData.items().getString(key);
+        }
+
+        // If the key doesn't exist in the config, fall back to a nicely formatted material name
+        if (name == null) {
+            name = formatEnumName(material.name());
+        } else {
+            name = applyPlaceholdersAndColors(name, null);
+        }
+
+        // Cache the result
+        materialNameCache.put(cacheKey, name);
+
+        return name;
     }
 
-    public String formatNumberTenThousand(long number) {
-        String formatNumberPath = "format-number.";
-        if (number >= 1_000_000_000_000L) {
-            return String.format(getMessage(formatNumberPath + "trillion"), formatNumberWithDecimals(number / 1_000_000_000_000D));
-        } else if (number >= 1_000_000_000) {
-            return String.format(getMessage(formatNumberPath + "billion"), formatNumberWithDecimals(number / 1_000_000_000D));
-        } else if (number >= 1_000_000) {
-            return String.format(getMessage(formatNumberPath + "million"), formatNumberWithDecimals(number / 1_000_000D));
-        } else if (number >= 10_000) {
-            return String.format(getMessage(formatNumberPath + "thousand"), formatNumberWithDecimals(number / 1_000D));
-        } else {
-            return String.format(getMessage(formatNumberPath + "default"), number);
+    public String[] getVanillaItemLore(Material material) {
+        if (material == null) {
+            return new String[0];
         }
+
+        // Generate the key using the material name directly
+        String key = "item." + material.name() + ".lore";
+
+        // Reuse existing method with the constructed key
+        return getItemLore(key);
     }
 
-    private String formatNumberWithDecimals(double number) {
-        if (number < 10) {
-            return String.format("%.1f", number);
-        } else {
-            return String.format("%.0f", number);
+    public String getItemName(String key) {
+        return getItemName(key, EMPTY_PLACEHOLDERS);
+    }
+
+    public String getItemName(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.ITEMS)) {
+            return key;
         }
+
+        String name = cachedDefaultLocaleData.items().getString(key);
+        if (name == null) {
+            return key;
+        }
+
+        return applyPlaceholdersAndColors(name, placeholders);
+    }
+
+    public String[] getItemLore(String key) {
+        return getItemLore(key, EMPTY_PLACEHOLDERS);
+    }
+
+    public String[] getItemLore(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.ITEMS)) {
+            return new String[0];
+        }
+
+        // Generate cache key
+        String cacheKey = key + "|" + generateCacheKey("", placeholders);
+
+        // Check cache first
+        String[] cachedLore = loreCache.get(cacheKey);
+        if (cachedLore != null) {
+            cacheHits.incrementAndGet();
+            return cachedLore;
+        }
+
+        // Cache miss, generate the lore
+        cacheMisses.incrementAndGet();
+        List<String> loreList = cachedDefaultLocaleData.items().getStringList(key);
+        String[] result = loreList.stream()
+                .map(line -> applyPlaceholdersAndColors(line, placeholders))
+                .toArray(String[]::new);
+
+        // Cache the result
+        loreCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    /**
+     * Gets item lore with support for multi-line placeholders
+     * This method expands any placeholder that contains newline characters into multiple lines
+     */
+    public List<String> getItemLoreWithMultilinePlaceholders(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.ITEMS)) {
+            return Collections.emptyList();
+        }
+
+        List<String> result = new ArrayList<>();
+        List<String> loreList = cachedDefaultLocaleData.items().getStringList(key);
+
+        for (String line : loreList) {
+            // Check if the line contains a placeholder that might have multiple lines
+            boolean containsMultilinePlaceholder = false;
+
+            // First, identify placeholders in the line
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                String placeholder = "%" + entry.getKey() + "%";
+                if (line.contains(placeholder) && entry.getValue().contains("\n")) {
+                    containsMultilinePlaceholder = true;
+                    break;
+                }
+            }
+
+            if (containsMultilinePlaceholder) {
+                // Process special case: line contains multi-line placeholder
+                String processedLine = line;
+
+                // Apply non-multiline placeholders first
+                for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                    String placeholder = "%" + entry.getKey() + "%";
+                    String value = entry.getValue();
+
+                    if (!value.contains("\n")) {
+                        processedLine = processedLine.replace(placeholder, value);
+                    }
+                }
+
+                // Now handle multiline placeholders
+                for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                    String placeholder = "%" + entry.getKey() + "%";
+                    String value = entry.getValue();
+
+                    if (processedLine.contains(placeholder) && value.contains("\n")) {
+                        // Split the placeholder value into lines
+                        String[] valueLines = value.split("\n");
+
+                        // Replace the placeholder in the first line
+                        String firstLine = processedLine.replace(placeholder, valueLines[0]);
+                        result.add(ColorUtil.translateHexColorCodes(firstLine));
+
+                        // Add remaining lines with the same formatting/indentation
+                        String lineStart = processedLine.substring(0, processedLine.indexOf(placeholder));
+                        for (int i = 1; i < valueLines.length; i++) {
+                            result.add(ColorUtil.translateHexColorCodes(lineStart + valueLines[i]));
+                        }
+                    }
+                }
+            } else {
+                // Standard processing for lines without multi-line placeholders
+                result.add(applyPlaceholdersAndColors(line, placeholders));
+            }
+        }
+
+        return result;
+    }
+
+    //---------------------------------------------------
+    //               Hologram Methods
+    //---------------------------------------------------
+
+    public String getHologramText() {
+        // Check if the text exists in the config
+        if (plugin.getConfig().contains("hologram.text")) {
+            // Get as string list for multi-line support
+            List<String> lines = plugin.getConfig().getStringList("hologram.text");
+
+            // Join lines with newline characters
+            if (!lines.isEmpty()) {
+                return String.join("\n", lines);
+            }
+
+            // Fallback to string if list is empty or not properly defined
+            return plugin.getConfig().getString("hologram.text");
+        }
+
+        // Default value if not defined
+        return "&e%entity% Spawner &7[&f%stack_size%x&7]\n" +
+                "&7XP: &a%current_exp%&7/&a%max_exp%\n" +
+                "&7Items: &a%used_slots%&7/&a%max_slots%";
+    }
+
+    //---------------------------------------------------
+    //                     Utilities
+    //---------------------------------------------------
+
+    public String getSmallCaps(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+
+        // Generate cache key
+        String cacheKey = "smallcaps|" + text;
+
+        // Check cache first
+        String cachedText = smallCapsCache.get(cacheKey);
+        if (cachedText != null) {
+            cacheHits.incrementAndGet();
+            return cachedText;
+        }
+
+        // Cache miss, generate small caps
+        cacheMisses.incrementAndGet();
+        StringBuilder result = new StringBuilder();
+
+        for (char c : text.toCharArray()) {
+            if (Character.isLetter(c)) {
+                // Convert all alphabetic characters to small caps regardless of case
+                char lowercaseChar = Character.toLowerCase(c);
+                char smallCapsChar = getSmallCapsChar(lowercaseChar);
+                result.append(smallCapsChar);
+            } else {
+                // Keep non-alphabetic characters as they are
+                result.append(c);
+            }
+        }
+
+        String smallCapsText = result.toString();
+
+        // Cache the result
+        smallCapsCache.put(cacheKey, smallCapsText);
+
+        return smallCapsText;
+    }
+
+    private char getSmallCapsChar(char c) {
+        return switch (c) {
+            case 'a' -> 'ᴀ';
+            case 'b' -> 'ʙ';
+            case 'c' -> 'ᴄ';
+            case 'd' -> 'ᴅ';
+            case 'e' -> 'ᴇ';
+            case 'f' -> 'ꜰ';
+            case 'g' -> 'ɢ';
+            case 'h' -> 'ʜ';
+            case 'i' -> 'ɪ';
+            case 'j' -> 'ᴊ';
+            case 'k' -> 'ᴋ';
+            case 'l' -> 'ʟ';
+            case 'm' -> 'ᴍ';
+            case 'n' -> 'ɴ';
+            case 'o' -> 'ᴏ';
+            case 'p' -> 'ᴘ';
+            case 'q' -> 'ǫ';
+            case 'r' -> 'ʀ';
+            case 's' -> 'ꜱ';
+            case 't' -> 'ᴛ';
+            case 'u' -> 'ᴜ';
+            case 'v' -> 'ᴠ';
+            case 'w' -> 'ᴡ';
+            case 'x' -> 'x';
+            case 'y' -> 'ʏ';
+            case 'z' -> 'ᴢ';
+            default -> c;
+        };
+    }
+
+    public String applyPlaceholdersAndColors(String text, Map<String, String> placeholders) {
+        if (text == null) return null;
+
+        // Create a cache key based on the text and placeholders
+        String cacheKey = generateCacheKey(text, placeholders);
+
+        // Check if we have a cached result
+        String cachedResult = formattedStringCache.get(cacheKey);
+        if (cachedResult != null) {
+            cacheHits.incrementAndGet();
+            return cachedResult;
+        }
+
+        // Process the text if not cached
+        cacheMisses.incrementAndGet();
+        String result = text;
+
+        // Apply placeholders only if there are any
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                result = result.replace("%" + entry.getKey() + "%", entry.getValue());
+            }
+        }
+
+        // Apply hex colors
+        result = ColorUtil.translateHexColorCodes(result);
+
+        // Cache the result for future use
+        formattedStringCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    //---------------------------------------------------
+    //                 Cache Methods
+    //---------------------------------------------------
+    public void clearCache() {
+        formattedStringCache.clear();
+        loreCache.clear();
+        loreListCache.clear();
+        guiItemNameCache.clear();
+        guiItemLoreCache.clear();
+        guiItemLoreListCache.clear();
+        entityNameCache.clear();
+        smallCapsCache.clear();
+        materialNameCache.clear();
+    }
+    private String generateCacheKey(String text, Map<String, String> placeholders) {
+        if (placeholders == null || placeholders.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder keyBuilder = new StringBuilder(text);
+
+        // Sort keys for consistent cache keys
+        List<String> keys = new ArrayList<>(placeholders.keySet());
+        Collections.sort(keys);
+
+        for (String key : keys) {
+            keyBuilder.append('|').append(key).append('=').append(placeholders.get(key));
+        }
+        return keyBuilder.toString();
+    }
+
+
+    /**
+     * Gets cache statistics for monitoring
+     * @return Map with statistics about cache usage
+     */
+    public Map<String, Object> getCacheStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("string_cache_size", formattedStringCache.size());
+        stats.put("string_cache_capacity", formattedStringCache.capacity());
+        stats.put("lore_cache_size", loreCache.size());
+        stats.put("lore_cache_capacity", loreCache.capacity());
+        stats.put("lore_list_cache_size", loreListCache.size());
+        stats.put("lore_list_cache_capacity", loreListCache.capacity());
+        stats.put("gui_name_cache_size", guiItemNameCache.size());
+        stats.put("gui_name_cache_capacity", guiItemNameCache.capacity());
+        stats.put("gui_lore_cache_size", guiItemLoreCache.size());
+        stats.put("gui_lore_cache_capacity", guiItemLoreCache.capacity());
+        stats.put("gui_lore_list_cache_size", guiItemLoreListCache.size());
+        stats.put("gui_lore_list_cache_capacity", guiItemLoreListCache.capacity());
+        stats.put("entity_name_cache_size", entityNameCache.size());
+        stats.put("entity_name_cache_capacity", entityNameCache.capacity());
+        stats.put("small_caps_cache_size", smallCapsCache.size());
+        stats.put("small_caps_cache_capacity", smallCapsCache.capacity());
+        stats.put("material_name_cache_size", materialNameCache.size());
+        stats.put("material_name_cache_capacity", materialNameCache.capacity());
+        stats.put("cache_hits", cacheHits.get());
+        stats.put("cache_misses", cacheMisses.get());
+        stats.put("hit_ratio", cacheHits.get() > 0 ?
+                (double) cacheHits.get() / (cacheHits.get() + cacheMisses.get()) : 0);
+        return stats;
     }
 }

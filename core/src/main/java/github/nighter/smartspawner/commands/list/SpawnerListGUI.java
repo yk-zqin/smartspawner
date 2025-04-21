@@ -1,17 +1,17 @@
 package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.Scheduler;
-import github.nighter.smartspawner.spawner.properties.SpawnerManager;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
+import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -19,8 +19,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SpawnerListGUI implements Listener {
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final ListCommand listCommand;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
@@ -28,10 +28,11 @@ public class SpawnerListGUI implements Listener {
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
             Material.CREEPER_HEAD, Material.PIGLIN_HEAD
     );
+    private static final String patternString = "#([A-Za-z0-9]+)";
 
     public SpawnerListGUI(SmartSpawner plugin) {
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
         this.listCommand = new ListCommand(plugin);
     }
@@ -42,7 +43,7 @@ public class SpawnerListGUI implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "no_permission");
             return;
         }
         event.setCancelled(true);
@@ -53,23 +54,23 @@ public class SpawnerListGUI implements Listener {
         String displayName = ChatColor.stripColor(clickedItem.getItemMeta().getDisplayName());
 
         // Check for original layout slots first (for backward compatibility)
-        if (event.getSlot() == 11 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.overworld.name")))) {
+        if (event.getSlot() == 11 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.overworld.name")))) {
             listCommand.openSpawnerListGUI(player, "world", 1);
             return;
-        } else if (event.getSlot() == 13 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.nether.name")))) {
+        } else if (event.getSlot() == 13 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.nether.name")))) {
             listCommand.openSpawnerListGUI(player, "world_nether", 1);
             return;
-        } else if (event.getSlot() == 15 && displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.end.name")))) {
+        } else if (event.getSlot() == 15 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
             listCommand.openSpawnerListGUI(player, "world_the_end", 1);
             return;
         }
 
         // For custom layout or any other slots, determine world by name
-        if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.overworld.name")))) {
+        if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
             listCommand.openSpawnerListGUI(player, "world", 1);
-        } else if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.nether.name")))) {
+        } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
             listCommand.openSpawnerListGUI(player, "world_nether", 1);
-        } else if (displayName.equals(ChatColor.stripColor(languageManager.getMessage("spawner-list.world-buttons.end.name")))) {
+        } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
             listCommand.openSpawnerListGUI(player, "world_the_end", 1);
         } else {
             // For custom worlds, find the matching world
@@ -97,7 +98,7 @@ public class SpawnerListGUI implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "no_permission");
             return;
         }
         event.setCancelled(true);
@@ -127,16 +128,11 @@ public class SpawnerListGUI implements Listener {
         if (displayName == null) return;
 
         // Extract spawner ID from display name, now handling alphanumeric IDs
-        String patternString = languageManager.getMessage("spawner-list.spawner-item.id_pattern");
-        configManager.debug("Pattern string: " + patternString);
         Pattern pattern = Pattern.compile(patternString);
-        configManager.debug("Pattern: " + pattern);
         Matcher matcher = pattern.matcher(ChatColor.stripColor(displayName));
-        configManager.debug("Matcher: " + ChatColor.stripColor(displayName));
 
         if (matcher.find()) {
             String spawnerId = matcher.group(1);
-            configManager.debug("Clicked spawner ID: " + spawnerId);
             SpawnerData spawner = spawnerManager.getSpawnerById(spawnerId);
 
             if (spawner != null) {
@@ -147,25 +143,23 @@ public class SpawnerListGUI implements Listener {
                 if (Scheduler.isFolia()) {
                     player.teleportAsync(loc).thenAccept(success -> {
                         if (success) {
-                            Scheduler.runEntityTask(player, () ->
-                                    languageManager.sendMessage(player, "messages.teleported",
-                                            "%spawnerId%", spawnerId)
-                            );
+                            Scheduler.runEntityTask(player, () -> {
+                                messageService.sendMessage(player, "teleported_to_spawner");
+                            });
                         }
                     });
                 } else {
                     // For non-Folia servers, teleport synchronously
                     player.teleport(loc);
-                    languageManager.sendMessage(player, "messages.teleported",
-                            "%spawnerId%", spawnerId);
+                    messageService.sendMessage(player, "teleported_to_spawner");
                 }
             } else {
                 Player player = (Player) event.getWhoClicked();
-                languageManager.sendMessage(player, "messages.not-found");
+                messageService.sendMessage(player, "spawner_not_found");
             }
         } else {
             Player player = (Player) event.getWhoClicked();
-            languageManager.sendMessage(player, "messages.not-found");
+            messageService.sendMessage(player, "spawner_not_found");
         }
     }
 }

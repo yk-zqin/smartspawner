@@ -4,7 +4,6 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.shops.api.economyshopgui.EconomyShopGUI;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
 import github.nighter.smartspawner.hooks.shops.api.zshop.ZShop;
-import github.nighter.smartspawner.config.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -32,32 +31,25 @@ public class ShopIntegrationManager {
     }
 
     public void initialize() {
-        ConfigManager.ShopType configuredShopType = plugin.getConfigManager().getShopType();
-
-        if (configuredShopType == ConfigManager.ShopType.DISABLED) {
+        if (!plugin.getConfig().getBoolean("shop_integration.enabled", true)) {
             plugin.getLogger().info("Shop integration is disabled by configuration");
             return;
         }
 
-        if (configuredShopType == ConfigManager.ShopType.AUTO) {
+        String configuredShopType = plugin.getConfig().getString("shop_integration.type", "auto").toLowerCase();
+
+        if ("auto".equals(configuredShopType)) {
             autoDetectAndSetupShop();
         } else {
             setupSpecificShop(configuredShopType);
         }
     }
 
-    private void setupSpecificShop(ConfigManager.ShopType shopType) {
-        String pluginName = shopType.toString().toLowerCase();
-        Function<SmartSpawner, IShopIntegration> integrationCreator = shopIntegrations.get(pluginName);
+    private void setupSpecificShop(String shopType) {
+        Function<SmartSpawner, IShopIntegration> integrationCreator = shopIntegrations.get(shopType);
 
         if (integrationCreator != null) {
-            String bukkitPluginName = switch (pluginName) {
-                case "economyshopgui" -> "EconomyShopGUI";
-                case "economyshopgui-premium" -> "EconomyShopGUI-Premium";
-                case "shopguiplus" -> "ShopGUIPlus";
-                case "zshop" -> "zShop";
-                default -> pluginName;
-            };
+            String bukkitPluginName = getBukkitPluginName(shopType);
 
             plugin.getLogger().info("Checking for " + bukkitPluginName + "...");
             Plugin shopPlugin = Bukkit.getPluginManager().getPlugin(bukkitPluginName);
@@ -70,6 +62,16 @@ public class ShopIntegrationManager {
         } else {
             plugin.getLogger().warning("No integration found for shop type: " + shopType);
         }
+    }
+
+    private String getBukkitPluginName(String shopType) {
+        return switch (shopType.toLowerCase()) {
+            case "economyshopgui" -> "EconomyShopGUI";
+            case "economyshopgui-premium" -> "EconomyShopGUI-Premium";
+            case "shopguiplus" -> "ShopGUIPlus";
+            case "zshop" -> "zShop";
+            default -> shopType;
+        };
     }
 
     private void autoDetectAndSetupShop() {
@@ -87,6 +89,11 @@ public class ShopIntegrationManager {
 
             if (shopPlugin != null && shopPlugin.isEnabled()) {
                 String lowercasePluginName = bukkitPluginName.toLowerCase();
+                // Handle the special case for EconomyShopGUI-Premium
+                if (lowercasePluginName.equals("economyshopgui-premium")) {
+                    lowercasePluginName = "economyshopgui-premium";
+                }
+
                 Function<SmartSpawner, IShopIntegration> integrationCreator = shopIntegrations.get(lowercasePluginName);
 
                 if (integrationCreator != null) {

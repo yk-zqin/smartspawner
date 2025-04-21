@@ -2,15 +2,13 @@ package github.nighter.smartspawner.spawner.interactions.stack;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.protections.CheckStackBlock;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import github.nighter.smartspawner.utils.SpawnerTypeChecker;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
@@ -19,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,15 +30,15 @@ public class SpawnerStackHandler {
     private static final long STACK_COOLDOWN = 250L; // 250ms cooldown between stacks
 
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
+    private final MessageService messageService;
     private final Map<UUID, Long> lastStackTime;
     private final Map<Location, UUID> stackLocks;
 
     public SpawnerStackHandler(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
         this.lastStackTime = new ConcurrentHashMap<>();
         this.stackLocks = new ConcurrentHashMap<>();
 
@@ -104,10 +103,16 @@ public class SpawnerStackHandler {
             return false;
         }
 
+        // Check if either the target or the item is a vanilla spawner
+        if (SpawnerTypeChecker.isVanillaSpawner(itemInHand)) {
+            messageService.sendMessage(player, "spawner_invalid");
+            return false;
+        }
+
         // Always check the entity type directly without caching
         Optional<EntityType> handEntityTypeOpt = getEntityTypeFromItem(itemInHand);
         if (!handEntityTypeOpt.isPresent()) {
-            languageManager.sendMessage(player, "messages.invalid-spawner");
+            messageService.sendMessage(player, "spawner_invalid");
             return false;
         }
 
@@ -116,16 +121,17 @@ public class SpawnerStackHandler {
 
         // Verify types match
         if (handEntityType != targetEntityType) {
-            languageManager.sendMessage(player, "messages.different-type");
+            messageService.sendMessage(player, "spawner_different");
             return false;
         }
 
         // Verify stack limits
-        int maxStackSize = configManager.getInt("max-stack-size");
+        int maxStackSize = targetSpawner.getMaxStackSize();
         int currentStack = targetSpawner.getStackSize();
-
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("max", String.valueOf(maxStackSize));
         if (currentStack >= maxStackSize) {
-            languageManager.sendMessage(player, "messages.stack-full");
+            messageService.sendMessage(player, "spawner_stack_full", placeholders);
             return false;
         }
 
@@ -134,12 +140,12 @@ public class SpawnerStackHandler {
 
     private boolean hasStackPermissions(Player player, Location location) {
         if (!CheckStackBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
-            languageManager.sendMessage(player, "messages.spawner-protected");
+            messageService.sendMessage(player, "spawner_protected");
             return false;
         }
 
         if (!player.hasPermission("smartspawner.stack")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "no_permission");
             return false;
         }
 
@@ -185,7 +191,12 @@ public class SpawnerStackHandler {
     private Optional<EntityType> tryLanguageManagerFormat(String displayName) {
         for (EntityType entityType : EntityType.values()) {
             String entityTypeName = entityType.name();
-            String expectedName = languageManager.getMessage("spawner-name", "%entity%", entityTypeName);
+
+            // Get the formatted mob name from the language manager
+            String formattedName = languageManager.getFormattedMobName(entityType);
+
+            // Check if the formatted name matches the display name format
+            String expectedName = formattedName + " Spawner";
             if (displayName.equals(expectedName)) {
                 return Optional.of(entityType);
             }
@@ -203,8 +214,8 @@ public class SpawnerStackHandler {
 
         // Update spawner data
         targetSpawner.setStackSize(newStack);
-        if (targetSpawner.isAtCapacity()) {
-            targetSpawner.setAtCapacity(false);
+        if (targetSpawner.getIsAtCapacity()) {
+            targetSpawner.setIsAtCapacity(false);
         }
 
         // Update player's inventory
@@ -229,7 +240,7 @@ public class SpawnerStackHandler {
     }
 
     private void showStackAnimation(SpawnerData spawner, int newStack, Player player) {
-        if (configManager.getBoolean("particles-spawner-stack")) {
+        if (plugin.getConfig().getBoolean("particle.spawner_stack", true)) {
             Location loc = spawner.getSpawnerLocation();
             World world = loc.getWorld();
 
@@ -245,6 +256,8 @@ public class SpawnerStackHandler {
             }
         }
 
-        languageManager.sendMessage(player, "messages.hand-stack", "%amount%", String.valueOf(newStack));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", String.valueOf(newStack));
+        messageService.sendMessage(player, "spawner_stack_success", placeholders);
     }
 }

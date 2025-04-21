@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.spawner.lootgen;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.Scheduler;
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SpawnerRangeChecker {
     private static final long CHECK_INTERVAL = 20L; // 1 second in ticks
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final SpawnerManager spawnerManager;
     private final SpawnerLootGenerator spawnerLootGenerator;
     private final Map<String, Scheduler.Task> spawnerTasks;
@@ -24,7 +22,6 @@ public class SpawnerRangeChecker {
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
         this.spawnerTasks = new ConcurrentHashMap<>();
@@ -87,18 +84,6 @@ public class SpawnerRangeChecker {
         return false;
     }
 
-    private boolean checkChunkForPlayers(World world, Location spawnerLoc, int range, double rangeSquared) {
-        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range,
-                entity -> entity instanceof Player);
-
-        for (Entity entity : nearbyEntities) {
-            if (entity.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void handleSpawnerStateChange(SpawnerData spawner, boolean shouldStop) {
         if (!shouldStop) {
             activateSpawner(spawner);
@@ -109,14 +94,12 @@ public class SpawnerRangeChecker {
 
     public void activateSpawner(SpawnerData spawner) {
         startSpawnerTask(spawner);
-        spawner.refreshHologram();
-        //configManager.debug("Spawner " + spawner.getSpawnerId() + " activated - Player in range");
+        //plugin.debug("Spawner " + spawner.getSpawnerId() + " activated - Player in range");
     }
 
     private void deactivateSpawner(SpawnerData spawner) {
         stopSpawnerTask(spawner);
-        spawner.removeHologram();
-        //configManager.debug("Spawner " + spawner.getSpawnerId() + " deactivated - No players in range");
+        //plugin.debug("Spawner " + spawner.getSpawnerId() + " deactivated - No players in range");
     }
 
     private void startSpawnerTask(SpawnerData spawner) {

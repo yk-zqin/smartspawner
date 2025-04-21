@@ -2,21 +2,18 @@ package github.nighter.smartspawner.spawner.interactions;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.protections.CheckOpenMenu;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.interactions.stack.SpawnerStackHandler;
 import github.nighter.smartspawner.spawner.interactions.type.SpawnEggHandler;
-import github.nighter.smartspawner.spawner.utils.NaturalSpawnerDetector;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
-import github.nighter.smartspawner.config.ConfigManager;
-import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -42,8 +39,7 @@ public class SpawnerClickManager implements Listener {
     private static final long CLEANUP_INTERVAL_TICKS = 6000L; // 5 minutes
 
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
-    private final LanguageManager languageManager;
+    private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final SpawnEggHandler spawnEggHandler;
     private final SpawnerStackHandler spawnerStackHandler;
@@ -54,8 +50,7 @@ public class SpawnerClickManager implements Listener {
 
     public SpawnerClickManager(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
-        this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnEggHandler = plugin.getSpawnEggHandler();
         this.spawnerStackHandler = plugin.getSpawnerStackHandler();
@@ -74,10 +69,8 @@ public class SpawnerClickManager implements Listener {
         Block block = event.getClickedBlock();
 
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
-        if (!configManager.getBoolean("natural-spawner-interaction")) {
-            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
-                return;
-            }
+        if (spawner == null) {
+            return;
         }
 
         // Apply interaction cooldown
@@ -102,12 +95,12 @@ public class SpawnerClickManager implements Listener {
         // Prevent default interaction
         event.setCancelled(true);
 
-        if (spawner != null && !spawner.getSpawnerActive()) {
+        if (!spawner.getSpawnerActive()) {
             handleInactiveSpawnerInteraction(player, block, spawner, heldItem, itemType);
         }
 
         // Process spawner interaction
-        handleSpawnerInteraction(player, block, heldItem, itemType);
+        handleSpawnerInteraction(player, block, heldItem, itemType, spawner);
     }
 
     /**
@@ -161,14 +154,11 @@ public class SpawnerClickManager implements Listener {
     /**
      * Main handler for spawner interactions
      */
-    private void handleSpawnerInteraction(Player player, Block block, ItemStack heldItem, Material itemType) {
-
-        // Get or create spawner data
-        SpawnerData spawner = getOrCreateSpawnerData(block, player);
+    private void handleSpawnerInteraction(Player player, Block block, ItemStack heldItem, Material itemType, SpawnerData spawner) {
 
         // Check permission on claimed land
         if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
-            languageManager.sendMessage(player, "messages.spawner-protected");
+            messageService.sendMessage(player, "spawner_protected");
             return;
         }
 
@@ -192,7 +182,7 @@ public class SpawnerClickManager implements Listener {
 
         // Check permission on claimed land
         if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
-            languageManager.sendMessage(player, "messages.spawner-protected");
+            messageService.sendMessage(player, "spawner_protected");
             return;
         }
 
@@ -205,7 +195,7 @@ public class SpawnerClickManager implements Listener {
         // Activate the spawner
         spawner.setSpawnerActive(true);
         spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
-        languageManager.sendMessage(player, "messages.activated");
+        messageService.sendMessage(player, "spawner_activated");
 
         // Handle spawner stacking
         if (itemType == Material.SPAWNER) {
@@ -215,23 +205,6 @@ public class SpawnerClickManager implements Listener {
 
         // Open spawner menu if not using special items
         openSpawnerMenu(player, spawner);
-    }
-
-    /**
-     * Gets existing spawner data or creates a new one
-     */
-    private SpawnerData getOrCreateSpawnerData(Block block, Player player) {
-        SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
-
-        if (spawner == null) {
-            // Create new spawner if it doesn't exist
-            spawner = createNewSpawner(block, player);
-        } else if (spawner.getEntityType() == null) {
-            // Initialize existing spawner with null entity type
-            initializeExistingSpawner(spawner, block);
-        }
-
-        return spawner;
     }
 
     /**
@@ -250,48 +223,6 @@ public class SpawnerClickManager implements Listener {
     }
 
     /**
-     * Creates a new spawner with default settings
-     */
-    private SpawnerData createNewSpawner(Block block, Player player) {
-        // Generate short unique ID
-        String spawnerId = UUID.randomUUID().toString().substring(0, 8);
-
-        // Update the block state
-        CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
-        EntityType entityType = getValidEntityType(creatureSpawner.getSpawnedType());
-
-        // Apply changes to the block
-        creatureSpawner.setSpawnedType(entityType);
-        creatureSpawner.update();
-
-        // Show particles if enabled
-        if (configManager.getBoolean("particles-spawner-activate")) {
-            spawnActivationParticles(block.getLocation());
-        }
-
-        // Create and save spawner data
-        SpawnerData spawner = new SpawnerData(spawnerId, block.getLocation(), entityType, plugin);
-        spawner.setSpawnerActive(true);
-
-        spawnerManager.addSpawner(spawnerId, spawner);
-        spawnerManager.queueSpawnerForSaving(spawnerId);
-
-        // Notify player
-        languageManager.sendMessage(player, "messages.activated");
-        configManager.debug("Created new spawner with ID: " + spawnerId + " at " + block.getLocation());
-
-        return spawner;
-    }
-
-    /**
-     * Gets a valid entity type, defaulting if necessary
-     */
-    private EntityType getValidEntityType(EntityType type) {
-        return (type == null || type == EntityType.UNKNOWN) ?
-                configManager.getDefaultEntityType() : type;
-    }
-
-    /**
      * Spawns particles at the given location to indicate spawner activation
      */
     private void spawnActivationParticles(Location location) {
@@ -302,14 +233,6 @@ public class SpawnerClickManager implements Listener {
                     50, 0.5, 0.5, 0.5, 0
             );
         });
-    }
-
-    /**
-     * Initializes an existing spawner with proper entity type
-     */
-    private void initializeExistingSpawner(SpawnerData spawner, Block block) {
-        CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
-        spawner.setEntityType(getValidEntityType(creatureSpawner.getSpawnedType()));
     }
 
     /**

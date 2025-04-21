@@ -2,7 +2,6 @@ package github.nighter.smartspawner.spawner.properties;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.*;
 import java.util.*;
@@ -16,7 +15,6 @@ public class SpawnerManager {
     private final SmartSpawner plugin;
     private final Map<String, SpawnerData> spawners = new HashMap<>();
     private final Map<LocationKey, SpawnerData> locationIndex = new HashMap<>();
-    private final ConfigManager configManager;
     private final Map<String, Set<SpawnerData>> worldIndex = new HashMap<>();
     private final SpawnerFileHandler spawnerFileHandler;
     private final Logger logger;
@@ -29,7 +27,6 @@ public class SpawnerManager {
     public SpawnerManager(SmartSpawner plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
-        this.configManager = plugin.getConfigManager();
 
         // Initialize file handler
         this.spawnerFileHandler = new SpawnerFileHandler(plugin);
@@ -222,7 +219,6 @@ public class SpawnerManager {
 
         // Load spawners from file handler
         Map<String, SpawnerData> loadedSpawners = spawnerFileHandler.loadAllSpawners();
-        boolean hologramEnabled = configManager.getHologramEnabled("hologram-enabled");
 
         // Add all loaded spawners to our indexes
         for (Map.Entry<String, SpawnerData> entry : loadedSpawners.entrySet()) {
@@ -242,15 +238,6 @@ public class SpawnerManager {
 
         // Check for ghost spawners after initial load using Scheduler
         Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
-
-        // Update holograms if enabled
-        if (hologramEnabled && !spawners.isEmpty()) {
-            removeAllGhostsHolograms();
-            Scheduler.runTask(() -> {
-                logger.info("Updating holograms for all spawners...");
-                spawners.values().forEach(SpawnerData::updateHologramData);
-            });
-        }
     }
 
     /**
@@ -342,7 +329,7 @@ public class SpawnerManager {
     }
 
     public void reloadAllHolograms() {
-        if (configManager.getHologramEnabled("hologram-enabled")) {
+        if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
             for (SpawnerData spawner : spawners.values()) {
                 Location loc = spawner.getSpawnerLocation();
                 Scheduler.runLocationTask(loc, spawner::reloadHologramData);

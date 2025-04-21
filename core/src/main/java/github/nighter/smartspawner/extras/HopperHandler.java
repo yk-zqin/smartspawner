@@ -1,8 +1,8 @@
 package github.nighter.smartspawner.extras;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
@@ -20,21 +20,19 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 
 public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
-    private final Map<Location, BukkitTask> activeHoppers = new ConcurrentHashMap<>();
+    private final Map<Location, Scheduler.Task> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
     private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final LanguageManager languageManager;
-    private final ConfigManager configManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
 
     public HopperHandler(SmartSpawner plugin) {
@@ -43,40 +41,76 @@ public class HopperHandler implements Listener {
         this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        Bukkit.getScheduler().runTaskLater(plugin, this::restartAllHoppers, 40L);
+
+        // Delay the initialization to ensure server is fully loaded
+        Scheduler.runTaskLater(() -> {
+            if (plugin.getConfig().getBoolean("hopper.enabled", false)) {
+                restartAllHoppers();
+            }
+        }, 40L);
     }
 
     public void restartAllHoppers() {
-        for (World world : plugin.getServer().getWorlds()) {
-            for (Chunk chunk : world.getLoadedChunks()) {
-                for (BlockState state : chunk.getTileEntities()) {
-                    if (state.getType() == Material.HOPPER) {
-                        Block hopperBlock = state.getBlock();
-                        Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+        if (!plugin.getConfig().getBoolean("hopper.enabled", false)) return;
 
-                        if (aboveBlock.getType() == Material.SPAWNER) {
-                            startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+        // For each world, we'll schedule a world-specific task
+        for (World world : plugin.getServer().getWorlds()) {
+            try {
+                // Create a location in this world to schedule a region task
+                // Using spawn location as it's guaranteed to exist
+                Location worldLocation = world.getSpawnLocation();
+
+                Scheduler.runLocationTask(worldLocation, () -> {
+                    try {
+                        // Now we're on the correct thread for this world region
+                        for (Chunk chunk : world.getLoadedChunks()) {
+                            processChunkHoppers(chunk);
                         }
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.SEVERE, "Error processing hoppers in world " + world.getName(), e);
+                    }
+                });
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Error scheduling hopper task for world " + world.getName(), e);
+            }
+        }
+    }
+
+    private void processChunkHoppers(Chunk chunk) {
+        try {
+            for (BlockState state : chunk.getTileEntities()) {
+                if (state.getType() == Material.HOPPER) {
+                    Block hopperBlock = state.getBlock();
+                    Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+
+                    if (aboveBlock.getType() == Material.SPAWNER) {
+                        startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
                     }
                 }
             }
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error processing hoppers in chunk at " +
+                    chunk.getX() + "," + chunk.getZ(), e);
         }
     }
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
+        if (!plugin.getConfig().getBoolean("hopper.enabled", false)) return;
+
         Chunk chunk = event.getChunk();
-        for (BlockState state : chunk.getTileEntities()) {
-            if (state.getType() == Material.HOPPER) {
-                Block hopperBlock = state.getBlock();
-                Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
-                if (aboveBlock.getType() == Material.SPAWNER) {
-                    startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
-                }
-            }
+        // Use a location in this chunk to schedule a region task
+        try {
+            Location chunkLoc = new Location(chunk.getWorld(),
+                    chunk.getX() * 16 + 8, 64, chunk.getZ() * 16 + 8);
+
+            Scheduler.runLocationTask(chunkLoc, () -> {
+                processChunkHoppers(chunk);
+            });
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error scheduling hopper task for loaded chunk", e);
         }
     }
 
@@ -91,13 +125,14 @@ public class HopperHandler implements Listener {
     }
 
     public void cleanup() {
-        activeHoppers.values().forEach(BukkitTask::cancel);
+        activeHoppers.values().forEach(Scheduler.Task::cancel);
         activeHoppers.clear();
         spawnerLocks.clear();
     }
 
     @EventHandler
     public void onHopperPlace(BlockPlaceEvent event) {
+        if (!plugin.getConfig().getBoolean("hopper.enabled", false)) return;
         if (event.getBlockPlaced().getType() != Material.HOPPER) return;
 
         Block above = event.getBlockPlaced().getRelative(BlockFace.UP);
@@ -118,21 +153,36 @@ public class HopperHandler implements Listener {
     }
 
     public void startHopperTask(Location hopperLoc, Location spawnerLoc) {
-        if (!configManager.getBoolean("hopper-enabled")) return;
+        if (!plugin.getConfig().getBoolean("hopper.enabled", false)) return;
         if (activeHoppers.containsKey(hopperLoc)) return;
 
-        BukkitTask task = new BukkitRunnable() {
-            @Override
-            public void run() {
+        // Create a runnable for the hopper task
+        Runnable hopperRunnable = () -> {
+            try {
                 if (!isValidSetup(hopperLoc, spawnerLoc)) {
                     stopHopperTask(hopperLoc);
                     return;
                 }
                 transferItems(hopperLoc, spawnerLoc);
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Error in hopper task at " + hopperLoc, e);
+                // Don't stop the task on error, just log it
             }
-        }.runTaskTimer(plugin, 0L, configManager.getInt("hopper-check-interval") * 20L); // Convert seconds to ticks
+        };
 
-        activeHoppers.put(hopperLoc, task);
+        // Use the location-based scheduler for better Folia compatibility
+        try {
+            Scheduler.Task task = Scheduler.runLocationTaskTimer(
+                    hopperLoc,
+                    hopperRunnable,
+                    0L,
+                    plugin.getTimeFromConfig("hopper.check_delay", "3s")
+            );
+
+            activeHoppers.put(hopperLoc, task);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to start hopper task at " + hopperLoc, e);
+        }
     }
 
     private boolean isValidSetup(Location hopperLoc, Location spawnerLoc) {
@@ -145,7 +195,7 @@ public class HopperHandler implements Listener {
     }
 
     public void stopHopperTask(Location hopperLoc) {
-        BukkitTask task = activeHoppers.remove(hopperLoc);
+        Scheduler.Task task = activeHoppers.remove(hopperLoc);
         if (task != null) {
             task.cancel();
         }
@@ -162,7 +212,7 @@ public class HopperHandler implements Listener {
             VirtualInventory virtualInv = spawner.getVirtualInventory();
             Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
 
-            int itemsPerTransfer = configManager.getInt("hopper-items-per-transfer");
+            int itemsPerTransfer = plugin.getConfig().getInt("hopper.stack_per_transfer", 5);
             int transferred = 0;
             boolean inventoryChanged = false;
 
@@ -211,6 +261,8 @@ public class HopperHandler implements Listener {
             if (inventoryChanged) {
                 updateOpenGuis(spawner);
             }
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error transferring items from spawner to hopper", e);
         } finally {
             lock.unlock();
         }
@@ -220,17 +272,25 @@ public class HopperHandler implements Listener {
         // Keep track of the old used slots for page calculation
         int oldUsedSlots = spawner.getVirtualInventory().getUsedSlots();
 
-        // Batch update - run every 2 ticks
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // Calculate total pages before and after the inventory change
-            int oldTotalPages = (int) Math.ceil((double) oldUsedSlots / 45); // Using same ITEMS_PER_PAGE constant as in SpawnerGuiManager
-            int newTotalPages = (int) Math.ceil((double) spawner.getVirtualInventory().getUsedSlots() / 45);
+        // Use location-based scheduling for batch updates
+        try {
+            Scheduler.runLocationTaskLater(spawner.getSpawnerLocation(), () -> {
+                try {
+                    // Calculate total pages before and after the inventory change
+                    int oldTotalPages = (int) Math.ceil((double) oldUsedSlots / 45); // Using same ITEMS_PER_PAGE constant as in SpawnerGuiManager
+                    int newTotalPages = (int) Math.ceil((double) spawner.getVirtualInventory().getUsedSlots() / 45);
 
-            // Update all storage GUI viewers
-            spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                    // Update all storage GUI viewers
+                    spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
 
-            // Update all spawner menu GUI viewers
-            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
-        }, 2L);
+                    // Update all spawner menu GUI viewers
+                    spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Error updating GUIs for spawner", e);
+                }
+            }, 2L);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error scheduling GUI update task", e);
+        }
     }
 }

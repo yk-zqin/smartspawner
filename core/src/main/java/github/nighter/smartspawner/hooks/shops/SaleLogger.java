@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.hooks.shops;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 
 import java.io.BufferedWriter;
@@ -59,17 +58,16 @@ public class SaleLogger {
                     playerName,
                     amount,
                     itemName,
-                    languageManager.formatNumberTenThousand((long) price),
+                    languageManager.formatNumber((long) price),
                     currency);
         }
     }
 
     private SaleLogger() {
         SmartSpawner plugin = SmartSpawner.getInstance();
-        ConfigManager configManager = plugin.getConfigManager();
         this.logQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
         this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        this.logFile = new File("plugins/SmartSpawner/" + configManager.getString("logging-file-path"));
+        this.logFile = new File("plugins/SmartSpawner/" + plugin.getConfig().getString("log_transactions.file_path", "logs/shop_transactions.log"));
         this.isRunning = true;
 
         // Ensure directory exists

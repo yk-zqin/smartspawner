@@ -2,10 +2,10 @@ package github.nighter.smartspawner.spawner.gui.storage;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.StoragePageHolder;
+import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.config.ConfigManager;
-import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.Scheduler.Task;
 import org.bukkit.inventory.Inventory;
@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +22,6 @@ public class SpawnerStorageUI {
     private static final int INVENTORY_SIZE = 54;
 
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
 
     // Precomputed buttons to avoid repeated creation
@@ -42,7 +40,6 @@ public class SpawnerStorageUI {
 
     public SpawnerStorageUI(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
 
         // Initialize caches with appropriate initial capacity
@@ -58,23 +55,23 @@ public class SpawnerStorageUI {
     private void initializeStaticButtons() {
         // Create return button
         staticButtons.put("return", createButton(
-                Material.BARRIER,
-                languageManager.getMessage("return-button.name"),
-                Collections.emptyList()
+                Material.RED_STAINED_GLASS_PANE,
+                languageManager.getGuiItemName("return_button.name"),
+                languageManager.getGuiItemLoreAsList("return_button.lore")
         ));
 
         // Create take all button
         staticButtons.put("takeAll", createButton(
                 Material.CHEST,
-                languageManager.getMessage("take-all-button.name"),
-                Collections.emptyList()
+                languageManager.getGuiItemName("take_all_button.name"),
+                languageManager.getGuiItemLoreAsList("take_all_button.lore" )
         ));
 
         // Create discard all button
         staticButtons.put("discardAll", createButton(
                 Material.LAVA_BUCKET,
-                languageManager.getMessage("discard-all-button.name"),
-                Arrays.asList(languageManager.getMessage("discard-all-button.lore").split("\n"))
+                languageManager.getGuiItemName("discard_all_button.name"),
+                languageManager.getGuiItemLoreAsList("discard_all_button.lore")
         ));
 
         // Pre-create equipment toggle buttons
@@ -83,7 +80,6 @@ public class SpawnerStorageUI {
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
-
         // Get total pages efficiently
         if (totalPages == -1) {
             totalPages = calculateTotalPages(spawner);
@@ -110,7 +106,6 @@ public class SpawnerStorageUI {
     }
 
     public void updateDisplay(Inventory inventory, SpawnerData spawner, int page, int totalPages) {
-
         if (totalPages == -1) {
             totalPages = calculateTotalPages(spawner);
         }
@@ -142,7 +137,7 @@ public class SpawnerStorageUI {
         }
 
         // Update hologram if enabled
-        if (configManager.getHologramEnabled("hologram-enabled")) {
+        if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
             spawner.updateHologramData();
         }
 
@@ -218,11 +213,7 @@ public class SpawnerStorageUI {
         updates.put(NAVIGATION_ROW * 9 + 8, staticButtons.get("return"));
         updates.put(NAVIGATION_ROW * 9 + 7, staticButtons.get("discardAll"));
         updates.put(NAVIGATION_ROW * 9, staticButtons.get("takeAll"));
-
-        // Add equipment toggle button if enabled
-        if (configManager.getBoolean("allow-toggle-equipment-drops")) {
-            updates.put(NAVIGATION_ROW * 9 + 1, equipmentToggleButtons.get(spawner.isAllowEquipmentItems()));
-        }
+        updates.put(NAVIGATION_ROW * 9 + 1, equipmentToggleButtons.get(spawner.isAllowEquipmentItems()));
     }
 
     private String getPageIndicatorKey(int page, int totalPages, SpawnerData spawner) {
@@ -240,43 +231,44 @@ public class SpawnerStorageUI {
     private ItemStack createButton(Material material, String name, List<String> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        if (!lore.isEmpty()) {
-            meta.setLore(lore);
+        if (meta != null) {
+            meta.setDisplayName(name);
+            if (!lore.isEmpty()) {
+                meta.setLore(lore);
+            }
+            item.setItemMeta(meta);
         }
-        item.setItemMeta(meta);
         return item;
     }
 
     private ItemStack createNavigationButton(String type, int targetPage) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("target_page", String.valueOf(targetPage));
+
         String buttonName;
-        String loreKey;
+        String buttonKey;
 
         if (type.equals("previous")) {
-            buttonName = languageManager.getMessage("navigation-button.previous.name")
-                    .replace("%target_page%", String.valueOf(targetPage));
-            loreKey = "navigation-button.previous.lore";
+            buttonKey = "navigation_button_previous";
         } else {
-            buttonName = languageManager.getMessage("navigation-button.next.name")
-                    .replace("%target_page%", String.valueOf(targetPage));
-            loreKey = "navigation-button.next.lore";
+            buttonKey = "navigation_button_next";
         }
 
-        List<String> buttonLore = Arrays.asList(
-                languageManager.getMessage(loreKey)
-                        .replace("%target_page%", String.valueOf(targetPage))
-                        .split("\n")
-        );
+        buttonName = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
+        String[] buttonLore = languageManager.getGuiItemLore(buttonKey + ".lore", placeholders);
 
-        return createButton(Material.SPECTRAL_ARROW, buttonName, buttonLore);
+        return createButton(Material.SPECTRAL_ARROW, buttonName, Arrays.asList(buttonLore));
     }
 
     private ItemStack createEquipmentToggleButton(boolean currentState) {
-        String displayName = languageManager.getMessage("equipment-toggle.name");
-        String loreKey = currentState ? "equipment-toggle.lore.enabled" : "equipment-toggle.lore.disabled";
-        List<String> lore = Arrays.asList(languageManager.getMessage(loreKey).split("\n"));
+        String buttonKey = "equipment_toggle";
+        Map<String, String> placeholders = new HashMap<>();
 
-        return createButton(Material.HOPPER, displayName, lore);
+        String displayName = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
+        String loreKey = currentState ? buttonKey + "_enabled.lore" : buttonKey + "_disabled.lore";
+        String[] lore = languageManager.getGuiItemLore(loreKey, placeholders);
+
+        return createButton(Material.HOPPER, displayName, Arrays.asList(lore));
     }
 
     private ItemStack createPageIndicator(int currentPage, int totalPages, SpawnerData spawner) {
@@ -285,23 +277,21 @@ public class SpawnerStorageUI {
         int usedSlots = virtualInv.getUsedSlots();
         int percentStorage = maxSlots > 0 ? (int) ((double) usedSlots / maxSlots * 100) : 0;
 
-        String formattedMaxSlots = languageManager.formatNumberTenThousand(maxSlots);
-        String formattedUsedSlots = languageManager.formatNumberTenThousand(usedSlots);
+        String formattedMaxSlots = languageManager.formatNumber(maxSlots);
+        String formattedUsedSlots = languageManager.formatNumber(usedSlots);
 
         Material material = plugin.hasShopIntegration() ? Material.GOLD_INGOT : Material.PAPER;
-        String nameKey = plugin.hasShopIntegration() ? "shop-page-indicator.name" : "page-indicator.name";
-        String loreKey = plugin.hasShopIntegration() ? "shop-page-indicator.lore" : "page-indicator.lore";
+        String nameKey = plugin.hasShopIntegration() ? "shop_page_indicator" : "page_indicator";
 
-        String name = languageManager.getMessage(nameKey)
-                .replace("%current_page%", String.valueOf(currentPage))
-                .replace("%total_pages%", String.valueOf(totalPages));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("current_page", String.valueOf(currentPage));
+        placeholders.put("total_pages", String.valueOf(totalPages));
+        placeholders.put("max_slots", formattedMaxSlots);
+        placeholders.put("used_slots", formattedUsedSlots);
+        placeholders.put("percent_storage", String.valueOf(percentStorage));
 
-        String loreText = languageManager.getMessage(loreKey)
-                .replace("%max_slots%", formattedMaxSlots)
-                .replace("%used_slots%", formattedUsedSlots)
-                .replace("%percent_storage%", String.valueOf(percentStorage));
-
-        List<String> lore = Arrays.asList(loreText.split("\n"));
+        String name = plugin.getLanguageManager().getGuiItemName(nameKey +".name", placeholders);
+        List<String> lore = plugin.getLanguageManager().getGuiItemLoreAsList(nameKey +".lore", placeholders);
 
         return createButton(material, name, lore);
     }

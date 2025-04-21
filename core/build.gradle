@@ -15,10 +15,6 @@ dependencies {
     implementation 'com.github.GriefPrevention:GriefPrevention:17.0.0'
     implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
 
-    // Adventure API
-    implementation 'net.kyori:adventure-api:4.19.0'
-    implementation 'net.kyori:adventure-text-minimessage:4.19.0'
-
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.36")
@@ -38,7 +34,7 @@ jar {
     from { project(':v1_20').sourceSets.main.output }
     from { project(':v1_21').sourceSets.main.output }
 
-    //destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Paper\\plugins\\')
+    // destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Paper\\plugins\\')
     from sourceSets.main.output
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

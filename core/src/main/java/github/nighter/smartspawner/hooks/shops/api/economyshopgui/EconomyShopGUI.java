@@ -5,8 +5,8 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.hooks.shops.IShopIntegration;
 import github.nighter.smartspawner.hooks.shops.SaleLogger;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -28,7 +28,7 @@ import java.util.logging.Level;
 public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
-    private final ConfigManager configManager;
+    private final MessageService messageService;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
 
     // Transaction timeout
@@ -41,7 +41,7 @@ public class EconomyShopGUI implements IShopIntegration {
     public EconomyShopGUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
     }
 
@@ -49,14 +49,14 @@ public class EconomyShopGUI implements IShopIntegration {
     public boolean sellAllItems(Player player, SpawnerData spawner) {
         // Prevent multiple concurrent sales for the same player
         if (pendingSales.containsKey(player.getUniqueId())) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
         // Get lock with timeout
         ReentrantLock lock = spawner.getLock();
         if (!lock.tryLock()) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
@@ -75,7 +75,7 @@ public class EconomyShopGUI implements IShopIntegration {
                 if (error != null) {
                     plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);
                     plugin.getServer().getScheduler().runTask(plugin, () ->
-                            languageManager.sendMessage(player, "messages.sell-failed"));
+                            messageService.sendMessage(player, "shop.sale_failed"));
                 }
             });
 
@@ -102,7 +102,7 @@ public class EconomyShopGUI implements IShopIntegration {
 
         if (items.isEmpty()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-items"));
+                    messageService.sendMessage(player, "shop.no_items"));
             return false;
         }
 
@@ -110,7 +110,7 @@ public class EconomyShopGUI implements IShopIntegration {
         SaleCalculationResult calculation = calculateSalePrices(player, items);
         if (!calculation.isValid()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-sellable-items"));
+                    messageService.sendMessage(player, "shop.no_sellable_items"));
             return false;
         }
 
@@ -139,7 +139,7 @@ public class EconomyShopGUI implements IShopIntegration {
                 // Restore items if payment fails
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
-                    languageManager.sendMessage(player, "messages.sell-failed");
+                    messageService.sendMessage(player, "shop.sale_failed");
                     int newTotalPages = calculateTotalPages(spawner);
                     spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 });
@@ -159,7 +159,7 @@ public class EconomyShopGUI implements IShopIntegration {
             // Restore items on timeout/error
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 virtualInv.addItems(calculation.getItemsToRemove());
-                languageManager.sendMessage(player, "messages.sell-failed");
+                messageService.sendMessage(player, "shop.sale_failed");
                 int newTotalPages = calculateTotalPages(spawner);
                 spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
             });
@@ -196,24 +196,25 @@ public class EconomyShopGUI implements IShopIntegration {
         });
 
         StringBuilder originalPriceBuilder = new StringBuilder();
-        if (configManager.getBoolean("tax-enabled")) {
+        if (plugin.getConfig().getBoolean("tax.enabled", false)) {
             calculation.getOriginalPrices().forEach((type, value) -> {
                 if (!originalPriceBuilder.isEmpty()) originalPriceBuilder.append(", ");
                 originalPriceBuilder.append(formatMonetaryValue(value, type));
             });
         }
 
-        double taxPercentage = configManager.getDouble("tax-rate");
-        if (configManager.getBoolean("tax-enabled")) {
-            languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
-                    "%price%", taxedPriceBuilder.toString(),
-                    "%gross%", originalPriceBuilder.toString(),
-                    "%tax%", String.format("%.2f", taxPercentage));
+        double taxPercentage = plugin.getConfig().getDouble("tax.percentage", 10.0);
+
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", String.valueOf(languageManager.formatNumber(calculation.getTotalAmount())));
+        placeholders.put("price", taxedPriceBuilder.toString());
+
+        if (plugin.getConfig().getBoolean("tax.enabled")) {
+            placeholders.put("gross", originalPriceBuilder.toString());
+            placeholders.put("tax", String.format("%.2f", taxPercentage));
+            messageService.sendMessage(player, "shop.sell_all_with_tax", placeholders);
         } else {
-            languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(languageManager.formatNumberTenThousand(calculation.getTotalAmount())),
-                    "%price%", taxedPriceBuilder.toString());
+            messageService.sendMessage(player, "shop.sell_all", placeholders);
         }
     }
 
@@ -250,7 +251,7 @@ public class EconomyShopGUI implements IShopIntegration {
             }
         }
 
-        Map<EcoType, Double> taxedPrices = configManager.getBoolean("tax-enabled")
+        Map<EcoType, Double> taxedPrices = plugin.getConfig().getBoolean("tax.enabled", false)
                 ? applyTax(prices)
                 : prices;
 
@@ -258,7 +259,7 @@ public class EconomyShopGUI implements IShopIntegration {
     }
 
     private Map<EcoType, Double> applyTax(Map<EcoType, Double> originalPrices) {
-        double taxPercentage = plugin.getConfigManager().getDouble("tax-rate");
+        double taxPercentage = plugin.getConfig().getDouble("tax.percentage", 10.0);
         Map<EcoType, Double> taxedPrices = new HashMap<>();
         for (Map.Entry<EcoType, Double> entry : originalPrices.entrySet()) {
             double originalPrice = entry.getValue();
@@ -297,7 +298,7 @@ public class EconomyShopGUI implements IShopIntegration {
                     .forEach((type, price) -> {
                         prices.put(type, prices.getOrDefault(type, 0d) + price);
                         // Log sale for each type of currency
-                        if (configManager.getBoolean("logging-enabled")) {
+                        if (plugin.getConfig().getBoolean("log_transactions.enabled", true)) {
                             SaleLogger.getInstance().logSale(
                                     player.getName(),
                                     item.getType().name(),
@@ -311,7 +312,7 @@ public class EconomyShopGUI implements IShopIntegration {
             double sellPrice = EconomyShopGUIHook.getItemSellPrice(shopItem, item, player, amount, sold);
             prices.put(shopItem.getEcoType(), prices.getOrDefault(shopItem.getEcoType(), 0d) + sellPrice);
             // Log sale for single currency
-            if (configManager.getBoolean("logging-enabled")) {
+            if (plugin.getConfig().getBoolean("log_transactions.enabled", true)) {
                 SaleLogger.getInstance().logSale(
                         player.getName(),
                         item.getType().name(),
@@ -355,8 +356,7 @@ public class EconomyShopGUI implements IShopIntegration {
         }
 
         try {
-            boolean useLanguageManager = ecoType.getType() == VAULT && configManager.getBoolean("formated-price")
-                    || ecoType.getType() == PLAYER_POINTS;
+            boolean useLanguageManager = ecoType.getType() == VAULT || ecoType.getType() == PLAYER_POINTS;
             String formattedValue = formatPrice(value, useLanguageManager);
 
             // Add name type for EXP, LEVELS và ITEM

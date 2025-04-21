@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.spawner.interactions.destroy;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.Material;
@@ -16,12 +15,10 @@ import java.util.List;
 public class SpawnerExplosionListener implements Listener {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
-    private final ConfigManager configManager;
 
     public SpawnerExplosionListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
-        this.configManager = plugin.getConfigManager();
     }
 
     @EventHandler
@@ -33,7 +30,8 @@ public class SpawnerExplosionListener implements Listener {
                 SpawnerData spawnerData = this.spawnerManager.getSpawnerByLocation(block.getLocation());
 
                 if (spawnerData != null) {
-                    if (!configManager.getBoolean("allow-grief")) {
+
+                    if (!plugin.getConfig().getBoolean("spawner_properties.default.allow_explosions",false)) {
                         // Add the spawner block to the list of blocks to remove
                         blocksToRemove.add(block);
                         // Close all viewers of the spawner
@@ -42,7 +40,6 @@ public class SpawnerExplosionListener implements Listener {
                         String spawnerId = spawnerData.getSpawnerId();
                         spawnerManager.removeSpawner(spawnerId);
                         plugin.getRangeChecker().stopSpawnerTask(spawnerData);
-                        plugin.getConfigManager().debug("Spawner " + spawnerId + " has been exploded.");
                     }
                 } else {
                     // If no spawner data is found, we still want the spawner block to be destroyed

@@ -5,17 +5,16 @@ import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.hooks.protections.CheckBreakBlock;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
-import github.nighter.smartspawner.spawner.utils.NaturalSpawnerDetector;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
+import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
+import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,12 +22,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Vector;
 
-import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -36,23 +32,20 @@ import java.util.concurrent.CompletableFuture;
  * silk touch requirements, and drop processing.
  */
 public class SpawnerBreakListener implements Listener {
-    private static final int PICKUP_DELAY = 10;
-    private static final double DROP_SPREAD_RANGE = 0.5;
-    private static final double DROP_VELOCITY_RANGE = 0.2;
+    private static final int MAX_STACK_SIZE = 64;
 
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
-    private final LanguageManager languageManager;
+    private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final HopperHandler hopperHandler;
-    private final Random random = new Random();
+    private final SpawnerItemFactory spawnerItemFactory;
 
     public SpawnerBreakListener(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
-        this.languageManager = plugin.getLanguageManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
         this.hopperHandler = plugin.getHopperHandler();
+        this.spawnerItemFactory = plugin.getSpawnerItemFactory();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -73,7 +66,7 @@ public class SpawnerBreakListener implements Listener {
         }
 
         // Feature toggle check
-        if (!configManager.getBoolean("spawner-break-enabled")) {
+        if (!plugin.getConfig().getBoolean("spawner_break.enabled", true)) {
             event.setCancelled(true);
             return;
         }
@@ -82,12 +75,12 @@ public class SpawnerBreakListener implements Listener {
         final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
 
         // Check if natural spawner interaction is disabled
-        if (!configManager.getBoolean("natural-spawner-interaction")) {
-            // Check if this is likely a natural dungeon spawner
-            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
+        if (!plugin.getConfig().getBoolean("natural_spawner.breakable", true)) {
+            if (spawner == null) {
                 // Handle like vanilla - break with no drops
                 block.setType(Material.AIR);
                 event.setCancelled(true);
+                messageService.sendMessage(player, "natural_spawner_break_blocked");
                 return;
             }
         }
@@ -95,7 +88,7 @@ public class SpawnerBreakListener implements Listener {
         // Permission check
         if (!player.hasPermission("smartspawner.break")) {
             event.setCancelled(true);
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "spawner_break_no_permission");
             return;
         }
 
@@ -128,8 +121,8 @@ public class SpawnerBreakListener implements Listener {
 
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
 
-        // Process drops optimally based on stack size
-        SpawnerBreakResult result = processDrops(location, spawner);
+        // Process drops based on crouching state
+        SpawnerBreakResult result = processDrops(location, spawner, player.isSneaking(), block);
 
         if (result.isSuccess()) {
             // Handle tool durability
@@ -139,7 +132,7 @@ public class SpawnerBreakListener implements Listener {
 
             // Clean up if no stacks remain
             if (spawner.getStackSize() <= 0) {
-                cleanupSpawner(block, spawner, player);
+                cleanupSpawner(block, spawner);
             }
         }
     }
@@ -152,20 +145,16 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        // Get entity type and create appropriate item
+        // Get entity type and create appropriate item using the factory
         EntityType entityType = creatureSpawner.getSpawnedType();
-        ItemStack spawnerItem = createSpawnerItem(entityType);
+        ItemStack spawnerItem = spawnerItemFactory.createSpawnerItem(entityType);
 
         // Drop item and update world
         World world = location.getWorld();
         if (world != null) {
             block.setType(Material.AIR);
             world.dropItemNaturally(location, spawnerItem);
-            reduceDurability(tool, player, configManager.getInt("durability-loss-per-spawner"));
-
-            logDebugInfo("Player " + player.getName() + " broke " +
-                    (entityType != null ? entityType + " spawner" : "empty spawner") +
-                    " at " + location);
+            reduceDurability(tool, player, plugin.getConfig().getInt("spawner_break.durability_loss", 1));
         }
     }
 
@@ -176,19 +165,20 @@ public class SpawnerBreakListener implements Listener {
         }
 
         if (!player.hasPermission("smartspawner.break")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "spawner_break_no_permission");
             return false;
         }
 
         if (!isValidTool(tool)) {
+            messageService.sendMessage(player, "spawner_break_required_tools");
             return false;
         }
 
         // Silk touch validation
-        if (configManager.getBoolean("silk-touch-required")) {
-            int requiredLevel = configManager.getInt("silk-touch-level");
+        if (plugin.getConfig().getBoolean("spawner_break.silk_touch.required", true)) {
+            int requiredLevel = plugin.getConfig().getInt("spawner_break.silk_touch.level", 1);
             if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < requiredLevel) {
-                languageManager.sendMessage(player, "messages.silk-touch-required");
+                messageService.sendMessage(player, "spawner_break_silk_touch_required");
                 return false;
             }
         }
@@ -196,90 +186,44 @@ public class SpawnerBreakListener implements Listener {
         return true;
     }
 
-    private SpawnerBreakResult processDrops(Location location, SpawnerData spawner) {
+    private SpawnerBreakResult processDrops(Location location, SpawnerData spawner, boolean isCrouching, Block spawnerBlock) {
         final int currentStackSize = spawner.getStackSize();
-        // Ensure at least 1 spawner remains (if initially > 1)
-        final int maxAllowedToDrop = currentStackSize > 1 ? currentStackSize - 1 : 1;
-        final int configDropAmount = configManager.getInt("drop-stack-amount");
-        final int durabilityLoss = configManager.getInt("durability-loss-per-spawner");
-
-        // Calculate actual drop amount
-        final int dropAmount;
-        if (currentStackSize == 1) {
-            // If only one exists, drop one and block will be handled separately
-            dropAmount = 1;
-        } else {
-            // If more than one exists, ensure at least one remains
-            dropAmount = Math.min(configDropAmount, maxAllowedToDrop);
-        }
-
-        if (dropAmount <= 0) {
-            return new SpawnerBreakResult(false, 0, durabilityLoss);
-        }
+        final int durabilityLoss = plugin.getConfig().getInt("spawner_break.durability_loss", 1);
 
         World world = location.getWorld();
         if (world == null) {
             return new SpawnerBreakResult(false, 0, durabilityLoss);
         }
 
-        // Create template item for efficiency
+        // Create template item for spawner drops
         EntityType entityType = spawner.getEntityType();
-        ItemStack template = createSpawnerItem(entityType);
+        ItemStack template = spawnerItemFactory.createSpawnerItem(entityType);
 
-        // Handle drops based on stack size
-        if (currentStackSize == 1) {
-            // Special case: drop single item, spawner will be handled by another method
-            dropItems(world, location, template, 1);
-            spawner.decreaseStackSizeByOne();
+        int dropAmount;
+
+        if (isCrouching) {
+            // Crouching behavior: Drop up to MAX_STACK_SIZE (64)
+            if (currentStackSize <= MAX_STACK_SIZE) {
+                // If stack is 64 or less, drop all and remove spawner
+                dropAmount = currentStackSize;
+                cleanupSpawner(spawnerBlock, spawner);
+            } else {
+                // If stack is more than 64, drop 64 and reduce stack
+                dropAmount = MAX_STACK_SIZE;
+                spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
+            }
         } else {
-            // Ensure at least one spawner always remains
-            dropItems(world, location, template, dropAmount);
-            int newStackSize = Math.max(currentStackSize - dropAmount, 1);
-            spawner.setStackSize(newStackSize);
+            // Normal behavior: Drop 1 spawner
+            dropAmount = 1;
+            spawner.decreaseStackSizeByOne();
+        }
 
-            // Debug logging
-            logDebugInfo("Spawner stack at " + location + " reduced from " +
-                    currentStackSize + " to " + newStackSize +
-                    ", dropped " + dropAmount + " items");
+        // Drop the items individually (no batch operations)
+        for (int i = 0; i < dropAmount; i++) {
+            world.dropItemNaturally(location, template.clone());
         }
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
-    }
-
-    private void dropItems(World world, Location location, ItemStack template, int amount) {
-        if (amount <= 0) {
-            return;
-        }
-
-        if (amount <= 5) {
-            // For small amounts, use simple dropping
-            for (int i = 0; i < amount; i++) {
-                world.dropItemNaturally(location, template.clone());
-            }
-        } else {
-            // For larger amounts, use batch processing with optimized physics
-            List<Item> drops = new ArrayList<>(amount);
-
-            for (int i = 0; i < amount; i++) {
-                double spreadX = random.nextDouble() * DROP_SPREAD_RANGE - (DROP_SPREAD_RANGE / 2);
-                double spreadZ = random.nextDouble() * DROP_SPREAD_RANGE - (DROP_SPREAD_RANGE / 2);
-
-                Location dropLoc = location.clone().add(spreadX, 0.5, spreadZ);
-                Item item = world.dropItem(dropLoc, template.clone());
-
-                // Calculate randomized but controlled velocity
-                item.setVelocity(new Vector(
-                        random.nextDouble() * DROP_VELOCITY_RANGE - (DROP_VELOCITY_RANGE / 2),
-                        0.2,
-                        random.nextDouble() * DROP_VELOCITY_RANGE - (DROP_VELOCITY_RANGE / 2)
-                ));
-
-                drops.add(item);
-            }
-
-            // Set pickup delay in batch
-            drops.forEach(item -> item.setPickupDelay(PICKUP_DELAY));
-        }
     }
 
     private void reduceDurability(ItemStack tool, Player player, int durabilityLoss) {
@@ -304,46 +248,13 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    private ItemStack createSpawnerItem(EntityType entityType) {
-        ItemStack spawner = new ItemStack(Material.SPAWNER);
-        ItemMeta meta = spawner.getItemMeta();
-
-        if (meta != null) {
-            if (entityType != null && entityType != EntityType.UNKNOWN) {
-                // Set display name
-                String entityTypeName = languageManager.getFormattedMobName(entityType);
-                String displayName = languageManager.getMessage("spawner-name", "%entity%", entityTypeName);
-                meta.setDisplayName(displayName);
-
-                // Store entity type in BlockStateMeta
-                if (meta instanceof BlockStateMeta) {
-                    BlockStateMeta blockMeta = (BlockStateMeta) meta;
-                    BlockState blockState = blockMeta.getBlockState();
-
-                    if (blockState instanceof CreatureSpawner) {
-                        CreatureSpawner cs = (CreatureSpawner) blockState;
-                        cs.setSpawnedType(entityType);
-                        blockMeta.setBlockState(cs);
-                    }
-                }
-            }
-            spawner.setItemMeta(meta);
-        }
-
-        return spawner;
-    }
-
-    private void cleanupSpawner(Block block, SpawnerData spawner, Player player) {
+    private void cleanupSpawner(Block block, SpawnerData spawner) {
         spawner.setSpawnerStop(true);
         block.setType(Material.AIR);
         spawnerManager.removeSpawner(spawner.getSpawnerId());
 
         // Save asynchronously
-        CompletableFuture.runAsync(() -> {
-            spawnerManager.saveSpawnerData();
-            logDebugInfo("Player " + player.getName() +
-                    " broke spawner with ID: " + spawner.getSpawnerId());
-        });
+        CompletableFuture.runAsync(spawnerManager::saveSpawnerData);
     }
 
     private void cleanupAssociatedHopper(Block block) {
@@ -357,15 +268,11 @@ public class SpawnerBreakListener implements Listener {
         if (tool == null) {
             return false;
         }
-        return configManager.getStringList("required-tools").contains(tool.getType().name());
-    }
-
-    private void logDebugInfo(String message) {
-        configManager.debug(message);
+        return plugin.getConfig().getStringList("spawner_break.required_tools").contains(tool.getType().name());
     }
 
     private static class SpawnerBreakResult {
-        private final boolean success;
+        @Getter private final boolean success;
         private final int droppedAmount;
         private final int baseDurabilityLoss;
 
@@ -373,14 +280,6 @@ public class SpawnerBreakListener implements Listener {
             this.success = success;
             this.droppedAmount = droppedAmount;
             this.baseDurabilityLoss = baseDurabilityLoss;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public int getDroppedAmount() {
-            return droppedAmount;
         }
 
         public int getDurabilityLoss() {
@@ -403,43 +302,34 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        // Check if it's a natural dungeon spawner and if natural spawner interaction is disabled
-        if (!configManager.getBoolean("natural-spawner-interaction")) {
-            SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
-            if (NaturalSpawnerDetector.isNaturalDungeonSpawner(block, spawner)) {
-                // Don't show any message for natural spawners when interaction is disabled
-                return;
-            }
-        }
-
         ItemStack tool = player.getInventory().getItemInMainHand();
         if (tool.getType() == Material.AIR) {
             return;
         }
 
+        // Warn about breaking
+        SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
+        if (spawner != null) {
+            messageService.sendMessage(player, "spawner_break_warning");
+        }
+
         // Provide appropriate feedback based on tool and permissions
         if (isValidTool(tool)) {
-            if (configManager.getBoolean("silk-touch-required")) {
-                int requiredLevel = configManager.getInt("silk-touch-level");
+            if (plugin.getConfig().getBoolean("spawner_break.silk_touch.required", true)) {
+                int requiredLevel = plugin.getConfig().getInt("spawner_break.silk_touch.level", 1);
                 if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < requiredLevel) {
-                    languageManager.sendMessage(player, "messages.silk-touch-required");
+                    messageService.sendMessage(player, "spawner_break_silk_touch_required");
                     return;
                 }
             }
 
             if (!player.hasPermission("smartspawner.break")) {
-                languageManager.sendMessage(player, "no-permission");
-                return;
+                messageService.sendMessage(player, "spawner_break_no_permission");
             }
 
-            // Warn about breaking
-            SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
-            if (spawner != null) {
-                languageManager.sendMessage(player, "messages.break-warning");
-            }
         } else {
             // Inform about required tools
-            languageManager.sendMessage(player, "messages.required-tools");
+            messageService.sendMessage(player, "spawner_break_required_tools");
         }
     }
 }

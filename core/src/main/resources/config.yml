@@ -1,139 +1,153 @@
 #---------------------------------------------------
-#                 Plugin Settings
+#               Language Settings
 #---------------------------------------------------
-# Language Selection
-# Supported: en_US (English), vi_VN (Vietnamese), zh_CN (Simplified Chinese)
-# You can also use custom language files by placing them in the messages folder
-# (Need a full server restart to apply changes)
+# Language setting (available: en_US)
 language: en_US
 
-# Debug Mode (for printing debug messages to console)
+# For custom languages:
+# 1. Create a new folder in the language directory
+# 2. Use the files from en_US folder as a template
+# 3. Modify those files as needed (messages.yml, formatting.yml,...)
+# 4. Set language to your custom folder name
+
+# Enable or disable debug mode (provides verbose console output)
 debug: false
 
-# Data Saving Interval in seconds (default: 300 seconds - 5 minutes)
-save-interval: 300 # seconds
+#---------------------------------------------------
+#                 Time Format Guide
+#---------------------------------------------------
+# TIME FORMAT GUIDE
+# Simple formats: 20s (20 seconds), 5m (5 minutes), 1h (1 hour)
+# Complex format: 1d_2h_30m_15s (1 day, 2 hours, 30 minutes, 15 seconds)
+# Units: s = seconds, m = minutes, h = hours, d = days, w = weeks, mo = months, y = years
 
 #---------------------------------------------------
-#              Spawner Core Mechanics
+#             Core Spawner Properties
 #---------------------------------------------------
-# Default entity type for spawners
-default-entity: PIG
+# These settings control the fundamental behavior of all spawners
+spawner_properties:
+  default:
+    # Spawn Parameters - Controls mob generation frequency and amounts
+    min_mobs: 1         # Minimum mobs spawned per cycle
+    max_mobs: 4         # Maximum mobs spawned per cycle
+    range: 16           # Player proximity required for activation (in blocks)
+    delay: 25s          # Base delay between spawn cycles (see time format guide above)
 
-# Spawn count limits
-min-mobs: 1
-max-mobs: 4
+    # Storage Settings - Defines internal inventory capacity
+    max_storage_pages: 1  # Each page provides 45 inventory slots
+    max_stored_exp: 1000  # Maximum experience points that can be stored
+    max_stack_size: 10000  # Maximum number of items in a single stack
 
-# Player proximity for activation
-range: 16 # blocks
-
-# Base loot spawn delay
-delay: 20 # seconds
-
-# Storage page(s) per spawner (1 page = 45 slots)
-max-storage-pages: 1
-
-# Maximum storable experience points
-max-stored-exp: 1000
-
-# Maximum spawner stack size
-max-stack-size: 1000
-
-# Experience and equipment features
-allow-exp-mending: true
-allow-toggle-equipment-drops: true
-
-# Prevent explosions destroying spawners
-allow-grief: false
-
-# Immediate spawner activation when placed
-# If false, players must right-click to activate
-activate-on-place: true
+    # Behavior Settings - Controls special spawner functionality
+    allow_exp_mending: true   # Allow spawners to repair items with stored XP
+    allow_explosions: false   # Protect spawners from explosion damage
 
 #---------------------------------------------------
-#             Custom Mechanics
+#           Spawner Breaking Mechanics
 #---------------------------------------------------
-# If false prevent players from interacting with natural spawners
-# This includes breaking & activating natural spawners
-# Useful for preventing players using ESP, X-ray, etc. to locate spawners unfairly
-natural-spawner-interaction: true
+# Controls how players can break and collect spawners
+spawner_break:
+  enabled: true         # Master switch for spawner breaking feature
 
-#---------------------------------------------------
-#             Spawner Breaking Mechanics
-#---------------------------------------------------
-# Enable spawner breaking functionality
-spawner-break-enabled: true
+  # Tool Requirements - Which tools can break spawners
+  required_tools:
+    - IRON_PICKAXE
+    - GOLDEN_PICKAXE
+    - DIAMOND_PICKAXE
+    - NETHERITE_PICKAXE
 
-# Permitted Breaking Tools
-required-tools:
-  - IRON_PICKAXE
-  - GOLDEN_PICKAXE
-  - DIAMOND_PICKAXE
-  - NETHERITE_PICKAXE
+  # Durability impact on tools when breaking a spawner
+  durability_loss: 1    # Number of durability points deducted
 
-# Durability lost per spawner broken
-durability-loss-per-spawner: 1
-
-# Silk Touch Requirements
-silk-touch-required: true
-silk-touch-level: 1
-
-# Maximum dropped items per break
-drop-stack-amount: 64
+  # Enchantment Requirements for successful spawner collection
+  silk_touch:
+    required: true      # Whether Silk Touch is needed to obtain spawners
+    level: 1            # Minimum level of Silk Touch required
 
 #---------------------------------------------------
-#                Aesthetic Features
+#               Natural Spawner Settings
 #---------------------------------------------------
-# Note: May impact server performance
-
-# Hologram Configuration (Incompatible with Folia)
-hologram-enabled: false
-hologram-see-through: false
-hologram-shadowed-text: true
-hologram-height: 1.6
-hologram-offset-x: 0.5
-hologram-offset-z: 0.5
-
-# Particle Effects
-particles-loot-spawn: true
-particles-spawner-stack: true
-particles-spawner-activate: true
+# Controls behavior of naturally generated dungeon spawners
+natural_spawner:
+  breakable: false       # Whether vanilla/natural spawners can be broken and converted into smart spawner
 
 #---------------------------------------------------
-#              Economic Integration
+#             Shop Integration Settings
 #---------------------------------------------------
-# Shop integration options:
-# - auto: Automatically detect supported shop plugins
-# - EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
-# - disabled: No shop integration
-shop-integration: auto
+# Configure direct selling of items from spawner inventories
+shop_integration:
+  enabled: true
+  # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
+  # 'auto' will attempt to detect your installed shop plugin automatically
+  type: auto
 
-# Format prices with currency symbols (K, M, B, T)
-formated-price: true
+# Transaction cooldown to prevent abuse
+sell_cooldown:
+  enabled: true
+  duration: 3s          # Time between allowed transactions (see time format guide above)
 
-# Cooldown between selling items
-sell-cooldown: 3 # seconds
+# Economy taxation system for spawner sales
+tax:
+  enabled: false        # Apply tax to spawner sales
+  percentage: 10.0      # Percentage of sale value taken as tax
 
-# Sales tax configuration
-tax-enabled: false
-tax-rate: 10.0
-
-# Transaction logging
-logging-enabled: true
-logging-file-path: "shop-logs/sales.log"
-
-#---------------------------------------------------
-#              Hopper Mechanics
-#---------------------------------------------------
-# Not recommended for large servers
-# May impact server performance
-hopper-enabled: false
-hopper-items-per-transfer: 4
-hopper-check-interval: 1 # seconds
+# Transaction logging for security and monitoring
+log_transactions:
+  enabled: false
+  file_path: "logs/shop_transactions.log"  # Path relative to plugin directory
 
 #---------------------------------------------------
-#              Update Checker
+#              Item Collection System
 #---------------------------------------------------
-update-checker-enabled: true
-update-checker-interval: 24 # hours
-update-checker-notify-console: true
-update-checker-notify-on-join: true
+# Configuration for automated item collection
+hopper:
+  enabled: false
+  check_delay: 3s       # Time between collection checks (see time format guide above)
+  stack_per_transfer: 5 # Number of item stacks transferred in one operation (max 5)
+
+#---------------------------------------------------
+#                 Visual Effects
+#---------------------------------------------------
+# Configure visual indicators and effects for spawners
+hologram:
+  enabled: false        # Show floating text above spawners
+
+  # Hologram Text Display (supports color codes)
+  # Available placeholders:
+  # %entity% - Type of mob
+  # %stack_size% - Number of stacked spawners
+  # %current_exp% - Current stored XP
+  # %max_exp% - Maximum XP capacity
+  # %used_slots% - Used inventory slots
+  # %max_slots% - Total inventory slots
+  text:
+    - '[&#f8f8ff%stack_size%] &#7b68ee%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
+    - '&#ab7afd• &#e6e6faxᴘ: &#37eb9a%current_exp%&#f8f8ff/&#37eb9a%max_exp%'
+    - '&#ab7afd• &#e6e6faɪᴛᴇᴍꜱ: &#37eb9a%used_slots%&#f8f8ff/&#37eb9a%max_slots%'
+
+  # Position Offset from spawner block center
+  offset_x: 0.5
+  offset_y: 1.6
+  offset_z: 0.5
+
+  # Display Settings
+  alignment: CENTER     # Text alignment (CENTER, LEFT, or RIGHT)
+  shadowed_text: true   # Apply shadow effect to text
+  see_through: false    # Text visible through blocks
+
+# Particle effect toggles for visual feedback
+particle:
+  spawner_stack: true           # Show effects when spawners are stacked
+  spawner_activate: true        # Show effects when spawner activates
+  spawner_generate_loot: true   # Show effects when items are generated
+
+#---------------------------------------------------
+#                 Data Management
+#---------------------------------------------------
+# Controls how and when spawner data is saved
+data_saving:
+  # Periodic auto-save interval
+  interval: 5m          # Time between saves (see time format guide above)
+
+  # Save spawner data on server shutdown
+  save_on_shutdown: true

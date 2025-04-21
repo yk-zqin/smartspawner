@@ -5,7 +5,6 @@ import github.nighter.smartspawner.holders.SpawnerMenuHolder;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.utils.ItemUpdater;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
@@ -39,7 +38,6 @@ public class SpawnerGuiViewManager implements Listener {
     private static final int ITEMS_PER_PAGE = 45; // Standard chest inventory size minus navigation items
 
     private final SmartSpawner plugin;
-    private final ConfigManager configManager;
     private final LanguageManager languageManager;
     private final SpawnerStorageUI spawnerStorageUI;
 
@@ -54,7 +52,6 @@ public class SpawnerGuiViewManager implements Listener {
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
         this.plugin = plugin;
-        this.configManager = plugin.getConfigManager();
         this.languageManager = plugin.getLanguageManager();
         this.spawnerStorageUI = new SpawnerStorageUI(plugin);
         this.playerToSpawnerMap = new ConcurrentHashMap<>();
@@ -158,9 +155,7 @@ public class SpawnerGuiViewManager implements Listener {
     public void clearAllTrackedGuis() {
         playerToSpawnerMap.clear();
         spawnerToPlayersMap.clear();
-        if (configManager.isDebugEnabled()) {
-            plugin.getLogger().info("Cleared all tracked spawner GUIs");
-        }
+        // plugin.getLogger().info("Cleared all tracked spawner GUIs");
     }
 
     // ===============================================================
@@ -234,7 +229,7 @@ public class SpawnerGuiViewManager implements Listener {
 
             Inventory openInventory = player.getOpenInventory().getTopInventory();
             if (openInventory.getHolder() instanceof SpawnerMenuHolder) {
-                if (!spawner.isAtCapacity()) {
+                if (!spawner.getIsAtCapacity()) {
                     updateSpawnerGuiInfo(player, spawner, false);
                 }
             } else if (!(openInventory.getHolder() instanceof StoragePageHolder)) {
@@ -246,7 +241,7 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     // ===============================================================
-    //                      Spawner Main GUI Update
+    //                      Main GUI Update
     // ===============================================================
 
     public void updateSpawnerMenuViewers(SpawnerData spawner) {
@@ -311,7 +306,7 @@ public class SpawnerGuiViewManager implements Listener {
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
         String timeDisplay = getTimeDisplay(timeUntilNextSpawn);
 
-        String nextSpawnTemplate = languageManager.getMessage("spawner-info-item.lore-change");
+        String nextSpawnTemplate = languageManager.getGuiItemName("spawner_info_item.lore_change");
         String strippedTemplate = ChatColor.stripColor(nextSpawnTemplate);
 
         int lineIndex = -1;
@@ -323,8 +318,8 @@ public class SpawnerGuiViewManager implements Listener {
             }
         }
         // Check if spawner is at capacity and display message
-        if (spawner.isAtCapacity()){
-            timeDisplay = languageManager.getMessage("spawner-info-item.lore-full");
+        if (spawner.getIsAtCapacity()){
+            timeDisplay = languageManager.getGuiItemName("spawner_info_item.lore_full");
         }
         String newLine = nextSpawnTemplate + timeDisplay;
         if (lineIndex >= 0) {
@@ -339,7 +334,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private String getTimeDisplay(long timeUntilNextSpawn) {
         if (timeUntilNextSpawn == -1) {
-            return languageManager.getMessage("spawner-info-item.lore-inactive");
+            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         } else if (timeUntilNextSpawn <= 0) {
             return formatTime(timeUntilNextSpawn);
         }
@@ -418,13 +413,14 @@ public class SpawnerGuiViewManager implements Listener {
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
 
         Map<String, String> replacements = new HashMap<>();
-        replacements.put("%max_slots%", String.valueOf(maxSlots));
-        replacements.put("%current_items%", String.valueOf(currentItems));
-        replacements.put("%percent_storage%", String.valueOf(percentStorage));
+        replacements.put("max_slots", String.valueOf(maxSlots));
+        replacements.put("current_items", String.valueOf(currentItems));
+        replacements.put("percent_storage", String.valueOf(percentStorage));
 
-        String name = languageManager.getMessage("spawner-loot-item.name");
-        String loreMessageChest = languageManager.getMessage("spawner-loot-item.lore.chest", replacements);
-        List<String> chestLore = Arrays.asList(loreMessageChest.split("\n"));
+        String name = languageManager.getGuiItemName("spawner_storage_item.name");
+
+        // Use the new direct key access method that returns a List for compatibility with ItemUpdater
+        List<String> chestLore = languageManager.getGuiItemLoreAsList("spawner_storage_item.lore", replacements);
 
         ItemUpdater.updateItemMeta(chestItem, name, chestLore);
     }
@@ -436,24 +432,19 @@ public class SpawnerGuiViewManager implements Listener {
         long currentExp = spawner.getSpawnerExp();
         if (currentExp != previousExpValue) {
             Map<String, String> nameReplacements = new HashMap<>();
-            String formattedExp = languageManager.formatNumber(currentExp);
-            String formattedMaxExp = languageManager.formatNumber(spawner.getMaxStoredExp());
             int percentExp = (int) ((double) spawner.getSpawnerExp() / spawner.getMaxStoredExp() * 100);
 
-            nameReplacements.put("%current_exp%", String.valueOf(spawner.getSpawnerExp()));
-            String name = languageManager.getMessage("exp-info-item.name", nameReplacements);
+            nameReplacements.put("current_exp", String.valueOf(spawner.getSpawnerExp()));
+            String name = languageManager.getGuiItemName("exp_info_item.name", nameReplacements);
 
             Map<String, String> loreReplacements = new HashMap<>();
-            loreReplacements.put("%current_exp%", formattedExp);
-            loreReplacements.put("%max_exp%", formattedMaxExp);
-            loreReplacements.put("%percent_exp%", String.valueOf(percentExp));
-            loreReplacements.put("%u_max_exp%", String.valueOf(spawner.getMaxStoredExp()));
+            loreReplacements.put("current_exp", languageManager.formatNumber(currentExp));
+            loreReplacements.put("max_exp", languageManager.formatNumber(spawner.getMaxStoredExp()));
+            loreReplacements.put("percent_exp", String.valueOf(percentExp));
+            loreReplacements.put("u_max_exp", String.valueOf(spawner.getMaxStoredExp()));
+            List<String> expLore = languageManager.getGuiItemLoreAsList("exp_info_item.lore", loreReplacements);
 
-            String lorePathExp = "exp-info-item.lore.exp-bottle";
-            String loreMessageExp = languageManager.getMessage(lorePathExp, loreReplacements);
-            List<String> loreExp = Arrays.asList(loreMessageExp.split("\n"));
-
-            ItemUpdater.updateItemMeta(expItem, name, loreExp);
+            ItemUpdater.updateItemMeta(expItem, name, expLore);
             previousExpValue = currentExp;
         }
     }
@@ -505,7 +496,7 @@ public class SpawnerGuiViewManager implements Listener {
                     if (action.requiresNewInventory) {
                         try {
                             // Update inventory title and contents
-                            String newTitle = languageManager.getGuiTitle("gui-title.loot-menu") + " - [" + action.page + "/" + action.totalPages + "]";
+                            String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + action.page + "/" + action.totalPages + "]";
                             action.player.getOpenInventory().setTitle(newTitle);
                             Inventory currentInv = action.player.getOpenInventory().getTopInventory();
                             spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page, action.totalPages);
@@ -513,7 +504,7 @@ public class SpawnerGuiViewManager implements Listener {
                             // Fall back to creating a new inventory
                             Inventory newInv = spawnerStorageUI.createInventory(
                                     action.spawner,
-                                    languageManager.getGuiTitle("gui-title.loot-menu"),
+                                    languageManager.getGuiTitle("gui_title_storage"),
                                     action.page,
                                     action.totalPages
                             );

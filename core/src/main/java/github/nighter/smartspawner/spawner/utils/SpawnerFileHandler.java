@@ -2,7 +2,6 @@ package github.nighter.smartspawner.spawner.utils;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
@@ -32,7 +31,6 @@ import java.util.logging.Logger;
 public class SpawnerFileHandler {
     private final SmartSpawner plugin;
     private final Logger logger;
-    private final ConfigManager configManager;
     private File spawnerDataFile;
     private FileConfiguration spawnerData;
 
@@ -57,7 +55,6 @@ public class SpawnerFileHandler {
     public SpawnerFileHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
-        this.configManager = plugin.getConfigManager();
         setupSpawnerDataFile();
         startSaveTask();
     }
@@ -116,8 +113,7 @@ public class SpawnerFileHandler {
      * Starts periodic save task for all modified spawners
      */
     private void startSaveTask() {
-        configManager.debug("Starting spawner data save task");
-        int intervalSeconds = configManager.getInt("save-interval");
+        long intervalSeconds = plugin.getTimeFromConfig("data_saving.interval", "5m");
 
         if (saveTask != null) {
             saveTask.cancel();
@@ -125,7 +121,7 @@ public class SpawnerFileHandler {
         }
 
         saveTask = Scheduler.runTaskTimerAsync(() -> {
-            configManager.debug("Running scheduled save task - interval: " + intervalSeconds + "s");
+            plugin.debug("Running scheduled save task - interval: " + intervalSeconds + "s");
             saveModifiedSpawners();
         }, intervalSeconds * 20L, intervalSeconds * 20L);
     }
@@ -152,7 +148,12 @@ public class SpawnerFileHandler {
             // Save basic spawner properties
             spawnerData.set(path + ".location", String.format("%s,%d,%d,%d",
                     loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-            spawnerData.set(path + ".entityType", spawner.getEntityType().name());
+
+            if (spawner.getEntityType() == null) {
+                spawnerData.set(path + ".entityType", null);
+            } else {
+                spawnerData.set(path + ".entityType", spawner.getEntityType().name());
+            }
 
             // Build settings string efficiently
             String settings = String.valueOf(spawner.getSpawnerExp()) + ',' +
@@ -242,7 +243,7 @@ public class SpawnerFileHandler {
      */
     public void saveModifiedSpawners() {
         if (modifiedSpawners.isEmpty()) {
-            configManager.debug("No modified spawners to save");
+            plugin.debug("No modified spawners to save");
             return;
         }
 
@@ -250,7 +251,7 @@ public class SpawnerFileHandler {
         modifiedSpawners.clear();
 
         if (!toSave.isEmpty()) {
-            configManager.debug("Batch saving " + toSave.size() + " modified spawners");
+            plugin.debug("Batch saving " + toSave.size() + " modified spawners");
             Scheduler.runTaskAsync(() -> {
                 int savedCount = 0;
                 for (String id : toSave) {
@@ -261,7 +262,7 @@ public class SpawnerFileHandler {
                         }
                     }
                 }
-                configManager.debug("Batch save completed: " + savedCount + " spawners saved");
+                plugin.debug("Batch save completed: " + savedCount + " spawners saved");
             });
         }
     }
@@ -308,7 +309,12 @@ public class SpawnerFileHandler {
                 // Save basic spawner properties
                 spawnerData.set(path + ".location", String.format("%s,%d,%d,%d",
                         loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-                spawnerData.set(path + ".entityType", spawner.getEntityType().name());
+
+                if (spawner.getEntityType() == null) {
+                    spawnerData.set(path + ".entityType", null);
+                } else {
+                    spawnerData.set(path + ".entityType", spawner.getEntityType().name());
+                }
 
                 // Save settings
                 String settings = String.valueOf(spawner.getSpawnerExp()) + ',' +
@@ -359,7 +365,7 @@ public class SpawnerFileHandler {
             // Remove from tracking sets
             modifiedSpawners.remove(spawnerId);
 
-            configManager.debug("Successfully deleted spawner " + spawnerId + " from data file");
+            plugin.debug("Successfully deleted spawner " + spawnerId + " from data file");
             return true;
         } catch (IOException e) {
             logger.severe("Could not delete spawner " + spawnerId + " from spawners_data.yml!");
@@ -476,6 +482,8 @@ public class SpawnerFileHandler {
                     spawner.setAllowEquipmentItems(Boolean.parseBoolean(settings[11]));
                 } catch (NumberFormatException e) {
                     logger.warning("Invalid settings format for spawner " + spawnerId);
+                    logger.warning("Settings: " + settingsString);
+                    e.printStackTrace();
                     return null;
                 }
             }
@@ -557,21 +565,5 @@ public class SpawnerFileHandler {
         if (loc == null || loc.getWorld() == null) return "unknown";
         return String.format("%s,%d,%d,%d",
                 loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
-    }
-
-    /**
-     * Reloads spawner data from file
-     */
-    public void reloadSpawnerData() {
-        spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);
-    }
-
-    /**
-     * Gets the current data file
-     *
-     * @return The spawner data file
-     */
-    public File getSpawnerDataFile() {
-        return spawnerDataFile;
     }
 }

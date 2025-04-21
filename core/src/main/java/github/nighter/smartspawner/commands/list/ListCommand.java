@@ -2,18 +2,23 @@ package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import lombok.Getter;
 import org.bukkit.*;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,17 +27,19 @@ public class ListCommand {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
     private final LanguageManager languageManager;
+    private final MessageService messageService;
     private static final int SPAWNERS_PER_PAGE = 45;
 
     public ListCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.languageManager = plugin.getLanguageManager();
+        this.messageService = new MessageService(plugin, languageManager);
     }
 
     public void openWorldSelectionGUI(Player player) {
         if (!player.hasPermission("smartspawner.list")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "no_permission");
             return;
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -53,19 +60,19 @@ public class ListCommand {
         int size = hasCustomWorlds ? Math.max(27, (int) Math.ceil((worlds.size() + 2) / 7.0) * 9) : 27;
 
         Inventory inv = Bukkit.createInventory(new WorldSelectionHolder(),
-                size, languageManager.getMessage("spawner-list.gui-title.world-selection"));
+                size, languageManager.getGuiTitle("gui_title_world_selection"));
 
         // If we only have default worlds, use the original layout
         if (!hasCustomWorlds) {
             // Create buttons for default worlds
             ItemStack overworldButton = createWorldButtonIfWorldExists("world", Material.GRASS_BLOCK,
-                    languageManager.getMessage("spawner-list.world-buttons.overworld.name"));
+                    languageManager.getGuiTitle("world_buttons.overworld.name"));
 
             ItemStack netherButton = createWorldButtonIfWorldExists("world_nether", Material.NETHERRACK,
-                    languageManager.getMessage("spawner-list.world-buttons.nether.name"));
+                    languageManager.getGuiTitle("world_buttons.nether.name"));
 
             ItemStack endButton = createWorldButtonIfWorldExists("world_the_end", Material.END_STONE,
-                    languageManager.getMessage("spawner-list.world-buttons.end.name"));
+                    languageManager.getGuiTitle("world_buttons.end.name"));
 
             // Set buttons in the original layout
             if (overworldButton != null) inv.setItem(11, overworldButton);
@@ -79,17 +86,17 @@ public class ListCommand {
 
             // Add default worlds first (if they exist)
             if (addWorldButtonIfExists(inv, "world", Material.GRASS_BLOCK,
-                    languageManager.getMessage("spawner-list.world-buttons.overworld.name"), slot)) {
+                    languageManager.getGuiTitle("world_buttons.overworld.name"), slot)) {
                 slot++;
             }
 
             if (addWorldButtonIfExists(inv, "world_nether", Material.NETHERRACK,
-                    languageManager.getMessage("spawner-list.world-buttons.nether.name"), slot)) {
+                    languageManager.getGuiTitle("world_buttons.nether.name"), slot)) {
                 slot++;
             }
 
             if (addWorldButtonIfExists(inv, "world_the_end", Material.END_STONE,
-                    languageManager.getMessage("spawner-list.world-buttons.end.name"), slot)) {
+                    languageManager.getGuiTitle("world_buttons.end.name"), slot)) {
                 slot++;
             }
 
@@ -152,12 +159,14 @@ public class ListCommand {
                 World.Environment environment = world.getEnvironment();
                 String namePath;
                 switch (environment) {
-                    case NORMAL -> namePath = "spawner-list.world-buttons.custom-overworld.name";
-                    case NETHER -> namePath = "spawner-list.world-buttons.custom-nether.name";
-                    case THE_END -> namePath = "spawner-list.world-buttons.custom-end.name";
-                    default -> namePath = "spawner-list.world-buttons.custom-default.name";
+                    case NORMAL -> namePath = "world_buttons.custom_overworld.name";
+                    case NETHER -> namePath = "world_buttons.custom_nether.name";
+                    case THE_END -> namePath = "world_buttons.custom_end.name";
+                    default -> namePath = "world_buttons.custom_default.name";
                 }
-                displayName = languageManager.getMessage(namePath).replace("{world_name}", displayName);
+                Map<String, String> placeholders = new HashMap<>();
+                placeholders.put("world_name", displayName);
+                displayName = languageManager.getGuiTitle(namePath, placeholders);
             }
         }
 
@@ -181,7 +190,6 @@ public class ListCommand {
                 .collect(Collectors.joining(" "));
     }
 
-
     private List<String> getWorldDescription(String worldName) {
         List<String> description = new ArrayList<>();
         int physicalSpawners = spawnerManager.countSpawnersInWorld(worldName);
@@ -190,11 +198,11 @@ public class ListCommand {
         // Use path for default worlds if available, otherwise use custom world description based on environment
         String path;
         if (worldName.equals("world")) {
-            path = "spawner-list.world-buttons.overworld.lore";
+            path = "world_buttons.overworld.lore";
         } else if (worldName.equals("world_nether")) {
-            path = "spawner-list.world-buttons.nether.lore";
+            path = "world_buttons.nether.lore";
         } else if (worldName.equals("world_the_end")) {
-            path = "spawner-list.world-buttons.end.lore";
+            path = "world_buttons.end.lore";
         } else {
             // Get environment for custom world
             World world = Bukkit.getWorld(worldName);
@@ -202,19 +210,20 @@ public class ListCommand {
 
             // Select appropriate lore based on environment
             switch (environment) {
-                case NORMAL -> path = "spawner-list.world-buttons.overworld.lore";
-                case NETHER -> path = "spawner-list.world-buttons.nether.lore";
-                case THE_END -> path = "spawner-list.world-buttons.end.lore";
-                default -> path = "spawner-list.world-buttons.custom-default.lore";
+                case NORMAL -> path = "world_buttons.overworld.lore";
+                case NETHER -> path = "world_buttons.nether.lore";
+                case THE_END -> path = "world_buttons.end.lore";
+                default -> path = "world_buttons.custom_default.lore";
             }
         }
 
-        for (String line : languageManager.getMessage(path).split("\n")) {
-            description.add(line
-                    .replace("{total}", String.valueOf(physicalSpawners))
-                    .replace("{total_stacked}", languageManager.formatNumberTenThousand(totalWithStacks)));
-        }
-        return description;
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("total", String.valueOf(physicalSpawners));
+        placeholders.put("total_stacked", languageManager.formatNumber(totalWithStacks));
+
+        // Get the lore as string array and convert to List
+        String[] loreArray = languageManager.getGuiItemLore(path, placeholders);
+        return Arrays.asList(loreArray);
     }
 
     private ItemStack createDecorationItem() {
@@ -236,34 +245,35 @@ public class ListCommand {
 
     public void openSpawnerListGUI(Player player, String worldName, int page) {
         if (!player.hasPermission("smartspawner.list")) {
-            languageManager.sendMessage(player, "no-permission");
+            messageService.sendMessage(player, "no_permission");
             return;
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
         List<SpawnerData> worldSpawners = spawnerManager.getAllSpawners().stream()
                 .filter(spawner -> spawner.getSpawnerLocation().getWorld().getName().equals(worldName))
-                .collect(Collectors.toList());
+                .toList();
 
         int totalPages = (int) Math.ceil((double) worldSpawners.size() / SPAWNERS_PER_PAGE);
         page = Math.max(1, Math.min(page, totalPages));
 
         String worldTitle;
         switch (worldName) {
-            case "world" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.overworld.name");
-            case "world_nether" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.nether.name");
-            case "world_the_end" -> worldTitle = languageManager.getMessage("spawner-list.world-buttons.end.name");
+            case "world" -> worldTitle = languageManager.getGuiTitle("world_buttons.overworld.name");
+            case "world_nether" -> worldTitle = languageManager.getGuiTitle("world_buttons.nether.name");
+            case "world_the_end" -> worldTitle = languageManager.getGuiTitle("world_buttons.end.name");
             default -> {
                 // For custom worlds, format the name nicely
                 worldTitle = formatWorldName(worldName);
             }
         }
 
-        String title = languageManager.getMessage("spawner-list.gui-title.page-title",
-                Map.of(
-                        "{world}", worldTitle,
-                        "{current}", String.valueOf(page),
-                        "{total}", String.valueOf(totalPages)
-                ));
+        Map<String, String> titlePlaceholders = new HashMap<>();
+        worldTitle = ChatColor.stripColor(worldTitle);
+        titlePlaceholders.put("world", worldTitle);
+        titlePlaceholders.put("current", String.valueOf(page));
+        titlePlaceholders.put("total", String.valueOf(totalPages));
+
+        String title = languageManager.getGuiTitle("gui_title_spawner_list", titlePlaceholders);
 
         Inventory inv = Bukkit.createInventory(new SpawnerListHolder(page, totalPages, worldName),
                 54, title);
@@ -281,49 +291,54 @@ public class ListCommand {
         // Add navigation buttons and back button
         addNavigationButtons(inv, page, totalPages);
         addBackButton(inv);
-
-        // Add decoration
-        ItemStack decoration = createDecorationItem();
-        for (int i = 45; i < 54; i++) {
-            if (inv.getItem(i) == null) {
-                inv.setItem(i, decoration);
-            }
-        }
-
         player.openInventory(inv);
     }
 
     private ItemStack createSpawnerInfoItem(SpawnerData spawner) {
         // Get the custom head for the spawner's entity type
-        ItemStack spawnerItem = SpawnerMobHeadTexture.getCustomHead(spawner.getEntityType());
-        ItemMeta meta = spawnerItem.getItemMeta();
+        EntityType entityType = spawner.getEntityType();
+        ItemStack spawnerItem;
+        ItemMeta meta;
+        if (entityType == null) {
+            spawnerItem = new ItemStack(Material.SPAWNER);
+            meta = spawnerItem.getItemMeta();
+            if (meta == null) return spawnerItem;
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+        } else {
+            spawnerItem = SpawnerMobHeadTexture.getCustomHead(entityType);
+            meta = spawnerItem.getItemMeta();
+            if (meta == null) return spawnerItem;
+        }
         Location loc = spawner.getSpawnerLocation();
 
-        if (meta == null) return spawnerItem;
-
         // Set display name with formatted spawner ID
-        meta.setDisplayName(languageManager.getMessage("spawner-list.spawner-item.name",
-                Map.of("{id}", String.valueOf(spawner.getSpawnerId()))));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("id", String.valueOf(spawner.getSpawnerId()));
+        meta.setDisplayName(languageManager.getGuiItemName("spawner_item_list.name", placeholders));
 
-        // Build the lore list
-        List<String> lore = new ArrayList<>(List.of(
-                languageManager.getMessage("spawner-list.spawner-item.lore.separator"), // Top separator
-                languageManager.getMessage("spawner-list.spawner-item.lore.entity",
-                        Map.of("{entity}", formatEntityName(spawner.getEntityType().name()))),
-                languageManager.getMessage("spawner-list.spawner-item.lore.stack_size",
-                        Map.of("{size}", String.valueOf(spawner.getStackSize()))),
-                languageManager.getMessage(spawner.getSpawnerStop()
-                        ? "spawner-list.spawner-item.lore.status.inactive"
-                        : "spawner-list.spawner-item.lore.status.active"),
-                languageManager.getMessage("spawner-list.spawner-item.lore.location",
-                        Map.of(
-                                "{x}", String.valueOf(loc.getBlockX()),
-                                "{y}", String.valueOf(loc.getBlockY()),
-                                "{z}", String.valueOf(loc.getBlockZ())
-                        )),
-                languageManager.getMessage("spawner-list.spawner-item.lore.separator"), // Bottom separator
-                languageManager.getMessage("spawner-list.spawner-item.lore.teleport")
-        ));
+        // Add entity type
+        placeholders.put("entity", languageManager.getFormattedMobName(entityType));
+
+        // Add stack size
+        placeholders.put("size", String.valueOf(spawner.getStackSize()));
+
+        // Add status
+        if (spawner.getSpawnerStop()) {
+            placeholders.put("status_color", "&#ff6b6b");
+            placeholders.put("status_text", "Inactive");
+        } else {
+            placeholders.put("status_color", "&#00E689");
+            placeholders.put("status_text", "Active");
+        }
+
+        // Add location
+        placeholders.put("x", String.valueOf(loc.getBlockX()));
+        placeholders.put("y", String.valueOf(loc.getBlockY()));
+        placeholders.put("z", String.valueOf(loc.getBlockZ()));
+
+        // Get the lore with placeholders replaced
+        List<String> lore = Arrays.asList(languageManager.getGuiItemLore("spawner_item_list.lore", placeholders));
 
         // Set lore and apply meta
         meta.setLore(lore);
@@ -331,18 +346,11 @@ public class ListCommand {
         return spawnerItem;
     }
 
-
-    private String formatEntityName(String name) {
-        return Arrays.stream(name.toLowerCase().split("_"))
-                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1))
-                .collect(Collectors.joining(" "));
-    }
-
     private void addNavigationButtons(Inventory inv, int currentPage, int totalPages) {
         if (currentPage > 1) {
             ItemStack previousPage = new ItemStack(Material.ARROW);
             ItemMeta previousMeta = previousPage.getItemMeta();
-            previousMeta.setDisplayName(languageManager.getMessage("spawner-list.navigation.previous-page"));
+            previousMeta.setDisplayName(languageManager.getGuiItemName("navigation.previous_page", new HashMap<>()));
             previousPage.setItemMeta(previousMeta);
             inv.setItem(45, previousPage);
         }
@@ -350,7 +358,7 @@ public class ListCommand {
         if (currentPage < totalPages) {
             ItemStack nextPage = new ItemStack(Material.ARROW);
             ItemMeta nextMeta = nextPage.getItemMeta();
-            nextMeta.setDisplayName(languageManager.getMessage("spawner-list.navigation.next-page"));
+            nextMeta.setDisplayName(languageManager.getGuiItemName("navigation.next_page", new HashMap<>()));
             nextPage.setItemMeta(nextMeta);
             inv.setItem(53, nextPage);
         }
@@ -359,7 +367,7 @@ public class ListCommand {
     private void addBackButton(Inventory inv) {
         ItemStack backButton = new ItemStack(Material.BARRIER);
         ItemMeta meta = backButton.getItemMeta();
-        meta.setDisplayName(languageManager.getMessage("spawner-list.navigation.back"));
+        meta.setDisplayName(languageManager.getGuiItemName("navigation.back", new HashMap<>()));
         backButton.setItemMeta(meta);
         inv.setItem(49, backButton);
     }
@@ -372,6 +380,7 @@ public class ListCommand {
         }
     }
 
+    @Getter
     public static class SpawnerListHolder implements InventoryHolder {
         private final int currentPage;
         private final int totalPages;
@@ -386,18 +395,6 @@ public class ListCommand {
         @Override
         public Inventory getInventory() {
             return null;
-        }
-
-        public int getCurrentPage() {
-            return currentPage;
-        }
-
-        public int getTotalPages() {
-            return totalPages;
-        }
-
-        public String getWorldName() {
-            return worldName;
         }
     }
 }

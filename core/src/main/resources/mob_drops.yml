@@ -1,990 +1,1029 @@
-# Important: this is per mob drop configuration, spawner will generate between min-mobs and max-mobs of these drops (1 to 4 mobs default) each time.
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#   ███████╗███╗   ███╗ █████╗ ██████╗ ████████╗███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗██████╗
+#   ██╔════╝████╗ ████║██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║██╔════╝██╔══██╗
+#   ███████╗██╔████╔██║███████║██████╔╝   ██║   ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║█████╗  ██████╔╝
+#   ╚════██║██║╚██╔╝██║██╔══██║██╔══██╗   ██║   ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║██╔══╝  ██╔══██╗
+#   ███████║██║ ╚═╝ ██║██║  ██║██║  ██║   ██║   ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗██║  ██║
+#   ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#
+#   OVERVIEW:
+#   This configuration defines drop rates and experience values for all mob
+#   spawners in the SmartSpawner system. Each time a spawner is triggered,
+#   it will generate between min_mobs and max_mobs (default: 1-4) entities
+#   with the drops specified below.
+#
+#   FORMAT EXPLANATION:
+#   - experience: XP points awarded when killing this mob
+#   - loot: Items that can be dropped by this mob
+#     - ITEM_ID:
+#       - amount: Range of possible item quantities (min-max)
+#       - chance: Percentage chance of drop (0.0-100.0)
+#       - durability: For tools/weapons, range of possible durability values
+#       - potion_effect: For potion-based items, effect details
+#
+#   All drop rates and values are based on the official Minecraft Wiki.
+#
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-#---------------------------------------------------
-#                     Allay
-#---------------------------------------------------
-# https://minecraft.wiki/w/Allay#Drops
-Allay:
+
+#===============================================================================
+#                           PASSIVE MOBS
+#===============================================================================
+
+#---------------------------------------
+# ALLAY
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Allay#Drops
+ALLAY:
   experience: 0
 
-#---------------------------------------------------
-#                   Armadillo
-#---------------------------------------------------
-# https://minecraft.wiki/w/Armadillo#Drops
-Armadillo:
+#---------------------------------------
+# ARMADILLO
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Armadillo#Drops
+ARMADILLO:
   experience: 3
 
-#---------------------------------------------------
-#                    Axolotl
-#---------------------------------------------------
-# https://minecraft.wiki/w/Axolotl#Drops
-Axolotl:
+#---------------------------------------
+# AXOLOTL
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Axolotl#Drops
+AXOLOTL:
   experience: 1
 
-#---------------------------------------------------
-#                      Bat
-#---------------------------------------------------
-# https://minecraft.wiki/w/Bat#Drops
-Bat:
+#---------------------------------------
+# BAT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Bat#Drops
+BAT:
   experience: 1
 
-#---------------------------------------------------
-#                      Bee
-#---------------------------------------------------
-# https://minecraft.wiki/w/Bee#Drops
-Bee:
+#---------------------------------------
+# BEE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Bee#Drops
+BEE:
   experience: 3
 
-#---------------------------------------------------
-#                     Blaze
-#---------------------------------------------------
-# https://minecraft.wiki/w/Blaze#Drops
-Blaze:
-  experience: 10
-  loot:
-    blaze_rod:
-      amount: 0-1
-      chance: 100.0
-
-#---------------------------------------------------
-#                     Bogged
-#---------------------------------------------------
-# https://minecraft.wiki/w/Bogged#Drops
-Bogged:
-  experience: 5
-  loot:
-    bone:
-      amount: 0-2
-      chance: 100.0
-    arrow:
-      amount: 0-2
-      chance: 100.0
-    bow:
-      amount: 1-1
-      chance: 8.5
-      durability: 1-384
-    tipped_arrow:
-      amount: 0-2
-      chance: 50.0
-      potion_effect:
-        effect: POISON # effect: POISON, REGENERATION, STRENGTH, etc.
-        duration: 5 # 5s time in seconds
-        level: 0 # level: (0 = I, 1 = II, etc.)
-
-#---------------------------------------------------
-#                     Breeze
-#---------------------------------------------------
-# https://minecraft.wiki/w/Breeze#Drops
-Breeze:
-  experience: 10
-  loot:
-    breeze_rod:
-      amount: 1-2
-      chance: 100.0
-
-#---------------------------------------------------
-#                     Camel
-#---------------------------------------------------
-# https://minecraft.wiki/w/Camel#Drops
-Camel:
+#---------------------------------------
+# CAMEL
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Camel#Drops
+CAMEL:
   experience: 3
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                      Cat
-#---------------------------------------------------
-# https://minecraft.wiki/w/Cat#Drops
-Cat:
+#---------------------------------------
+# CAT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Cat#Drops
+CAT:
   experience: 1
   loot:
-    string:
+    STRING:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                  Cave Spider
-#---------------------------------------------------
-# https://minecraft.wiki/w/Cave_Spider#Drops
-Cave_Spider:
-  experience: 5
-  loot:
-    spider_eye:
-      amount: 1-1
-      chance: 33.33
-    string:
-      amount: 0-2
-      chance: 100.0
-
-#---------------------------------------------------
-#                    Chicken
-#---------------------------------------------------
-# https://minecraft.wiki/w/Chicken#Drops
-Chicken:
+#---------------------------------------
+# CHICKEN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Chicken#Drops
+CHICKEN:
   experience: 3
   loot:
-    feather:
+    FEATHER:
       amount: 0-2
       chance: 100.0
-    chicken:
+    CHICKEN:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------------------
-#                      Cod
-#---------------------------------------------------
-# https://minecraft.wiki/w/Cod#Drops
-Cod:
+#---------------------------------------
+# COD
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Cod#Drops
+COD:
   experience: 1
   loot:
-    cod:
+    COD:
       amount: 1-1
       chance: 100.0
-    bone_meal:
+    BONE_MEAL:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------------------
-#                      Cow
-#---------------------------------------------------
-# https://minecraft.wiki/w/Cow#Drops
-Cow:
+#---------------------------------------
+# COW
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Cow#Drops
+COW:
   experience: 3
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
-    beef:
+    BEEF:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#                    Creeper
-#---------------------------------------------------
-# https://minecraft.wiki/w/Creeper#Drops
-Creeper:
-  experience: 5
-  loot:
-    gunpowder:
-      amount: 0-2
-      chance: 100.0
-
-#---------------------------------------------------
-#                    Dolphin
-#---------------------------------------------------
-# https://minecraft.wiki/w/Dolphin#Drops
-Dolphin:
+#---------------------------------------
+# DOLPHIN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Dolphin#Drops
+DOLPHIN:
   experience: 1
 
-#---------------------------------------------------
-#                    Donkey
-#---------------------------------------------------
-# https://minecraft.wiki/w/Donkey#Drops
-Donkey:
+#---------------------------------------
+# DONKEY
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Donkey#Drops
+DONKEY:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                    Drowned
-#---------------------------------------------------
-# https://minecraft.wiki/w/Drowned#Drops
-Drowned:
-  experience: 5
+#---------------------------------------
+# FOX
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Fox#Drops
+FOX:
+  experience: 1
+
+#---------------------------------------
+# FROG
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Frog#Drops
+FROG:
+  experience: 1
+
+#---------------------------------------
+# GLOW_SQUID
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Glow_Squid#Drops
+GLOW_SQUID:
+  experience: 1
   loot:
-    rotten_flesh:
+    GLOW_INK_SAC:
+      amount: 1-3
+      chance: 100.0
+
+#---------------------------------------
+# GOAT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Goat#Drops
+GOAT:
+  experience: 1
+
+#---------------------------------------
+# HORSE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Horse#Drops
+HORSE:
+  experience: 1
+  loot:
+    LEATHER:
       amount: 0-2
       chance: 100.0
-    copper_ingot:
+
+#===============================================================================
+#                           HOSTILE MOBS
+#===============================================================================
+
+#---------------------------------------
+# BLAZE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Blaze#Drops
+BLAZE:
+  experience: 10
+  loot:
+    BLAZE_ROD:
+      amount: 0-1
+      chance: 100.0
+
+#---------------------------------------
+# BOGGED
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Bogged#Drops
+BOGGED:
+  experience: 5
+  loot:
+    BONE:
+      amount: 0-2
+      chance: 100.0
+    ARROW:
+      amount: 0-2
+      chance: 100.0
+    BOW:
+      amount: 1-1
+      chance: 8.5
+      durability: 1-384
+    TIPPED_ARROW:
+      amount: 0-2
+      chance: 50.0
+      potion_effect:
+        effect: POISON
+        duration: 5  # Duration in seconds
+        level: 0     # Level 0 = I, 1 = II, etc.
+
+#---------------------------------------
+# BREEZE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Breeze#Drops
+BREEZE:
+  experience: 10
+  loot:
+    BREEZE_ROD:
+      amount: 1-2
+      chance: 100.0
+
+#---------------------------------------
+# CAVE_SPIDER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Cave_Spider#Drops
+CAVE_SPIDER:
+  experience: 5
+  loot:
+    SPIDER_EYE:
+      amount: 1-1
+      chance: 33.33
+    STRING:
+      amount: 0-2
+      chance: 100.0
+
+#---------------------------------------
+# CREEPER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Creeper#Drops
+CREEPER:
+  experience: 5
+  loot:
+    GUNPOWDER:
+      amount: 0-2
+      chance: 100.0
+
+#---------------------------------------
+# DROWNED
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Drowned#Drops
+DROWNED:
+  experience: 5
+  loot:
+    ROTTEN_FLESH:
+      amount: 0-2
+      chance: 100.0
+    COPPER_INGOT:
       amount: 1-1
       chance: 11.0
-    trident:
+    TRIDENT:
       amount: 1-1
-      chance: 0.53 # Each drowned has a 6.25% chance to spawn with a trident, A drowned holding a trident has an 8.5% chance to drop it when killed so it would be 6.25%×8.5% = 0.53125%
+      chance: 0.53  # 6.25% spawn with trident × 8.5% drop chance = 0.53125%
       durability: 1-250
 
-#---------------------------------------------------
-#                Elder Guardian
-#---------------------------------------------------
-# https://minecraft.wiki/w/Elder_Guardian#Drops
-Elder_Guardian:
+#---------------------------------------
+# ELDER_GUARDIAN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Elder_Guardian#Drops
+ELDER_GUARDIAN:
   experience: 10
   loot:
-    prismarine_shard:
+    PRISMARINE_SHARD:
       amount: 0-2
       chance: 100.0
-    prismarine_crystals:
+    PRISMARINE_CRYSTALS:
       amount: 0-1
       chance: 100.0
-    wet_sponge:
+    WET_SPONGE:
       amount: 1-1
       chance: 100.0
+    TIDE_ARMOR_TRIM_SMITHING_TEMPLATE:
+      amount: 1-1
+      chance: 20.0
 
-#---------------------------------------------------
-#                   Enderman
-#---------------------------------------------------
-# https://minecraft.wiki/w/Enderman#Drops
-Enderman:
+#---------------------------------------
+# ENDERMAN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Enderman#Drops
+ENDERMAN:
   experience: 5
   loot:
-    ender_pearl:
+    ENDER_PEARL:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------------------
-#                  Endermite
-#---------------------------------------------------
-# https://minecraft.wiki/w/Endermite#Drops
-Endermite:
+#---------------------------------------
+# ENDERMITE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Endermite#Drops
+ENDERMITE:
   experience: 3
 
-#---------------------------------------------------
-#                    Evoker
-#---------------------------------------------------
-# https://minecraft.wiki/w/Evoker#Drops
-Evoker:
+#---------------------------------------
+# EVOKER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Evoker#Drops
+EVOKER:
   experience: 10
   loot:
-    emerald:
+    EMERALD:
       amount: 0-1
       chance: 100.0
-    totem_of_undying:
+    TOTEM_OF_UNDYING:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------------------
-#                      Fox
-#---------------------------------------------------
-# https://minecraft.wiki/w/Fox#Drops
-Fox:
-  experience: 1
-
-#---------------------------------------------------
-#                     Frog
-#---------------------------------------------------
-# https://minecraft.wiki/w/Frog#Drops
-Frog:
-  experience: 1
-
-#---------------------------------------------------
-#                     Ghast
-#---------------------------------------------------
-# https://minecraft.wiki/w/Ghast#Drops
-Ghast:
+#---------------------------------------
+# GHAST
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Ghast#Drops
+GHAST:
   experience: 5
   loot:
-    ghast_tear:
+    GHAST_TEAR:
       amount: 0-1
       chance: 100.0
-    gunpowder:
+    GUNPOWDER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                  Glow Squid
-#---------------------------------------------------
-# https://minecraft.wiki/w/Glow_Squid#Drops
-Glow_Squid:
-  experience: 1
-  loot:
-    glow_ink_sac:
-      amount: 1-3
-      chance: 100.0
-
-#---------------------------------------------------
-#                     Goat
-#---------------------------------------------------
-# https://minecraft.wiki/w/Goat#Drops
-Goat:
-  experience: 1
-
-#---------------------------------------------------
-#                   Guardian
-#---------------------------------------------------
-# https://minecraft.wiki/w/Guardian#Drops
-Guardian:
+#---------------------------------------
+# GUARDIAN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Guardian#Drops
+GUARDIAN:
   experience: 10
   loot:
-    prismarine_shard:
+    PRISMARINE_SHARD:
       amount: 0-2
       chance: 100.0
-    prismarine_crystals:
+    PRISMARINE_CRYSTALS:
       amount: 0-1
       chance: 100.0
-    # random fish
 
-#---------------------------------------------------
-#                    Hoglin
-#---------------------------------------------------
-# https://minecraft.wiki/w/Hoglin#Drops
-Hoglin:
+#---------------------------------------
+# HOGLIN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Hoglin#Drops
+HOGLIN:
   experience: 5
   loot:
-    leather:
+    LEATHER:
       amount: 0-1
       chance: 100.0
-    porkchop:
+    PORKCHOP:
       amount: 2-4
       chance: 100.0
 
-#---------------------------------------------------
-#                     Horse
-#---------------------------------------------------
-# https://minecraft.wiki/w/Horse#Drops
-Horse:
-  experience: 1
-  loot:
-    leather:
-      amount: 0-2
-      chance: 100.0
-
-#---------------------------------------------------
-#                     Husk
-#---------------------------------------------------
-# https://minecraft.wiki/w/Husk#Drops
-Husk:
+#---------------------------------------
+# HUSK
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Husk#Drops
+HUSK:
   experience: 5
   loot:
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 0-2
       chance: 100.0
-    iron_ingot:
+    IRON_INGOT:
       amount: 1-1
       chance: 0.83
-    carrot:
+    CARROT:
       amount: 1-1
       chance: 0.83
-    potato:
+    POTATO:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------------------
-#                  Iron Golem
-#---------------------------------------------------
-# https://minecraft.wiki/w/Iron_Golem#Drops
-Iron_Golem:
+#---------------------------------------
+# IRON_GOLEM
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Iron_Golem#Drops
+IRON_GOLEM:
   experience: 0
   loot:
-    iron_ingot:
+    IRON_INGOT:
       amount: 3-5
       chance: 100.0
-    poppy:
+    POPPY:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                     Llama
-#---------------------------------------------------
-# https://minecraft.wiki/w/Llama#Drops
-Llama:
+#---------------------------------------
+# LLAMA
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Llama#Drops
+LLAMA:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                  Magma Cube
-#---------------------------------------------------
-# https://minecraft.wiki/w/Magma_Cube#Drops
-Magma_Cube: # Average Drop
+#---------------------------------------
+# MAGMA_CUBE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Magma_Cube#Drops
+MAGMA_CUBE:  # Average drops across all sizes
   experience: 4
   loot:
-    magma_cream:
+    MAGMA_CREAM:
       amount: 2-6
       chance: 25.0
 
-#---------------------------------------------------
-#                   Mooshroom
-#---------------------------------------------------
-# https://minecraft.wiki/w/Mooshroom#Drops
-Mooshroom:
+#---------------------------------------
+# MOOSHROOM
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Mooshroom#Drops
+MOOSHROOM:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
-    beef:
+    BEEF:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#              MUSHROOM_COW (1.20 fallback)
-#---------------------------------------------------
-# https://minecraft.wiki/w/Mooshroom#Drops
+#---------------------------------------
+# MUSHROOM_COW
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Mooshroom#Drops
+# Legacy 1.20 fallback
 MUSHROOM_COW:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
-    beef:
+    BEEF:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#                     Mule
-#---------------------------------------------------
-# https://minecraft.wiki/w/Mule#Drops
-Mule:
+#---------------------------------------
+# MULE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Mule#Drops
+MULE:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                    Ocelot
-#---------------------------------------------------
-# https://minecraft.wiki/w/Ocelot#Drops
-Ocelot:
+#---------------------------------------
+# OCELOT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Ocelot#Drops
+OCELOT:
   experience: 1
 
-#---------------------------------------------------
-#                     Panda
-#---------------------------------------------------
-# https://minecraft.wiki/w/Panda#Drops
-Panda:
+#---------------------------------------
+# PANDA
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Panda#Drops
+PANDA:
   experience: 1
 
-#---------------------------------------------------
-#                    Parrot
-#---------------------------------------------------
-# https://minecraft.wiki/w/Parrot#Drops
-Parrot:
+#---------------------------------------
+# PARROT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Parrot#Drops
+PARROT:
   experience: 1
   loot:
-    feather:
+    FEATHER:
       amount: 1-2
       chance: 100.0
 
-#---------------------------------------------------
-#                    Phantom
-#---------------------------------------------------
-# https://minecraft.wiki/w/Phantom#Drops
-Phantom:
+#---------------------------------------
+# PHANTOM
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Phantom#Drops
+PHANTOM:
   experience: 5
   loot:
-    phantom_membrane:
+    PHANTOM_MEMBRANE:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------------------
-#                      Pig
-#---------------------------------------------------
-# https://minecraft.wiki/w/Pig#Drops
-Pig:
+#---------------------------------------
+# PIG
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Pig#Drops
+PIG:
   experience: 1
   loot:
-    porkchop:
+    PORKCHOP:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#                    Piglin
-#---------------------------------------------------
-# https://minecraft.wiki/w/Piglin#Drops
-Piglin:
+#---------------------------------------
+# PIGLIN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Piglin#Drops
+PIGLIN:
   experience: 5
   loot:
-    crossbow:
+    CROSSBOW:
       amount: 1-1
       chance: 8.5
       durability: 1-326
-    golden_sword:
+    GOLDEN_SWORD:
       amount: 1-1
       chance: 8.5
       durability: 1-32
 
-#---------------------------------------------------
-#                 Piglin Brute
-#---------------------------------------------------
-# https://minecraft.wiki/w/Piglin_Brute#Drops
-Piglin_Brute:
+#---------------------------------------
+# PIGLIN_BRUTE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Piglin_Brute#Drops
+PIGLIN_BRUTE:
   experience: 20
   loot:
-    golden_axe:
+    GOLDEN_AXE:
       amount: 1-1
       chance: 8.5
       durability: 1-32
 
-#---------------------------------------------------
-#                   Pillager
-#---------------------------------------------------
-# https://minecraft.wiki/w/Pillager#Drops
-Pillager:
+#---------------------------------------
+# PILLAGER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Pillager#Drops
+PILLAGER:
   experience: 5
   loot:
-    crossbow:
+    CROSSBOW:
       amount: 1-1
       chance: 8.5
       durability: 1-326
-    arrow:
+    ARROW:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                 Polar Bear
-#---------------------------------------------------
-# https://minecraft.wiki/w/Polar_Bear#Drops
-Polar_Bear:
+#---------------------------------------
+# POLAR_BEAR
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Polar_Bear#Drops
+POLAR_BEAR:
   experience: 1
   loot:
-    cod:
+    COD:
       amount: 0-2
       chance: 75.0
-    salmon:
+    SALMON:
       amount: 0-2
       chance: 25.0
 
-#---------------------------------------------------
-#                  Pufferfish
-#---------------------------------------------------
-# https://minecraft.wiki/w/Pufferfish#Drops
-Pufferfish:
+#---------------------------------------
+# PUFFERFISH
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Pufferfish#Drops
+PUFFERFISH:
   experience: 3
   loot:
-    pufferfish:
+    PUFFERFISH:
       amount: 1-1
       chance: 100.0
-    bone_meal:
+    BONE_MEAL:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------------------
-#                    Rabbit
-#---------------------------------------------------
-# https://minecraft.wiki/w/Rabbit#Drops
-Rabbit:
+#---------------------------------------
+# RABBIT
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Rabbit#Drops
+RABBIT:
   experience: 3
   loot:
-    rabbit_hide:
+    RABBIT_HIDE:
       amount: 0-1
       chance: 100.0
-    rabbit:
+    RABBIT:
       amount: 1-1
       chance: 100.0
-    rabbit_foot:
+    RABBIT_FOOT:
       amount: 1-1
       chance: 10.0
 
-#---------------------------------------------------
-#                    Ravager
-#---------------------------------------------------
-# https://minecraft.wiki/w/Ravager#Drops
-Ravager:
+#---------------------------------------
+# RAVAGER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Ravager#Drops
+RAVAGER:
   experience: 20
   loot:
-    saddle:
+    SADDLE:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------------------
-#                    Salmon
-#---------------------------------------------------
-# https://minecraft.wiki/w/Salmon#Drops
-Salmon:
+#---------------------------------------
+# SALMON
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Salmon#Drops
+SALMON:
   experience: 1
   loot:
-    salmon:
+    SALMON:
       amount: 1-1
       chance: 100.0
-    bone_meal:
+    BONE_MEAL:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------------------
-#                     Sheep
-#---------------------------------------------------
-# https://minecraft.wiki/w/Sheep#Drops
-Sheep:
+#---------------------------------------
+# SHEEP
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Sheep#Drops
+SHEEP:
   experience: 1
   loot:
-    white_wool:
+    WHITE_WOOL:
       amount: 1-1
       chance: 100.0
-    mutton:
+    MUTTON:
       amount: 1-2
       chance: 100.0
 
-#---------------------------------------------------
-#                    Shulker
-#---------------------------------------------------
-# https://minecraft.wiki/w/Shulker#Drops
-Shulker:
+#---------------------------------------
+# SHULKER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Shulker#Drops
+SHULKER:
   experience: 5
   loot:
-    shulker_shell:
+    SHULKER_SHELL:
       amount: 1-1
       chance: 50.0
 
-#---------------------------------------------------
-#                  Silverfish
-#---------------------------------------------------
-# https://minecraft.wiki/w/Silverfish#Drops
-Silverfish:
+#---------------------------------------
+# SILVERFISH
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Silverfish#Drops
+SILVERFISH:
   experience: 5
 
-#---------------------------------------------------
-#                   Skeleton
-#---------------------------------------------------
-# https://minecraft.wiki/w/Skeleton#Drops
-Skeleton:
+#---------------------------------------
+# SKELETON
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Skeleton#Drops
+SKELETON:
   experience: 5
   loot:
-    bone:
+    BONE:
       amount: 0-2
       chance: 100.0
-    arrow:
+    ARROW:
       amount: 0-2
       chance: 100.0
-    bow:
+    BOW:
       amount: 1-1
       chance: 8.5
-      durability: 1-384  # Bow has a maximum durability of 384
+      durability: 1-384  # Maximum bow durability is 384
 
-#---------------------------------------------------
-#                Skeleton Horse
-#---------------------------------------------------
-# https://minecraft.wiki/w/Skeleton_Horse#Drops
-Skeleton_Horse:
+#---------------------------------------
+# SKELETON_HORSE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Skeleton_Horse#Drops
+SKELETON_HORSE:
   experience: 3
   loot:
-    bone:
+    BONE:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                     Slime
-#---------------------------------------------------
-# https://minecraft.wiki/w/Slime#Drops
-Slime: # Average Drop
+#---------------------------------------
+# SLIME
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Slime#Drops
+SLIME:  # Average drops across all sizes
   experience: 4
   loot:
-    slime_ball:
+    SLIME_BALL:
       amount: 1-6
       chance: 100.0
 
-#---------------------------------------------------
-#                    Sniffer
-#---------------------------------------------------
-# https://minecraft.wiki/w/Sniffer#Drops
-Sniffer:
+#---------------------------------------
+# SNIFFER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Sniffer#Drops
+SNIFFER:
   experience: 5
 
-#---------------------------------------------------
-#                    Snow Golem
-#---------------------------------------------------
-# https://minecraft.wiki/w/Snow_Golem#Drops
+#---------------------------------------
+# SNOW_GOLEM
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Snow_Golem#Drops
 SNOW_GOLEM:
   experience: 0
   loot:
-    snowball:
+    SNOWBALL:
       amount: 0-15
       chance: 100.0
 
-#---------------------------------------------------
-#               SNOWMAN (1.20 fallback)
-#---------------------------------------------------
-# https://minecraft.wiki/w/Snow_Golem#Drops
+#---------------------------------------
+# SNOWMAN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Snow_Golem#Drops
+# Legacy 1.20 fallback
 SNOWMAN:
   experience: 0
   loot:
-    snowball:
+    SNOWBALL:
       amount: 0-15
       chance: 100.0
 
-#---------------------------------------------------
-#                    Spider
-#---------------------------------------------------
-# https://minecraft.wiki/w/Spider#Drops
-Spider:
+#---------------------------------------
+# SPIDER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Spider#Drops
+SPIDER:
   experience: 5
   loot:
-    string:
+    STRING:
       amount: 0-2
       chance: 100.0
-    spider_eye:
+    SPIDER_EYE:
       amount: 1-1
       chance: 33.33
 
-#---------------------------------------------------
-#                     Squid
-#---------------------------------------------------
-# https://minecraft.wiki/w/Squid#Drops
-Squid:
+#---------------------------------------
+# SQUID
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Squid#Drops
+SQUID:
   experience: 3
   loot:
-    ink_sac:
+    INK_SAC:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#                     Stray
-#---------------------------------------------------
-# https://minecraft.wiki/w/Stray#Drops
-Stray:
+#---------------------------------------
+# STRAY
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Stray#Drops
+STRAY:
   experience: 5
   loot:
-    bone:
+    BONE:
       amount: 0-2
       chance: 100.0
-    arrow:
+    ARROW:
       amount: 0-2
       chance: 100.0
-    bow:
+    BOW:
       amount: 1-1
       chance: 8.5
       durability: 1-384
-    tipped_arrow:
+    TIPPED_ARROW:
       amount: 0-2
       chance: 50.0
       potion_effect:
-        effect: SLOWNESS # effect: POISON, REGENERATION, STRENGTH, etc.
-        duration: 5 # 5s time in seconds
-        level: 0 # level: (0 = I, 1 = II, etc).
+        effect: SLOWNESS
+        duration: 5  # Duration in seconds
+        level: 0     # Level 0 = I, 1 = II, etc.
 
-#---------------------------------------------------
-#                    Strider
-#---------------------------------------------------
-# https://minecraft.wiki/w/Strider#Drops
-Strider:
+#---------------------------------------
+# STRIDER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Strider#Drops
+STRIDER:
   experience: 3
   loot:
-    string:
+    STRING:
       amount: 2-5
       chance: 100.0
 
-#---------------------------------------------------
-#                   Tadpole
-#---------------------------------------------------
-# https://minecraft.wiki/w/Tadpole#Drops
-Tadpole:
+#---------------------------------------
+# TADPOLE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Tadpole#Drops
+TADPOLE:
   experience: 0
 
-#---------------------------------------------------
-#                 Trader Llama
-#---------------------------------------------------
-# https://minecraft.wiki/w/Trader_Llama#Drops
-Trader_Llama:
+#---------------------------------------
+# TRADER_LLAMA
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Trader_Llama#Drops
+TRADER_LLAMA:
   experience: 1
   loot:
-    leather:
+    LEATHER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                Tropical Fish
-#---------------------------------------------------
-# https://minecraft.wiki/w/Tropical_Fish#Drops
-Tropical_Fish:
+#---------------------------------------
+# TROPICAL_FISH
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Tropical_Fish#Drops
+TROPICAL_FISH:
   experience: 1
   loot:
-    tropical_fish:
+    TROPICAL_FISH:
       amount: 1-1
       chance: 100.0
-    bone_meal:
+    BONE_MEAL:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------------------
-#                    Turtle
-#---------------------------------------------------
-# https://minecraft.wiki/w/Turtle#Drops
-Turtle:
+#---------------------------------------
+# TURTLE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Turtle#Drops
+TURTLE:
   experience: 1
   loot:
-    seagrass:
+    SEAGRASS:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#                      Vex
-#---------------------------------------------------
-# https://minecraft.wiki/w/Vex#Drops
-Vex:
+#---------------------------------------
+# VEX
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Vex#Drops
+VEX:
   experience: 3
 
-#---------------------------------------------------
-#                   Villager
-#---------------------------------------------------
-# https://minecraft.wiki/w/Villager#Drops
-Villager:
+#---------------------------------------
+# VILLAGER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Villager#Drops
+VILLAGER:
   experience: 0
 
-#---------------------------------------------------
-#                  Vindicator
-#---------------------------------------------------
-# https://minecraft.wiki/w/Vindicator#Drops
-Vindicator:
+#---------------------------------------
+# VINDICATOR
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Vindicator#Drops
+VINDICATOR:
   experience: 10
   loot:
-    emerald:
+    EMERALD:
       amount: 0-1
       chance: 100.0
-    iron_axe:
+    IRON_AXE:
       amount: 1-1
       chance: 8.5
       durability: 1-250
 
-#---------------------------------------------------
-#               Wandering Trader
-#---------------------------------------------------
-# https://minecraft.wiki/w/Wandering_Trader#Drops
-Wandering_Trader:
+#---------------------------------------
+# WANDERING_TRADER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Wandering_Trader#Drops
+WANDERING_TRADER:
   experience: 0
 
-#---------------------------------------------------
-#                    Warden
-#---------------------------------------------------
-# https://minecraft.wiki/w/Warden#Drops
-Warden:
+#---------------------------------------
+# WARDEN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Warden#Drops
+WARDEN:
   experience: 50
   loot:
-    sculk_catalyst:
+    SCULK_CATALYST:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------------------
-#                     Witch
-#---------------------------------------------------
-# https://minecraft.wiki/w/Witch#Drops
-Witch:
+#---------------------------------------
+# WITCH
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Witch#Drops
+WITCH:
   experience: 5
   loot:
-    redstone:
+    REDSTONE:
       amount: 4-8
       chance: 100.0
-    glowstone_dust:
+    GLOWSTONE_DUST:
       amount: 0-2
       chance: 0.27
-    sugar:
+    SUGAR:
       amount: 0-2
       chance: 0.27
-    spider_eye:
+    SPIDER_EYE:
       amount: 0-2
       chance: 0.27
-    glass_bottle:
+    GLASS_BOTTLE:
       amount: 0-2
       chance: 0.27
-    gunpowder:
+    GUNPOWDER:
       amount: 0-2
       chance: 0.27
-    stick:
+    STICK:
       amount: 0-2
       chance: 0.27
 
-#---------------------------------------------------
-#                Wither Skeleton
-#---------------------------------------------------
-# https://minecraft.wiki/w/Wither_Skeleton#Drops
-Wither_Skeleton:
+#---------------------------------------
+# WITHER_SKELETON
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Wither_Skeleton#Drops
+WITHER_SKELETON:
   experience: 5
   loot:
-    coal:
+    COAL:
       amount: 1-1
       chance: 33.33
-    bone:
+    BONE:
       amount: 0-2
       chance: 100.0
-    wither_skeleton_skull:
+    WITHER_SKELETON_SKULL:
       amount: 1-1
       chance: 2.5
-    stone_sword:
+    STONE_SWORD:
       amount: 1-1
       chance: 8.5
       durability: 1-131
 
-#---------------------------------------------------
-#                     Wolf
-#---------------------------------------------------
-# https://minecraft.wiki/w/Wolf#Drops
-Wolf:
+#---------------------------------------
+# WOLF
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Wolf#Drops
+WOLF:
   experience: 3
 
-#---------------------------------------------------
-#                    Zoglin
-#---------------------------------------------------
-# https://minecraft.wiki/w/Zoglin#Drops
-Zoglin:
+#---------------------------------------
+# ZOGLIN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Zoglin#Drops
+ZOGLIN:
   experience: 5
   loot:
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------------------
-#                    Zombie
-#---------------------------------------------------
-# https://minecraft.wiki/w/Zombie#Drops
-Zombie:
+#---------------------------------------
+# ZOMBIE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Zombie#Drops
+ZOMBIE:
   experience: 5
   loot:
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 0-2
       chance: 100.0
-    iron_ingot:
+    IRON_INGOT:
       amount: 1-1
       chance: 0.83
-    carrot:
+    CARROT:
       amount: 1-1
       chance: 0.83
-    potato:
+    POTATO:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------------------
-#                Zombie Horse
-#---------------------------------------------------
-# https://minecraft.wiki/w/Zombie_Horse#Drops
-Zombie_Horse:
+#---------------------------------------
+# ZOMBIE_HORSE
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Zombie_Horse#Drops
+ZOMBIE_HORSE:
   experience: 3
   loot:
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------------------
-#               Zombie Villager
-#---------------------------------------------------
-# https://minecraft.wiki/w/Zombie_Villager#Drops
-Zombie_Villager:
+#---------------------------------------
+# ZOMBIE_VILLAGER
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Zombie_Villager#Drops
+ZOMBIE_VILLAGER:
   experience: 5
   loot:
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 0-2
       chance: 100.0
-    iron_ingot:
+    IRON_INGOT:
       amount: 1-1
       chance: 0.83
-    carrot:
+    CARROT:
       amount: 1-1
       chance: 0.83
-    potato:
+    POTATO:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------------------
-#              Zombified Piglin
-#---------------------------------------------------
-# https://minecraft.wiki/w/Zombified_Piglin#Drops
-Zombified_Piglin:
+#---------------------------------------
+# ZOMBIFIED_PIGLIN
+#---------------------------------------
+# Reference: https://minecraft.wiki/w/Zombified_Piglin#Drops
+ZOMBIFIED_PIGLIN:
   experience: 5
   loot:
-    gold_nugget:
+    GOLD_NUGGET:
       amount: 0-1
       chance: 100.0
-    rotten_flesh:
+    ROTTEN_FLESH:
       amount: 0-1
       chance: 100.0
-    gold_ingot:
+    GOLD_INGOT:
       amount: 1-1
       chance: 2.5
-    golden_sword:
+    GOLDEN_SWORD:
       amount: 1-1
       chance: 8.5
       durability: 1-32

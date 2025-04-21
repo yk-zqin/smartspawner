@@ -8,8 +8,8 @@ import github.nighter.smartspawner.hooks.shops.IShopIntegration;
 import github.nighter.smartspawner.hooks.shops.SaleLogger;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.config.ConfigManager;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -25,7 +25,7 @@ import java.util.logging.Level;
 public class ZShop implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
-    private final ConfigManager configManager;
+    private final MessageService messageService;
     private ShopManager shopManager;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private Economy vaultEconomy;
@@ -40,7 +40,7 @@ public class ZShop implements IShopIntegration {
     public ZShop(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
-        this.configManager = plugin.getConfigManager();
+        this.messageService = plugin.getMessageService();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         setupVaultEconomy();
     }
@@ -74,7 +74,7 @@ public class ZShop implements IShopIntegration {
     }
 
     private double calculateNetAmount(double grossAmount, double taxPercentage) {
-        if (configManager.getBoolean("tax-enabled")) {
+        if (plugin.getConfig().getBoolean("tax.enabled", false)) {
             return grossAmount * (1 - taxPercentage / 100.0);
         }
         return grossAmount;
@@ -89,14 +89,14 @@ public class ZShop implements IShopIntegration {
 
         // Prevent multiple concurrent sales for the same player
         if (pendingSales.containsKey(player.getUniqueId())) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
         // Get lock with timeout
         ReentrantLock lock = spawner.getLock();
         if (!lock.tryLock()) {
-            languageManager.sendMessage(player, "messages.transaction-in-progress");
+            messageService.sendMessage(player, "shop.transaction_in_progress");
             return false;
         }
 
@@ -115,7 +115,7 @@ public class ZShop implements IShopIntegration {
                 if (error != null) {
                     plugin.getLogger().log(Level.SEVERE, "Error processing sale", error);
                     plugin.getServer().getScheduler().runTask(plugin, () ->
-                            languageManager.sendMessage(player, "messages.sell-failed"));
+                            messageService.sendMessage(player, "shop.sale_failed"));
                 }
             });
 
@@ -141,7 +141,7 @@ public class ZShop implements IShopIntegration {
 
         if (items.isEmpty()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-items"));
+                    messageService.sendMessage(player, "shop.no_items"));
             return false;
         }
 
@@ -149,7 +149,7 @@ public class ZShop implements IShopIntegration {
         SaleCalculationResult calculation = calculateSalePrices(player, items);
         if (!calculation.isValid()) {
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    languageManager.sendMessage(player, "messages.no-sellable-items"));
+                    messageService.sendMessage(player, "shop.no_sellable_items"));
             return false;
         }
 
@@ -165,7 +165,7 @@ public class ZShop implements IShopIntegration {
         });
 
         // Process payment
-        double taxPercentage = configManager.getDouble("tax-rate");
+        double taxPercentage = plugin.getConfig().getDouble("tax.percentage", 10.0);
         double netAmount = calculateNetAmount(calculation.getTotalGrossPrice(), taxPercentage);
 
         try {
@@ -183,7 +183,7 @@ public class ZShop implements IShopIntegration {
                 // Restore items if payment fails
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
-                    languageManager.sendMessage(player, "messages.sell-failed");
+                    messageService.sendMessage(player, "shop.sale_failed");
                     // Force inventory update
                     if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
                         int newTotalPages = calculateTotalPages(spawner);
@@ -194,13 +194,13 @@ public class ZShop implements IShopIntegration {
             }
 
             // Log sales asynchronously
-            if (configManager.getBoolean("logging-enabled")) {
+            if (plugin.getConfig().getBoolean("log_transactions.enabled", true)) {
                 logSalesAsync(calculation, player.getName());
             }
 
             // Send success message on main thread
             plugin.getServer().getScheduler().runTask(plugin, () ->
-                    sendSuccessMessage(player, calculation.getTotalAmount(), netAmount, taxPercentage));
+                    sendSuccessMessage(player, calculation.getTotalAmount(), netAmount, calculation.getTotalGrossPrice(), taxPercentage));
 
             return true;
 
@@ -210,7 +210,7 @@ public class ZShop implements IShopIntegration {
                 virtualInv.addItems(calculation.getItemsToRemove());
                 int newTotalPages = calculateTotalPages(spawner);
                 spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
-                languageManager.sendMessage(player, "messages.sell-failed");
+                messageService.sendMessage(player, "shop.sale_failed");
             });
             return false;
         }
@@ -237,24 +237,22 @@ public class ZShop implements IShopIntegration {
         });
     }
 
-    private String formatMonetaryValue(double value) {
-        return formatPrice(value, configManager.getBoolean("formated-price"));
+    private void sendSuccessMessage(Player player, int totalAmount, double netAmount, double grossAmount, double taxPercentage) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("amount", String.valueOf(languageManager.formatNumber(totalAmount)));
+        placeholders.put("price", formatMonetaryValue(netAmount));
+
+        if (plugin.getConfig().getBoolean("tax.enabled", false)) {
+            placeholders.put("gross", formatMonetaryValue(grossAmount));
+            placeholders.put("tax", String.format("%.2f", taxPercentage));
+            messageService.sendMessage(player, "shop.sell_all_with_tax", placeholders);
+        } else {
+            messageService.sendMessage(player, "shop.sell_all", placeholders);
+        }
     }
 
-    private void sendSuccessMessage(Player player, int totalAmount, double netAmount, double taxPercentage) {
-        if (configManager.getBoolean("tax-enabled")) {
-            double netPrice = calculateNetAmount(netAmount, taxPercentage);
-            languageManager.sendMessage(player, "messages.sell-all-tax",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formatMonetaryValue(netPrice),
-                    "%gross%", formatMonetaryValue(netAmount),
-                    "%tax%", String.format("%.2f", taxPercentage)
-            );
-        } else {
-            languageManager.sendMessage(player, "messages.sell-all",
-                    "%amount%", String.valueOf(totalAmount),
-                    "%price%", formatMonetaryValue(netAmount));
-        }
+    private String formatMonetaryValue(double value) {
+        return formatPrice(value, true);
     }
 
     private SaleCalculationResult calculateSalePrices(Player player, Map<VirtualInventory.ItemSignature, Long> items) {
