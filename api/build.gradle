@@ -3,6 +3,16 @@ dependencies {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ptthanh02/SmartSpawner")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
     publications {
         mavenJava(MavenPublication) {
             groupId = 'github.nighter'
@@ -12,7 +22,7 @@ publishing {
             pom {
                 name = 'SmartSpawner API'
                 description = 'API for SmartSpawner plugin - allows other plugins to create and manage spawners'
-                url = 'https://github.com/ptthanh02/Smart-Spawner'
+                url = 'https://github.com/ptthanh02/SmartSpawner'
                 licenses {
                     license {
                         name = 'MIT License'
