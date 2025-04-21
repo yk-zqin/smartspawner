@@ -1,0 +1,264 @@
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#   ███████╗███╗   ███╗ █████╗ ██████╗ ████████╗███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗██████╗
+#   ██╔════╝████╗ ████║██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║██╔════╝██╔══██╗
+#   ███████╗██╔████╔██║███████║██████╔╝   ██║   ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║█████╗  ██████╔╝
+#   ╚════██║██║╚██╔╝██║██╔══██║██╔══██╗   ██║   ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║██╔══╝  ██╔══██╗
+#   ███████║██║ ╚═╝ ██║██║  ██║██║  ██║   ██║   ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗██║  ██║
+#   ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#
+#   TỔNG QUAN:
+#   Tệp này chứa cài đặt ngôn ngữ GUI cho plugin Spawner.
+#   Nó bao gồm những tin nhắn cho mỗi hành động hay vật phẩm trong
+#   plugin bao gồm: nút, tên vật phẩm và mô tả. Các tin nhắn được chia thành các phần
+#   cho các GUI khác nhau, chẳng hạn như GUI chính, GUI gộp spawner,
+#   GUI lưu trữ spawner, ... và lệnh.
+
+# ------------------------------------------------------
+#                  Tiền tố tin nhắn
+# ------------------------------------------------------
+prefix: "&8[&#7b68eeSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
+
+# ------------------------------------------------------
+#             Spawner - Tương tác với người chơi
+# ------------------------------------------------------
+spawner_activated:
+  message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ &#ab7afdđã ᴋíᴄʜ ʜᴏạᴛ&#e6e6fa! ǫᴜáɪ ᴠậᴛ sẽ ᴋʜôɴɢ xᴜấᴛ ʜɪệɴ ᴛự ɴʜɪêɴ, ᴛʜᴀʏ ᴠàᴏ đó ʜãʏ ᴛʜᴜ ᴛʜậᴘ ᴠậᴛ ᴘʜẩᴍ ᴠà đɪểᴍ ᴋɪɴʜ ɴɢʜɪệᴍ ᴛʜôɴɢ ǫᴜᴀ ɢɪᴀᴏ ᴅɪệɴ."
+  sound: block.beacon.activate
+
+spawner_protected:
+  action_bar: "&#ff5252⚠ ʟồɴɢ sᴘᴀᴡɴᴇʀ đᴀɴɢ đượᴄ ʙảᴏ ᴠệ ⚠"
+  sound: block.note_block.pling
+
+# ------------------------------------------------------
+#             Spawner - Main GUI Interactions
+# ------------------------------------------------------
+no_exp:
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ᴋɪɴʜ ɴɢʜɪệᴍ"
+  sound: block.note_block.pling
+
+exp_collected:
+  action_bar: "&#37eb9a+%exp% ᴇxᴘ đã ᴛʜᴜ ᴛʜậᴘ"
+  sound: entity.experience_orb.pickup
+
+exp_collected_with_mending:
+  action_bar: "&#37eb9a+%exp% ᴇxᴘ đã ᴛʜᴜ ᴛʜậᴘ &#f8f8ff| &#ff5252-%exp_mending% ᴇxᴘ để sửᴀ ᴄʜữᴀ ᴠậᴛ ᴘʜẩᴍ"
+  sound: entity.experience_orb.pickup
+
+# ------------------------------------------------------
+#            Spawner - Storage GUI Interactions
+# ------------------------------------------------------
+inventory_full:
+  message: "&#ff5252ᴛúɪ đồ đầʏ!"
+  sound: block.note_block.pling
+
+no_items_to_discard:
+  message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʟᴏạɪ ʙỏ!"
+  sound: block.note_block.pling
+
+discard_all_success:
+  action_bar: "&#ff5252Đã loại bỏ &#f8f8ff%amount% &#ff5252vật phẩm"
+  sound: entity.generic.burn
+
+no_items_to_take:
+  message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʟấʏ"
+  sound: block.note_block.pling
+
+take_all_items:
+  action_bar: "&#37eb9aĐã lấy &#f8f8ff%amount% &#37eb9avật phẩm"
+  sound: entity.item.pickup
+
+# ------------------------------------------------------
+#         Spawner - Gui gộp spawner
+# -----------------------------------------------------
+spawner_stacker_minimum_reached:
+  message: "&#ff5252ᴄʜỉ ᴄó ᴛʜể ɢộᴘ &#f8f8ff+%amount% &#ff5252sᴘᴀᴡɴᴇʀ ᴅᴏ đã đếɴ ɢɪớɪ ʜạɴ."
+  sound: block.note_block.pling
+
+spawner_insufficient_quantity:
+  action_bar: "&#ff5252ᴋʜôɴɢ đủ sᴘᴀᴡɴᴇʀ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
+  sound: block.note_block.pling
+
+inventory_full_items_dropped:
+  message: "&#f0c857ᴛúɪ đồ đầʏ! &#e6e6faᴍộᴛ ᴠàɪ ᴠậᴛ ᴘʜẩᴍ sẽ ʙị ʀơɪ ʀᴀ ɴɢᴏàɪ."
+  sound: block.note_block.pling
+
+# ------------------------------------------------------
+#             Spawner - Stack Interaction
+# ------------------------------------------------------
+spawner_invalid:
+  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴᴇʀ ᴋʜôɴɢ ʜợᴘ ʟệ"
+  sound: block.note_block.pling
+
+spawner_different:
+  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴᴇʀ ᴘʜảɪ ᴄùɴɢ ʟᴏạɪ"
+  sound: block.note_block.pling
+
+spawner_stack_full:
+  action_bar: "&#ff5252ɢɪớɪ ʜạɴ ɢộᴘ: &#f8f8ff%max%"
+  sound: block.note_block.pling
+
+spawner_stack_success:
+  action_bar: "&#37eb9a+%amount% &#f8f8ffꜱᴘᴀᴡɴᴇʀꜱ sᴘᴀᴡɴᴇʀ đã đượᴄ ɢộᴘ"
+  sound: entity.player.levelup
+
+# ------------------------------------------------------
+#             Spawner - GUI danh sách spawner
+# ------------------------------------------------------
+teleported_to_spawner:
+  message: "&#37eb9aĐã ᴅịᴄʜ ᴄʜᴜʏểɴ ᴛʜàɴʜ ᴄôɴɢ đếɴ ᴠị ᴛʀí sᴘᴀᴡɴᴇʀ"
+  sound: entity.enderman.teleport
+
+spawner_not_found:
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ sᴘᴀᴡɴᴇʀ"
+  sound: entity.enderman.teleport
+
+# ------------------------------------------------------
+#             Spawner - Tương tác trứng
+# ------------------------------------------------------
+invalid_egg:
+  action_bar: "&#ff5252ᴛʀứɴɢ ᴋʜôɴɢ ʜợᴘ ʟệ"
+  sound: entity.enderman.teleport
+
+entity_changed:
+  action_bar: "&#37eb9aᴛʜàɴʜ ᴄôɴɢ đổɪ sᴀɴɢ &#f8f8ff%ᴇɴᴛɪᴛʏ% &#37eb9aꜱᴘᴀᴡɴᴇʀ"
+  sound: entity.player.levelup
+
+# ------------------------------------------------------
+#             Spawner - Tương tác phá hủy
+# ------------------------------------------------------
+spawner_break_no_permission:
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴘʜá sᴘᴀᴡɴᴇʀ"
+  sound: entity.villager.no
+
+spawner_break_silk_touch_required:
+  action_bar: "&#ff5252ᴄầɴ ᴘʜù ᴘʜéᴘ sɪʟᴋ ᴛᴏᴜᴄʜ để đậᴘ"
+  sound: item.shield.block
+
+spawner_break_required_tools:
+  action_bar: "&#ff5252Không tʙạɴ ᴄầɴ ᴄúᴘ để ᴘʜá sᴘᴀᴡɴᴇʀ ɴàʏ!"
+  sound: item.shield.block
+
+spawner_break_warning:
+  enabled: false
+  title: "&#f0c857ᴄảɴʜ ʙáᴏ"
+  subtitle: "&#e6e6faᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ ᴛʀᴏɴɢ sᴘᴀᴡɴᴇʀ sẽ ʙị ᴍấᴛ!"
+  sound: block.note_block.bass
+
+natural_spawner_break_blocked:
+  action_bar: "&#ff5252sᴘᴀᴡɴᴇʀ ᴛự ɴʜɪêɴ ᴋʜôɴɢ ᴛʜể ʙị ᴘʜá ʜᴏặᴄ sử ᴅụɴɢ"
+  sound: block.note_block.pling
+
+# ------------------------------------------------------
+#              Tin nhắn tích hợp cửa hàng
+# ------------------------------------------------------
+shop:
+  # Tin nhắn quá trình giao dịch
+  transaction_in_progress:
+    action_bar: "&#e9b949⌛ Đang xử lí giao dịch..."
+    sound: block.note_block.chime
+
+  sale_failed:
+    message: "&#ff5252ᴋʜôɴɢ ᴛʜể ʙáɴ ᴠậᴛ ᴘʜẩᴍ! Vᴜɪ ʟòɴɢ ᴛʜử ʟạɪ."
+    sound: entity.item.break
+
+  sell_cooldown:
+    action_bar: "&#ff5252ᴠᴜɪ ʟòɴɢ đợɪ &#f8f8ff%time% &#ff5252ᴛʀướᴄ ᴋʜɪ ʙáɴ ʟạɪ"
+    sound: block.note_block.pling
+
+  no_items:
+    message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʙáɴ"
+    sound: block.note_block.pling
+
+  no_sellable_items:
+    message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ᴛʜể ʙáɴ"
+    sound: block.note_block.pling
+
+  # Tin nhắn bán thành công
+  sell_all:
+    message: "Đã bán &#f8f8ff%amount% vật phẩm với giá &#37eb9a+$%price%"
+    sound: block.note_block.bell
+
+  sell_all_with_tax:
+    message: "Đã bán &#f8f8ff%amount% vật phẩm với giá &#37eb9a+$%price%"
+    action_bar: "&#37eb9a$%gross% &#f8f8ff| &#ff5252Thuế: -%tax%%"
+    sound: block.note_block.bell
+
+# ------------------------------------------------------
+#                Tin nhắn lệnh plugin
+# ------------------------------------------------------
+no_permission:
+  message: "&#ff5252ʙạɴ ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴛʜựᴄ ʜɪệɴ đɪềᴜ ɴàʏ"
+  sound: block.note_block.pling
+
+command_usage:
+  message: |
+    &8&m
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &#ab7afd&l&oᴄáᴄ ʟệɴʜ &#7b68ee&l&oSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    &#ab7afd» &#e6e6fa/ss reload &#7b68ee- &#a8e6cf&oᴛảɪ ʟạɪ ᴘʟᴜɢɪɴ
+    &#ab7afd» &#e6e6fa/ss list &#7b68ee- &#dcedc1&oᴅᴀɴʜ sáᴄʜ sᴘᴀᴡɴᴇʀ
+    &#ab7afd» &#e6e6fa/ss give &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffd3b6&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ sᴘᴀᴡɴᴇʀ
+    &#ab7afd» &#e6e6fa/ss giveVanillaSpawner &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffaaa5&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ sᴘᴀᴡɴᴇʀ ᴠᴀɴɪʟʟᴀ
+    &#ab7afd» &#e6e6fa/ss hologram &#7b68ee- &#ff8b94&oʙậᴛ/ᴛắᴛ ʜɪểɴ ᴛʜị ʜᴏʟᴏɢʀᴀᴍ
+    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  sound: entity.player.levelup
+
+# Tin nhắn lệnh reload
+reload_command_start:
+  action_bar: "&#e9b949⌛ Đang tải lại plugin... Vui lòng đợi!"
+
+reload_command_success:
+  message: "&#37eb9aĐã tải lại thành công SmartSpawner"
+  sound: entity.experience_orb.pickup
+
+reload_command_error:
+  message: "&#e05252ᴋʜôɴɢ ᴛʜể ᴛảɪ ʟạɪ SᴍᴀʀᴛSᴘᴀᴡɴᴇʀ, ᴠᴜɪ ʟòɴɢ ᴋɪểᴍ ᴛʀᴀ ᴄᴏɴsᴏʟᴇ để ʙɪếᴛ ᴄʜɪ ᴛɪếᴛ!"
+  sound: block.note_block.pling
+
+# Tin nhắn lệnh give
+command_give_usage:
+  message: "&#ff5252ᴄáᴄʜ ᴅùɴɢ: /ss give <player> <mobtype> [amount]"
+  sound: block.note_block.hat
+
+command_give_vanilla_usage:
+  message: "&#ff5252ᴄáᴄʜ ᴅùɴɢ: /ss giveVanillaSpawner <player> <mobtype> [amount]"
+  sound: block.note_block.hat
+
+command_give_player_not_found:
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ɴɢườɪ ᴄʜơɪ"
+  sound: block.note_block.pling
+
+command_give_invalid_mob_type:
+  message: "&#ff5252ᴍᴏʙ ᴋʜôɴɢ ʜợᴘ ʟạɪ"
+  sound: block.note_block.pling
+
+command_give_invalid_amount:
+  message: "&#ff5252số ʟượɴɢ ᴋʜôɴɢ ʜợᴘ ʟệ"
+  sound: block.note_block.pling
+
+command_give_amount_too_large:
+  message: "&#ff5252số ʟượɴɢ ᴛốɪ đᴀ: &#f8f8ff%max%"
+  sound: block.note_block.pling
+
+command_give_inventory_full:
+  message: "&#ff5252ᴍộᴛ số sᴘᴀᴡɴᴇʀ đã ʀơɪ ᴅᴏ ᴛúɪ đồ đầʏ"
+  sound: block.note_block.pling
+
+command_give_spawner_received:
+  message: "&#37eb9aʙạɴ đã ɴʜậɴ &#f8f8ff%amount% sᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%"
+  sound: entity.experience_orb.pickup
+
+command_give_spawner_given:
+  message: "&#37eb9aĐã đưa &#f8f8ff%amount% spawner %ᴇɴᴛɪᴛʏ% cho &#f8f8ff%player%"
+  sound: entity.experience_orb.pickup
+
+# Tin nhắn lệnh hologram
+command_hologram_enabled:
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#37eb9ađã ʙậᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả sᴘᴀᴡɴᴇʀ"
+  sound: entity.experience_orb.pickup
+
+command_hologram_disabled:
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả sᴘᴀᴡɴᴇʀ"
+  sound: block.note_block.bass

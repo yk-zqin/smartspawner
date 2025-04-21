@@ -1,0 +1,150 @@
+custom_item:
+  spawner:
+    name: "&#a782ec%ᴇɴᴛɪᴛʏ% Spawner"
+    loot_items: "  &#e6e6fa•  %amount% %ɪᴛᴇᴍ_ɴᴀᴍᴇ% &#b19cd9(%chance%%)"
+    loot_items_empty: "  &#e6e6fa• ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ"
+    lore:
+      - ""
+      - "&#9370db◈ &#8a2be2ᴛʜôɴɢ ᴛɪɴ:"
+      - "  &#e6e6fa•  ᴋɪɴʜ ɴɢʜɪệᴍ ᴛʜưởɴɢ: &#b19cd9%exp%"
+      - ""
+      - "&#9370db◈ &#8a2be2ᴠậᴛ ᴘʜẩᴍ ʀơɪ ʀᴀ:"
+      - "%loot_items%"
+      - ""
+
+  vanilla_spawner:
+    name: ""
+    lore:
+
+item:
+  LEATHER:
+    name: "Da"
+  STRING:
+    name: "Sợi chỉ"
+  FEATHER:
+    name: "Lông"
+  CHICKEN:
+    name: "Thịt Gà Sống"
+  COD:
+    name: "Cá Tuyết Sống"
+  SALMON:
+    name: "Cá Hồi Sống"
+  BEEF:
+    name: "Thịt Bò Sống"
+  PORKCHOP:
+    name: "Thịt Heo Sống"
+  MUTTON:
+    name: "Thịt Cừu Sống"
+  RABBIT:
+    name: "Thịt Thỏ Sống"
+  WHITE_WOOL:
+    name: "Len Trắng"
+  RABBIT_HIDE:
+    name: "Da Thỏ"
+  RABBIT_FOOT:
+    name: "Chân Thỏ"
+  PUFFERFISH:
+    name: "Cá Nóc"
+  TROPICAL_FISH:
+    name: "Cá Nhiệt Đới"
+
+  BONE:
+    name: "Xương"
+  BONE_MEAL:
+    name: "Bột Xương"
+  ARROW:
+    name: "Mũi Tên"
+  SPIDER_EYE:
+    name: "Mắt Nhện"
+  GUNPOWDER:
+    name: "Thuốc Súng"
+  ROTTEN_FLESH:
+    name: "Thịt Thối"
+  ENDER_PEARL:
+    name: "Ngọc Ender"
+  GHAST_TEAR:
+    name: "Nước Mắt Ghast"
+  MAGMA_CREAM:
+    name: "Kem Dung Nham"
+  PHANTOM_MEMBRANE:
+    name: "Màng Da Phantom"
+  SHULKER_SHELL:
+    name: "Vỏ Shulker"
+  SLIME_BALL:
+    name: "Bóng Slime"
+  BLAZE_ROD:
+    name: "Que Lửa"
+  BREEZE_ROD:
+    name: "Que Gió"
+  WITHER_SKELETON_SKULL:
+    name: "Đầu Wither Skeleton"
+
+  BOW:
+    name: "Cung"
+  CROSSBOW:
+    name: "Nỏ"
+  GOLDEN_SWORD:
+    name: "Kiếm Vàng"
+  GOLDEN_AXE:
+    name: "Rìu Vàng"
+  STONE_SWORD:
+    name: "Kiếm Đá"
+  IRON_AXE:
+    name: "Rìu Sắt"
+  TRIDENT:
+    name: "Cây Đinh Ba"
+  TIPPED_ARROW:
+    name: "Mũi Tên Có Hiệu Ứng"
+  TOTEM_OF_UNDYING:
+    name: "Vật Tổ Trường Sinh"
+  SADDLE:
+    name: "Yên Ngựa"
+
+  COPPER_INGOT:
+    name: "Thỏi Đồng"
+  PRISMARINE_SHARD:
+    name: "Mảnh Prismarine"
+  PRISMARINE_CRYSTALS:
+    name: "Tinh Thể Prismarine"
+  WET_SPONGE:
+    name: "Bọt Biển Ướt"
+  EMERALD:
+    name: "Ngọc Lục Bảo"
+  IRON_INGOT:
+    name: "Phôi Sắt"
+  GOLD_NUGGET:
+    name: "Hạt Vàng"
+  GOLD_INGOT:
+    name: "Phôi Vàng"
+  REDSTONE:
+    name: "Bột Đá Đỏ"
+  GLOWSTONE_DUST:
+    name: "Bột Đá Phát Sáng"
+  COAL:
+    name: "Than"
+
+  GLOW_INK_SAC:
+    name: "Túi Mực Phát Sáng"
+  INK_SAC:
+    name: "Túi Mực"
+  CARROT:
+    name: "Cà Rốt"
+  POTATO:
+    name: "Khoai Tây"
+  POPPY:
+    name: "Hoa Anh Túc"
+  SNOWBALL:
+    name: "Cầu Tuyết"
+  SEAGRASS:
+    name: "Cỏ Biển"
+  SUGAR:
+    name: "Đường"
+  GLASS_BOTTLE:
+    name: "Chai Thủy Tinh"
+  STICK:
+    name: "Gậy"
+  SCULK_CATALYST:
+    name: "Cảm biến Sculk được hiểu chỉnh"
+  TIDE_ARMOR_TRIM_SMITHING_TEMPLATE:
+    name: "Trang trí giáp"
+
