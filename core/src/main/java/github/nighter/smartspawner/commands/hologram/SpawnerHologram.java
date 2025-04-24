@@ -63,35 +63,38 @@ public class SpawnerHologram {
 
         Location holoLoc = spawnerLocation.clone().add(offsetX, offsetY, offsetZ);
 
-        try {
-            TextDisplay display = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, td -> {
-                td.setBillboard(Display.Billboard.CENTER);
-                // Get alignment from config with CENTER as default
-                String alignmentStr = plugin.getConfig().getString("hologram.alignment", "CENTER");
-                TextDisplay.TextAlignment alignment;
-                try {
-                    alignment = TextDisplay.TextAlignment.valueOf(alignmentStr.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    alignment = TextDisplay.TextAlignment.CENTER;
-                    plugin.getLogger().warning("Invalid hologram alignment in config: " + alignmentStr + ". Using CENTER as default.");
-                }
-                td.setAlignment(alignment);
-                td.setViewRange(16.0f);
-                td.setShadowed(plugin.getConfig().getBoolean("hologram.shadowed_text", true));
-                td.setDefaultBackground(false);
-                td.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
-                td.setSeeThrough(plugin.getConfig().getBoolean("hologram.see_through", false));
-                // Add custom name for identification
-                td.setCustomName(uniqueIdentifier);
-                td.setCustomNameVisible(false);
-            });
+        // Use the location scheduler to spawn the entity in the correct region
+        Scheduler.runLocationTask(holoLoc, () -> {
+            try {
+                TextDisplay display = spawnerLocation.getWorld().spawn(holoLoc, TextDisplay.class, td -> {
+                    td.setBillboard(Display.Billboard.CENTER);
+                    // Get alignment from config with CENTER as default
+                    String alignmentStr = plugin.getConfig().getString("hologram.alignment", "CENTER");
+                    TextDisplay.TextAlignment alignment;
+                    try {
+                        alignment = TextDisplay.TextAlignment.valueOf(alignmentStr.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        alignment = TextDisplay.TextAlignment.CENTER;
+                        plugin.getLogger().warning("Invalid hologram alignment in config: " + alignmentStr + ". Using CENTER as default.");
+                    }
+                    td.setAlignment(alignment);
+                    td.setViewRange(16.0f);
+                    td.setShadowed(plugin.getConfig().getBoolean("hologram.shadowed_text", true));
+                    td.setDefaultBackground(false);
+                    td.setTransformation(new Transformation(TRANSLATION, ROTATION, SCALE, ROTATION));
+                    td.setSeeThrough(plugin.getConfig().getBoolean("hologram.see_through", false));
+                    // Add custom name for identification
+                    td.setCustomName(uniqueIdentifier);
+                    td.setCustomNameVisible(false);
+                });
 
-            textDisplay.set(display);
-            updateText();
-        } catch (Exception e) {
-            plugin.getLogger().severe("Error creating hologram: " + e.getMessage());
-            e.printStackTrace();
-        }
+                textDisplay.set(display);
+                updateText();
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error creating hologram: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 
     public void updateText() {
@@ -171,15 +174,17 @@ public class SpawnerHologram {
             textDisplay.set(null);
         }
 
-        // Define a tighter search radius just to catch any potentially duplicated holograms
-        // with the same identifier (which shouldn't happen but being safe)
-        double searchRadius = 2.0;
+        Scheduler.runLocationTask(spawnerLocation, () -> {
+            // Define a tighter search radius just to catch any potentially duplicated holograms
+            // with the same identifier (which shouldn't happen but being safe)
+            double searchRadius = 2.0;
 
-        // Look for any entity with our specific unique identifier
-        spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, searchRadius, searchRadius, searchRadius)
-                .stream()
-                .filter(entity -> entity instanceof TextDisplay && entity.getCustomName() != null)
-                .filter(entity -> entity.getCustomName().equals(uniqueIdentifier))
-                .forEach(Entity::remove);
+            // Look for any entity with our specific unique identifier
+            spawnerLocation.getWorld().getNearbyEntities(spawnerLocation, searchRadius, searchRadius, searchRadius)
+                    .stream()
+                    .filter(entity -> entity instanceof TextDisplay && entity.getCustomName() != null)
+                    .filter(entity -> entity.getCustomName().equals(uniqueIdentifier))
+                    .forEach(Entity::remove);
+        });
     }
 }

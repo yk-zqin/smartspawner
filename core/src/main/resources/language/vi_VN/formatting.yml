@@ -1,103 +1,103 @@
 #---------------------------------------------------
-#                 Định dạng số
+#                 Number Formatting
 #---------------------------------------------------
-# Kiểm soát cách hiển thị số lớn trong trò chơi
+# Controls how large numbers are displayed in-game
 #---------------------------------------------------
 format_number:
-  thousand: "%s%K"    # Ví dụ: 5000 → 5K
-  million: "%s%M"     # Ví dụ: 2000000 → 2M
-  billion: "%s%B"     # Ví dụ: 1500000000 → 1.5B
-  trillion: "%s%T"    # Ví dụ: 1000000000000 → 1T
-  default: "%s%"      # Định dạng mặc định khi không có quy tắc khớp
+  thousand: "%s%K"    # Example: 5000 → 5K
+  million: "%s%M"     # Example: 2000000 → 2M
+  billion: "%s%B"     # Example: 1500000000 → 1.5B
+  trillion: "%s%T"    # Example: 1000000000000 → 1T
+  default: "%s%"      # Fallback format when no other rule matches
 
 #---------------------------------------------------
-#                 Tên hiển thị Mob
+#                 Mob Display Names
 #---------------------------------------------------
-# Hiển thị tên mob trong GUI, vật phẩm, hologram và tin nhắn
+# Defines how mob names appear in spawner GUIs, items, holograms and messages
 #---------------------------------------------------
 mob_names:
-  # Mob thân thiện
+  # Passive Mobs
   #-------------------------
   ALLAY: "Allay"
   ARMADILLO: "Tatu"
   AXOLOTL: "Axolotl"
   BAT: "Dơi"
   BEE: "Ong"
-  CAMEL: "Lạc đà"
+  CAMEL: "Lạc Đà"
   CAT: "Mèo"
   CHICKEN: "Gà"
-  COD: "Cá tuyết"
+  COD: "Cá Thu"
   COW: "Bò"
-  DOLPHIN: "Cá heo"
+  DOLPHIN: "Cá Heo"
   DONKEY: "Lừa"
   FOX: "Cáo"
   FROG: "Ếch"
-  GLOW_SQUID: "Mực phát sáng"
+  GLOW_SQUID: "Mực Phát Sáng"
   GOAT: "Dê"
   HORSE: "Ngựa"
-  IRON_GOLEM: "Người sắt"
-  LLAMA: "Lạc đà không bướu"
-  MOOSHROOM: "Bò nấm"
-  MUSHROOM_COW: "Bò nấm" # Dành cho phiên bản 1.20.+
+  IRON_GOLEM: "Người Sắt"
+  LLAMA: "Lạc Đà Không Bướu"
+  MOOSHROOM: "Bò Nấm"
+  MUSHROOM_COW: "Bò Nấm" # Fallback for 1.20 version compatibility
   MULE: "La"
-  OCELOT: "Mèo rừng"
-  PANDA: "Gấu trúc"
+  OCELOT: "Báo Đốm"
+  PANDA: "Gấu Trúc"
   PARROT: "Vẹt"
-  PIG: "Heo"
+  PIG: "Lợn"
   POLAR_BEAR: "Gấu Bắc Cực"
-  PUFFERFISH: "Cá nóc"
+  PUFFERFISH: "Cá Nóc"
   RABBIT: "Thỏ"
-  SALMON: "Cá hồi"
+  SALMON: "Cá Hồi"
   SHEEP: "Cừu"
   SNIFFER: "Kẻ Đánh Hơi"
-  SNOW_GOLEM: "Người tuyết"
-  SNOWMAN: "Người tuyết" # Dành cho phiên bản 1.20.+
+  SNOW_GOLEM: "Người Tuyết"
+  SNOWMAN: "Người Tuyết" # Fallback for 1.20 version compatibility
   SQUID: "Mực"
-  STRIDER: "Kẻ lang thang"
-  TADPOLE: "Nòng nọc"
+  STRIDER: "Kẻ Sải Bước"
+  TADPOLE: "Nòng Nọc"
   TRADER_LLAMA: "Lạc Đà Không Bướu Thương Nhân"
-  TROPICAL_FISH: "Cá nhiệt đới"
+  TROPICAL_FISH: "Cá Nhiệt Đới"
   TURTLE: "Rùa"
-  VILLAGER: "Dân làng"
-  WANDERING_TRADER: "Thương nhân lang thang"
+  VILLAGER: "Dân Làng"
+  WANDERING_TRADER: "Thương Nhân Lang Thang"
   WOLF: "Sói"
 
-  # Quái vât
+  # Hostile Mobs
   #-------------------------
-  BLAZE: "Quỷ lửa"
-  BOGGED: "Bogged"
-  BREEZE: "Breeze"
+  BLAZE: "Quỷ Lửa"
+  BOGGED: "Quái Vật Đầm Lầy"
+  BREEZE: "Quỷ Gió"
   CAVE_SPIDER: "Nhện Hang"
   CREEPER: "Creeper"
-  DROWNED: "Kẻ đuối nước"
+  DROWNED: "Kẻ Đuối Nước"
   ELDER_GUARDIAN: "Giám Hộ Cổ"
   ENDERMAN: "Enderman"
   ENDERMITE: "Rận Ender"
   EVOKER: "Kẻ Chiêu Hồn"
   GHAST: "Ghast"
-  GUARDIAN: "Người bảo vệ"
+  GUARDIAN: "Giám Hộ"
   HOGLIN: "Hoglin"
   HUSK: "Quái Khô Tàn"
   MAGMA_CUBE: "Khối Dung Nham"
-  PHANTOM: "Phantom"
+  PHANTOM: "Ma Cà Rồng"
   PIGLIN: "Piglin"
   PIGLIN_BRUTE: "Piglin Hung Bạo"
-  PILLAGER: "Kẻ cướp"
-  RAVAGER: "Kẻ tàn phá"
+  PILLAGER: "Kẻ Cướp"
+  RAVAGER: "Quái Thú Cướp Bóc"
   SHULKER: "Shulker"
-  SILVERFISH: "Bọ Bạc"
+  SILVERFISH: "Cá Bạc"
   SKELETON: "Bộ Xương"
-  SKELETON_HORSE: "Ngựa xương"
-  SLIME: "Slime"
+  SKELETON_HORSE: "Ngựa Xương"
+  SLIME: "Quái Vật Chất Nhờn"
   SPIDER: "Nhện"
-  STRAY: "Kẻ lang thang"
-  VEX: "Vex"
+  STRAY: "Quái Lang Thang"
+  VEX: "Linh Hồn Bay"
   VINDICATOR: "Kẻ Biện Hộ"
-  WARDEN: "Warden"
-  WITCH: "Phù thủy"
-  WITHER_SKELETON: "Bộ xương Wither"
+  WARDEN: "Giám Ngục"
+  WITCH: "Phù Thủy"
+  WITHER_SKELETON: "Bộ Xương Khô Héo"
   ZOGLIN: "Zoglin"
-  ZOMBIE: "Thây ma"
-  ZOMBIE_HORSE: "Ngựa thây ma"
-  ZOMBIE_VILLAGER: "Dân làng thây ma"
-  ZOMBIFIED_PIGLIN: "Piglin thây ma"
+  ZOMBIE: "Xác Sống"
+  ZOMBIE_HORSE: "Ngựa Xác Sống"
+  ZOMBIE_VILLAGER: "Dân Làng Thây Ma"
+  ZOMBIFIED_PIGLIN: "Piglin Thây Ma"

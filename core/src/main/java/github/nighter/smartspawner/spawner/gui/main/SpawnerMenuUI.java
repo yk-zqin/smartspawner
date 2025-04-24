@@ -87,7 +87,7 @@ public class SpawnerMenuUI {
         int percentStorage = calculatePercentage(currentItems, maxSlots);
 
         Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("max_slots", String.valueOf(maxSlots));
+        placeholders.put("max_slots", languageManager.formatNumber(maxSlots));
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("percent_storage", String.valueOf(percentStorage));
 

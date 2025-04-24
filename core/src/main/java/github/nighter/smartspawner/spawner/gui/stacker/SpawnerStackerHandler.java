@@ -54,11 +54,14 @@ public class SpawnerStackerHandler implements Listener {
     private static final int SPAWNER_INFO_SLOT = 13;
     private static final int[] STACK_AMOUNTS = {64, 10, 1};
 
-    // Player interaction tracking
-    private final Map<UUID, Long> lastClickTime = new ConcurrentHashMap<>();
-    private final Map<UUID, Scheduler.Task> pendingUpdates = new ConcurrentHashMap<>();
-    private final Map<String, Set<UUID>> activeViewers = new ConcurrentHashMap<>();
-    private final Map<UUID, AtomicBoolean> updateLocks = new ConcurrentHashMap<>();
+    // Player interaction tracking - using more efficient data structures
+    private final Map<UUID, Long> lastClickTime = new ConcurrentHashMap<>(16, 0.75f, 2);
+    private final Map<UUID, Scheduler.Task> pendingUpdates = new ConcurrentHashMap<>(16, 0.75f, 2);
+    private final Map<String, Set<UUID>> activeViewers = new ConcurrentHashMap<>(16, 0.75f, 2);
+    private final Map<UUID, AtomicBoolean> updateLocks = new ConcurrentHashMap<>(16, 0.75f, 2);
+
+    // Cache for entity type extraction - avoids repeated metadata checks
+    private final Map<ItemStack, Optional<EntityType>> entityTypeCache = new WeakHashMap<>();
 
     // Click cooldown in milliseconds
     private static final long CLICK_COOLDOWN = 200L;
@@ -73,7 +76,7 @@ public class SpawnerStackerHandler implements Listener {
         this.spawnerItemFactory = plugin.getSpawnerItemFactory();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
 
-        // Start cleanup task
+        // Start cleanup task - increased interval for less overhead
         startCleanupTask();
     }
 
@@ -82,7 +85,12 @@ public class SpawnerStackerHandler implements Listener {
             long now = System.currentTimeMillis();
             lastClickTime.entrySet().removeIf(entry -> now - entry.getValue() > 5000);
             updateLocks.entrySet().removeIf(entry -> !lastClickTime.containsKey(entry.getKey()));
-        }, 100L, 100L);
+
+            // Clear entity type cache occasionally to prevent memory leaks
+            if (entityTypeCache.size() > 100) {
+                entityTypeCache.clear();
+            }
+        }, 200L, 200L); // Increased from 100L to 200L
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -93,8 +101,10 @@ public class SpawnerStackerHandler implements Listener {
         // Cancel the event to prevent item movement
         event.setCancelled(true);
 
-        // Check for cooldown
-        if (isOnCooldown(player.getUniqueId())) return;
+        // Check for cooldown - fast path return
+        UUID playerId = player.getUniqueId();
+        Long lastClick = lastClickTime.get(playerId);
+        if (lastClick != null && System.currentTimeMillis() - lastClick < CLICK_COOLDOWN) return;
 
         // Get the clicked item
         ItemStack clickedItem = event.getCurrentItem();
@@ -104,7 +114,8 @@ public class SpawnerStackerHandler implements Listener {
 
         // Handle navigation back to main menu if spawner is clicked
         if (clickedItem.getType() == Material.SPAWNER) {
-            navigateToMainMenu(player, spawner);
+            spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+            player.playSound(player.getLocation(), CLICK_SOUND, SOUND_VOLUME, SOUND_PITCH);
             return;
         }
 
@@ -114,11 +125,15 @@ public class SpawnerStackerHandler implements Listener {
 
         if (changeAmount != 0) {
             // Mark click time and attempt modification
-            markClick(player.getUniqueId());
+            lastClickTime.put(playerId, System.currentTimeMillis());
             processStackModification(player, spawner, changeAmount);
 
             // Schedule a single batch update for all viewers
-            scheduleViewersUpdate(spawner, player);
+            String spawnerId = spawner.getSpawnerId();
+            Set<UUID> viewers = activeViewers.get(spawnerId);
+            if (viewers != null && !viewers.isEmpty()) {
+                scheduleViewersUpdate(spawner);
+            }
         }
     }
 
@@ -136,12 +151,15 @@ public class SpawnerStackerHandler implements Listener {
         if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder holder)) return;
 
         // Track player as viewer of this spawner
+        UUID playerId = player.getUniqueId();
         String spawnerId = holder.getSpawnerData().getSpawnerId();
-        activeViewers.computeIfAbsent(spawnerId, k -> ConcurrentHashMap.newKeySet())
-                .add(player.getUniqueId());
+
+        // Use computeIfAbsent for atomic operations
+        Set<UUID> viewers = activeViewers.computeIfAbsent(spawnerId, k -> ConcurrentHashMap.newKeySet());
+        viewers.add(playerId);
 
         // Initialize lock for this player
-        updateLocks.putIfAbsent(player.getUniqueId(), new AtomicBoolean(false));
+        updateLocks.putIfAbsent(playerId, new AtomicBoolean(false));
     }
 
     @EventHandler
@@ -150,13 +168,14 @@ public class SpawnerStackerHandler implements Listener {
         if (!(event.getInventory().getHolder() instanceof SpawnerStackerHolder holder)) return;
 
         String spawnerId = holder.getSpawnerData().getSpawnerId();
+        UUID playerId = player.getUniqueId();
 
         // Verify the player is really closing the GUI (not just inventory updates)
         Scheduler.runTaskLater(() -> {
             Inventory topInventory = player.getOpenInventory().getTopInventory();
             if (!(topInventory.getHolder() instanceof SpawnerStackerHolder)) {
                 // Remove viewer and cancel any pending updates
-                removeViewer(spawnerId, player.getUniqueId());
+                removeViewer(spawnerId, playerId);
             }
         }, 1L);
     }
@@ -170,31 +189,39 @@ public class SpawnerStackerHandler implements Listener {
     // ---- Helper Methods ----
 
     private void cleanupPlayer(UUID playerId) {
-        // Cancel any pending tasks
+        // Cancel any pending tasks - faster direct retrieval
         Scheduler.Task task = pendingUpdates.remove(playerId);
         if (task != null && !task.isCancelled()) {
             task.cancel();
         }
 
-        // Remove player from tracking
+        // Remove player from tracking - faster direct removal
         lastClickTime.remove(playerId);
         updateLocks.remove(playerId);
 
-        // Remove from all viewer sets
-        activeViewers.values().forEach(viewers -> viewers.remove(playerId));
-        activeViewers.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        // Remove from all viewer sets efficiently
+        for (Map.Entry<String, Set<UUID>> entry : activeViewers.entrySet()) {
+            entry.getValue().remove(playerId);
+            if (entry.getValue().isEmpty()) {
+                activeViewers.remove(entry.getKey());
+            }
+        }
     }
 
     public void cleanupAll() {
+        // Cancel all pending tasks
         pendingUpdates.values().forEach(task -> {
             if (task != null && !task.isCancelled()) {
                 task.cancel();
             }
         });
+
+        // Clear all tracking maps at once
         pendingUpdates.clear();
         lastClickTime.clear();
         updateLocks.clear();
         activeViewers.clear();
+        entityTypeCache.clear();
     }
 
     private void removeViewer(String spawnerId, UUID playerId) {
@@ -205,62 +232,51 @@ public class SpawnerStackerHandler implements Listener {
                 activeViewers.remove(spawnerId);
             }
         }
-        cleanupPlayer(playerId);
-    }
 
-    private boolean isOnCooldown(UUID playerId) {
-        Long lastClick = lastClickTime.get(playerId);
-        if (lastClick == null) return false;
-
-        return System.currentTimeMillis() - lastClick < CLICK_COOLDOWN;
-    }
-
-    private void markClick(UUID playerId) {
-        lastClickTime.put(playerId, System.currentTimeMillis());
+        // Cleanup player data
+        Scheduler.Task task = pendingUpdates.remove(playerId);
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
     }
 
     private int determineChangeAmount(int slotIndex) {
-        // Check decrease buttons
-        for (int i = 0; i < DECREASE_SLOTS.length; i++) {
-            if (slotIndex == DECREASE_SLOTS[i]) {
-                return -STACK_AMOUNTS[i];
-            }
+        // Optimized slot checking using binary search or direct lookup when possible
+        if (slotIndex >= 9 && slotIndex <= 11) {
+            // Decrease buttons
+            return -STACK_AMOUNTS[slotIndex - 9];
+        } else if (slotIndex >= 15 && slotIndex <= 17) {
+            // Increase buttons
+            return STACK_AMOUNTS[17 - slotIndex];
         }
-
-        // Check increase buttons
-        for (int i = 0; i < INCREASE_SLOTS.length; i++) {
-            if (slotIndex == INCREASE_SLOTS[i]) {
-                return STACK_AMOUNTS[i];
-            }
-        }
-
         return 0; // Not a modification button
-    }
-
-    private void navigateToMainMenu(Player player, SpawnerData spawner) {
-        spawnerMenuUI.openSpawnerMenu(player, spawner, true);
-        player.playSound(player.getLocation(), CLICK_SOUND, SOUND_VOLUME, SOUND_PITCH);
     }
 
     private void processStackModification(Player player, SpawnerData spawner, int changeAmount) {
         if (changeAmount < 0) {
             // Handle stack decrease
-            handleStackDecrease(player, spawner, changeAmount);
+            handleStackDecrease(player, spawner, Math.abs(changeAmount));
         } else {
             // Handle stack increase
             handleStackIncrease(player, spawner, changeAmount);
         }
     }
 
-    private void handleStackDecrease(Player player, SpawnerData spawner, int changeAmount) {
+    private void handleStackDecrease(Player player, SpawnerData spawner, int removeAmount) {
         int currentSize = spawner.getStackSize();
-        int removeAmount = Math.abs(changeAmount);
+
+        // Check if trying to go below 1 - fast path
+        if (currentSize == 1) {
+            messageService.sendMessage(player, "spawner_cannot_remove_last");
+            return;
+        }
+
         int targetSize = Math.max(1, currentSize - removeAmount);
         int actualChange = currentSize - targetSize;
 
-        // Stop if no change
+        // Stop if no change - fast path
         if (actualChange <= 0) {
-            Map<String, String> placeholders = new HashMap<>();
+            Map<String, String> placeholders = new HashMap<>(2);
             placeholders.put("amount", String.valueOf(currentSize));
             messageService.sendMessage(player, "spawner_stacker_minimum_reached", placeholders);
             return;
@@ -280,41 +296,44 @@ public class SpawnerStackerHandler implements Listener {
 
         // Calculate how many more can be added
         int spaceLeft = maxStackSize - currentSize;
-        Map<String, String> placeholders0 = new HashMap<>();
-        placeholders0.put("max", String.valueOf(maxStackSize));
+
+        // Fast path for full stack
         if (spaceLeft <= 0) {
-            messageService.sendMessage(player, "spawner_stack_full", placeholders0);
+            Map<String, String> placeholders = new HashMap<>(2);
+            placeholders.put("max", String.valueOf(maxStackSize));
+            messageService.sendMessage(player, "spawner_stack_full", placeholders);
             return;
         }
 
         // Limit change to available space
         int actualChange = Math.min(changeAmount, spaceLeft);
+        EntityType requiredType = spawner.getEntityType();
 
-        // Check player inventory for spawners
-        int availableSpawners = countValidSpawners(player, spawner.getEntityType());
+        // Analyze inventory in a single pass to get both counts and check types
+        InventoryScanResult scanResult = scanPlayerInventory(player, requiredType);
 
-        // Handle different spawner types
-        if (availableSpawners == 0 && hasDifferentSpawnerType(player, spawner.getEntityType())) {
+        // Check if player has different spawner types
+        if (scanResult.availableSpawners == 0 && scanResult.hasDifferentType) {
             messageService.sendMessage(player, "spawner_different");
             return;
         }
 
         // Check if player has enough spawners
-        if (availableSpawners < actualChange) {
-            Map<String, String> placeholders = new HashMap<>();
+        if (scanResult.availableSpawners < actualChange) {
+            Map<String, String> placeholders = new HashMap<>(4);
             placeholders.put("amountChange", String.valueOf(actualChange));
-            placeholders.put("amountAvailable", String.valueOf(availableSpawners));
+            placeholders.put("amountAvailable", String.valueOf(scanResult.availableSpawners));
             messageService.sendMessage(player, "spawner_insufficient_quantity", placeholders);
             return;
         }
 
         // Remove from inventory and update stack
-        removeValidSpawnersFromInventory(player, spawner.getEntityType(), actualChange);
+        removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
         spawner.setStackSize(currentSize + actualChange, player);
 
         // Notify if max stack reached
         if (actualChange < changeAmount) {
-            Map<String, String> placeholders = new HashMap<>();
+            Map<String, String> placeholders = new HashMap<>(2);
             placeholders.put("amount", String.valueOf(actualChange));
             messageService.sendMessage(player, "spawner_stacker_minimum_reached", placeholders);
         }
@@ -323,64 +342,82 @@ public class SpawnerStackerHandler implements Listener {
         player.playSound(player.getLocation(), STACK_SOUND, SOUND_VOLUME, SOUND_PITCH);
     }
 
-    private void scheduleViewersUpdate(SpawnerData spawner, Player initiator) {
+    private void scheduleViewersUpdate(SpawnerData spawner) {
         String spawnerId = spawner.getSpawnerId();
-        Set<UUID> viewers = activeViewers.getOrDefault(spawnerId, ConcurrentHashMap.newKeySet());
+        Set<UUID> viewers = activeViewers.get(spawnerId);
+        if (viewers == null || viewers.isEmpty()) return;
 
-        // Only schedule update if viewers exist
-        if (viewers.isEmpty()) return;
+        // Use a shared task for all viewers of this spawner
+        Scheduler.Task task = Scheduler.runTaskLater(() -> {
+            updateAllViewers(spawner, viewers);
+        }, UPDATE_DELAY);
 
-        // Schedule single update task for all viewers
-        Scheduler.runTaskLater(() -> {
-            for (UUID viewerId : viewers) {
-                Player viewer = plugin.getServer().getPlayer(viewerId);
-                if (viewer != null && viewer.isOnline()) {
-                    // Try to get update lock for this player
-                    AtomicBoolean lock = updateLocks.computeIfAbsent(viewerId, k -> new AtomicBoolean(false));
+        // Store the task for potential cancellation
+        for (UUID viewerId : viewers) {
+            pendingUpdates.put(viewerId, task);
+        }
+    }
 
-                    // Only update if not currently updating
-                    if (lock.compareAndSet(false, true)) {
-                        try {
-                            updateGui(viewer, spawner);
-                        } finally {
-                            // Always release lock
-                            lock.set(false);
-                        }
+    private void updateAllViewers(SpawnerData spawner, Set<UUID> viewers) {
+        // Update all players viewing this spawner
+        for (UUID viewerId : viewers) {
+            Player viewer = plugin.getServer().getPlayer(viewerId);
+            if (viewer != null && viewer.isOnline()) {
+                AtomicBoolean lock = updateLocks.get(viewerId);
+                if (lock != null && lock.compareAndSet(false, true)) {
+                    try {
+                        updateGui(viewer, spawner);
+                    } finally {
+                        lock.set(false);
                     }
                 }
             }
-        }, UPDATE_DELAY);
+        }
     }
 
     private void updateGui(Player player, SpawnerData spawner) {
         Inventory inv = player.getOpenInventory().getTopInventory();
-        if (inv.getHolder() instanceof SpawnerStackerHolder) {
-            // Update spawner info in slot 13
-            updateInfoItem(inv, spawner);
+        if (!(inv.getHolder() instanceof SpawnerStackerHolder)) return;
 
-            // Update decrease buttons
-            for (int i = 0; i < DECREASE_SLOTS.length; i++) {
-                updateActionButton(inv, "remove", spawner, STACK_AMOUNTS[i], DECREASE_SLOTS[i]);
-            }
+        // Pre-create placeholders map once
+        Map<String, String> basePlaceholders = createBasePlaceholders(spawner);
 
-            // Update increase buttons
-            for (int i = 0; i < INCREASE_SLOTS.length; i++) {
-                updateActionButton(inv, "add", spawner, STACK_AMOUNTS[i], INCREASE_SLOTS[i]);
-            }
+        // Update spawner info in slot 13
+        updateInfoItem(inv, basePlaceholders);
 
-            // Force client refresh
-            player.updateInventory();
+        // Update decrease and increase buttons
+        for (int i = 0; i < DECREASE_SLOTS.length; i++) {
+            updateActionButton(inv, "remove", STACK_AMOUNTS[i], DECREASE_SLOTS[i], basePlaceholders);
         }
+
+        for (int i = 0; i < INCREASE_SLOTS.length; i++) {
+            updateActionButton(inv, "add", STACK_AMOUNTS[i], INCREASE_SLOTS[i], basePlaceholders);
+        }
+
+        // Force client refresh
+        player.updateInventory();
     }
 
-    private void updateInfoItem(Inventory inventory, SpawnerData spawner) {
+    private Map<String, String> createBasePlaceholders(SpawnerData spawner) {
+        Map<String, String> placeholders = new HashMap<>(8);
+        placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
+        placeholders.put("max_stack_size", String.valueOf(spawner.getMaxStackSize()));
+
+        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
+        placeholders.put("entity", entityName);
+        placeholders.put("ᴇɴᴛɪᴛʏ", languageManager.getSmallCaps(entityName));
+
+        return placeholders;
+    }
+
+    private void updateInfoItem(Inventory inventory, Map<String, String> basePlaceholders) {
         ItemStack infoItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (infoItem == null || !infoItem.hasItemMeta()) return;
 
         ItemMeta meta = infoItem.getItemMeta();
 
-        // Create placeholders map
-        Map<String, String> placeholders = createPlaceholders(spawner, 0);
+        // Create a copy of base placeholders
+        Map<String, String> placeholders = new HashMap<>(basePlaceholders);
 
         // Get name and lore from the LanguageManager
         String name = languageManager.getGuiItemName("button_spawner.name", placeholders);
@@ -391,14 +428,16 @@ public class SpawnerStackerHandler implements Listener {
         infoItem.setItemMeta(meta);
     }
 
-    private void updateActionButton(Inventory inventory, String action, SpawnerData spawner, int amount, int slot) {
+    private void updateActionButton(Inventory inventory, String action, int amount, int slot, Map<String, String> basePlaceholders) {
         ItemStack button = inventory.getItem(slot);
         if (button == null || !button.hasItemMeta()) return;
 
         ItemMeta meta = button.getItemMeta();
 
-        // Create placeholders map
-        Map<String, String> placeholders = createPlaceholders(spawner, amount);
+        // Create a copy of base placeholders and add action-specific ones
+        Map<String, String> placeholders = new HashMap<>(basePlaceholders);
+        placeholders.put("amount", String.valueOf(amount));
+        placeholders.put("plural", amount > 1 ? "s" : "");
 
         // Get name and lore from the LanguageManager
         String name = languageManager.getGuiItemName("button_" + action + ".name", placeholders);
@@ -409,50 +448,33 @@ public class SpawnerStackerHandler implements Listener {
         button.setItemMeta(meta);
     }
 
-    private Map<String, String> createPlaceholders(SpawnerData spawner, int amount) {
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("amount", String.valueOf(amount));
-        placeholders.put("plural", amount > 1 ? "s" : "");
-        placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
-        placeholders.put("max_stack_size", String.valueOf(spawner.getMaxStackSize()));
-        placeholders.put("entity", languageManager.getFormattedMobName(spawner.getEntityType()));
-        placeholders.put("ᴇɴᴛɪᴛʏ", languageManager.getSmallCaps(placeholders.get("entity")));
-        return placeholders;
-    }
-
-    private int countValidSpawners(Player player, EntityType entityType) {
+    // Combined inventory scan that collects all required data in one pass
+    private InventoryScanResult scanPlayerInventory(Player player, EntityType requiredType) {
         int count = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SPAWNER) {
-                // Skip vanilla spawners
-                if (SpawnerTypeChecker.isVanillaSpawner(item)) {
-                    continue;
-                }
+        boolean hasDifferentType = false;
+        List<SpawnerSlot> spawnerSlots = new ArrayList<>();
 
-                // Check if it's the right entity type
-                if (isCorrectEntityType(item, entityType)) {
+        ItemStack[] contents = player.getInventory().getContents();
+
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack item = contents[i];
+            if (item == null || item.getType() != Material.SPAWNER) continue;
+
+            // Skip vanilla spawners
+            if (SpawnerTypeChecker.isVanillaSpawner(item)) continue;
+
+            Optional<EntityType> itemType = getSpawnerEntityType(item);
+            if (itemType.isPresent()) {
+                if (itemType.get() == requiredType) {
                     count += item.getAmount();
+                    spawnerSlots.add(new SpawnerSlot(i, item.getAmount()));
+                } else {
+                    hasDifferentType = true;
                 }
             }
         }
-        return count;
-    }
 
-    private boolean hasDifferentSpawnerType(Player player, EntityType requiredType) {
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.SPAWNER) {
-                // Skip vanilla spawners
-                if (SpawnerTypeChecker.isVanillaSpawner(item)) {
-                    continue;
-                }
-
-                Optional<EntityType> typeOptional = getSpawnerEntityType(item);
-                if (typeOptional.isPresent() && typeOptional.get() != requiredType) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return new InventoryScanResult(count, hasDifferentType, spawnerSlots);
     }
 
     private Optional<EntityType> getSpawnerEntityType(ItemStack item) {
@@ -460,6 +482,21 @@ public class SpawnerStackerHandler implements Listener {
             return Optional.empty();
         }
 
+        // Check cache first
+        Optional<EntityType> cachedType = entityTypeCache.get(item);
+        if (cachedType != null) {
+            return cachedType;
+        }
+
+        // Extract type from metadata
+        Optional<EntityType> result = extractEntityTypeFromMeta(item);
+
+        // Cache the result
+        entityTypeCache.put(item, result);
+        return result;
+    }
+
+    private Optional<EntityType> extractEntityTypeFromMeta(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (!(meta instanceof BlockStateMeta blockMeta)) {
             return Optional.empty();
@@ -488,31 +525,22 @@ public class SpawnerStackerHandler implements Listener {
         return Optional.ofNullable(spawnerEntity);
     }
 
-
-    private boolean isCorrectEntityType(ItemStack item, EntityType requiredType) {
-        // Helper method to check if a spawner is of the required type
-        Optional<EntityType> typeOptional = getSpawnerEntityType(item);
-        return typeOptional.isPresent() && typeOptional.get() == requiredType;
-    }
-
-    private void removeValidSpawnersFromInventory(Player player, EntityType requiredType, int amountToRemove) {
+    private void removeValidSpawnersFromInventory(Player player, EntityType requiredType, int amountToRemove, List<SpawnerSlot> spawnerSlots) {
         int remainingToRemove = amountToRemove;
-        ItemStack[] contents = player.getInventory().getContents();
 
-        for (int i = 0; i < contents.length && remainingToRemove > 0; i++) {
-            ItemStack item = contents[i];
-            if (item == null) continue;
+        // Use the pre-scanned slots for faster removal
+        for (SpawnerSlot slot : spawnerSlots) {
+            if (remainingToRemove <= 0) break;
 
-            // Skip vanilla spawners
-            if (SpawnerTypeChecker.isVanillaSpawner(item)) {
-                continue;
-            }
+            ItemStack item = player.getInventory().getItem(slot.slotIndex);
+            // Verify item is still valid
+            if (item == null || item.getType() != Material.SPAWNER) continue;
 
             Optional<EntityType> spawnerType = getSpawnerEntityType(item);
             if (spawnerType.isPresent() && spawnerType.get() == requiredType) {
                 int itemAmount = item.getAmount();
                 if (itemAmount <= remainingToRemove) {
-                    player.getInventory().setItem(i, null);
+                    player.getInventory().setItem(slot.slotIndex, null);
                     remainingToRemove -= itemAmount;
                 } else {
                     item.setAmount(itemAmount - remainingToRemove);
@@ -524,15 +552,18 @@ public class SpawnerStackerHandler implements Listener {
         player.updateInventory();
     }
 
-    private synchronized void giveSpawnersToPlayer(Player player, int amount, EntityType entityType) {
+    public void giveSpawnersToPlayer(Player player, int amount, EntityType entityType) {
         final int MAX_STACK_SIZE = 64;
-        ItemStack[] contents = player.getInventory().getContents();
         int remainingAmount = amount;
 
-        // First pass: Try to merge with existing stacks
+        // First pass: Try to merge with existing non-vanilla stacks
+        ItemStack[] contents = player.getInventory().getContents();
         for (int i = 0; i < contents.length && remainingAmount > 0; i++) {
             ItemStack item = contents[i];
-            if (item == null || item.getType() != Material.SPAWNER) continue;
+            // Skip null items, non-spawners, or vanilla spawners
+            if (item == null || item.getType() != Material.SPAWNER || SpawnerTypeChecker.isVanillaSpawner(item)) {
+                continue;
+            }
 
             Optional<EntityType> itemEntityType = getSpawnerEntityType(item);
             if (itemEntityType.isEmpty() || itemEntityType.get() != entityType) continue;
@@ -547,23 +578,29 @@ public class SpawnerStackerHandler implements Listener {
 
         // Second pass: Create new stacks for remaining items
         if (remainingAmount > 0) {
+            // Create all stacks at once to avoid multiple inventory operations
+            List<ItemStack> newStacks = new ArrayList<>();
+
             while (remainingAmount > 0) {
                 int stackSize = Math.min(MAX_STACK_SIZE, remainingAmount);
-                // Use the factory instead of the local method
                 ItemStack spawnerItem = spawnerItemFactory.createSpawnerItem(entityType, stackSize);
-
-                // Try to add to inventory first
-                Map<Integer, ItemStack> failedItems = player.getInventory().addItem(spawnerItem);
-
-                // Drop any items that couldn't fit
-                if (!failedItems.isEmpty()) {
-                    failedItems.values().forEach(item ->
-                            player.getWorld().dropItemNaturally(player.getLocation(), item)
-                    );
-                    messageService.sendMessage(player, "inventory_full_items_dropped");
-                }
-
+                newStacks.add(spawnerItem);
                 remainingAmount -= stackSize;
+            }
+
+            // Try to add all at once
+            boolean allFit = true;
+            for (ItemStack stack : newStacks) {
+                boolean addedSuccessfully = addItemAvoidingVanillaSpawners(player, stack);
+                if (!addedSuccessfully) {
+                    // Drop any items that couldn't fit
+                    player.getWorld().dropItemNaturally(player.getLocation(), stack);
+                    allFit = false;
+                }
+            }
+
+            if (!allFit) {
+                messageService.sendMessage(player, "inventory_full_items_dropped");
             }
         }
 
@@ -571,8 +608,31 @@ public class SpawnerStackerHandler implements Listener {
         player.updateInventory();
     }
 
+    private boolean addItemAvoidingVanillaSpawners(Player player, ItemStack item) {
+        // If it's not a spawner, just use the normal method
+        if (item.getType() != Material.SPAWNER) {
+            Map<Integer, ItemStack> failed = player.getInventory().addItem(item);
+            return failed.isEmpty();
+        }
+
+        // For spawners, find an empty slot in the main inventory
+        Inventory inv = player.getInventory();
+        for (int i = 0; i < 36; i++) {  // Main inventory slots are 0-35
+            ItemStack currentItem = inv.getItem(i);
+            if (currentItem == null) {
+                // Found an empty slot in main inventory
+                inv.setItem(i, item.clone());
+                return true;
+            }
+        }
+
+        // No empty slots found in main inventory
+        return false;
+    }
+
     public void closeAllViewersInventory(String spawnerId) {
-        Set<UUID> viewers = activeViewers.getOrDefault(spawnerId, Collections.emptySet());
+        Set<UUID> viewers = activeViewers.get(spawnerId);
+        if (viewers == null || viewers.isEmpty()) return;
 
         // Create a copy to avoid concurrent modification
         Set<UUID> viewersCopy = new HashSet<>(viewers);
@@ -583,6 +643,29 @@ public class SpawnerStackerHandler implements Listener {
             if (viewer != null && viewer.isOnline()) {
                 viewer.closeInventory();
             }
+        }
+    }
+
+    // Helper classes for optimized inventory scanning
+    private static class SpawnerSlot {
+        final int slotIndex;
+        final int amount;
+
+        SpawnerSlot(int slotIndex, int amount) {
+            this.slotIndex = slotIndex;
+            this.amount = amount;
+        }
+    }
+
+    private static class InventoryScanResult {
+        final int availableSpawners;
+        final boolean hasDifferentType;
+        final List<SpawnerSlot> spawnerSlots;
+
+        InventoryScanResult(int availableSpawners, boolean hasDifferentType, List<SpawnerSlot> spawnerSlots) {
+            this.availableSpawners = availableSpawners;
+            this.hasDifferentType = hasDifferentType;
+            this.spawnerSlots = spawnerSlots;
         }
     }
 }

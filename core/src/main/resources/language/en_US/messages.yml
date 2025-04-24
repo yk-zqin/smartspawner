@@ -86,6 +86,10 @@ spawner_stacker_minimum_reached:
   message: "&#ff5252ꜱᴛᴀᴄᴋ ʟɪᴍɪᴛ ʀᴇᴀᴄʜᴇᴅ &#f8f8ff+%amount% &#ff5252ᴡɪʟʟ ʙᴇ ꜱᴛᴀᴄᴋᴇᴅ."
   sound: block.note_block.pling
 
+spawner_cannot_remove_last:
+  action_bar: "&#ff5252ᴄᴀɴɴᴏᴛ ʀᴇᴍᴏᴠᴇ ʟᴀꜱᴛ ꜱᴘᴀᴡɴᴇʀ"
+  sound: block.note_block.pling
+
 spawner_insufficient_quantity:
   action_bar: "&#ff5252ɪɴꜱᴜꜰꜰɪᴄɪᴇɴᴛ ꜱᴘᴀᴡɴᴇʀꜱ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
   sound: block.note_block.pling
@@ -110,9 +114,8 @@ spawner_stack_full:
   sound: block.note_block.pling
 
 spawner_stack_success:
-  action_bar: "&#37eb9a+%amount% &#f8f8ffꜱᴘᴀᴡɴᴇʀꜱ ꜱᴛᴀᴄᴋᴇᴅ"
+  action_bar: "&#37eb9aꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ꜱᴛᴀᴄᴋᴇᴅ &#f8f8ff%amount% &#37eb9aꜱᴘᴀᴡɴᴇʀꜱ"
   sound: entity.player.levelup
-
 # ------------------------------------------------------
 #             Spawner - List GUI Interaction
 # ------------------------------------------------------
@@ -187,11 +190,11 @@ shop:
 
   # Sale success messages
   sell_all:
-    message: "ꜱᴏʟᴅ &#f8f8ff%amount% ɪᴛᴇᴍꜱ ꜰᴏʀ &#37eb9a+$%price%"
+    message: "&#e6e6faꜱᴏʟᴅ &#f0c857%amount% ɪᴛᴇᴍꜱ&#e6e6fa ꜰᴏʀ &#37eb9a+$%price%"
     sound: block.note_block.bell
 
   sell_all_with_tax:
-    message: "ꜱᴏʟᴅ &#f8f8ff%amount% ɪᴛᴇᴍꜱ ꜰᴏʀ &#37eb9a+$%price%"
+    message: "&#e6e6faꜱᴏʟᴅ &#f0c857%amount% ɪᴛᴇᴍꜱ&#e6e6fa ꜰᴏʀ &#37eb9a+$%price%"
     action_bar: "&#37eb9a$%gross% &#f8f8ff| &#ff5252ᴛᴀx: -%tax%%"
     sound: block.note_block.bell
 

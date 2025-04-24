@@ -16,7 +16,7 @@ public class LanguageUpdater {
     private final String currentVersion;
     private final JavaPlugin plugin;
     private static final String LANGUAGE_VERSION_KEY = "language_version";
-    private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en_US");
+    private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en_US", "vi_VN");
 
     // Track which file types to update
     private final Set<LanguageFileType> activeFileTypes = new HashSet<>();

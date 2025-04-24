@@ -1,22 +1,44 @@
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#   ███████╗███╗   ███╗ █████╗ ██████╗ ████████╗███████╗██████╗  █████╗ ██╗    ██╗███╗   ██╗███████╗██████╗
+#   ██╔════╝████╗ ████║██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║    ██║████╗  ██║██╔════╝██╔══██╗
+#   ███████╗██╔████╔██║███████║██████╔╝   ██║   ███████╗██████╔╝███████║██║ █╗ ██║██╔██╗ ██║█████╗  ██████╔╝
+#   ╚════██║██║╚██╔╝██║██╔══██║██╔══██╗   ██║   ╚════██║██╔═══╝ ██╔══██║██║███╗██║██║╚██╗██║██╔══╝  ██╔══██╗
+#   ███████║██║ ╚═╝ ██║██║  ██║██║  ██║   ██║   ███████║██║     ██║  ██║╚███╔███╔╝██║ ╚████║███████╗██║  ██║
+#   ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#
+#   NOTE: Text placeholders in small caps (ᴇxᴀᴍᴘʟᴇ) will be automatically
+#   converted to small caps in-game. Numeric placeholders like %amount% or
+#   %chance% will remain as-is because they are not affected by the small caps.
+
 custom_item:
+  # Appearance of smart spawner items in inventory and tooltips
   spawner:
-    name: "&#a782ec%ᴇɴᴛɪᴛʏ% Spawner"
+    name: "&#a782ecsᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%"
     loot_items: "  &#e6e6fa•  %amount% %ɪᴛᴇᴍ_ɴᴀᴍᴇ% &#b19cd9(%chance%%)"
     loot_items_empty: "  &#e6e6fa• ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ"
     lore:
       - ""
       - "&#9370db◈ &#8a2be2ᴛʜôɴɢ ᴛɪɴ:"
-      - "  &#e6e6fa•  ᴋɪɴʜ ɴɢʜɪệᴍ ᴛʜưởɴɢ: &#b19cd9%exp%"
+      - "  &#e6e6fa•  ᴋɪɴʜ ɴɢʜɪệᴍ: &#b19cd9%exp%"
       - ""
-      - "&#9370db◈ &#8a2be2ᴠậᴛ ᴘʜẩᴍ ʀơɪ ʀᴀ:"
+      - "&#9370db◈ &#8a2be2ᴠậᴛ ᴘʜẩᴍ:"
       - "%loot_items%"
       - ""
 
+  # Appearance of vanilla spawner items in inventory and tooltips
+  # Available placeholders: %entity%, %ᴇɴᴛɪᴛʏ%
+  # Delete this section if you don't want to use custom vanilla spawners name and lore
   vanilla_spawner:
     name: ""
     lore:
 
+# Item display names
 item:
+  # These names are used when displaying potential drops in spawner tooltips
+  # For multilingual support, replace with corresponding names from your language
+
+  # Animal & Fish Drops
   LEATHER:
     name: "Da"
   STRING:
@@ -48,6 +70,7 @@ item:
   TROPICAL_FISH:
     name: "Cá Nhiệt Đới"
 
+  # Hostile Mob Drops
   BONE:
     name: "Xương"
   BONE_MEAL:
@@ -77,8 +100,9 @@ item:
   BREEZE_ROD:
     name: "Que Gió"
   WITHER_SKELETON_SKULL:
-    name: "Đầu Wither Skeleton"
+    name: "Đầu Xương Khô Héo"
 
+  # Weapons & Tools
   BOW:
     name: "Cung"
   CROSSBOW:
@@ -100,12 +124,13 @@ item:
   SADDLE:
     name: "Yên Ngựa"
 
+  # Materials & Resources
   COPPER_INGOT:
     name: "Thỏi Đồng"
   PRISMARINE_SHARD:
-    name: "Mảnh Prismarine"
+    name: "Mảnh Lăng Trụ Biển"
   PRISMARINE_CRYSTALS:
-    name: "Tinh Thể Prismarine"
+    name: "Tinh Thể Lăng Trụ Biển"
   WET_SPONGE:
     name: "Bọt Biển Ướt"
   EMERALD:
@@ -123,6 +148,7 @@ item:
   COAL:
     name: "Than"
 
+  # Miscellaneous Items
   GLOW_INK_SAC:
     name: "Túi Mực Phát Sáng"
   INK_SAC:
@@ -144,7 +170,6 @@ item:
   STICK:
     name: "Gậy"
   SCULK_CATALYST:
-    name: "Cảm biến Sculk được hiểu chỉnh"
+    name: "Khối xúc tác Sculk"
   TIDE_ARMOR_TRIM_SMITHING_TEMPLATE:
-    name: "Trang trí giáp"
-
+    name: "Trang trí giáp Thủy Triều"

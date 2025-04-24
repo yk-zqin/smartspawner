@@ -77,7 +77,7 @@ public class LanguageManager {
         this.materialNameCache = new LRUCache<>(250);
 
         loadLanguages();
-        // saveDefaultFiles();
+        saveDefaultFiles();
         cacheDefaultLocaleData();
     }
 
@@ -99,7 +99,7 @@ public class LanguageManager {
         this.materialNameCache = new LRUCache<>(250);
 
         loadLanguages(fileTypes);
-        // saveDefaultFiles();
+        saveDefaultFiles();
         cacheDefaultLocaleData();
     }
 

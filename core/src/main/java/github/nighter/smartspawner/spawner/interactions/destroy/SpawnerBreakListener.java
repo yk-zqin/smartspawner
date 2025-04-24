@@ -219,9 +219,8 @@ public class SpawnerBreakListener implements Listener {
         }
 
         // Drop the items individually (no batch operations)
-        for (int i = 0; i < dropAmount; i++) {
-            world.dropItemNaturally(location, template.clone());
-        }
+        template.setAmount(dropAmount);
+        world.dropItemNaturally(location, template.clone());
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
     }

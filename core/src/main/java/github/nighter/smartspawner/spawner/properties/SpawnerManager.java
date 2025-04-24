@@ -345,13 +345,6 @@ public class SpawnerManager {
     }
 
     public void cleanupAllSpawners() {
-        for (SpawnerData spawner : spawners.values()) {
-            try {
-                spawner.removeHologram();
-            } catch (Exception e) {
-                logger.warning("Failed to remove hologram for spawner during shutdown: " + e.getMessage());
-            }
-        }
         spawners.clear();
         locationIndex.clear();
         worldIndex.clear();

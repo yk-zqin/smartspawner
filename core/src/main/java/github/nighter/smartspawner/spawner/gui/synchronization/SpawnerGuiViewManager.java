@@ -413,7 +413,7 @@ public class SpawnerGuiViewManager implements Listener {
         int percentStorage = (int) ((double) currentItems / maxSlots * 100);
 
         Map<String, String> replacements = new HashMap<>();
-        replacements.put("max_slots", String.valueOf(maxSlots));
+        replacements.put("max_slots", languageManager.formatNumber(maxSlots));
         replacements.put("current_items", String.valueOf(currentItems));
         replacements.put("percent_storage", String.valueOf(percentStorage));
 
