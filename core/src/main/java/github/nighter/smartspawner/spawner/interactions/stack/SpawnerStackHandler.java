@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.interactions.stack;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerStackEvent;
 import github.nighter.smartspawner.hooks.protections.CheckStackBlock;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
@@ -211,6 +212,10 @@ public class SpawnerStackHandler {
 
         int amountToStack = stackAll ? Math.min(spaceLeft, itemAmount) : 1;
         int newStack = currentStack + amountToStack;
+
+        SpawnerStackEvent e = new SpawnerStackEvent(player, targetSpawner.getSpawnerLocation(), currentStack, newStack);
+        Bukkit.getPluginManager().callEvent(e);
+        if(e.isCancelled()) return false;
 
         // Update spawner data
         targetSpawner.setStackSize(newStack);

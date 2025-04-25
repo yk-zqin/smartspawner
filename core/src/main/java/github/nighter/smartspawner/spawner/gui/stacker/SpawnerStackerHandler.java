@@ -1,6 +1,8 @@
 package github.nighter.smartspawner.spawner.gui.stacker;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerRemoveEvent;
+import github.nighter.smartspawner.api.events.SpawnerStackEvent;
 import github.nighter.smartspawner.holders.SpawnerStackerHolder;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
@@ -10,6 +12,7 @@ import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.Scheduler;
 
 import github.nighter.smartspawner.utils.SpawnerTypeChecker;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.CreatureSpawner;
@@ -282,6 +285,9 @@ public class SpawnerStackerHandler implements Listener {
             return;
         }
 
+        SpawnerRemoveEvent e = new SpawnerRemoveEvent(player, spawner.getSpawnerLocation(), targetSize, actualChange);
+        Bukkit.getPluginManager().callEvent(e);
+        if(e.isCancelled()) return;
         // Update stack size and give spawners to player
         spawner.setStackSize(targetSize, player);
         giveSpawnersToPlayer(player, actualChange, spawner.getEntityType());
@@ -328,6 +334,9 @@ public class SpawnerStackerHandler implements Listener {
         }
 
         // Remove from inventory and update stack
+        SpawnerStackEvent e = new SpawnerStackEvent(player, spawner.getSpawnerLocation(), spawner.getStackSize(), spawner.getStackSize() + actualChange, SpawnerStackEvent.StackSource.GUI);
+        Bukkit.getPluginManager().callEvent(e);
+        if(e.isCancelled()) return;
         removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
         spawner.setStackSize(currentSize + actualChange, player);
 
