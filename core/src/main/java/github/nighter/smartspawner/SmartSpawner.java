@@ -33,6 +33,7 @@ import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
 import github.nighter.smartspawner.spawner.loot.EntityLootRegistry;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerRangeChecker;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
 import github.nighter.smartspawner.language.LanguageManager;
@@ -89,6 +90,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerStorageAction spawnerStorageAction;
 
     // Core managers
+    private SpawnerFileHandler spawnerFileHandler;
     private SpawnerManager spawnerManager;
     private ShopIntegrationManager shopIntegrationManager;
     private HopperHandler hopperHandler;
@@ -187,6 +189,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         // Initialize core components in order
         this.spawnerStorageUI = new SpawnerStorageUI(this);
+        this.spawnerFileHandler = new SpawnerFileHandler(this);
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerManager.reloadAllHolograms();
         this.spawnerListGUI = new SpawnerListGUI(this);
@@ -342,16 +345,16 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         getLogger().info("SmartSpawner has been disabled!");
     }
 
-    private void shutdownSaleLogger() {
-        if (getConfig().getBoolean("log_transactions.enabled", true)) {
-            SaleLogger.getInstance().shutdown();
-        }
-    }
-
     private void saveAndCleanup() {
         if (spawnerManager != null) {
             try {
-                spawnerManager.saveSpawnerData();
+                // First shutdown the file handler to flush any pending changes
+                // but avoid starting new tasks
+                if (spawnerFileHandler != null) {
+                    spawnerFileHandler.shutdown();
+                }
+
+                // Clean up the spawner manager
                 spawnerManager.cleanupAllSpawners();
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Error saving spawner data during shutdown", e);
@@ -365,6 +368,12 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerHandler != null) spawnerStackerHandler.cleanupAll();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
+    }
+
+    private void shutdownSaleLogger() {
+        if (getConfig().getBoolean("log_transactions.enabled", true)) {
+            SaleLogger.getInstance().shutdown();
+        }
     }
 
     @FunctionalInterface

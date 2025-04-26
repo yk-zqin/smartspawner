@@ -1,13 +1,14 @@
 package github.nighter.smartspawner.spawner.interactions.destroy;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.hooks.protections.CheckBreakBlock;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
-import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
+import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -24,9 +25,6 @@ import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Handles spawner break interactions, including permissions checking,
  * silk touch requirements, and drop processing.
@@ -39,6 +37,7 @@ public class SpawnerBreakListener implements Listener {
     private final SpawnerManager spawnerManager;
     private final HopperHandler hopperHandler;
     private final SpawnerItemFactory spawnerItemFactory;
+    private final SpawnerFileHandler spawnerFileHandler;
 
     public SpawnerBreakListener(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -46,6 +45,7 @@ public class SpawnerBreakListener implements Listener {
         this.spawnerManager = plugin.getSpawnerManager();
         this.hopperHandler = plugin.getHopperHandler();
         this.spawnerItemFactory = plugin.getSpawnerItemFactory();
+        this.spawnerFileHandler = plugin.getSpawnerFileHandler();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -133,6 +133,9 @@ public class SpawnerBreakListener implements Listener {
             // Clean up if no stacks remain
             if (spawner.getStackSize() <= 0) {
                 cleanupSpawner(block, spawner);
+            } else {
+                // Just mark the spawner as modified instead of saving directly
+                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             }
         }
     }
@@ -248,12 +251,21 @@ public class SpawnerBreakListener implements Listener {
     }
 
     private void cleanupSpawner(Block block, SpawnerData spawner) {
+        // Stop the spawner and remove the block
         spawner.setSpawnerStop(true);
         block.setType(Material.AIR);
-        spawnerManager.removeSpawner(spawner.getSpawnerId());
 
-        // Save asynchronously
-        CompletableFuture.runAsync(spawnerManager::saveSpawnerData);
+        // Get ID before removing from manager
+        String spawnerId = spawner.getSpawnerId();
+
+        // Remove from memory first
+        spawnerManager.removeSpawner(spawnerId);
+
+        // Mark for deletion instead of immediately deleting
+        spawnerFileHandler.markSpawnerDeleted(spawnerId);
+
+        // Let the file handler's batching system handle the actual deletion
+        // This avoids unnecessary immediate writes to disk
     }
 
     private void cleanupAssociatedHopper(Block block) {
