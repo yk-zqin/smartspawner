@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.interactions.place;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerPlaceEvent;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
@@ -9,6 +10,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.utils.SpawnerTypeChecker; // Add this import
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -89,6 +91,16 @@ public class SpawnerPlaceListener implements Listener {
         if (storedEntityType == null || storedEntityType == EntityType.UNKNOWN) {
             return;
         }
+
+        if(SpawnerPlaceEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), 1);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
         plugin.debug("Player: " + player.getName() + " placed spawner, isOp: " + player.isOp() +
                 ", isVanillaSpawner: " + isVanillaSpawner + ", entityType: " + storedEntityType);
 

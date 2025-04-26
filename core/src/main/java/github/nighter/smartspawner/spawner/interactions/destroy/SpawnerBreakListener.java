@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.spawner.interactions.destroy;
 
-import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerPlayerBreakEvent;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.hooks.protections.CheckBreakBlock;
@@ -95,12 +95,15 @@ public class SpawnerBreakListener implements Listener {
         // Handle spawner based on type
         if (spawner != null) {
             handleSpawnerBreak(block, spawner, player);
-
             // Clean up associated tasks
             plugin.getRangeChecker().stopSpawnerTask(spawner);
         } else {
             // Fallback to vanilla spawner handling
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
+            if(callAPIEvent(player, block.getLocation(), 1)) {
+                event.setCancelled(true);
+                return;
+            }
             handleVanillaSpawnerBreak(block, creatureSpawner, player);
         }
 
@@ -122,7 +125,7 @@ public class SpawnerBreakListener implements Listener {
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
 
         // Process drops based on crouching state
-        SpawnerBreakResult result = processDrops(location, spawner, player.isSneaking(), block);
+        SpawnerBreakResult result = processDrops(player, location, spawner, player.isSneaking(), block);
 
         if (result.isSuccess()) {
             // Handle tool durability
@@ -189,7 +192,7 @@ public class SpawnerBreakListener implements Listener {
         return true;
     }
 
-    private SpawnerBreakResult processDrops(Location location, SpawnerData spawner, boolean isCrouching, Block spawnerBlock) {
+    private SpawnerBreakResult processDrops(Player player, Location location, SpawnerData spawner, boolean isCrouching, Block spawnerBlock) {
         final int currentStackSize = spawner.getStackSize();
         final int durabilityLoss = plugin.getConfig().getInt("spawner_break.durability_loss", 1);
 
@@ -203,21 +206,24 @@ public class SpawnerBreakListener implements Listener {
         ItemStack template = spawnerItemFactory.createSpawnerItem(entityType);
 
         int dropAmount;
-
+        
         if (isCrouching) {
             // Crouching behavior: Drop up to MAX_STACK_SIZE (64)
             if (currentStackSize <= MAX_STACK_SIZE) {
                 // If stack is 64 or less, drop all and remove spawner
                 dropAmount = currentStackSize;
+                if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 cleanupSpawner(spawnerBlock, spawner);
             } else {
                 // If stack is more than 64, drop 64 and reduce stack
                 dropAmount = MAX_STACK_SIZE;
+                if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
             }
         } else {
             // Normal behavior: Drop 1 spawner
             dropAmount = 1;
+            if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
             spawner.decreaseStackSizeByOne();
         }
 
@@ -226,6 +232,15 @@ public class SpawnerBreakListener implements Listener {
         world.dropItemNaturally(location, template.clone());
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
+    }
+
+    private boolean callAPIEvent(Player player, Location location, int dropAmount) {
+        if(SpawnerPlayerBreakEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerPlayerBreakEvent e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
+            Bukkit.getPluginManager().callEvent(e);
+            return e.isCancelled();
+        }
+        return false;
     }
 
     private void reduceDurability(ItemStack tool, Player player, int durabilityLoss) {

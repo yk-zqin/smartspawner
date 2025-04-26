@@ -1,9 +1,11 @@
 package github.nighter.smartspawner.spawner.interactions.type;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerEggChangeEvent;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;
@@ -86,6 +88,12 @@ public class SpawnEggHandler {
      * @param newType     The new entity type
      */
     private void updateSpawner(Player player, CreatureSpawner spawner, SpawnerData spawnerData, EntityType newType) {
+        if(SpawnerEggChangeEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerEggChangeEvent e = new SpawnerEggChangeEvent(player, spawner.getLocation(), spawnerData.getEntityType(), newType);
+            Bukkit.getPluginManager().callEvent(e);
+            if(e.isCancelled()) return;
+        }
+
         // Update spawner data
         spawnerData.setEntityType(newType);
 
