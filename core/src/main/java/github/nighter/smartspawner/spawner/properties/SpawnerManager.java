@@ -29,7 +29,7 @@ public class SpawnerManager {
         this.logger = plugin.getLogger();
 
         // Initialize file handler
-        this.spawnerFileHandler = new SpawnerFileHandler(plugin);
+        this.spawnerFileHandler = plugin.getSpawnerFileHandler();
 
         // Load spawners from file
         loadSpawnerData();
@@ -107,7 +107,6 @@ public class SpawnerManager {
 
             spawners.remove(id);
         }
-        spawnerFileHandler.deleteSpawnerFromFile(id);
     }
 
     /**
@@ -137,17 +136,6 @@ public class SpawnerManager {
     }
 
     /**
-     * Rebuilds world indexes - useful after world loads/unloads
-     */
-    public void reindexWorlds() {
-        worldIndex.clear();
-        for (SpawnerData spawner : spawners.values()) {
-            String worldName = spawner.getSpawnerLocation().getWorld().getName();
-            worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
-        }
-    }
-
-    /**
      * Gets a spawner by its location in the world
      *
      * @param location The location to check
@@ -174,38 +162,6 @@ public class SpawnerManager {
      */
     public List<SpawnerData> getAllSpawners() {
         return new ArrayList<>(spawners.values());
-    }
-
-    /**
-     * Validates loaded spawners to ensure they have valid blocks
-     * This should be called after all spawners are loaded
-     */
-    public void validateLoadedSpawners() {
-        Scheduler.runTaskAsync(() -> {
-            logger.info("Starting validation of " + spawners.size() + " loaded spawners...");
-            int invalidCount = 0;
-
-            List<String> invalidSpawners = new ArrayList<>();
-
-            for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
-                String id = entry.getKey();
-                SpawnerData data = entry.getValue();
-
-                boolean valid = spawnerFileHandler.validateSpawnerBlock(id, data.getSpawnerLocation());
-                if (!valid) {
-                    invalidSpawners.add(id);
-                    invalidCount++;
-                }
-            }
-
-            // Remove invalid spawners
-            for (String id : invalidSpawners) {
-                spawners.remove(id);
-                spawnerFileHandler.deleteSpawnerFromFile(id);
-            }
-
-            logger.info("Spawner validation complete. Found " + invalidCount + " invalid spawners.");
-        });
     }
 
     /**
@@ -308,13 +264,6 @@ public class SpawnerManager {
      */
     public void saveSpawnerData() {
         spawnerFileHandler.saveAllSpawners(spawners);
-    }
-
-    /**
-     * Saves only modified spawners
-     */
-    public void saveModifiedSpawners() {
-        spawnerFileHandler.saveModifiedSpawners();
     }
 
     // ===============================================================
