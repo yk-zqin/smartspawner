@@ -340,9 +340,10 @@ public class SpawnerStackerHandler implements Listener {
             SpawnerStackEvent e = new SpawnerStackEvent(player, spawner.getSpawnerLocation(), spawner.getStackSize(), spawner.getStackSize() + actualChange, SpawnerStackEvent.StackSource.GUI);
             Bukkit.getPluginManager().callEvent(e);
             if (e.isCancelled()) return;
-            removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
-            spawner.setStackSize(currentSize + actualChange, player);
         }
+        removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
+        spawner.setStackSize(currentSize + actualChange, player);
+
 
         // Notify if max stack reached
         if (actualChange < changeAmount) {
