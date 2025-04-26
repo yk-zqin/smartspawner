@@ -3,6 +3,8 @@ package github.nighter.smartspawner.api.events;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * SpawnerPlaceEvent is called when a spawner being placed by a player.
@@ -10,6 +12,8 @@ import org.bukkit.event.Cancellable;
 public class SpawnerPlaceEvent extends SpawnerEvent implements Cancellable {
     private final Player player;
     private boolean cancelled = false;
+
+    private static final HandlerList handlers = new HandlerList();
 
     /**
      * The constructor for the event.
@@ -24,7 +28,6 @@ public class SpawnerPlaceEvent extends SpawnerEvent implements Cancellable {
     }
 
     /**
-     * Get the player who placed the spawner.
      * @return The player who placed the spawner.
      */
     public Player getPlayer() {
@@ -39,5 +42,14 @@ public class SpawnerPlaceEvent extends SpawnerEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
+    }
+
+    @Override
+    public @NotNull HandlerList getHandlers() {
+        return handlers;
+    }
+
+    public static @NotNull HandlerList getHandlerList() {
+        return handlers;
     }
 }

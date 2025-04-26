@@ -3,10 +3,14 @@ package github.nighter.smartspawner.api.events;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 public class SpawnerPlayerBreakEvent extends SpawnerBreakEvent implements Cancellable {
     private final Player player;
     private boolean cancelled = false;
+
+    private static final HandlerList handlers = new HandlerList();
 
     /**
      * The constructor for the event.
@@ -21,7 +25,6 @@ public class SpawnerPlayerBreakEvent extends SpawnerBreakEvent implements Cancel
     }
 
     /**
-     * Get the player who broke the spawner
      * @return Player who broke the spawner
      */
     public Player getPlayer() {
@@ -36,5 +39,14 @@ public class SpawnerPlayerBreakEvent extends SpawnerBreakEvent implements Cancel
     @Override
     public void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
+    }
+
+    @Override
+    public @NotNull HandlerList getHandlers() {
+        return handlers;
+    }
+
+    public static @NotNull HandlerList getHandlerList() {
+        return handlers;
     }
 }

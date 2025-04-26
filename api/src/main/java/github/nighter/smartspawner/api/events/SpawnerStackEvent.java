@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpawnerStackEvent extends Event implements Cancellable {
     private final Player player;
-    private Location location;
-    private int oldQuantity, newQuantity;
+    private final Location location;
+    private final int oldQuantity, newQuantity;
     private final StackSource source;
     private boolean cancelled = false;
 
@@ -47,14 +47,23 @@ public class SpawnerStackEvent extends Event implements Cancellable {
         return location;
     }
 
+    /**
+     * @return The quantity before stack operation
+     */
     public int getOldQuantity() {
         return oldQuantity;
     }
 
+    /**
+     * @return The quantity post stack operation
+     */
     public int getNewQuantity() {
         return newQuantity;
     }
 
+    /**
+     * @return The source of stack operation (PLACE, GUI)
+     */
     public StackSource getSource() {
         return source;
     }
