@@ -92,7 +92,6 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        SpawnerPlayerBreakEvent e;
         // Handle spawner based on type
         if (spawner != null) {
             handleSpawnerBreak(block, spawner, player);
@@ -101,9 +100,7 @@ public class SpawnerBreakListener implements Listener {
         } else {
             // Fallback to vanilla spawner handling
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
-            e = new SpawnerPlayerBreakEvent(player, block.getLocation(), spawner.getStackSize());
-            Bukkit.getPluginManager().callEvent(e);
-            if(e.isCancelled()) {
+            if(callAPIEvent(player, block.getLocation(), 1)) {
                 event.setCancelled(true);
                 return;
             }
@@ -239,8 +236,7 @@ public class SpawnerBreakListener implements Listener {
 
     private boolean callAPIEvent(Player player, Location location, int dropAmount) {
         if(SpawnerPlayerBreakEvent.getHandlerList().getRegisteredListeners().length != 0) {
-            SpawnerPlayerBreakEvent e;
-            e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
+            SpawnerPlayerBreakEvent e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
             Bukkit.getPluginManager().callEvent(e);
             return e.isCancelled();
         }
