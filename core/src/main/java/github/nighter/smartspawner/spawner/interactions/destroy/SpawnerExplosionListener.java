@@ -32,20 +32,23 @@ public class SpawnerExplosionListener implements Listener {
                 SpawnerData spawnerData = this.spawnerManager.getSpawnerByLocation(block.getLocation());
 
                 if (spawnerData != null) {
-                    SpawnerExplodeEvent e;
+                    SpawnerExplodeEvent e = null;
                     if (!plugin.getConfig().getBoolean("spawner_properties.default.allow_explosions",false)) {
-                        e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, false);
+                        if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
+                            e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, false);
                         // Add the spawner block to the list of blocks to remove
                         blocksToRemove.add(block);
                         // Close all viewers of the spawner
                         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawnerData);
                     } else {
                         String spawnerId = spawnerData.getSpawnerId();
-                        e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, true);
+                        if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
+                            e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, true);
                         spawnerManager.removeSpawner(spawnerId);
                         plugin.getRangeChecker().stopSpawnerTask(spawnerData);
                     }
-                    Bukkit.getPluginManager().callEvent(e);
+                    if(e != null)
+                        Bukkit.getPluginManager().callEvent(e);
                 } else {
                     // If no spawner data is found, we still want the spawner block to be destroyed
                     // So don't add it to the blocksToRemove list

@@ -213,9 +213,11 @@ public class SpawnerStackHandler {
         int amountToStack = stackAll ? Math.min(spaceLeft, itemAmount) : 1;
         int newStack = currentStack + amountToStack;
 
-        SpawnerStackEvent e = new SpawnerStackEvent(player, targetSpawner.getSpawnerLocation(), currentStack, newStack);
-        Bukkit.getPluginManager().callEvent(e);
-        if(e.isCancelled()) return false;
+        if(SpawnerStackEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerStackEvent e = new SpawnerStackEvent(player, targetSpawner.getSpawnerLocation(), currentStack, newStack);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) return false;
+        }
 
         // Update spawner data
         targetSpawner.setStackSize(newStack);

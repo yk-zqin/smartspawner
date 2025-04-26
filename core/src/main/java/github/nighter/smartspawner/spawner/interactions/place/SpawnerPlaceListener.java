@@ -92,11 +92,13 @@ public class SpawnerPlaceListener implements Listener {
             return;
         }
 
-        SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), 1);
-        Bukkit.getPluginManager().callEvent(e);
-        if(e.isCancelled()) {
-            event.setCancelled(true);
-            return;
+        if(SpawnerPlaceEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), 1);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) {
+                event.setCancelled(true);
+                return;
+            }
         }
 
         plugin.debug("Player: " + player.getName() + " placed spawner, isOp: " + player.isOp() +

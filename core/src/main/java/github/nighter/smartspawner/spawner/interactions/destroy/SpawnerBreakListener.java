@@ -1,6 +1,5 @@
 package github.nighter.smartspawner.spawner.interactions.destroy;
 
-import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerPlayerBreakEvent;
 import github.nighter.smartspawner.extras.HopperHandler;
@@ -210,31 +209,24 @@ public class SpawnerBreakListener implements Listener {
         ItemStack template = spawnerItemFactory.createSpawnerItem(entityType);
 
         int dropAmount;
-        SpawnerPlayerBreakEvent e;
         
         if (isCrouching) {
             // Crouching behavior: Drop up to MAX_STACK_SIZE (64)
             if (currentStackSize <= MAX_STACK_SIZE) {
                 // If stack is 64 or less, drop all and remove spawner
                 dropAmount = currentStackSize;
-                e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
-                Bukkit.getPluginManager().callEvent(e);
-                if(e.isCancelled()) return new SpawnerBreakResult(false, dropAmount, 0);
+                if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 cleanupSpawner(spawnerBlock, spawner);
             } else {
                 // If stack is more than 64, drop 64 and reduce stack
                 dropAmount = MAX_STACK_SIZE;
-                e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
-                Bukkit.getPluginManager().callEvent(e);
-                if(e.isCancelled()) return new SpawnerBreakResult(false, dropAmount, 0);
+                if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
             }
         } else {
             // Normal behavior: Drop 1 spawner
             dropAmount = 1;
-            e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
-            Bukkit.getPluginManager().callEvent(e);
-            if(e.isCancelled()) return new SpawnerBreakResult(false, dropAmount, 0);
+            if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
             spawner.decreaseStackSizeByOne();
         }
 
@@ -243,6 +235,16 @@ public class SpawnerBreakListener implements Listener {
         world.dropItemNaturally(location, template.clone());
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
+    }
+
+    private boolean callAPIEvent(Player player, Location location, int dropAmount) {
+        if(SpawnerPlayerBreakEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerPlayerBreakEvent e;
+            e = new SpawnerPlayerBreakEvent(player, location, dropAmount);
+            Bukkit.getPluginManager().callEvent(e);
+            return e.isCancelled();
+        }
+        return false;
     }
 
     private void reduceDurability(ItemStack tool, Player player, int durabilityLoss) {

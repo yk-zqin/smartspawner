@@ -285,9 +285,11 @@ public class SpawnerStackerHandler implements Listener {
             return;
         }
 
-        SpawnerRemoveEvent e = new SpawnerRemoveEvent(player, spawner.getSpawnerLocation(), targetSize, actualChange);
-        Bukkit.getPluginManager().callEvent(e);
-        if(e.isCancelled()) return;
+        if(SpawnerRemoveEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerRemoveEvent e = new SpawnerRemoveEvent(player, spawner.getSpawnerLocation(), targetSize, actualChange);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) return;
+        }
         // Update stack size and give spawners to player
         spawner.setStackSize(targetSize, player);
         giveSpawnersToPlayer(player, actualChange, spawner.getEntityType());
@@ -334,11 +336,13 @@ public class SpawnerStackerHandler implements Listener {
         }
 
         // Remove from inventory and update stack
-        SpawnerStackEvent e = new SpawnerStackEvent(player, spawner.getSpawnerLocation(), spawner.getStackSize(), spawner.getStackSize() + actualChange, SpawnerStackEvent.StackSource.GUI);
-        Bukkit.getPluginManager().callEvent(e);
-        if(e.isCancelled()) return;
-        removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
-        spawner.setStackSize(currentSize + actualChange, player);
+        if(SpawnerStackEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerStackEvent e = new SpawnerStackEvent(player, spawner.getSpawnerLocation(), spawner.getStackSize(), spawner.getStackSize() + actualChange, SpawnerStackEvent.StackSource.GUI);
+            Bukkit.getPluginManager().callEvent(e);
+            if (e.isCancelled()) return;
+            removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
+            spawner.setStackSize(currentSize + actualChange, player);
+        }
 
         // Notify if max stack reached
         if (actualChange < changeAmount) {
