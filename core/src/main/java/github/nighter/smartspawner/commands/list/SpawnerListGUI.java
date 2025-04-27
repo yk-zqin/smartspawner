@@ -66,17 +66,19 @@ public class SpawnerListGUI implements Listener {
         }
 
         // For custom layout or any other slots, determine world by name
-        if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
+        if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.overworld.name")))) {
             listCommand.openSpawnerListGUI(player, "world", 1);
-        } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
+        } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.nether.name")))) {
             listCommand.openSpawnerListGUI(player, "world_nether", 1);
         } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
             listCommand.openSpawnerListGUI(player, "world_the_end", 1);
         } else {
             // For custom worlds, find the matching world
             for (World world : Bukkit.getWorlds()) {
+                String worldDisplayName = formatWorldName(world.getName());
+
                 if (spawnerManager.countSpawnersInWorld(world.getName()) > 0 &&
-                        displayName.equals(formatWorldName(world.getName()))) {
+                        displayName.contains(worldDisplayName)) {
                     listCommand.openSpawnerListGUI(player, world.getName(), 1);
                     break;
                 }
@@ -140,19 +142,13 @@ public class SpawnerListGUI implements Listener {
                 Location loc = spawner.getSpawnerLocation();
 
                 // Use the Scheduler to handle teleportation properly for both Bukkit and Folia
-                if (Scheduler.isFolia()) {
-                    player.teleportAsync(loc).thenAccept(success -> {
-                        if (success) {
-                            Scheduler.runEntityTask(player, () -> {
-                                messageService.sendMessage(player, "teleported_to_spawner");
-                            });
-                        }
-                    });
-                } else {
-                    // For non-Folia servers, teleport synchronously
-                    player.teleport(loc);
-                    messageService.sendMessage(player, "teleported_to_spawner");
-                }
+                player.teleportAsync(loc).thenAccept(success -> {
+                    if (success) {
+                        Scheduler.runEntityTask(player, () -> {
+                            messageService.sendMessage(player, "teleported_to_spawner");
+                        });
+                    }
+                });
             } else {
                 Player player = (Player) event.getWhoClicked();
                 messageService.sendMessage(player, "spawner_not_found");

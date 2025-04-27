@@ -210,13 +210,11 @@ command_usage:
   message: |
     &8&m
     &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    &#ab7afd&lLệɴʜ &#7b68ee&l&oSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    &#ab7afd» &#e6e6fa/ss reload &#7b68ee- &#a8e6cf&oᴛảɪ ʟạɪ ᴘʟᴜɢɪɴ
-    &#ab7afd» &#e6e6fa/ss list &#7b68ee- &#dcedc1&oᴅᴀɴʜ sáᴄʜ ʟồɴɢ sᴘᴀᴡɴ
-    &#ab7afd» &#e6e6fa/ss give &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffd3b6&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ ʟồɴɢ sᴘᴀᴡɴ
-    &#ab7afd» &#e6e6fa/ss giveVanillaSpawner &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffaaa5&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ ʟồɴɢ sᴘᴀᴡɴ ᴠᴀɴɪʟʟᴀ
-    &#ab7afd» &#e6e6fa/ss hologram &#7b68ee- &#ff8b94&oʙậᴛ/ᴛắᴛ ʜɪểɴ ᴛʜị ʜᴏʟᴏɢʀᴀᴍ
+    &#ab7afd» &#e6e6fa/ss ʀᴇʟᴏᴀᴅ &#7b68ee- &#a8e6cfʀᴇʟᴏᴀᴅ ᴄᴏɴꜰɪɢᴜʀᴀᴛɪᴏɴ
+    &#ab7afd» &#e6e6fa/ss ʟɪsᴛ &#7b68ee- &#dcedc1ᴏᴘᴇɴ ꜱᴘᴀᴡɴᴇʀ ʟɪꜱᴛ
+    &#ab7afd» &#e6e6fa/ss ʜᴏʟᴏɢʀᴀᴍ &#7b68ee- &#ff8b94ᴛᴏɢɢʟᴇ ʜᴏʟᴏɢʀᴀᴍ ᴠɪꜱɪʙɪʟɪᴛʏ
+    &#ab7afd» &#e6e6fa/ss ɢɪᴠᴇ &#c2a8ff<ᴘʟᴀʏᴇʀ> <ᴍᴏʙᴛʏᴘᴇ> [ᴀᴍᴏᴜɴᴛ] &#7b68ee- &#ffd3b6ɢɪᴠᴇ ꜱᴍᴀʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ
+    &#ab7afd» &#e6e6fa/ss ɢɪᴠᴇᴠᴀɴɪʟʟᴀsᴘᴀᴡɴᴇʀ &#c2a8ff<ᴘʟᴀʏᴇʀ> <ᴍᴏʙᴛʏᴘᴇ> [ᴀᴍᴏᴜɴᴛ] &#7b68ee- &#ffaaa5ɢɪᴠᴇ ᴠᴀɴɪʟʟᴀ ꜱᴘᴀᴡɴᴇʀꜱ
     &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   sound: entity.player.levelup
 

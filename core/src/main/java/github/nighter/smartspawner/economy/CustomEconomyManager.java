@@ -24,14 +24,8 @@ public class CustomEconomyManager {
     private final ItemPriceManager priceManager;
     private Economy economy;
     private boolean isVaultAvailable;
-
-    // Use a more efficient structure for the transaction cache with timestamps
     private final Map<String, CacheEntry> transactionCache = new ConcurrentHashMap<>();
-
-    // Add a cache for material price lookups to avoid repeated calls to priceManager
     private final Map<Material, Double> materialPriceCache = new ConcurrentHashMap<>();
-
-    // Reference to the cleanup task so we can cancel it when needed
     private Scheduler.Task cleanupTask;
 
     // Cache cleanup interval in minutes
@@ -145,6 +139,7 @@ public class CustomEconomyManager {
         double totalValue = 0.0;
         Map<Material, Long> materialAmounts = new HashMap<>();
         List<ItemStack> itemsToRemove = new ArrayList<>();
+        long totalItemCount = 0; // Add this to track total item count
 
         // First pass: consolidate by material and calculate values
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
@@ -166,6 +161,9 @@ public class CustomEconomyManager {
 
             // Calculate and accumulate value
             totalValue += price * amount;
+
+            // Track total items being sold
+            totalItemCount += amount;
 
             // Create item stacks for removal more efficiently
             createItemStacksForRemoval(template, amount, itemsToRemove);
@@ -195,8 +193,8 @@ public class CustomEconomyManager {
             Scheduler.runTask(() ->
                     plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
 
-            // Send success message
-            sendSellSuccessMessage(player, totalValue, itemsToRemove.size());
+            // Send success message with total item count instead of itemsToRemove.size()
+            sendSellSuccessMessage(player, totalValue, totalItemCount); // Changed to use totalItemCount
 
             return true;
         } else {
@@ -242,7 +240,7 @@ public class CustomEconomyManager {
         return entry != null ? entry.amount : 0.0;
     }
 
-    private void sendSellSuccessMessage(Player player, double amount, int itemCount) {
+    private void sendSellSuccessMessage(Player player, double amount, long itemCount) {
         String formattedAmount = formatPrice(amount);
         messageService.sendMessage(player, "shop.sell_all",
                 Map.of("price", formattedAmount, "amount", String.valueOf(itemCount)));

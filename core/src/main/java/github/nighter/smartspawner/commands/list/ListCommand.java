@@ -117,14 +117,6 @@ public class ListCommand {
                 Material material = getMaterialForWorldType(world.getEnvironment());
                 addWorldButton(inv, world.getName(), material, formatWorldName(world.getName()), slot++);
             }
-
-            // Fill with decoration
-            ItemStack decoration = createDecorationItem();
-            for (int i = 0; i < size; i++) {
-                if (inv.getItem(i) == null) {
-                    inv.setItem(i, decoration);
-                }
-            }
         }
 
         player.openInventory(inv);
@@ -224,14 +216,6 @@ public class ListCommand {
         // Get the lore as string array and convert to List
         String[] loreArray = languageManager.getGuiItemLore(path, placeholders);
         return Arrays.asList(loreArray);
-    }
-
-    private ItemStack createDecorationItem() {
-        ItemStack item = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(" ");
-        item.setItemMeta(meta);
-        return item;
     }
 
     private ItemStack createWorldButton(Material material, String name, List<String> lore) {
@@ -348,7 +332,7 @@ public class ListCommand {
 
     private void addNavigationButtons(Inventory inv, int currentPage, int totalPages) {
         if (currentPage > 1) {
-            ItemStack previousPage = new ItemStack(Material.ARROW);
+            ItemStack previousPage = new ItemStack(Material.SPECTRAL_ARROW);
             ItemMeta previousMeta = previousPage.getItemMeta();
             previousMeta.setDisplayName(languageManager.getGuiItemName("navigation.previous_page", new HashMap<>()));
             previousPage.setItemMeta(previousMeta);
@@ -356,7 +340,7 @@ public class ListCommand {
         }
 
         if (currentPage < totalPages) {
-            ItemStack nextPage = new ItemStack(Material.ARROW);
+            ItemStack nextPage = new ItemStack(Material.SPECTRAL_ARROW);
             ItemMeta nextMeta = nextPage.getItemMeta();
             nextMeta.setDisplayName(languageManager.getGuiItemName("navigation.next_page", new HashMap<>()));
             nextPage.setItemMeta(nextMeta);
@@ -365,7 +349,7 @@ public class ListCommand {
     }
 
     private void addBackButton(Inventory inv) {
-        ItemStack backButton = new ItemStack(Material.BARRIER);
+        ItemStack backButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta meta = backButton.getItemMeta();
         meta.setDisplayName(languageManager.getGuiItemName("navigation.back", new HashMap<>()));
         backButton.setItemMeta(meta);

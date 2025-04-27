@@ -265,9 +265,9 @@ public class LanguageManager {
                 }
 
                 // Log reload information
-                if (forceReload) {
-                    plugin.getLogger().info("Force reloaded " + fileName + " for locale " + locale);
-                }
+//                if (forceReload) {
+//                    plugin.getLogger().info("Force reloaded " + fileName + " for locale " + locale);
+//                }
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Failed to load " + fileName + " for locale " + locale + ". Using defaults.", e);
                 return defaultConfig; // Return default config if user config can't be loaded
