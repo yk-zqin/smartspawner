@@ -57,7 +57,7 @@ public class TextureWrapper {
         TEXTURE_MAP.put(EntityType.SKELETON_HORSE, "ac7d8a16d3f0f98b598df93f2c2d34e75171cd52dbf4a1211d7b84c019416a40");
         TEXTURE_MAP.put(EntityType.SLIME, "c7d29dbf3d98213ec2fb0ca25da74779e57bd0c1234268f828a3ec9869e15a9c");
         TEXTURE_MAP.put(EntityType.SNIFFER, "fe5a8341c478a134302981e6a7758ea4ecfd8d62a0df4067897e75502f9b25de");
-        TEXTURE_MAP.put(EntityType.SPIDER, "e5871c22b81c12e67f5aebd9afe0958b81cada6305c07599a07b01ab126ba2c4");
+        TEXTURE_MAP.put(EntityType.SPIDER, "35e248da2e108f09813a6b848a0fcef111300978180eda41d3d1a7a8e4dba3c3");
         TEXTURE_MAP.put(EntityType.SQUID, "d8705624daa2956aa45956c81bab5f4fdb2c74a596051e24192039aea3a8b8");
         TEXTURE_MAP.put(EntityType.STRAY, "2c5097916bc0565d30601c0eebfeb287277a34e867b4ea43c63819d53e89ede7");
         TEXTURE_MAP.put(EntityType.STRIDER, "125851a86ee1c54c94fc5bed017823dfb3ba08eddbcab2a914ef45b596c1603");
