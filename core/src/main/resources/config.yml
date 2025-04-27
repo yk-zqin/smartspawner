@@ -81,6 +81,9 @@ shop_integration:
   # 'auto' will attempt to detect your installed shop plugin automatically
   type: auto
 
+  # If true and no shop plugins are found during auto-detection, will try to use custom prices
+  use_custom_prices_if_no_shop: true
+
 # Transaction cooldown to prevent abuse
 sell_cooldown:
   enabled: true
@@ -95,6 +98,26 @@ tax:
 log_transactions:
   enabled: false
   file_path: "logs/shop_transactions.log"  # Path relative to plugin directory
+
+# ---------------------------------------------------
+#             Custom Economy Settings
+# ---------------------------------------------------
+# For adding custom sell prices for items without a shop plugin
+# This system uses item_prices.yml for individual item pricing
+# NOTE: If 'custom_economy' is enabled, 'shop_integration' will be disabled
+custom_economy:
+  # Enable or disable custom economy system
+  enabled: false
+
+  # Default economy plugin to use when no shop plugin is found
+  default: VAULT
+
+  # List of supported economy plugins (for future expansion)
+  supported:
+    - VAULT
+
+  # Default sell price for items not specifically listed in item_prices.yml
+  default_price: 1.0
 
 #---------------------------------------------------
 #              Item Collection System

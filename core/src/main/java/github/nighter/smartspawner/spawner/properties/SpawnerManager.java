@@ -232,6 +232,7 @@ public class SpawnerManager {
             for (String ghostId : ghostSpawnerIds) {
                 logger.info("Removing ghost spawner with ID: " + ghostId);
                 removeSpawner(ghostId);
+                spawnerFileHandler.deleteSpawnerFromFile(ghostId);
                 removed++;
             }
 
@@ -257,13 +258,6 @@ public class SpawnerManager {
      */
     public void queueSpawnerForSaving(String spawnerId) {
         spawnerFileHandler.queueSpawnerForSaving(spawnerId);
-    }
-
-    /**
-     * Saves all spawner data to file - mainly used for server shutdown
-     */
-    public void saveSpawnerData() {
-        spawnerFileHandler.saveAllSpawners(spawners);
     }
 
     // ===============================================================

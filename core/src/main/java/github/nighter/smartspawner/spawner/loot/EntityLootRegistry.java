@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.spawner.loot;
 
+import github.nighter.smartspawner.economy.ItemPriceManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -17,15 +18,22 @@ public class EntityLootRegistry {
     private final JavaPlugin plugin;
     private final FileConfiguration lootConfig;
     private final Map<String, EntityLootConfig> entityLootConfigs;
+    private final ItemPriceManager priceManager;
+    private final Map<Material, Double> cachedPrices;
 
-    public EntityLootRegistry(JavaPlugin plugin) {
+    public EntityLootRegistry(JavaPlugin plugin, ItemPriceManager priceManager) {
         this.plugin = plugin;
         this.lootConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "mob_drops.yml"));
         this.entityLootConfigs = new ConcurrentHashMap<>();
+        this.priceManager = priceManager;
+        this.cachedPrices = new ConcurrentHashMap<>();
         loadConfigurations();
     }
 
     private void loadConfigurations() {
+        // Clear caches before reloading
+        entityLootConfigs.clear();
+        cachedPrices.clear();
 
         // Iterate through all top-level keys (entity names)
         for (String entityName : lootConfig.getKeys(false)) {
@@ -52,6 +60,9 @@ public class EntityLootRegistry {
                         int minAmount = Integer.parseInt(amounts[0]);
                         int maxAmount = Integer.parseInt(amounts.length > 1 ? amounts[1] : amounts[0]);
                         double chance = itemSection.getDouble("chance", 100.0);
+
+                        // Get the sell price from the price manager, using cache for performance
+                        double sellPrice = getSellPrice(material);
 
                         Integer minDurability = null;
                         Integer maxDurability = null;
@@ -80,7 +91,7 @@ public class EntityLootRegistry {
 
                         items.add(new LootItem(material, minAmount, maxAmount, chance,
                                 minDurability, maxDurability, potionEffectType,
-                                potionDuration, potionAmplifier));
+                                potionDuration, potionAmplifier, sellPrice));
 
                     } catch (IllegalArgumentException e) {
                         plugin.getLogger().warning("Invalid material name: " + itemKey + " in entity loot config for " + entityName);
@@ -92,6 +103,11 @@ public class EntityLootRegistry {
         }
     }
 
+    // Cached method to get sell price
+    private double getSellPrice(Material material) {
+        return cachedPrices.computeIfAbsent(material, priceManager::getPrice);
+    }
+
     public EntityLootConfig getLootConfig(EntityType entityType) {
         if (entityType == null || entityType == EntityType.UNKNOWN) {
             return null;
@@ -101,6 +117,7 @@ public class EntityLootRegistry {
 
     public void reload() {
         entityLootConfigs.clear();
+        cachedPrices.clear();
         loadConfigurations();
     }
 }

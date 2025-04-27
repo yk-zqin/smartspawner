@@ -3,7 +3,9 @@ package github.nighter.smartspawner.hooks.shops;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.shops.api.economyshopgui.EconomyShopGUI;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.ShopGuiPlus;
+import github.nighter.smartspawner.hooks.economies.VaultEconomyIntegration;
 import github.nighter.smartspawner.hooks.shops.api.zshop.ZShop;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -15,7 +17,10 @@ public class ShopIntegrationManager {
     private final SmartSpawner plugin;
     private IShopIntegration shopIntegration;
     private boolean hasShopIntegration = false;
+    @Getter
     private boolean isShopGUIPlusEnabled = false;
+    @Getter
+    private boolean isUsingCustomPrices = false;
     private final Map<String, Function<SmartSpawner, IShopIntegration>> shopIntegrations = new LinkedHashMap<>();
 
     public ShopIntegrationManager(SmartSpawner plugin) {
@@ -28,9 +33,17 @@ public class ShopIntegrationManager {
         shopIntegrations.put("economyshopgui", EconomyShopGUI::new);
         shopIntegrations.put("shopguiplus", ShopGuiPlus::new);
         shopIntegrations.put("zshop", ZShop::new);
+        shopIntegrations.put("vault", VaultEconomyIntegration::new);
     }
 
     public void initialize() {
+        // Check if custom economy is enabled - if so, skip shop integration
+        if (plugin.getConfig().getBoolean("custom_economy.enabled", false)) {
+            plugin.getLogger().info("Using custom economy system - shop integration disabled");
+            setupVaultIntegration();
+            return;
+        }
+
         if (!plugin.getConfig().getBoolean("shop_integration.enabled", true)) {
             plugin.getLogger().info("Shop integration is disabled by configuration");
             return;
@@ -42,6 +55,22 @@ public class ShopIntegrationManager {
             autoDetectAndSetupShop();
         } else {
             setupSpecificShop(configuredShopType);
+        }
+    }
+
+    private void setupVaultIntegration() {
+        Function<SmartSpawner, IShopIntegration> integrationCreator = shopIntegrations.get("vault");
+        if (integrationCreator != null) {
+            try {
+                shopIntegration = integrationCreator.apply(plugin);
+                hasShopIntegration = shopIntegration.isEnabled();
+                isUsingCustomPrices = true;
+                plugin.getLogger().info("Custom economy integration enabled successfully!");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to setup custom economy integration: " + e.getMessage());
+                hasShopIntegration = false;
+                isUsingCustomPrices = false;
+            }
         }
     }
 
@@ -58,9 +87,11 @@ public class ShopIntegrationManager {
                 setupShopIntegration(bukkitPluginName, integrationCreator);
             } else {
                 plugin.getLogger().warning(bukkitPluginName + " not found - integration disabled");
+                tryUseCustomPrices();
             }
         } else {
             plugin.getLogger().warning("No integration found for shop type: " + shopType);
+            tryUseCustomPrices();
         }
     }
 
@@ -70,6 +101,7 @@ public class ShopIntegrationManager {
             case "economyshopgui-premium" -> "EconomyShopGUI-Premium";
             case "shopguiplus" -> "ShopGUIPlus";
             case "zshop" -> "zShop";
+            case "vault" -> "Vault";
             default -> shopType;
         };
     }
@@ -108,6 +140,14 @@ public class ShopIntegrationManager {
         }
 
         plugin.getLogger().warning("No compatible shop plugins were found during auto-detection.");
+        tryUseCustomPrices();
+    }
+
+    private void tryUseCustomPrices() {
+        if (plugin.getConfig().getBoolean("shop_integration.use_custom_prices_if_no_shop", true)) {
+            plugin.getLogger().info("No shop plugin found, attempting to use custom prices with Vault...");
+            setupVaultIntegration();
+        }
     }
 
     private void setupShopIntegration(String pluginName, Function<SmartSpawner, IShopIntegration> integrationCreator) {
@@ -115,11 +155,13 @@ public class ShopIntegrationManager {
             shopIntegration = integrationCreator.apply(plugin);
             hasShopIntegration = true;
             isShopGUIPlusEnabled = pluginName.equals("ShopGUIPlus");
+            isUsingCustomPrices = pluginName.equals("Vault");
             plugin.getLogger().info(pluginName + " integration enabled successfully!");
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to setup " + pluginName + " integration: " + e.getMessage());
             hasShopIntegration = false;
             isShopGUIPlusEnabled = false;
+            isUsingCustomPrices = false;
         }
     }
 
@@ -134,7 +176,11 @@ public class ShopIntegrationManager {
         return hasShopIntegration;
     }
 
-    public boolean isShopGUIPlusEnabled() {
-        return isShopGUIPlusEnabled;
+    public void reload() {
+        hasShopIntegration = false;
+        isShopGUIPlusEnabled = false;
+        isUsingCustomPrices = false;
+        shopIntegration = null;
+        initialize();
     }
 }

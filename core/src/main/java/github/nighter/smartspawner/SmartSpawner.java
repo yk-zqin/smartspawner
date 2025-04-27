@@ -7,6 +7,8 @@ import github.nighter.smartspawner.bstats.Metrics;
 import github.nighter.smartspawner.commands.CommandHandler;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
 import github.nighter.smartspawner.configs.TimeFormatter;
+import github.nighter.smartspawner.economy.CustomEconomyManager;
+import github.nighter.smartspawner.economy.ItemPriceManager;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
 import github.nighter.smartspawner.hooks.shops.IShopIntegration;
@@ -104,6 +106,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerExplosionListener spawnerExplosionListener;
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
+    private ItemPriceManager itemPriceManager;
+    private CustomEconomyManager customEconomyManager;
     private EntityLootRegistry entityLootRegistry;
     private UpdateChecker updateChecker;
 
@@ -184,7 +188,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.messageService = new MessageService(this, languageManager);
 
         // Initialize factories
-        this.entityLootRegistry = new EntityLootRegistry(this);
+        this.itemPriceManager = new ItemPriceManager(this);
+        this.itemPriceManager.init();
+        this.customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
+        this.entityLootRegistry = new EntityLootRegistry(this, itemPriceManager);
         this.spawnerItemFactory = new SpawnerItemFactory(this);
 
         // Initialize core components in order
@@ -337,6 +344,13 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         return false;
     }
 
+    public void reload() {
+        // Reload economy components
+        itemPriceManager.reload();
+        customEconomyManager.reload();
+        shopIntegrationManager.reload();
+    }
+
     @Override
     public void onDisable() {
         saveAndCleanup();
@@ -368,6 +382,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerHandler != null) spawnerStackerHandler.cleanupAll();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
+        if (customEconomyManager != null) customEconomyManager.shutdown();
     }
 
     private void shutdownSaleLogger() {

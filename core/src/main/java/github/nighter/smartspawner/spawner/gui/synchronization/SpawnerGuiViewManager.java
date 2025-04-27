@@ -247,6 +247,7 @@ public class SpawnerGuiViewManager implements Listener {
     public void updateSpawnerMenuViewers(SpawnerData spawner) {
         Set<Player> viewers = getViewers(spawner.getSpawnerId());
         if (viewers.isEmpty()) return;
+        plugin.debug(viewers.size() + " spawner menu viewers to update for " + spawner.getSpawnerId());
 
         Scheduler.runTask(() -> {
             for (Player viewer : viewers) {
@@ -258,8 +259,7 @@ public class SpawnerGuiViewManager implements Listener {
                 InventoryHolder holder = openInv.getHolder();
                 if (holder instanceof SpawnerMenuHolder) {
                     updateSpawnerMenuGui(viewer, spawner, true);
-                } else if (holder instanceof StoragePageHolder) {
-                    StoragePageHolder storageHolder = (StoragePageHolder) holder;
+                } else if (holder instanceof StoragePageHolder storageHolder) {
                     int oldTotalPages = calculateTotalPages(storageHolder.getOldUsedSlots());
                     int newTotalPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
                     updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
@@ -269,6 +269,9 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private int calculateTotalPages(int totalItems) {
+        if (totalItems <= 0) {
+            return 1; // At least one page for empty inventory
+        }
         return (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
     }
 

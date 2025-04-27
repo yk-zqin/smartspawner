@@ -14,7 +14,7 @@
 custom_item:
   # Appearance of smart spawner items in inventory and tooltips
   spawner:
-    name: "&#a782ecsᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%"
+    name: "&#a782ecʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%"
     loot_items: "  &#e6e6fa•  %amount% %ɪᴛᴇᴍ_ɴᴀᴍᴇ% &#b19cd9(%chance%%)"
     loot_items_empty: "  &#e6e6fa• ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ"
     lore:

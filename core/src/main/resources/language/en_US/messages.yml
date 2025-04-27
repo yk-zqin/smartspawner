@@ -150,7 +150,7 @@ spawner_break_silk_touch_required:
   sound: item.shield.block
 
 spawner_break_required_tools:
-  action_bar: "&#ff5252ᴄᴀɴ''ᴛ ʙʀᴇᴀᴋ ꜱᴘᴀᴡɴᴇʀ ᴡɪᴛʜ ᴛʜɪꜱ ᴛᴏᴏʟ!"
+  action_bar: "&#ff5252ᴄᴀɴ'ᴛ ʙʀᴇᴀᴋ ꜱᴘᴀᴡɴᴇʀ ᴡɪᴛʜ ᴛʜɪꜱ ᴛᴏᴏʟ!"
   sound: item.shield.block
 
 spawner_break_warning:

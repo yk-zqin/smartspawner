@@ -34,11 +34,11 @@ prefix: "&8[&#7b68eeSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
 #             Spawner - Player Interaction
 # ------------------------------------------------------
 spawner_activated:
-  message: "&#e6e6fasᴘᴀᴡɴᴇʀ &#ab7afdđã ᴋíᴄʜ ʜᴏạᴛ&#e6e6fa! ᴛʜᴜ ᴛʜậᴘ ᴠậᴛ ᴘʜẩᴍ ᴠà ᴋɪɴʜ ɴɢʜɪệᴍ ǫᴜᴀ ɢɪᴀᴏ ᴅɪệɴ."
+  message: "&#e6e6faʟồɴɢ sᴘᴀᴡɴ &#ab7afdđã ᴋíᴄʜ ʜᴏạᴛ&#e6e6fa! ᴛʜᴜ ᴛʜậᴘ ᴠậᴛ ᴘʜẩᴍ ᴠà ᴋɪɴʜ ɴɢʜɪệᴍ ǫᴜᴀ ɢɪᴀᴏ ᴅɪệɴ."
   sound: block.beacon.activate
 
 spawner_protected:
-  action_bar: "&#ff5252⚠ sᴘᴀᴡɴᴇʀ đᴀɴɢ đượᴄ ʙảᴏ ᴠệ ⚠"
+  action_bar: "&#ff5252⚠ ʟồɴɢ sᴘᴀᴡɴ đᴀɴɢ đượᴄ ʙảᴏ ᴠệ ⚠"
   sound: block.note_block.pling
 
 # ------------------------------------------------------
@@ -83,15 +83,15 @@ take_all_items:
 #         Spawner - Stacker GUI Interaction
 # ------------------------------------------------------
 spawner_stacker_minimum_reached:
-  message: "&#ff5252ᴄʜỉ ᴄó ᴛʜể ɢộᴘ &#f8f8ff+%amount% &#ff5252sᴘᴀᴡɴᴇʀ ᴅᴏ đã đếɴ ɢɪớɪ ʜạɴ."
+  message: "&#ff5252ᴄʜỉ ᴄó ᴛʜể ɢộᴘ &#f8f8ff+%amount% &#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴅᴏ đã đếɴ ɢɪớɪ ʜạɴ."
   sound: block.note_block.pling
 
 spawner_cannot_remove_last:
-  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴛáᴄʜ sᴘᴀᴡɴᴇʀ ᴄᴜốɪ ᴄùɴɢ"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴛáᴄʜ ʟồɴɢ sᴘᴀᴡɴ ᴄᴜốɪ ᴄùɴɢ"
   sound: block.note_block.pling
 
 spawner_insufficient_quantity:
-  action_bar: "&#ff5252ᴋʜôɴɢ đủ sᴘᴀᴡɴᴇʀ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
+  action_bar: "&#ff5252ᴋʜôɴɢ đủ ʟồɴɢ sᴘᴀᴡɴ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
   sound: block.note_block.pling
 
 inventory_full_items_dropped:
@@ -102,11 +102,11 @@ inventory_full_items_dropped:
 #             Spawner - Stack Interaction
 # ------------------------------------------------------
 spawner_invalid:
-  action_bar: "&#ff5252sᴘᴀᴡɴᴇʀ ᴋʜôɴɢ ʜợᴘ ʟệ"
+  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴋʜôɴɢ ʜợᴘ ʟệ"
   sound: block.note_block.pling
 
 spawner_different:
-  action_bar: "&#ff5252sᴘᴀᴡɴᴇʀ ᴘʜảɪ ᴄùɴɢ ʟᴏạɪ"
+  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴘʜảɪ ᴄùɴɢ ʟᴏạɪ"
   sound: block.note_block.pling
 
 spawner_stack_full:
@@ -114,18 +114,18 @@ spawner_stack_full:
   sound: block.note_block.pling
 
 spawner_stack_success:
-  action_bar: "&#37eb9aɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#f8f8ff%amount% &#37eb9asᴘᴀᴡɴᴇʀ"
+  action_bar: "&#37eb9aɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#f8f8ff%amount% &#37eb9aʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.player.levelup
 
 # ------------------------------------------------------
 #             Spawner - List GUI Interaction
 # ------------------------------------------------------
 teleported_to_spawner:
-  message: "&#37eb9aĐã ᴅịᴄʜ ᴄʜᴜʏểɴ ᴛʜàɴʜ ᴄôɴɢ đếɴ ᴠị ᴛʀí sᴘᴀᴡɴᴇʀ"
+  message: "&#37eb9aĐã ᴅịᴄʜ ᴄʜᴜʏểɴ ᴛʜàɴʜ ᴄôɴɢ đếɴ ᴠị ᴛʀí ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.enderman.teleport
 
 spawner_not_found:
-  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ sᴘᴀᴡɴᴇʀ"
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.enderman.teleport
 
 # ------------------------------------------------------
@@ -143,7 +143,7 @@ entity_changed:
 #             Spawner - Break Interaction
 # ------------------------------------------------------
 spawner_break_no_permission:
-  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴘʜá sᴘᴀᴡɴᴇʀ"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴘʜá ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.villager.no
 
 spawner_break_silk_touch_required:
@@ -151,17 +151,17 @@ spawner_break_silk_touch_required:
   sound: item.shield.block
 
 spawner_break_required_tools:
-  action_bar: "&#ff5252Không tʙạɴ ᴄầɴ ᴄúᴘ để ᴘʜá sᴘᴀᴡɴᴇʀ ɴàʏ!"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴘʜá ʟồɴɢ sᴘᴀᴡɴ ʙằɴɢ ᴄôɴɢ ᴄụ ɴàʏ!!"
   sound: item.shield.block
 
 spawner_break_warning:
   enabled: false
   title: "&#f0c857ᴄảɴʜ ʙáᴏ"
-  subtitle: "&#e6e6faᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ ᴛʀᴏɴɢ sᴘᴀᴡɴᴇʀ sẽ ʙị ᴍấᴛ!"
+  subtitle: "&#e6e6faᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ ᴛʀᴏɴɢ ʟồɴɢ sᴘᴀᴡɴ sẽ ʙị ᴍấᴛ!"
   sound: block.note_block.bass
 
 natural_spawner_break_blocked:
-  action_bar: "&#ff5252sᴘᴀᴡɴᴇʀ ᴛự ɴʜɪêɴ ᴋʜôɴɢ ᴛʜể ʙị ᴘʜá ʜᴏặᴄ sử ᴅụɴɢ"
+  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴛự ɴʜɪêɴ ᴋʜôɴɢ ᴛʜể ʙị ᴘʜá và sử ᴅụɴɢ"
   sound: block.note_block.pling
 
 # ------------------------------------------------------
@@ -213,9 +213,9 @@ command_usage:
     &#ab7afd&lLệɴʜ &#7b68ee&l&oSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ
     &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     &#ab7afd» &#e6e6fa/ss reload &#7b68ee- &#a8e6cf&oᴛảɪ ʟạɪ ᴘʟᴜɢɪɴ
-    &#ab7afd» &#e6e6fa/ss list &#7b68ee- &#dcedc1&oᴅᴀɴʜ sáᴄʜ sᴘᴀᴡɴᴇʀ
-    &#ab7afd» &#e6e6fa/ss give &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffd3b6&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ sᴘᴀᴡɴᴇʀ
-    &#ab7afd» &#e6e6fa/ss giveVanillaSpawner &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffaaa5&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ sᴘᴀᴡɴᴇʀ ᴠᴀɴɪʟʟᴀ
+    &#ab7afd» &#e6e6fa/ss list &#7b68ee- &#dcedc1&oᴅᴀɴʜ sáᴄʜ ʟồɴɢ sᴘᴀᴡɴ
+    &#ab7afd» &#e6e6fa/ss give &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffd3b6&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ ʟồɴɢ sᴘᴀᴡɴ
+    &#ab7afd» &#e6e6fa/ss giveVanillaSpawner &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffaaa5&oᴄʜᴏ ɴɢườɪ ᴄʜơɪ ʟồɴɢ sᴘᴀᴡɴ ᴠᴀɴɪʟʟᴀ
     &#ab7afd» &#e6e6fa/ss hologram &#7b68ee- &#ff8b94&oʙậᴛ/ᴛắᴛ ʜɪểɴ ᴛʜị ʜᴏʟᴏɢʀᴀᴍ
     &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   sound: entity.player.levelup
@@ -258,22 +258,22 @@ command_give_amount_too_large:
   sound: block.note_block.pling
 
 command_give_inventory_full:
-  message: "&#ff5252ᴍộᴛ ꜱố sᴘᴀᴡɴᴇʀ đã ʀơɪ ʀᴀ đấᴛ ᴅᴏ ᴛúɪ đồ đã đầʏ"
+  message: "&#ff5252ᴍộᴛ ꜱố ʟồɴɢ sᴘᴀᴡɴ đã ʀơɪ ʀᴀ đấᴛ ᴅᴏ ᴛúɪ đồ đã đầʏ"
   sound: block.note_block.pling
 
 command_give_spawner_received:
-  message: "&#37eb9aʙạɴ đã ɴʜậɴ được &#f8f8ff%amount% sᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%"
+  message: "&#37eb9aʙạɴ đã ɴʜậɴ được &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%"
   sound: entity.experience_orb.pickup
 
 command_give_spawner_given:
-  message: "&#37eb9ađã ᴛặɴɢ &#f8f8ff%amount% sᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
+  message: "&#37eb9ađã ᴛặɴɢ &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
   sound: entity.experience_orb.pickup
 
 # Hologram command messages
 command_hologram_enabled:
-  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#37eb9ađã ʙậᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả sᴘᴀᴡɴᴇʀ"
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#37eb9ađã ʙậᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.experience_orb.pickup
 
 command_hologram_disabled:
-  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả sᴘᴀᴡɴᴇʀ"
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ʟồɴɢ sᴘᴀᴡɴ"
   sound: block.note_block.bass

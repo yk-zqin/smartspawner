@@ -69,7 +69,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             plugin.getSpawnerManager().reloadAllHolograms();
 
             plugin.getSpawnerMenuAction().updateCooldownSettings();
-
+            plugin.reload();
             // Log new cache stats after reload if in debug mode
             if (plugin.getConfig().getBoolean("debug", false)) {
                 logCacheStats();

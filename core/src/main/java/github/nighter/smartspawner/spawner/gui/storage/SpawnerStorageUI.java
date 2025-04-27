@@ -138,7 +138,7 @@ public class SpawnerStorageUI {
 
         // Update hologram if enabled
         if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
-            spawner.updateHologramData();
+            Scheduler.runLocationTask(spawner.getSpawnerLocation(), spawner::updateHologramData);
         }
 
         // Check if we need to update total pages
