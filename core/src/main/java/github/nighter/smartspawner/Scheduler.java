@@ -33,7 +33,7 @@ public final class Scheduler {
             foliaDetected = true;
             plugin.getLogger().info("Folia detected! Using region-based threading system.");
         } catch (final ClassNotFoundException e) {
-            plugin.getLogger().info("Running on standard Bukkit/Spigot/Paper server.");
+            plugin.getLogger().info("Running on standard Paper server.");
         }
         isFolia = foliaDetected;
     }
@@ -442,15 +442,6 @@ public final class Scheduler {
         }
 
         return future;
-    }
-
-    /**
-     * Determines if the server is running on Folia.
-     *
-     * @return true if the server is running on Folia
-     */
-    public static boolean isFolia() {
-        return isFolia;
     }
 
     /**

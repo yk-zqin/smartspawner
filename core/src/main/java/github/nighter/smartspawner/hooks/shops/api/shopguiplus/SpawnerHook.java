@@ -17,6 +17,7 @@ public class SpawnerHook implements Listener{
 
     @EventHandler
     public void onShopGUIPlusPostEnable(ShopGUIPlusPostEnableEvent event) {
+        plugin.debug("SpawnerHook: ShopGUIPlusPostEnableEvent triggered");
         if (Bukkit.getPluginManager().getPlugin("ShopGUIPlus") != null) {
             try {
                 ShopGuiPlusApi.registerSpawnerProvider(plugin.getSpawnerProvider());

@@ -56,7 +56,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 @Getter
@@ -128,12 +127,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         // Save default config
         saveDefaultConfig();
-
-        // Check if mob_drops.yml exists, if not create it
-        if (!new File(getDataFolder(), "mob_drops.yml").exists()) {
-            getLogger().info("mob_drops.yml not found, creating default...");
-            saveResource("mob_drops.yml", true);
-        }
+        ensureMobDropsFileExists();
 
         // Initialize version-specific components
         initializeVersionComponents();
@@ -141,24 +135,30 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Check for data migration needs
         migrateDataIfNeeded();
 
-        // Initialize core components with Scheduler
-        initializeComponents().thenRun(() -> {
-            Scheduler.runTask(() -> {
-                setupCommand();
-                checkDependencies();
-                setupBtatsMetrics();
-                registerListeners();
-                initializeSaleLogging();
+        // Initialize core components in the same order as before
+        initializeComponents();
 
-                long loadTime = System.currentTimeMillis() - startTime;
-                getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
-            });
-        });
+        // Setup plugin infrastructure
+        checkProtectionPlugins();
+        setupCommand();
+        setupBtatsMetrics();
+        registerListeners();
+        initializeSaleLogging();
+
+        long loadTime = System.currentTimeMillis() - startTime;
+        getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
     }
 
     @Override
     public SmartSpawnerAPI getAPI() {
         return apiImpl;
+    }
+
+    private void ensureMobDropsFileExists() {
+        // Check if mob_drops.yml exists, if not create it
+        if (!new File(getDataFolder(), "mob_drops.yml").exists()) {
+            saveResource("mob_drops.yml", true);
+        }
     }
 
     private void initializeVersionComponents() {
@@ -177,8 +177,34 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         }
     }
 
-    private CompletableFuture<Void> initializeComponents() {
+    private void initializeComponents() {
         // Initialize services
+        initializeServices();
+
+        // Initialize factories and economy
+        initializeEconomyComponents();
+
+        // Initialize core components in order
+        initializeCoreComponents();
+
+        // Initialize handlers
+        initializeHandlers();
+
+        // Initialize UI and actions
+        initializeUIAndActions();
+
+        // Initialize listeners
+        initializeListeners();
+
+        // Initialize hopper handler if enabled in config
+        setUpHopperHandler();
+
+        // Initialize API implementation
+        this.apiImpl = new SmartSpawnerAPIImpl(this);
+        this.updateChecker = new UpdateChecker(this);
+    }
+
+    private void initializeServices() {
         SpawnerTypeChecker.init(this);
         this.timeFormatter = new TimeFormatter(this);
         this.configUpdater = new ConfigUpdater(this);
@@ -186,15 +212,26 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.languageManager = new LanguageManager(this);
         this.languageUpdater = new LanguageUpdater(this);
         this.messageService = new MessageService(this, languageManager);
+    }
 
-        // Initialize factories
+    private void initializeEconomyComponents() {
+        this.shopIntegrationManager = new ShopIntegrationManager(this);
         this.itemPriceManager = new ItemPriceManager(this);
         this.itemPriceManager.init();
-        this.customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
+
+        // Only initialize if custom sell prices should be used
+        if (getConfig().getBoolean("custom_sell_prices.enabled", false)) {
+            this.customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
+        } else {
+            this.customEconomyManager = null;
+        }
+
+        shopIntegrationManager.initialize();
         this.entityLootRegistry = new EntityLootRegistry(this, itemPriceManager);
         this.spawnerItemFactory = new SpawnerItemFactory(this);
+    }
 
-        // Initialize core components in order
+    private void initializeCoreComponents() {
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.spawnerFileHandler = new SpawnerFileHandler(this);
         this.spawnerManager = new SpawnerManager(this);
@@ -203,42 +240,29 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
+    }
 
-        CompletableFuture<Void> asyncInit = Scheduler.supplyAsync(() -> {
-            this.shopIntegrationManager = new ShopIntegrationManager(this);
-            return null;
-        });
-
-        // Main thread initialization for components that need the main thread
+    private void initializeHandlers() {
         this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerStackerUI = new SpawnerStackerUI(this);
 
         this.spawnEggHandler = new SpawnEggHandler(this);
         this.spawnerStackHandler = new SpawnerStackHandler(this);
         this.spawnerClickManager = new SpawnerClickManager(this);
+    }
 
+    private void initializeUIAndActions() {
         this.spawnerMenuAction = new SpawnerMenuAction(this);
         this.spawnerStackerHandler = new SpawnerStackerHandler(this);
         this.spawnerStorageAction = new SpawnerStorageAction(this);
+    }
 
+    private void initializeListeners() {
         this.globalEventHandlers = new GlobalEventHandlers(this);
         this.spawnerExplosionListener = new SpawnerExplosionListener(this);
         this.spawnerBreakListener = new SpawnerBreakListener(this);
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
-
-        // Initialize hopper handler if enabled in config
-        setUpHopperHandler();
-
-        // Initialize API implementation
-        this.apiImpl = new SmartSpawnerAPIImpl(this);
-        return asyncInit.thenCompose(unused ->
-                Scheduler.supplyAsync(() -> {
-                    this.updateChecker = new UpdateChecker(this);
-                    return null;
-                })
-        );
     }
-
 
     public void setUpHopperHandler() {
         this.hopperHandler = getConfig().getBoolean("hopper.enabled", false) ? new HopperHandler(this) : null;
@@ -272,25 +296,15 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void setupBtatsMetrics() {
-        Scheduler.runTask(() -> {
-            Metrics metrics = new Metrics(this, 24822);
-            metrics.addCustomChart(new Metrics.SimplePie("players",
-                    () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
-        });
+        Metrics metrics = new Metrics(this, 24822);
+        metrics.addCustomChart(new Metrics.SimplePie("players",
+                () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
     }
 
     private void initializeSaleLogging() {
         if (getConfig().getBoolean("log_transactions.enabled", true)) {
             SaleLogger.getInstance();
         }
-    }
-
-    private void checkDependencies() {
-        // Run protection plugin checks using Scheduler
-        Scheduler.runTaskAsync(this::checkProtectionPlugins);
-
-        // Initialize shop integrations
-        shopIntegrationManager.initialize();
     }
 
     private void checkProtectionPlugins() {
@@ -345,10 +359,26 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     public void reload() {
-        // Reload economy components
-        itemPriceManager.reload();
-        customEconomyManager.reload();
         shopIntegrationManager.reload();
+        itemPriceManager.reload();
+
+        // Only initialize CustomEconomyManager if custom sell prices are enabled
+        boolean shouldUseCustomSellPrices = getConfig().getBoolean("custom_sell_prices.enabled", false);
+
+        // Handle CustomEconomyManager based on current configuration
+        if (shouldUseCustomSellPrices) {
+            if (customEconomyManager == null) {
+                // Initialize if it wasn't active before
+                customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
+            } else {
+                // Just reload if it already exists
+                customEconomyManager.reload();
+            }
+        } else if (customEconomyManager != null) {
+            // Shut down if it's no longer needed
+            customEconomyManager.shutdown();
+            customEconomyManager = null;
+        }
     }
 
     @Override
@@ -376,6 +406,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         }
 
         // Clean up resources
+        cleanupResources();
+    }
+
+    private void cleanupResources() {
         if (rangeChecker != null) rangeChecker.cleanup();
         if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();
         if (hopperHandler != null) hopperHandler.cleanup();

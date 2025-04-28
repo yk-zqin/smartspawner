@@ -26,7 +26,6 @@ public class SpawnerDataMigration {
         File dataFile = new File(dataFolder, DATA_FILE);
 
         if (!dataFile.exists()) {
-            plugin.getLogger().info("No spawner data file found. Creating new one...");
             try {
                 FileConfiguration newConfig = new YamlConfiguration();
                 newConfig.set(MIGRATION_FLAG, CURRENT_VERSION);

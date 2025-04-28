@@ -99,6 +99,7 @@ public class SpawnerFileHandler {
 
     public void markSpawnerDeleted(String spawnerId) {
         if (spawnerId != null) {
+            plugin.debug("Marking spawner " + spawnerId + " for deletion");
             deletedSpawners.add(spawnerId);
             dirtySpawners.remove(spawnerId); // No need to save if it's deleted
         }

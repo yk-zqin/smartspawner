@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.updates;
 
+import github.nighter.smartspawner.SmartSpawner;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -13,10 +14,10 @@ import java.util.*;
 
 public class ConfigUpdater {
     private final String currentVersion;
-    private final JavaPlugin plugin;
+    private final SmartSpawner plugin;
     private static final String CONFIG_VERSION_KEY = "config_version";
 
-    public ConfigUpdater(JavaPlugin plugin) {
+    public ConfigUpdater(SmartSpawner plugin) {
         this.plugin = plugin;
         this.currentVersion = plugin.getDescription().getVersion();
     }
@@ -42,7 +43,7 @@ public class ConfigUpdater {
             return;
         }
 
-        plugin.getLogger().info("Updating config from version " + configVersionStr + " to " + currentVersion);
+        plugin.debug("Updating config from version " + configVersionStr + " to " + currentVersion);
 
         try {
             Map<String, Object> userValues = flattenConfig(currentConfig);
@@ -62,7 +63,7 @@ public class ConfigUpdater {
                 Files.copy(configFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 plugin.getLogger().info("Config backup created at " + backupFile.getName());
             } else {
-                plugin.getLogger().info("No significant config changes detected, skipping backup creation");
+                plugin.debug("No significant config changes detected, skipping backup creation");
             }
 
             // Apply user values and save

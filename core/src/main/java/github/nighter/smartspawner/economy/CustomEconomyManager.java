@@ -39,14 +39,14 @@ public class CustomEconomyManager {
         this.priceManager = priceManager;
         this.isVaultAvailable = false;
 
-        // Initialize Vault if enabled
-        if (plugin.getConfig().getBoolean("custom_economy.enabled", false) &&
-                plugin.getConfig().getString("custom_economy.default", "VAULT").equalsIgnoreCase("VAULT")) {
-            setupVaultEconomy();
+        String currencyType = plugin.getConfig().getString("custom_sell_prices.currency", "VAULT");
+        if (currencyType.equalsIgnoreCase("VAULT")) {
+            if (setupVaultEconomy()) {
+                startCleanupTask();
+            }
+        } else {
+            plugin.getLogger().warning("Unsupported currency type: " + currencyType + ". Currently only VAULT is supported.");
         }
-
-        // Start the cache cleanup task
-        startCleanupTask();
     }
 
     // Static class to hold transaction amount and timestamp
@@ -70,12 +70,7 @@ public class CustomEconomyManager {
         // Convert minutes to ticks (20 ticks per second)
         long ticks = CACHE_CLEANUP_INTERVAL_MINUTES * 60 * 20;
 
-        cleanupTask = Scheduler.runTaskTimerAsync(() -> {
-            cleanTransactionCache();
-        }, ticks, ticks);
-
-        plugin.getLogger().info("Started transaction cache cleanup task (runs every " +
-                CACHE_CLEANUP_INTERVAL_MINUTES + " minutes)");
+        cleanupTask = Scheduler.runTaskTimerAsync(this::cleanTransactionCache, ticks, ticks);
     }
 
     private void cleanTransactionCache() {
@@ -92,31 +87,28 @@ public class CustomEconomyManager {
 
         int removedCount = beforeSize - transactionCache.size();
         if (removedCount > 0) {
-            plugin.getLogger().fine("Cleaned up " + removedCount + " expired transaction cache entries");
+            // Only log if actual cleaning occurred
+            plugin.debug("Cleaned up " + removedCount + " expired transaction cache entries");
         }
     }
 
     private boolean setupVaultEconomy() {
         if (plugin.getServer().getPluginManager().getPlugin("Vault") == null) {
-            plugin.getLogger().warning("Vault not found! Custom economy system disabled.");
+            plugin.getLogger().warning("Vault not found! Custom sell prices system disabled.");
             return false;
         }
 
         RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            plugin.getLogger().warning("No economy provider found for Vault! Custom economy system disabled.");
+            isVaultAvailable = false;
+            plugin.getLogger().warning("No economy provider found for Vault! Custom sell prices system disabled.");
             return false;
         }
 
         economy = rsp.getProvider();
-        isVaultAvailable = (economy != null);
+        isVaultAvailable = true;
 
-        if (isVaultAvailable) {
-            plugin.getLogger().info("Successfully connected to Vault economy: " + economy.getName());
-        } else {
-            plugin.getLogger().warning("Failed to connect to Vault economy.");
-        }
-
+        plugin.getLogger().info("Successfully connected to Vault & Economy provider: " + economy.getName());
         return isVaultAvailable;
     }
 
@@ -193,8 +185,8 @@ public class CustomEconomyManager {
             Scheduler.runTask(() ->
                     plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
 
-            // Send success message with total item count instead of itemsToRemove.size()
-            sendSellSuccessMessage(player, totalValue, totalItemCount); // Changed to use totalItemCount
+            // Send success message with total item count
+            sendSellSuccessMessage(player, totalValue, totalItemCount);
 
             return true;
         } else {
@@ -232,7 +224,7 @@ public class CustomEconomyManager {
     }
 
     public boolean isEnabled() {
-        return plugin.getConfig().getBoolean("custom_economy.enabled", false) && isVaultAvailable;
+        return plugin.getConfig().getBoolean("custom_sell_prices.enabled", false) && isVaultAvailable;
     }
 
     public double getLatestTransactionAmount(Player player) {
@@ -258,17 +250,16 @@ public class CustomEconomyManager {
         }
 
         isVaultAvailable = false;
-        if (plugin.getConfig().getBoolean("custom_economy.enabled", false) &&
-                plugin.getConfig().getString("custom_economy.default", "VAULT").equalsIgnoreCase("VAULT")) {
+        String currencyType = plugin.getConfig().getString("custom_sell_prices.currency", "VAULT");
+        if (plugin.getConfig().getBoolean("custom_sell_prices.enabled", false) &&
+                currencyType.equalsIgnoreCase("VAULT")) {
             setupVaultEconomy();
+            startCleanupTask();
         }
 
         // Clear caches
         transactionCache.clear();
         materialPriceCache.clear();
-
-        // Restart cleanup task
-        startCleanupTask();
     }
 
     // Method to properly shut down the manager

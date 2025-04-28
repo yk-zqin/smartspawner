@@ -99,7 +99,9 @@ public class SpawnerHologram {
 
     public void updateText() {
         TextDisplay display = textDisplay.get();
-        if (display == null || !display.isValid() || entityType == null) return;
+        if (display == null || entityType == null) return;
+
+        // Don't check isValid() here as it needs to be on the entity thread
 
         // Prepare the text content outside of the entity thread
         String entityTypeName = languageManager.getFormattedMobName(entityType);
@@ -125,7 +127,6 @@ public class SpawnerHologram {
         final String finalText = ColorUtil.translateHexColorCodes(hologramText);
 
         // Schedule the entity update on the entity's thread
-        // For Folia, we need to run this on the entity's thread
         Scheduler.runEntityTask(display, () -> {
             if (display.isValid()) {
                 display.setText(finalText);
@@ -156,7 +157,8 @@ public class SpawnerHologram {
     public void remove() {
         TextDisplay display = textDisplay.get();
         if (display != null && display.isValid()) {
-            display.remove();
+            // Run on the entity's thread
+            Scheduler.runEntityTask(display, display::remove);
             textDisplay.set(null);
         }
     }

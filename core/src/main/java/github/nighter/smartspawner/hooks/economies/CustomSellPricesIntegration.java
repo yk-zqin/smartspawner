@@ -7,17 +7,17 @@ import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.entity.Player;
 
-public class VaultEconomyIntegration implements IShopIntegration {
+public class CustomSellPricesIntegration implements IShopIntegration {
     private final SmartSpawner plugin;
     private final CustomEconomyManager economyManager;
     private final LanguageManager languageManager;
     private final boolean isEnabled;
 
-    public VaultEconomyIntegration(SmartSpawner plugin) {
+    public CustomSellPricesIntegration(SmartSpawner plugin) {
         this.plugin = plugin;
         this.economyManager = plugin.getCustomEconomyManager();
         this.languageManager = plugin.getLanguageManager();
-        this.isEnabled = economyManager.isEnabled();
+        this.isEnabled = economyManager != null && economyManager.isEnabled();
     }
 
     @Override

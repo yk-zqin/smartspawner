@@ -1,11 +1,11 @@
 package github.nighter.smartspawner.economy;
 
+import github.nighter.smartspawner.SmartSpawner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import java.util.logging.Level;
 
 @RequiredArgsConstructor
 public class ItemPriceManager {
-    private final JavaPlugin plugin;
+    private final SmartSpawner plugin;
     private final Map<String, Double> itemPrices = new ConcurrentHashMap<>();
     private File priceFile;
     private FileConfiguration priceConfig;
@@ -38,7 +38,7 @@ public class ItemPriceManager {
         // Create the file if it doesn't exist by copying from resources
         if (!priceFile.exists()) {
             plugin.saveResource("item_prices.yml", false);
-            plugin.getLogger().info("Created default item_prices.yml from plugin resources");
+            plugin.debug("Created default item_prices.yml from plugin resources");
         }
 
         // Load configuration
@@ -60,7 +60,7 @@ public class ItemPriceManager {
             itemPrices.put(key, price);
         }
 
-        plugin.getLogger().info("Loaded " + itemPrices.size() + " item prices with default price: " + defaultPrice);
+        // plugin.getLogger().info("Loaded " + itemPrices.size() + " item prices with default price: " + defaultPrice);
     }
 
     /**

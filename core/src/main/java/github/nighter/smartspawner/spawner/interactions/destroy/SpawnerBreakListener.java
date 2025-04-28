@@ -132,14 +132,6 @@ public class SpawnerBreakListener implements Listener {
             if (player.getGameMode() != GameMode.CREATIVE) {
                 reduceDurability(tool, player, result.getDurabilityLoss());
             }
-
-            // Clean up if no stacks remain
-            if (spawner.getStackSize() <= 0) {
-                cleanupSpawner(block, spawner);
-            } else {
-                // Just mark the spawner as modified instead of saving directly
-                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
-            }
         }
     }
 
@@ -219,12 +211,14 @@ public class SpawnerBreakListener implements Listener {
                 dropAmount = MAX_STACK_SIZE;
                 if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
+                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             }
         } else {
             // Normal behavior: Drop 1 spawner
             dropAmount = 1;
             if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
             spawner.decreaseStackSizeByOne();
+            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
         }
 
         // Drop the items individually (no batch operations)
@@ -278,9 +272,6 @@ public class SpawnerBreakListener implements Listener {
 
         // Mark for deletion instead of immediately deleting
         spawnerFileHandler.markSpawnerDeleted(spawnerId);
-
-        // Let the file handler's batching system handle the actual deletion
-        // This avoids unnecessary immediate writes to disk
     }
 
     private void cleanupAssociatedHopper(Block block) {

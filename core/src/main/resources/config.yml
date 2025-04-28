@@ -1,25 +1,22 @@
+# TIME FORMAT GUIDE
+# Simple formats: 20s (20 seconds), 5m (5 minutes), 1h (1 hour)
+# Complex format: 1d_2h_30m_15s (1 day, 2 hours, 30 minutes, 15 seconds)
+# Units: s = seconds, m = minutes, h = hours, d = days, w = weeks, mo = months, y = years
+
+# ADDING CUSTOM LANGUAGE
+# 1. Create a new folder in the language directory
+# 2. Use the files from en_US folder as a template
+# 3. Modify those files as needed (messages.yml, formatting.yml,...)
+# 4. Set language to your custom folder name
+
 #---------------------------------------------------
 #               Language Settings
 #---------------------------------------------------
 # Language setting (available: en_US, vi_VN)
 language: en_US
 
-# For custom languages:
-# 1. Create a new folder in the language directory
-# 2. Use the files from en_US folder as a template
-# 3. Modify those files as needed (messages.yml, formatting.yml,...)
-# 4. Set language to your custom folder name
-
 # Enable or disable debug mode (provides verbose console output)
 debug: false
-
-#---------------------------------------------------
-#                 Time Format Guide
-#---------------------------------------------------
-# TIME FORMAT GUIDE
-# Simple formats: 20s (20 seconds), 5m (5 minutes), 1h (1 hour)
-# Complex format: 1d_2h_30m_15s (1 day, 2 hours, 30 minutes, 15 seconds)
-# Units: s = seconds, m = minutes, h = hours, d = days, w = weeks, mo = months, y = years
 
 #---------------------------------------------------
 #             Core Spawner Properties
@@ -74,15 +71,12 @@ natural_spawner:
 #---------------------------------------------------
 #             Shop Integration Settings
 #---------------------------------------------------
-# Configure direct selling of items from spawner inventories
+# For selling of items from spawner with prices from the shop plugin
 shop_integration:
-  enabled: true
+  enabled: false
   # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
   # 'auto' will attempt to detect your installed shop plugin automatically
   type: auto
-
-  # If true and no shop plugins are found during auto-detection, will try to use custom prices
-  use_custom_prices_if_no_shop: true
 
 # Transaction cooldown to prevent abuse
 sell_cooldown:
@@ -100,21 +94,17 @@ log_transactions:
   file_path: "logs/shop_transactions.log"  # Path relative to plugin directory
 
 # ---------------------------------------------------
-#             Custom Economy Settings
+#             Custom Sell Prices Settings
 # ---------------------------------------------------
-# For adding custom sell prices for items without a shop plugin
-# This system uses item_prices.yml for individual item pricing
-# NOTE: If 'custom_economy' is enabled, 'shop_integration' will be disabled
-custom_economy:
-  # Enable or disable custom economy system
-  enabled: false
+# For adding custom sell prices for items without requiring a shop plugin
+# NOTE: If 'custom_sell_prices' is enabled, 'shop_integration' will be disabled
+custom_sell_prices:
+  # Enable or disable custom sell prices system
+  enabled: true
 
-  # Default economy plugin to use when no shop plugin is found
-  default: VAULT
-
-  # List of supported economy plugins (for future expansion)
-  supported:
-    - VAULT
+  # Economy system to use for handling transactions
+  # Supported options: VAULT (more options will be added in the future)
+  currency: VAULT
 
   # Default sell price for items not specifically listed in item_prices.yml
   default_price: 1.0

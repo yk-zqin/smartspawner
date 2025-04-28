@@ -92,7 +92,10 @@ public class SpawnerManager {
     public void removeSpawner(String id) {
         SpawnerData spawner = spawners.get(id);
         if (spawner != null) {
-            spawner.removeHologram();
+            Location loc = spawner.getSpawnerLocation();
+            // Run hologram removal on location thread
+            Scheduler.runLocationTask(loc, spawner::removeHologram);
+
             locationIndex.remove(new LocationKey(spawner.getSpawnerLocation()));
 
             // Remove from world index
@@ -230,16 +233,28 @@ public class SpawnerManager {
             // Remove ghost spawners
             int removed = 0;
             for (String ghostId : ghostSpawnerIds) {
-                logger.info("Removing ghost spawner with ID: " + ghostId);
-                removeSpawner(ghostId);
-                spawnerFileHandler.deleteSpawnerFromFile(ghostId);
-                removed++;
+                plugin.getLogger().info("Removing ghost spawner with ID: " + ghostId);
+                // Handle removal on the appropriate thread
+                SpawnerData spawner = spawners.get(ghostId);
+                if (spawner != null) {
+                    Location loc = spawner.getSpawnerLocation();
+                    // Run hologram removal on the location thread
+                    Scheduler.runLocationTask(loc, () -> {
+                        spawner.removeHologram();
+                        // After hologram is removed, we can remove the rest of the spawner data
+                        Scheduler.runTask(() -> {
+                            removeSpawner(ghostId);
+                            spawnerFileHandler.deleteSpawnerFromFile(ghostId);
+                        });
+                    });
+                    removed++;
+                }
             }
 
             if (removed > 0) {
-                logger.info("Removed " + removed + " ghost spawners.");
+                plugin.getLogger().info("Removed " + removed + " ghost spawners.");
             }
-        }, 10L); // Short delay to ensure location tasks complete
+        }, 20L); // Longer delay to ensure location tasks complete
     }
 
     /**
@@ -277,13 +292,6 @@ public class SpawnerManager {
                 Location loc = spawner.getSpawnerLocation();
                 Scheduler.runLocationTask(loc, spawner::reloadHologramData);
             }
-        }
-    }
-
-    public void removeAllGhostsHolograms() {
-        for (SpawnerData spawner : spawners.values()) {
-            Location loc = spawner.getSpawnerLocation();
-            Scheduler.runLocationTask(loc, spawner::removeGhostHologram);
         }
     }
 
