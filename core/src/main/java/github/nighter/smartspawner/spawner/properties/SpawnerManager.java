@@ -5,6 +5,9 @@ import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -203,58 +206,114 @@ public class SpawnerManager {
      * Checks for and removes ghost spawners (spawners without physical blocks)
      */
     public void removeGhostSpawners() {
-        int removedCount = 0;
-        List<String> ghostSpawnerIds = new ArrayList<>();
+        if (spawners.isEmpty()) {
+            return;
+        }
 
-        // Find ghost spawners
-        for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
+        Map<String, SpawnerData> spawnersToCheck = new HashMap<>(spawners);
+        AtomicInteger removedCount = new AtomicInteger(0);
+        AtomicInteger checkedCount = new AtomicInteger(0);
+        int totalToCheck = spawnersToCheck.size();
+
+        // Use a concurrent set to collect ghost spawners safely across threads
+        Set<String> ghostSpawnerIds = ConcurrentHashMap.newKeySet();
+
+        // Process spawners in batches to avoid overwhelming the server
+        List<CompletableFuture<Void>> checks = new ArrayList<>();
+
+        for (Map.Entry<String, SpawnerData> entry : spawnersToCheck.entrySet()) {
             String spawnerId = entry.getKey();
             SpawnerData spawner = entry.getValue();
             Location loc = spawner.getSpawnerLocation();
 
-            // Process each location with proper scheduling
-            Scheduler.runLocationTask(loc, () -> {
-                // Check if the chunk is loaded, if not, load it temporarily
-                if (!loc.getChunk().isLoaded()) {
-                    loc.getChunk().load(true);
-                }
+            // Create a future for each location check
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            checks.add(future);
 
-                // Check if the block at the location is a spawner
-                if (loc.getBlock().getType() != Material.SPAWNER) {
-                    synchronized (ghostSpawnerIds) {
-                        ghostSpawnerIds.add(spawnerId);
+            Scheduler.runLocationTask(loc, () -> {
+                try {
+                    boolean wasLoaded = loc.getChunk().isLoaded();
+                    boolean isGhost = false;
+
+                    // Load chunk temporarily if needed
+                    if (!wasLoaded) {
+                        loc.getChunk().load(false);
                     }
+
+                    try {
+                        // Check if block is not a spawner
+                        if (loc.getBlock().getType() != Material.SPAWNER) {
+                            ghostSpawnerIds.add(spawnerId);
+                            isGhost = true;
+                        }
+                    } finally {
+                        // Always unload if we loaded it
+                        if (!wasLoaded) {
+                            loc.getChunk().unload(true);
+                        }
+                    }
+
+                    checkedCount.incrementAndGet();
+                    if (checkedCount.get() % 100 == 0 || checkedCount.get() == totalToCheck) {
+                        plugin.debug(String.format("Ghost spawner check progress: %d/%d",
+                                checkedCount.get(), totalToCheck));
+                    }
+
+                    future.complete(null);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Error checking spawner " + spawnerId + ": " + e.getMessage());
+                    future.completeExceptionally(e);
                 }
             });
         }
 
-        // Use a delay to ensure all location checks have completed
-        Scheduler.runTaskLater(() -> {
-            // Remove ghost spawners
-            int removed = 0;
-            for (String ghostId : ghostSpawnerIds) {
-                plugin.getLogger().info("Removing ghost spawner with ID: " + ghostId);
-                // Handle removal on the appropriate thread
-                SpawnerData spawner = spawners.get(ghostId);
-                if (spawner != null) {
-                    Location loc = spawner.getSpawnerLocation();
-                    // Run hologram removal on the location thread
-                    Scheduler.runLocationTask(loc, () -> {
-                        spawner.removeHologram();
-                        // After hologram is removed, we can remove the rest of the spawner data
-                        Scheduler.runTask(() -> {
-                            removeSpawner(ghostId);
-                            spawnerFileHandler.deleteSpawnerFromFile(ghostId);
-                        });
-                    });
-                    removed++;
-                }
-            }
+        // Process results after all checks are complete
+        CompletableFuture.allOf(checks.toArray(new CompletableFuture[0]))
+                .thenRunAsync(() -> {
+                    if(!ghostSpawnerIds.isEmpty()) {
+                        plugin.getLogger().info("Found " + ghostSpawnerIds.size() + " ghost spawners");
+                    }
 
-            if (removed > 0) {
-                plugin.getLogger().info("Removed " + removed + " ghost spawners.");
-            }
-        }, 20L); // Longer delay to ensure location tasks complete
+                    // Process ghost spawners in batches
+                    List<CompletableFuture<Void>> removals = new ArrayList<>();
+                    for (String ghostId : ghostSpawnerIds) {
+                        SpawnerData spawner = spawners.get(ghostId);
+                        if (spawner != null) {
+                            Location loc = spawner.getSpawnerLocation();
+                            CompletableFuture<Void> removal = new CompletableFuture<>();
+                            removals.add(removal);
+
+                            Scheduler.runLocationTask(loc, () -> {
+                                try {
+                                    spawner.removeHologram();
+
+                                    Scheduler.runTask(() -> {
+                                        removeSpawner(ghostId);
+                                        spawnerFileHandler.markSpawnerDeleted(ghostId);
+                                        removedCount.incrementAndGet();
+                                        removal.complete(null);
+                                    });
+                                } catch (Exception e) {
+                                    plugin.getLogger().warning("Error removing ghost spawner " + ghostId + ": " + e.getMessage());
+                                    removal.completeExceptionally(e);
+                                }
+                            });
+                        } else {
+                            CompletableFuture<Void> removal = new CompletableFuture<>();
+                            removals.add(removal);
+                            removal.complete(null);
+                        }
+                    }
+
+                    // Final cleanup after all removals are done
+                    CompletableFuture.allOf(removals.toArray(new CompletableFuture[0]))
+                            .thenRunAsync(() -> {
+                                if (removedCount.get() > 0) {
+                                    spawnerFileHandler.flushChanges();
+                                    plugin.getLogger().info("Successfully removed " + removedCount.get() + " ghost spawners");
+                                }
+                            });
+                });
     }
 
     /**

@@ -205,19 +205,23 @@ public class SpawnerBreakListener implements Listener {
                 // If stack is 64 or less, drop all and remove spawner
                 dropAmount = currentStackSize;
                 if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
-                cleanupSpawner(spawnerBlock, spawner);
+
             } else {
                 // If stack is more than 64, drop 64 and reduce stack
                 dropAmount = MAX_STACK_SIZE;
                 if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
                 spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
-                spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             }
         } else {
             // Normal behavior: Drop 1 spawner
             dropAmount = 1;
             if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
             spawner.decreaseStackSizeByOne();
+        }
+
+        if(dropAmount == currentStackSize) {
+            cleanupSpawner(spawnerBlock, spawner);
+        } else {
             spawnerManager.markSpawnerModified(spawner.getSpawnerId());
         }
 

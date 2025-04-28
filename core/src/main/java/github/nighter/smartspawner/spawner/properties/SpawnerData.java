@@ -188,6 +188,7 @@ public class SpawnerData {
 
     public void decreaseStackSizeByOne() {
         this.stackSize -= 1;
+        updateHologramData();
     }
 
     public void setSpawnerExp(int exp) {
