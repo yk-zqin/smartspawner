@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.hooks.shops.api.shopguiplus;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.hooks.shops.IShopIntegration;
@@ -28,7 +29,6 @@ public class ShopGuiPlus implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final MessageService messageService;
-    private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final boolean isLoggingEnabled;
 
     // Transaction timeout
@@ -42,7 +42,6 @@ public class ShopGuiPlus implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.isLoggingEnabled = plugin.getConfig().getBoolean("log_transactions.enabled", true);
     }
 
@@ -120,15 +119,10 @@ public class ShopGuiPlus implements IShopIntegration {
             return false;
         }
 
-        int oldTotalPages = calculateTotalPages(spawner);
         // Pre-remove items to improve UX
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             virtualInv.removeItems(calculation.getItemsToRemove());
-            // Force inventory update
-            if (player.getOpenInventory().getTopInventory().getHolder() instanceof StoragePageHolder) {
-                int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
-            }
+            Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
         });
 
         try {
@@ -147,8 +141,7 @@ public class ShopGuiPlus implements IShopIntegration {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
                     messageService.sendMessage(player, "shop.sale_failed");
-                    int newTotalPages = calculateTotalPages(spawner);
-                    spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                    Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
                 });
                 return false;
             }
@@ -169,16 +162,10 @@ public class ShopGuiPlus implements IShopIntegration {
             // Restore items on timeout/error
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 virtualInv.addItems(calculation.getItemsToRemove());
-                int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
             });
             return false;
         }
-    }
-
-    private int calculateTotalPages(SpawnerData spawner) {
-        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
-        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 
     private boolean processTransactions(Player player, SaleCalculationResult calculation) {

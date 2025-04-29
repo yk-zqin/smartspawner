@@ -19,6 +19,7 @@ public class SpawnerRangeChecker {
     private final SpawnerLootGenerator spawnerLootGenerator;
     private final Map<String, Scheduler.Task> spawnerTasks;
     private final Map<String, Set<UUID>> playersInRange;
+    private boolean checkGhostSpawnersOnApproach;
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -26,7 +27,12 @@ public class SpawnerRangeChecker {
         this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
         this.spawnerTasks = new ConcurrentHashMap<>();
         this.playersInRange = new ConcurrentHashMap<>();
+        this.checkGhostSpawnersOnApproach = plugin.getConfig().getBoolean("ghost_spawners.remove_on_approach", false);
         initializeRangeCheckTask();
+    }
+
+    public void reload() {
+        this.checkGhostSpawnersOnApproach = plugin.getConfig().getBoolean("ghost_spawners.remove_on_approach", false);
     }
 
     private void initializeRangeCheckTask() {
@@ -85,6 +91,14 @@ public class SpawnerRangeChecker {
     }
 
     private void handleSpawnerStateChange(SpawnerData spawner, boolean shouldStop) {
+        if (checkGhostSpawnersOnApproach) {
+            boolean isGhost = spawnerManager.isGhostSpawner(spawner);
+            if (isGhost) {
+                plugin.debug("Ghost spawner detected during status update: " + spawner.getSpawnerId());
+                spawnerManager.removeGhostSpawner(spawner.getSpawnerId());
+                return; // Skip further processing
+            }
+        }
         if (!shouldStop) {
             activateSpawner(spawner);
         } else {
@@ -120,10 +134,6 @@ public class SpawnerRangeChecker {
         if (task != null) {
             task.cancel();
         }
-    }
-
-    public Set<UUID> getPlayersInRange(String spawnerId) {
-        return playersInRange.getOrDefault(spawnerId, Collections.emptySet());
     }
 
     public void cleanup() {

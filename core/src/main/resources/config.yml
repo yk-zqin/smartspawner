@@ -46,6 +46,9 @@ spawner_properties:
 spawner_break:
   enabled: true         # Master switch for spawner breaking feature
 
+  # Whether to directly add spawner items to player inventory instead of dropping them on the ground
+  direct_to_inventory: false
+
   # Tool Requirements - Which tools can break spawners
   required_tools:
     - IRON_PICKAXE
@@ -73,7 +76,7 @@ natural_spawner:
 #---------------------------------------------------
 # For selling of items from spawner with prices from the shop plugin
 shop_integration:
-  enabled: false
+  enabled: true
   # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
   # 'auto' will attempt to detect your installed shop plugin automatically
   type: auto
@@ -100,7 +103,7 @@ log_transactions:
 # NOTE: If 'custom_sell_prices' is enabled, 'shop_integration' will be disabled
 custom_sell_prices:
   # Enable or disable custom sell prices system
-  enabled: true
+  enabled: false
 
   # Economy system to use for handling transactions
   # Supported options: VAULT (more options will be added in the future)
@@ -164,3 +167,15 @@ data_saving:
 
   # Save spawner data on server shutdown
   save_on_shutdown: true
+
+# Ghost spawners are error spawners that exist in the world but no longer have a physical spawner block
+# This can happen due to server crashes, chunk corruption, or other issues
+# These settings control how ghost spawners are handled and removed
+ghost_spawners:
+  # Remove ghost spawners when server starts up
+  # Only checks spawners in loaded chunks
+  remove_on_startup: true
+
+  # Remove ghost spawners when players approach them
+  # This checks when players enter spawner range
+  remove_on_approach: false

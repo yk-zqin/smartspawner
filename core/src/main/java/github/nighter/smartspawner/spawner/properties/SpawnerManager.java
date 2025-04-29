@@ -21,6 +21,8 @@ public class SpawnerManager {
     private final Map<String, Set<SpawnerData>> worldIndex = new HashMap<>();
     private final SpawnerFileHandler spawnerFileHandler;
     private final Logger logger;
+    // Set to keep track of confirmed ghost spawners to avoid repeated checks
+    private final Set<String> confirmedGhostSpawners = ConcurrentHashMap.newKeySet();
 
     /**
      * Constructor for SpawnerManager
@@ -171,13 +173,14 @@ public class SpawnerManager {
     }
 
     /**
-     * Loads all spawner data from file storage and removes ghost spawners
+     * Loads all spawner data from file storage and removes ghost spawners if configured
      */
     public void loadSpawnerData() {
         // Clear existing data
         spawners.clear();
         locationIndex.clear();
         worldIndex.clear();
+        confirmedGhostSpawners.clear();
 
         // Load spawners from file handler
         Map<String, SpawnerData> loadedSpawners = spawnerFileHandler.loadAllSpawners();
@@ -198,12 +201,17 @@ public class SpawnerManager {
             }
         }
 
-        // Check for ghost spawners after initial load using Scheduler
-        Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5); // Run after 5 seconds
+        // Check for ghost spawners on startup if configured
+        boolean removeOnStartup = plugin.getConfig().getBoolean("ghost_spawners.remove_on_startup", true);
+        if (removeOnStartup) {
+            // Run after 5 seconds to allow server to stabilize
+            Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5);
+        }
     }
 
     /**
      * Checks for and removes ghost spawners (spawners without physical blocks)
+     * This only checks loaded chunks to avoid unnecessary chunk loading
      */
     public void removeGhostSpawners() {
         if (spawners.isEmpty()) {
@@ -226,30 +234,26 @@ public class SpawnerManager {
             SpawnerData spawner = entry.getValue();
             Location loc = spawner.getSpawnerLocation();
 
+            // Skip already confirmed ghost spawners
+            if (confirmedGhostSpawners.contains(spawnerId)) {
+                continue;
+            }
+
             // Create a future for each location check
             CompletableFuture<Void> future = new CompletableFuture<>();
             checks.add(future);
 
             Scheduler.runLocationTask(loc, () -> {
                 try {
-                    boolean wasLoaded = loc.getChunk().isLoaded();
                     boolean isGhost = false;
 
-                    // Load chunk temporarily if needed
-                    if (!wasLoaded) {
-                        loc.getChunk().load(false);
-                    }
-
-                    try {
+                    // Only check if the chunk is loaded
+                    if (loc.getChunk().isLoaded()) {
                         // Check if block is not a spawner
                         if (loc.getBlock().getType() != Material.SPAWNER) {
                             ghostSpawnerIds.add(spawnerId);
+                            confirmedGhostSpawners.add(spawnerId); // Mark as confirmed ghost
                             isGhost = true;
-                        }
-                    } finally {
-                        // Always unload if we loaded it
-                        if (!wasLoaded) {
-                            loc.getChunk().unload(true);
                         }
                     }
 
@@ -317,6 +321,58 @@ public class SpawnerManager {
     }
 
     /**
+     * Checks if a spawner is a ghost spawner (no actual spawner block exists)
+     * Only checks if the chunk is already loaded
+     *
+     * @param spawner The spawner to check
+     * @return true if it's a ghost spawner, false if valid or chunk not loaded
+     */
+    public boolean isGhostSpawner(SpawnerData spawner) {
+        if (spawner == null) return false;
+
+        // If already confirmed as ghost, return true immediately
+        if (confirmedGhostSpawners.contains(spawner.getSpawnerId())) {
+            return true;
+        }
+
+        Location loc = spawner.getSpawnerLocation();
+        if (loc == null || loc.getWorld() == null) return true;
+
+        // Only check loaded chunks
+        if (!loc.getChunk().isLoaded()) {
+            return false; // Can't confirm, assume valid
+        }
+
+        return loc.getBlock().getType() != Material.SPAWNER;
+    }
+
+    /**
+     * Handles the removal of a confirmed ghost spawner
+     *
+     * @param spawnerId The ID of the spawner to remove
+     */
+    public void removeGhostSpawner(String spawnerId) {
+        SpawnerData spawner = spawners.get(spawnerId);
+        if (spawner != null) {
+            Location loc = spawner.getSpawnerLocation();
+
+            // Add to confirmed list
+            confirmedGhostSpawners.add(spawnerId);
+
+            // Remove hologram and spawner data
+            Scheduler.runLocationTask(loc, () -> {
+                spawner.removeHologram();
+
+                Scheduler.runTask(() -> {
+                    removeSpawner(spawnerId);
+                    spawnerFileHandler.markSpawnerDeleted(spawnerId);
+                    plugin.debug("Removed ghost spawner " + spawnerId);
+                });
+            });
+        }
+    }
+
+    /**
      * Marks a spawner as modified for batch saving
      *
      * @param spawnerId The ID of the modified spawner
@@ -358,5 +414,6 @@ public class SpawnerManager {
         spawners.clear();
         locationIndex.clear();
         worldIndex.clear();
+        confirmedGhostSpawners.clear();
     }
 }

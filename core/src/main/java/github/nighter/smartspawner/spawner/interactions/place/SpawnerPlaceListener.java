@@ -56,6 +56,12 @@ public class SpawnerPlaceListener implements Listener {
      *
      * @param event The block place event
      */
+    /**
+     * Handles spawner placement events, managing entity type inheritance
+     * and activation behavior.
+     *
+     * @param event The block place event
+     */
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlock();
@@ -87,10 +93,8 @@ public class SpawnerPlaceListener implements Listener {
             storedEntityType = ((CreatureSpawner) blockMeta.getBlockState()).getSpawnedType();
         }
 
-        // If no valid entity type was found, return early
-        if (storedEntityType == null || storedEntityType == EntityType.UNKNOWN) {
-            return;
-        }
+        // Instead, schedule a task to get the entity type from the placed spawner
+        boolean needsDeferredEntityTypeResolution = storedEntityType == null || storedEntityType == EntityType.UNKNOWN;
 
         if(SpawnerPlaceEvent.getHandlerList().getRegisteredListeners().length != 0) {
             SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), 1);
@@ -102,10 +106,33 @@ public class SpawnerPlaceListener implements Listener {
         }
 
         plugin.debug("Player: " + player.getName() + " placed spawner, isOp: " + player.isOp() +
-                ", isVanillaSpawner: " + isVanillaSpawner + ", entityType: " + storedEntityType);
+                ", isVanillaSpawner: " + isVanillaSpawner + ", entityType: " +
+                (needsDeferredEntityTypeResolution ? "unknown (will resolve after placement)" : storedEntityType));
 
-        // Handle spawner setup immediately
-        handleSpawnerSetup(block, player, storedEntityType, isVanillaSpawner);
+        // Handle spawner setup
+        if (needsDeferredEntityTypeResolution) {
+            // Use a slightly longer delay to ensure the block is fully placed and initialized
+            Scheduler.runLocationTaskLater(block.getLocation(), () -> {
+                if (block.getType() != Material.SPAWNER) {
+                    plugin.debug("Block is no longer a spawner, aborting setup");
+                    return;
+                }
+
+                CreatureSpawner placedSpawner = (CreatureSpawner) block.getState();
+                EntityType resolvedEntityType = placedSpawner.getSpawnedType();
+
+                if (resolvedEntityType == null || resolvedEntityType == EntityType.UNKNOWN) {
+                    plugin.debug("Failed to resolve entity type from placed spawner, using default");
+                    resolvedEntityType = EntityType.PIG; // Default fallback entity
+                }
+
+                plugin.debug("Resolved entity type from placed spawner: " + resolvedEntityType);
+                handleSpawnerSetup(block, player, resolvedEntityType, isVanillaSpawner);
+            }, 3L); // Wait 3 ticks (longer than the original 2 ticks) to ensure spawner is fully initialized
+        } else {
+            // Original flow for known entity types
+            handleSpawnerSetup(block, player, storedEntityType, isVanillaSpawner);
+        }
     }
 
     private void handleSpawnerSetup(Block block, Player player, EntityType entityType, boolean isVanillaSpawner) {

@@ -49,8 +49,6 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             // Clear all caches first to avoid using stale data during reload
             ItemUpdater.clearCache();
             plugin.getSpawnerItemFactory().clearAllCaches();
-
-            // Clear message service caches (add this line)
             plugin.getMessageService().clearKeyExistsCache();
 
             // Reload all configurations
@@ -64,12 +62,11 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
             // Reload factory AFTER its dependencies (loot registry, language manager)
             plugin.getSpawnerItemFactory().reload();
-
-            // Refresh all holograms for configured changes
             plugin.getSpawnerManager().reloadAllHolograms();
-
             plugin.getSpawnerMenuAction().updateCooldownSettings();
+            plugin.getRangeChecker().reload();
             plugin.reload();
+
             // Log new cache stats after reload if in debug mode
             if (plugin.getConfig().getBoolean("debug", false)) {
                 logCacheStats();

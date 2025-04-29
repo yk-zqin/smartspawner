@@ -29,7 +29,6 @@ public class EconomyShopGUI implements IShopIntegration {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final MessageService messageService;
-    private final SpawnerGuiViewManager spawnerGuiViewManager;
 
     // Transaction timeout
     private static final long TRANSACTION_TIMEOUT_MS = 5000; // 5 seconds timeout
@@ -42,7 +41,6 @@ public class EconomyShopGUI implements IShopIntegration {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
-        this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
     }
 
     @Override
@@ -114,13 +112,11 @@ public class EconomyShopGUI implements IShopIntegration {
             return false;
         }
 
-        int oldTotalPages = calculateTotalPages(spawner);
         // Pre-remove items to improve UX
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             virtualInv.removeItems(calculation.getItemsToRemove());
             if (virtualInv.isDirty()) {
-                int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
             }
         });
 
@@ -140,8 +136,7 @@ public class EconomyShopGUI implements IShopIntegration {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     virtualInv.addItems(calculation.getItemsToRemove());
                     messageService.sendMessage(player, "shop.sale_failed");
-                    int newTotalPages = calculateTotalPages(spawner);
-                    spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                    Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
                 });
                 return false;
             }
@@ -160,16 +155,10 @@ public class EconomyShopGUI implements IShopIntegration {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 virtualInv.addItems(calculation.getItemsToRemove());
                 messageService.sendMessage(player, "shop.sale_failed");
-                int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+                Scheduler.runTask(() -> plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
             });
             return false;
         }
-    }
-
-    private int calculateTotalPages(SpawnerData spawner) {
-        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
-        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 
     private boolean processTransactions(Player player, SaleCalculationResult calculation) {
