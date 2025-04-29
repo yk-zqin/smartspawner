@@ -503,40 +503,11 @@ public class SpawnerStackerHandler implements Listener {
         }
 
         // Extract type from metadata
-        Optional<EntityType> result = extractEntityTypeFromMeta(item);
+        Optional<EntityType> result = plugin.getSpawnerStackHandler().getEntityTypeFromItem(item);
 
         // Cache the result
         entityTypeCache.put(item, result);
         return result;
-    }
-
-    private Optional<EntityType> extractEntityTypeFromMeta(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (!(meta instanceof BlockStateMeta blockMeta)) {
-            return Optional.empty();
-        }
-
-        CreatureSpawner spawner = (CreatureSpawner) blockMeta.getBlockState();
-        EntityType spawnerEntity = spawner.getSpawnedType();
-
-        // Support for stacking spawners with Spawner from EconomyShopGUI
-        if (spawnerEntity == null) {
-            String displayName = meta.getDisplayName();
-            Matcher matcher = SPAWNER_NAME_PATTERN.matcher(displayName);
-
-            if (matcher.matches()) {
-                String entityName = matcher.group(1)
-                        .replace(" ", "_")
-                        .toUpperCase();
-                try {
-                    return Optional.of(EntityType.valueOf(entityName));
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid entity type in spawner name: " + entityName);
-                }
-            }
-        }
-
-        return Optional.ofNullable(spawnerEntity);
     }
 
     private void removeValidSpawnersFromInventory(Player player, EntityType requiredType, int amountToRemove, List<SpawnerSlot> spawnerSlots) {
