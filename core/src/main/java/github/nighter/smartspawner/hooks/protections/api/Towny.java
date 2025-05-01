@@ -22,9 +22,8 @@ public class Towny {
             return true;
         }
 
-        Resident resident = null;
         try {
-            resident = TownyAPI.getInstance().getResident(playerUUID);
+            Resident resident = TownyAPI.getInstance().getResident(playerUUID);
             return town.hasResident(resident) || town.hasTrustedResident(resident);
         } catch (Exception e) {
             return true;
