@@ -22,7 +22,7 @@ public class CheckOpenMenu {
         if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerOpenMenuOnClaim(playerUUID, location)) return false;
         if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerInteractInRegion(player, location)) return false;
         if (SmartSpawner.hasLands && !Lands.CanPlayerInteractContainer(playerUUID, location)) return false;
-        if (SmartSpawner.hasTowny && !Towny.ifPlayerHasResident(playerUUID, location)) return false;
+        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(playerUUID, location)) return false;
         if (SmartSpawner.hasSuperiorSkyblock2 && SuperiorSkyblock2.canPlayerOpenMenu(playerUUID, location)) return false;
         if (SmartSpawner.hasBentoBox && !BentoBoxAPI.canPlayerOpenMenu(playerUUID, location)) return false;
 

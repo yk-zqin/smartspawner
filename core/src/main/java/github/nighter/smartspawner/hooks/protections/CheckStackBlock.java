@@ -21,7 +21,7 @@ public class CheckStackBlock {
         if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerStackClaimBlock(playerUUID, location)) return false;
         if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerStackBlockInRegion(playerUUID, location)) return false;
         if (SmartSpawner.hasLands && !Lands.canPlayerStackClaimBlock(playerUUID, location)) return false;
-        if (SmartSpawner.hasTowny && !Towny.ifPlayerHasResident(playerUUID, location)) return false;
+        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(playerUUID, location)) return false;
         if (SmartSpawner.hasSuperiorSkyblock2 && SuperiorSkyblock2.canPlayerStackBlock(playerUUID, location)) return false;
         if (SmartSpawner.hasBentoBox && !BentoBoxAPI.canPlayerStackBlock(playerUUID, location)) return false;
 
