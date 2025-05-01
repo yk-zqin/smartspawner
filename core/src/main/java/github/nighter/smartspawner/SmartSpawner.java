@@ -116,6 +116,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public static boolean hasWorldGuard = false;
     public static boolean hasGriefPrevention = false;
     public static boolean hasSuperiorSkyblock2 = false;
+    public static boolean hasBentoBox = false;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -342,6 +343,14 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         hasSuperiorSkyblock2 = checkPlugin("SuperiorSkyblock2", () ->
                 Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2") != null, true);
+
+        hasBentoBox = checkPlugin("BentoBox", () -> {
+            Plugin bentoPlugin = Bukkit.getPluginManager().getPlugin("BentoBox");
+            if (bentoPlugin != null) {
+                return true;
+            }
+            return false;
+        }, true);
     }
 
     private boolean checkPlugin(String pluginName, PluginCheck checker, boolean logSuccess) {

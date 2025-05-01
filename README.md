@@ -34,7 +34,6 @@
 3. Restart your server
 4. Configure settings in `plugins/SmartSpawner/config.yml`
 
-
 ## 🎮 Commands & Permissions
 
 ### Core Commands
@@ -65,6 +64,44 @@
 | [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` (deprecated)           | [SnowCutieOwO](https://github.com/SnowCutieOwO)                                          | `v1.2.3` |
 
 > 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
+
+## ⚠️ Important Notes
+
+If you have customs worlds or plugin that modify the world, please set world as the server's default world:
+
+(Because some plugin like [BentoBox](https://www.spigotmc.org/resources/73261/) always load later than normal worlds so [SmartSpawner](https://github.com/ptthanh02/SmartSpawner) cannot detect the world)
+
+### server.properties
+
+Open the server.properties file.
+
+Find the following line:
+```properties
+level-name=world
+```
+
+Replace world with the name of the customs world. (e.g. `example_world`)
+```properties
+level-name=example_world
+```
+
+### bukkit.yml
+
+Open the bukkit.yml file: we need to tell Bukkit that the default world uses a custom generator, otherwise it will mess up the world generation.
+
+The configuration section we're adding likely does not exist already in your `bukkit.yml` file, so you need to create it. See the official [Bukkit Wiki](https://bukkit.fandom.com/wiki/Bukkit.yml) for more details about the section.
+
+Add the following section to your file. The names listed must be the names of the worlds:
+
+```yaml
+worlds:
+  example_world:
+    generator: BentoBox
+  example_world_nether:
+    generator: BentoBox
+  example_world_the_end:
+    generator: BentoBox
+```
 
 ## 📊 Usage Statistics
 
