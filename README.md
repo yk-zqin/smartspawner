@@ -96,11 +96,11 @@ Add the following section to your file. The names listed must be the names of th
 ```yaml
 worlds:
   example_world:
-    generator: BentoBox
+    generator: ExampleGenerator
   example_world_nether:
-    generator: BentoBox
+    generator: ExampleGenerator
   example_world_the_end:
-    generator: BentoBox
+    generator: ExampleGenerator
 ```
 
 ## 📊 Usage Statistics
