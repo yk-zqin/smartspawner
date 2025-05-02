@@ -2,11 +2,7 @@ package github.nighter.smartspawner.hooks.protections;
 
 import java.util.UUID;
 
-import github.nighter.smartspawner.hooks.protections.api.Towny;
-import github.nighter.smartspawner.hooks.protections.api.Lands;
-import github.nighter.smartspawner.hooks.protections.api.WorldGuard;
-import github.nighter.smartspawner.hooks.protections.api.GriefPrevention;
-import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
+import github.nighter.smartspawner.hooks.protections.api.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -26,8 +22,9 @@ public class CheckOpenMenu {
         if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerOpenMenuOnClaim(playerUUID, location)) return false;
         if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerInteractInRegion(player, location)) return false;
         if (SmartSpawner.hasLands && !Lands.CanPlayerInteractContainer(playerUUID, location)) return false;
-        if (SmartSpawner.hasTowny && !Towny.ifPlayerHasResident(playerUUID, location)) return false;
+        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(playerUUID, location)) return false;
         if (SmartSpawner.hasSuperiorSkyblock2 && SuperiorSkyblock2.canPlayerOpenMenu(playerUUID, location)) return false;
+        if (SmartSpawner.hasBentoBox && !BentoBoxAPI.canPlayerOpenMenu(playerUUID, location)) return false;
 
         return true;
     }

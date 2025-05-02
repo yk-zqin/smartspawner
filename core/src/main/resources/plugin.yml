@@ -17,7 +17,6 @@ softdepend:
   - Lands
   - Towny
   - SuperiorSkyblock2
-  - BentoBox
   - Multiverse-Core
 commands:
   smartspawner:

@@ -12,17 +12,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class Towny {
     // Check if player has a resident in the location
-    public static boolean ifPlayerHasResident(@NotNull UUID pUUID, @NotNull Location location){
-        Resident resident = TownyAPI.getInstance().getResident(pUUID);
-        if (resident == null) return false;
+    public static boolean canPlayerInteractSpawner(@NotNull UUID playerUUID, @NotNull Location location) {
+
+        Town town = null;
+        try {
+            town = TownyAPI.getInstance().getTownBlock(location).getTown();
+        } catch (NotRegisteredException | NullPointerException e) {
+            /* Not in a town so allow break */
+            return true;
+        }
 
         try {
-            Town town = resident.getTown();
-        } catch (NotRegisteredException e) {
-            // Log the exception and return false if the resident does not belong to any town
-            // e.printStackTrace();
-            return false;
+            Resident resident = TownyAPI.getInstance().getResident(playerUUID);
+            return town.hasResident(resident) || town.hasTrustedResident(resident);
+        } catch (Exception e) {
+            return true;
         }
-        return true;
     }
 }
