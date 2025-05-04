@@ -231,6 +231,34 @@ world_buttons:
 # Spawner List GUI
 gui_title_spawner_list: '%world% - [%current%/%total%]'
 
+filter:
+  button:
+    name: '&#37eb9aʟọᴄ ʟồɴɢ sᴘᴀᴡɴ'
+    lore:
+      - '%all_color% • ᴛấᴛ ᴄả'
+      - '%active_color% • ʜᴏạᴛ độɴɢ'
+      - '%inactive_color% • ᴋʜôɴɢ ʜᴏạᴛ độɴɢ'
+  all:
+    color: '&#37eb9a'
+  active:
+    color: '&a'
+  inactive:
+    color: '&#ff5252'
+
+sort:
+  button:
+    name: '&#37eb9aꜱắᴘ xếᴘ ʟồɴɢ sᴘᴀᴡɴ'
+    lore:
+      - '%default_color% • ᴍặᴄ địɴʜ (ɪᴅ)'
+      - '%stack_size_asc_color% • xếᴘ ᴄʜồɴɢ (↑)'
+      - '%stack_size_desc_color% • xếᴘ ᴄʜồɴɢ (↓)'
+  default:
+    color: '&#37eb9a'
+  stack_size_asc:
+    color: '&#37eb9a'
+  stack_size_desc:
+    color: '&#37eb9a'
+
 spawner_item_list:
   name: '&#ab7afdʟồɴɢ sᴘᴀᴡɴ #%id%'
   lore:

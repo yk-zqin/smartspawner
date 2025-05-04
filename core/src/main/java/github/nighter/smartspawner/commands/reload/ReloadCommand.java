@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.commands.reload;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.ItemUpdater;
+import github.nighter.smartspawner.spawner.gui.synchronization.ItemUpdater;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

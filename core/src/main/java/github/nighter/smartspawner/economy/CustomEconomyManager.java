@@ -182,8 +182,7 @@ public class CustomEconomyManager {
             transactionCache.put(playerName, new CacheEntry(totalValue));
 
             // Update spawner GUI viewers in a separate thread to avoid blocking
-            Scheduler.runTask(() ->
-                    plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner));
+            plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner);
 
             // Send success message with total item count
             sendSellSuccessMessage(player, totalValue, totalItemCount);

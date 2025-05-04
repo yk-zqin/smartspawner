@@ -10,10 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-/**
- * Manages all spawner data and interactions, delegating file operations
- * to SpawnerFileHandler for improved performance.
- */
 public class SpawnerManager {
     private final SmartSpawner plugin;
     private final Map<String, SpawnerData> spawners = new HashMap<>();
@@ -24,11 +20,6 @@ public class SpawnerManager {
     // Set to keep track of confirmed ghost spawners to avoid repeated checks
     private final Set<String> confirmedGhostSpawners = ConcurrentHashMap.newKeySet();
 
-    /**
-     * Constructor for SpawnerManager
-     *
-     * @param plugin The SmartSpawner plugin instance
-     */
     public SpawnerManager(SmartSpawner plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
@@ -320,13 +311,6 @@ public class SpawnerManager {
                 });
     }
 
-    /**
-     * Checks if a spawner is a ghost spawner (no actual spawner block exists)
-     * Only checks if the chunk is already loaded
-     *
-     * @param spawner The spawner to check
-     * @return true if it's a ghost spawner, false if valid or chunk not loaded
-     */
     public boolean isGhostSpawner(SpawnerData spawner) {
         if (spawner == null) return false;
 
@@ -346,11 +330,6 @@ public class SpawnerManager {
         return loc.getBlock().getType() != Material.SPAWNER;
     }
 
-    /**
-     * Handles the removal of a confirmed ghost spawner
-     *
-     * @param spawnerId The ID of the spawner to remove
-     */
     public void removeGhostSpawner(String spawnerId) {
         SpawnerData spawner = spawners.get(spawnerId);
         if (spawner != null) {

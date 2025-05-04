@@ -3,13 +3,17 @@ package github.nighter.smartspawner.spawner.gui.synchronization;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.SpawnerMenuHolder;
 import github.nighter.smartspawner.holders.StoragePageHolder;
+import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import github.nighter.smartspawner.utils.ItemUpdater;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
+import github.nighter.smartspawner.spawner.properties.VirtualInventory;
+import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,7 +25,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,27 +36,35 @@ import java.util.stream.Collectors;
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces.
  */
 public class SpawnerGuiViewManager implements Listener {
+    private static final int TICKS_PER_SECOND = 20;
     private static final long UPDATE_INTERVAL_TICKS = 10L;
     private static final long INITIAL_DELAY_TICKS = 10L;
     private static final int ITEMS_PER_PAGE = 45; // Standard chest inventory size minus navigation items
 
+    // GUI slot constants
+    private static final int CHEST_SLOT = 11;
+    private static final int SPAWNER_INFO_SLOT = 13;
+    private static final int EXP_SLOT = 15;
+
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final SpawnerStorageUI spawnerStorageUI;
+    private final SpawnerMenuUI spawnerMenuUI;
 
     // Data structures to track viewers
     private final Map<UUID, SpawnerData> playerToSpawnerMap; // Player UUID -> SpawnerData
     private final Map<String, Set<UUID>> spawnerToPlayersMap; // SpawnerID -> Set of Player UUIDs
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
 
-    private Object updateTask;
+    private Scheduler.Task updateTask;
     private volatile boolean isTaskRunning;
     private long previousExpValue = 0;
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
-        this.spawnerStorageUI = new SpawnerStorageUI(plugin);
+        this.spawnerStorageUI = plugin.getSpawnerStorageUI();
+        this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.playerToSpawnerMap = new ConcurrentHashMap<>();
         this.spawnerToPlayersMap = new ConcurrentHashMap<>();
         this.isTaskRunning = false;
@@ -73,7 +84,7 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         updateTask = Scheduler.runTaskTimer(this::updateGuiForSpawnerInfo,
-                INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS).getTask();
+                INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS);
         isTaskRunning = true;
     }
 
@@ -83,11 +94,7 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         if (updateTask != null) {
-            if (updateTask instanceof BukkitTask) {
-                ((BukkitTask) updateTask).cancel();
-            } else if (updateTask instanceof io.papermc.paper.threadedregions.scheduler.ScheduledTask) {
-                ((io.papermc.paper.threadedregions.scheduler.ScheduledTask) updateTask).cancel();
-            }
+            updateTask.cancel();
             updateTask = null;
         }
 
@@ -187,15 +194,29 @@ public class SpawnerGuiViewManager implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
 
-        // Use runTask to check if player has another valid inventory open after closing this one
-        Scheduler.runTask(() -> {
-            if (!player.isOnline()) return;
+        if (!player.isOnline()) return;
 
-            Inventory openInv = player.getOpenInventory().getTopInventory();
-            if (openInv == null || !isValidHolder(openInv.getHolder())) {
-                untrackViewer(player.getUniqueId());
+        // Capture necessary info before passing to scheduler
+        final UUID playerId = player.getUniqueId();
+        final Inventory closedInventory = event.getInventory();
+        final InventoryHolder holder = closedInventory.getHolder();
+
+        // Check if it's a valid holder without accessing block data
+        if (isValidHolder(holder)) {
+            // Safe to untrack the viewer immediately
+            untrackViewer(playerId);
+
+            // Any other cleanup or follow-up actions should happen in the player's region
+            // This prevents the "Cannot read world asynchronously" error
+            if (player.getLocation() != null) {
+                // Use region scheduler for the player's specific region
+                Scheduler.runLocationTask(player.getLocation(), () -> {
+                    // By this point we're in the correct region thread
+                    // Any world access can be safely done here
+                    // However, we've already untracked the viewer, so no additional work needed
+                });
             }
-        });
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -227,15 +248,28 @@ public class SpawnerGuiViewManager implements Listener {
                 continue;
             }
 
-            Inventory openInventory = player.getOpenInventory().getTopInventory();
-            if (openInventory.getHolder() instanceof SpawnerMenuHolder) {
-                if (!spawner.getIsAtCapacity()) {
-                    updateSpawnerGuiInfo(player, spawner, false);
-                }
-            } else if (!(openInventory.getHolder() instanceof StoragePageHolder)) {
-                // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
-                iterator.remove();
-                untrackViewer(playerId);
+            // Using location to make sure we're on the correct region thread
+            Location playerLocation = player.getLocation();
+            if (playerLocation != null) {
+                // This is the key fix: use location-based scheduling to ensure we're on the right thread
+                Scheduler.runLocationTask(playerLocation, () -> {
+                    if (!player.isOnline()) return;
+
+                    Inventory openInventory = player.getOpenInventory().getTopInventory();
+                    if (openInventory == null) return;
+
+                    InventoryHolder holder = openInventory.getHolder();
+
+                    if (holder instanceof SpawnerMenuHolder) {
+                        if (!spawner.getIsAtCapacity()) {
+                            Inventory openInv = player.getOpenInventory().getTopInventory();
+                            updateSpawnerInfoItemTimer(openInv, spawner);
+                        }
+                    } else if (!(holder instanceof StoragePageHolder)) {
+                        // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
+                        untrackViewer(playerId);
+                    }
+                });
             }
         }
     }
@@ -249,12 +283,15 @@ public class SpawnerGuiViewManager implements Listener {
         if (viewers.isEmpty()) return;
         plugin.debug(viewers.size() + " spawner menu viewers to update for " + spawner.getSpawnerId());
 
-        Scheduler.runTask(() -> {
-            for (Player viewer : viewers) {
-                if (!viewer.isOnline()) continue;
+        for (Player viewer : viewers) {
+            if (!viewer.isOnline()) continue;
+
+            // Schedule update on the correct thread for this player
+            Scheduler.runLocationTask(viewer.getLocation(), () -> {
+                if (!viewer.isOnline()) return;
 
                 Inventory openInv = viewer.getOpenInventory().getTopInventory();
-                if (openInv == null) continue;
+                if (openInv == null) return;
 
                 InventoryHolder holder = openInv.getHolder();
                 if (holder instanceof SpawnerMenuHolder) {
@@ -264,8 +301,8 @@ public class SpawnerGuiViewManager implements Listener {
                     int newTotalPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
                     updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
                 }
-            }
-        });
+            });
+        }
     }
 
     private int calculateTotalPages(int totalItems) {
@@ -280,7 +317,6 @@ public class SpawnerGuiViewManager implements Listener {
         if (openInv.getHolder() instanceof SpawnerMenuHolder) {
             SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
             if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
-                updateSpawnerInfoItem(openInv, spawner);
                 updateExpItem(openInv, spawner);
                 updateChestItem(openInv, spawner);
                 player.updateInventory();
@@ -288,31 +324,37 @@ public class SpawnerGuiViewManager implements Listener {
         }
     }
 
-    public void updateSpawnerGuiInfo(Player player, SpawnerData spawner, boolean forceUpdate) {
-        Inventory openInv = player.getOpenInventory().getTopInventory();
-        if (openInv.getHolder() instanceof SpawnerMenuHolder) {
-            SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
-            if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
-                updateSpawnerInfoItem(openInv, spawner);
-                player.updateInventory();
-            }
-        }
-    }
-
-    private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner) {
-        ItemStack spawnerItem = inventory.getItem(13);
+    private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
+        ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
         ItemMeta meta = spawnerItem.getItemMeta();
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
 
+        // Get the template string for the next spawn time
+        String nextSpawnTemplate = languageManager.getGuiItemName("spawner_info_item.lore_change");
+
+        // If template is empty or just whitespace, skip countdown update entirely
+        if (nextSpawnTemplate == null || nextSpawnTemplate.trim().isEmpty()) {
+            return;
+        }
+
+        // Calculate time until next spawn
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
         String timeDisplay = getTimeDisplay(timeUntilNextSpawn);
 
-        String nextSpawnTemplate = languageManager.getGuiItemName("spawner_info_item.lore_change");
-        String strippedTemplate = ChatColor.stripColor(nextSpawnTemplate);
+        // Check if spawner is at capacity and override display message
+        if (spawner.getIsAtCapacity()) {
+            timeDisplay = languageManager.getGuiItemName("spawner_info_item.lore_full");
+        }
 
+        // Create the new line with template and time
+        String newLine = nextSpawnTemplate + timeDisplay;
+
+        // Find existing line in lore if it exists
+        String strippedTemplate = ChatColor.stripColor(nextSpawnTemplate);
         int lineIndex = -1;
+
         for (int i = 0; i < lore.size(); i++) {
             String strippedLine = ChatColor.stripColor(lore.get(i));
             if (strippedLine.startsWith(ChatColor.stripColor(strippedTemplate))) {
@@ -320,17 +362,17 @@ public class SpawnerGuiViewManager implements Listener {
                 break;
             }
         }
-        // Check if spawner is at capacity and display message
-        if (spawner.getIsAtCapacity()){
-            timeDisplay = languageManager.getGuiItemName("spawner_info_item.lore_full");
-        }
-        String newLine = nextSpawnTemplate + timeDisplay;
+
+        // Update or add the line
         if (lineIndex >= 0) {
+            // Only update if the line has changed to avoid unnecessary inventory updates
             if (!lore.get(lineIndex).equals(newLine)) {
                 ItemUpdater.updateLoreLine(spawnerItem, lineIndex, newLine);
             }
         } else {
+            // If line doesn't exist yet, add it
             lore.add(newLine);
+
             ItemUpdater.updateLore(spawnerItem, lore);
         }
     }
@@ -374,10 +416,14 @@ public class SpawnerGuiViewManager implements Listener {
                         if (timeUntilNextSpawn < 0) {
                             spawner.setLastSpawnTime(currentTime - cachedDelay);
 
-                            // Schedule activation on appropriate thread for Folia compatibility
-                            Scheduler.runTask(() -> {
-                                plugin.getRangeChecker().activateSpawner(spawner);
-                            });
+                            // Get the spawner location to schedule on the right region
+                            Location spawnerLocation = spawner.getSpawnerLocation();
+                            if (spawnerLocation != null) {
+                                // Schedule activation on the appropriate region thread for Folia compatibility
+                                Scheduler.runLocationTask(spawnerLocation, () -> {
+                                    plugin.getRangeChecker().activateSpawner(spawner);
+                                });
+                            }
                             return 0;
                         }
                     } finally {
@@ -385,7 +431,7 @@ public class SpawnerGuiViewManager implements Listener {
                     }
                 } else {
                     // If can't acquire lock, just return current calculation without modifying state
-                    return Math.max(0, timeUntilNextSpawn) ;
+                    return Math.max(0, timeUntilNextSpawn);
                 }
             } catch (InterruptedException e) {
                 // Handle interruption
@@ -408,28 +454,21 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void updateChestItem(Inventory inventory, SpawnerData spawner) {
-        ItemStack chestItem = inventory.getItem(11);
-        if (chestItem == null || !chestItem.hasItemMeta()) return;
+        // Get the chest item from the inventory
+        ItemStack currentChestItem = inventory.getItem(CHEST_SLOT);
+        if (currentChestItem == null || !currentChestItem.hasItemMeta()) return;
 
-        int currentItems = spawner.getVirtualInventory().getUsedSlots();
-        int maxSlots = spawner.getMaxSpawnerLootSlots();
-        int percentStorage = (int) ((double) currentItems / maxSlots * 100);
+        // Create a freshly generated chest item using the optimized method from SpawnerMenuUI
+        ItemStack newChestItem = spawnerMenuUI.createLootStorageItem(spawner);
 
-        Map<String, String> replacements = new HashMap<>();
-        replacements.put("max_slots", languageManager.formatNumber(maxSlots));
-        replacements.put("current_items", String.valueOf(currentItems));
-        replacements.put("percent_storage", String.valueOf(percentStorage));
-
-        String name = languageManager.getGuiItemName("spawner_storage_item.name");
-
-        // Use the new direct key access method that returns a List for compatibility with ItemUpdater
-        List<String> chestLore = languageManager.getGuiItemLoreAsList("spawner_storage_item.lore", replacements);
-
-        ItemUpdater.updateItemMeta(chestItem, name, chestLore);
+        // If the new item is different from current item, update it
+        if (!ItemUpdater.areItemsEqual(currentChestItem, newChestItem)) {
+            inventory.setItem(CHEST_SLOT, newChestItem);
+        }
     }
 
     private void updateExpItem(Inventory inventory, SpawnerData spawner) {
-        ItemStack expItem = inventory.getItem(15);
+        ItemStack expItem = inventory.getItem(EXP_SLOT);
         if (expItem == null || !expItem.hasItemMeta()) return;
 
         long currentExp = spawner.getSpawnerExp();
@@ -442,6 +481,7 @@ public class SpawnerGuiViewManager implements Listener {
 
             Map<String, String> loreReplacements = new HashMap<>();
             loreReplacements.put("current_exp", languageManager.formatNumber(currentExp));
+            loreReplacements.put("raw_current_exp", String.valueOf(currentExp));
             loreReplacements.put("max_exp", languageManager.formatNumber(spawner.getMaxStoredExp()));
             loreReplacements.put("percent_exp", String.valueOf(percentExp));
             loreReplacements.put("u_max_exp", String.valueOf(spawner.getMaxStoredExp()));
@@ -469,56 +509,54 @@ public class SpawnerGuiViewManager implements Listener {
         for (Player player : viewers) {
             if (!player.isOnline()) continue;
 
-            Inventory currentInv = player.getOpenInventory().getTopInventory();
-            if (currentInv.getHolder() instanceof StoragePageHolder) {
-                StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
-                int currentPage = holder.getCurrentPage();
+            final Player currentPlayer = player;
 
-                boolean needsNewInventory = false;
-                int targetPage = currentPage;
+            // Execute within the player's region thread
+            Scheduler.runLocationTask(player.getLocation(), () -> {
+                if (!currentPlayer.isOnline()) return;
 
-                // Determine if we need a new inventory
-                if (currentPage > newTotalPages) {
-                    // if current page is out of bounds, set to last page
-                    targetPage = newTotalPages;
-                    holder.setCurrentPage(targetPage);
-                    needsNewInventory = true;
-                } else if (pagesChanged) {
-                    // If total pages changed but current page is still valid, update current page
-                    needsNewInventory = true;
-                }
+                Inventory currentInv = currentPlayer.getOpenInventory().getTopInventory();
+                if (currentInv == null) return;
 
-                updateQueue.add(new UpdateAction(player, spawner, targetPage, newTotalPages, needsNewInventory));
-            }
-        }
+                if (currentInv.getHolder() instanceof StoragePageHolder) {
+                    StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
+                    int currentPage = holder.getCurrentPage();
 
-        // Process all updates in one server tick
-        if (!updateQueue.isEmpty()) {
-            Scheduler.runTask(() -> {
-                for (UpdateAction action : updateQueue) {
-                    if (action.requiresNewInventory) {
+                    boolean needsNewInventory = false;
+                    int targetPage = currentPage;
+
+                    // Determine if we need a new inventory
+                    if (currentPage > newTotalPages) {
+                        // if current page is out of bounds, set to last page
+                        targetPage = newTotalPages;
+                        holder.setCurrentPage(targetPage);
+                        needsNewInventory = true;
+                    } else if (pagesChanged) {
+                        // If total pages changed but current page is still valid, update current page
+                        needsNewInventory = true;
+                    }
+
+                    if (needsNewInventory) {
                         try {
                             // Update inventory title and contents
-                            String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + action.page + "/" + action.totalPages + "]";
-                            action.player.getOpenInventory().setTitle(newTitle);
-                            Inventory currentInv = action.player.getOpenInventory().getTopInventory();
-                            spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page, action.totalPages);
+                            String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + targetPage + "/" + newTotalPages + "]";
+                            currentPlayer.getOpenInventory().setTitle(newTitle);
+                            spawnerStorageUI.updateDisplay(currentInv, spawner, targetPage, newTotalPages);
                         } catch (Exception e) {
                             // Fall back to creating a new inventory
                             Inventory newInv = spawnerStorageUI.createInventory(
-                                    action.spawner,
+                                    spawner,
                                     languageManager.getGuiTitle("gui_title_storage"),
-                                    action.page,
-                                    action.totalPages
+                                    targetPage,
+                                    newTotalPages
                             );
-                            action.player.closeInventory();
-                            action.player.openInventory(newInv);
+                            currentPlayer.closeInventory();
+                            currentPlayer.openInventory(newInv);
                         }
                     } else {
                         // Just update contents of current inventory
-                        Inventory currentInv = action.player.getOpenInventory().getTopInventory();
-                        spawnerStorageUI.updateDisplay(currentInv, action.spawner, action.page, action.totalPages);
-                        action.player.updateInventory();
+                        spawnerStorageUI.updateDisplay(currentInv, spawner, targetPage, newTotalPages);
+                        currentPlayer.updateInventory();
                     }
                 }
             });
@@ -544,6 +582,10 @@ public class SpawnerGuiViewManager implements Listener {
         if (plugin.getSpawnerStackerHandler() != null) {
             plugin.getSpawnerStackerHandler().closeAllViewersInventory(spawnerId);
         }
+    }
+
+    private int calculatePercentage(long current, long maximum) {
+        return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
     }
 
     public void cleanup() {

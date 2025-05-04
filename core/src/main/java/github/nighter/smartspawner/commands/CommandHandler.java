@@ -25,10 +25,10 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     public CommandHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.messageService = plugin.getMessageService();
-        this.reloadCommand = new ReloadCommand(plugin);
-        this.giveCommand = new GiveCommand(plugin);
-        this.listCommand = new ListCommand(plugin);
-        this.hologramCommand = new HologramCommand(plugin);
+        this.reloadCommand = plugin.getReloadCommand();
+        this.giveCommand = plugin.getGiveCommand();
+        this.listCommand = plugin.getListCommand();
+        this.hologramCommand = plugin.getHologramCommand();
     }
 
     @Override

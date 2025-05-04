@@ -2,6 +2,7 @@ package github.nighter.smartspawner.language;
 
 import github.nighter.smartspawner.SmartSpawner;
 import lombok.Getter;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
@@ -112,6 +113,9 @@ public class LanguageManager {
         saveResource("language/vi_VN/gui.yml");
         saveResource("language/vi_VN/formatting.yml");
         saveResource("language/vi_VN/items.yml");
+        saveResource("language/DonutSMP/messages.yml");
+        saveResource("language/DonutSMP/gui.yml");
+        saveResource("language/DonutSMP/formatting.yml");
     }
 
     private void saveResource(String resourcePath) {
@@ -538,122 +542,73 @@ public class LanguageManager {
 
         return result;
     }
+    
+    /**
+     * Gets GUI item lore with support for multi-line placeholders
+     * This method expands any placeholder that contains newline characters into multiple lines
+     */
+    public List<String> getGuiItemLoreWithMultilinePlaceholders(String key, Map<String, String> placeholders) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return Collections.emptyList();
+        }
 
-    //---------------------------------------------------
-    //               Formatting Methods
-    //---------------------------------------------------
+        List<String> result = new ArrayList<>();
+        List<String> loreList = cachedDefaultLocaleData.gui().getStringList(key);
 
+        for (String line : loreList) {
+            // Check if the line contains a placeholder that might have multiple lines
+            boolean containsMultilinePlaceholder = false;
 
-    public String formatNumber(double number) {
-        if (!activeFileTypes.contains(LanguageFileType.FORMATTING)) {
-            // Return a default format if formatting file type is not active
-            if (number >= 1_000_000_000_000L) {
-                double value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
-                return formatDecimal(value) + "T";
-            } else if (number >= 1_000_000_000L) {
-                double value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
-                return formatDecimal(value) + "B";
-            } else if (number >= 1_000_000L) {
-                double value = Math.round(number / 1_000_000.0 * 10) / 10.0;
-                return formatDecimal(value) + "M";
-            } else if (number >= 1_000L) {
-                double value = Math.round(number / 1_000.0 * 10) / 10.0;
-                return formatDecimal(value) + "K";
+            // First, identify placeholders in the line
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                String placeholder = "%" + entry.getKey() + "%";
+                if (line.contains(placeholder) && entry.getValue().contains("\n")) {
+                    containsMultilinePlaceholder = true;
+                    break;
+                }
+            }
+
+            if (containsMultilinePlaceholder) {
+                // Process special case: line contains multi-line placeholder
+                String processedLine = line;
+
+                // Apply non-multiline placeholders first
+                for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                    String placeholder = "%" + entry.getKey() + "%";
+                    String value = entry.getValue();
+
+                    if (!value.contains("\n")) {
+                        processedLine = processedLine.replace(placeholder, value);
+                    }
+                }
+
+                // Now handle multiline placeholders
+                for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                    String placeholder = "%" + entry.getKey() + "%";
+                    String value = entry.getValue();
+
+                    if (processedLine.contains(placeholder) && value.contains("\n")) {
+                        // Split the placeholder value into lines
+                        String[] valueLines = value.split("\n");
+
+                        // Replace the placeholder in the first line
+                        String firstLine = processedLine.replace(placeholder, valueLines[0]);
+                        result.add(ColorUtil.translateHexColorCodes(firstLine));
+
+                        // Add remaining lines with the same formatting/indentation
+                        String lineStart = processedLine.substring(0, processedLine.indexOf(placeholder));
+                        for (int i = 1; i < valueLines.length; i++) {
+                            result.add(ColorUtil.translateHexColorCodes(lineStart + valueLines[i]));
+                        }
+                    }
+                }
             } else {
-                double value = Math.round(number * 10) / 10.0;
-                return formatDecimal(value);
+                // Standard processing for lines without multi-line placeholders
+                result.add(applyPlaceholdersAndColors(line, placeholders));
             }
         }
-
-        String format;
-        double value;
-
-        if (number >= 1_000_000_000_000L) {
-            format = cachedDefaultLocaleData.formatting().getString("format_number.trillion", "%s%T");
-            value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
-        } else if (number >= 1_000_000_000L) {
-            format = cachedDefaultLocaleData.formatting().getString("format_number.billion", "%s%B");
-            value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
-        } else if (number >= 1_000_000L) {
-            format = cachedDefaultLocaleData.formatting().getString("format_number.million", "%s%M");
-            value = Math.round(number / 1_000_000.0 * 10) / 10.0;
-        } else if (number >= 1_000L) {
-            format = cachedDefaultLocaleData.formatting().getString("format_number.thousand", "%s%K");
-            value = Math.round(number / 1_000.0 * 10) / 10.0;
-        } else {
-            format = cachedDefaultLocaleData.formatting().getString("format_number.default", "%s%");
-            value = Math.round(number * 10) / 10.0;
-        }
-
-        // Replace %s% with the formatted value and escape any other % characters
-        return format.replace("%s%", formatDecimal(value));
-    }
-
-    private String formatDecimal(double value) {
-        // Check if the value is a whole number (after our rounding)
-        if (value == Math.floor(value)) {
-            return String.valueOf((int)value);
-        } else {
-            return String.valueOf(value);
-        }
-    }
-
-    public String getFormattedMobName(EntityType type) {
-        if (type == null || type == EntityType.UNKNOWN) {
-            return "Unknown";
-        }
-
-        // Get the internal name key of the entity type
-        String mobNameKey = type.name();
-
-        // Create a special cache key for mob names
-        String cacheKey = "mob_name|" + mobNameKey;
-
-        // Check cache first
-        String cachedName = entityNameCache.get(cacheKey);
-        if (cachedName != null) {
-            cacheHits.incrementAndGet();
-            return cachedName;
-        }
-
-        // Cache miss, generate the name
-        cacheMisses.incrementAndGet();
-        String result;
-
-        // Try to get from formatting.yml first
-        if (activeFileTypes.contains(LanguageFileType.FORMATTING)) {
-            String formattedName = cachedDefaultLocaleData.formatting().getString("mob_names." + mobNameKey);
-
-            if (formattedName != null) {
-                result = applyPlaceholdersAndColors(formattedName, null);
-                entityNameCache.put(cacheKey, result);
-                return result;
-            }
-        }
-
-        // Default fallback: convert SNAKE_CASE to Title Case
-        result = formatEnumName(mobNameKey);
-
-        // Cache the result
-        entityNameCache.put(cacheKey, result);
 
         return result;
-    }
-
-    // Helper method to convert enum names like "CAVE_SPIDER" to "Cave Spider"
-    public String formatEnumName(String enumName) {
-        String[] words = enumName.split("_");
-        StringBuilder result = new StringBuilder();
-
-        for (String word : words) {
-            if (word.length() > 0) {
-                result.append(word.charAt(0))
-                        .append(word.substring(1).toLowerCase())
-                        .append(" ");
-            }
-        }
-
-        return result.toString().trim();
     }
 
     //---------------------------------------------------
@@ -830,28 +785,120 @@ public class LanguageManager {
     }
 
     //---------------------------------------------------
-    //               Hologram Methods
+    //               Formatting Methods
     //---------------------------------------------------
 
-    public String getHologramText() {
-        // Check if the text exists in the config
-        if (plugin.getConfig().contains("hologram.text")) {
-            // Get as string list for multi-line support
-            List<String> lines = plugin.getConfig().getStringList("hologram.text");
 
-            // Join lines with newline characters
-            if (!lines.isEmpty()) {
-                return String.join("\n", lines);
+    public String formatNumber(double number) {
+        if (!activeFileTypes.contains(LanguageFileType.FORMATTING)) {
+            // Return a default format if formatting file type is not active
+            if (number >= 1_000_000_000_000L) {
+                double value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "T";
+            } else if (number >= 1_000_000_000L) {
+                double value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "B";
+            } else if (number >= 1_000_000L) {
+                double value = Math.round(number / 1_000_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "M";
+            } else if (number >= 1_000L) {
+                double value = Math.round(number / 1_000.0 * 10) / 10.0;
+                return formatDecimal(value) + "K";
+            } else {
+                double value = Math.round(number * 10) / 10.0;
+                return formatDecimal(value);
             }
-
-            // Fallback to string if list is empty or not properly defined
-            return plugin.getConfig().getString("hologram.text");
         }
 
-        // Default value if not defined
-        return "&e%entity% Spawner &7[&f%stack_size%x&7]\n" +
-                "&7XP: &a%current_exp%&7/&a%max_exp%\n" +
-                "&7Items: &a%used_slots%&7/&a%max_slots%";
+        String format;
+        double value;
+
+        if (number >= 1_000_000_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.trillion", "%s%T");
+            value = Math.round(number / 1_000_000_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.billion", "%s%B");
+            value = Math.round(number / 1_000_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.million", "%s%M");
+            value = Math.round(number / 1_000_000.0 * 10) / 10.0;
+        } else if (number >= 1_000L) {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.thousand", "%s%K");
+            value = Math.round(number / 1_000.0 * 10) / 10.0;
+        } else {
+            format = cachedDefaultLocaleData.formatting().getString("format_number.default", "%s%");
+            value = Math.round(number * 10) / 10.0;
+        }
+
+        // Replace %s% with the formatted value and escape any other % characters
+        return format.replace("%s%", formatDecimal(value));
+    }
+
+    private String formatDecimal(double value) {
+        // Check if the value is a whole number (after our rounding)
+        if (value == Math.floor(value)) {
+            return String.valueOf((int)value);
+        } else {
+            return String.valueOf(value);
+        }
+    }
+
+    public String getFormattedMobName(EntityType type) {
+        if (type == null || type == EntityType.UNKNOWN) {
+            return "Unknown";
+        }
+
+        // Get the internal name key of the entity type
+        String mobNameKey = type.name();
+
+        // Create a special cache key for mob names
+        String cacheKey = "mob_name|" + mobNameKey;
+
+        // Check cache first
+        String cachedName = entityNameCache.get(cacheKey);
+        if (cachedName != null) {
+            cacheHits.incrementAndGet();
+            return cachedName;
+        }
+
+        // Cache miss, generate the name
+        cacheMisses.incrementAndGet();
+        String result;
+
+        // Try to get from formatting.yml first
+        if (activeFileTypes.contains(LanguageFileType.FORMATTING)) {
+            String formattedName = cachedDefaultLocaleData.formatting().getString("mob_names." + mobNameKey);
+
+            if (formattedName != null) {
+                result = applyPlaceholdersAndColors(formattedName, null);
+                entityNameCache.put(cacheKey, result);
+                return result;
+            }
+        }
+
+        // Default fallback: convert SNAKE_CASE to Title Case
+        result = formatEnumName(mobNameKey);
+
+        // Cache the result
+        entityNameCache.put(cacheKey, result);
+
+        return result;
+    }
+
+    // Helper method to convert enum names like "CAVE_SPIDER" to "Cave Spider"
+    public String formatEnumName(String enumName) {
+        String[] words = enumName.split("_");
+        StringBuilder result = new StringBuilder();
+
+        for (String word : words) {
+            if (word.length() > 0) {
+                result.append(word.charAt(0))
+                        .append(word.substring(1).toLowerCase())
+                        .append(" ");
+            }
+        }
+
+        return result.toString().trim();
     }
 
     //---------------------------------------------------
@@ -960,6 +1007,44 @@ public class LanguageManager {
         formattedStringCache.put(cacheKey, result);
 
         return result;
+    }
+
+    public String getColorCode(String path) {
+        if (!activeFileTypes.contains(LanguageFileType.GUI)) {
+            return ChatColor.WHITE.toString();
+        }
+
+        String colorStr = cachedDefaultLocaleData.gui().getString(path);
+        if (colorStr == null) {
+            return ChatColor.WHITE.toString();
+        }
+
+        return applyPlaceholdersAndColors(colorStr, EMPTY_PLACEHOLDERS);
+    }
+
+    //---------------------------------------------------
+    //               Hologram Methods
+    //---------------------------------------------------
+
+    public String getHologramText() {
+        // Check if the text exists in the config
+        if (plugin.getConfig().contains("hologram.text")) {
+            // Get as string list for multi-line support
+            List<String> lines = plugin.getConfig().getStringList("hologram.text");
+
+            // Join lines with newline characters
+            if (!lines.isEmpty()) {
+                return String.join("\n", lines);
+            }
+
+            // Fallback to string if list is empty or not properly defined
+            return plugin.getConfig().getString("hologram.text");
+        }
+
+        // Default value if not defined
+        return "&e%entity% Spawner &7[&f%stack_size%x&7]\n" +
+                "&7XP: &a%current_exp%&7/&a%max_exp%\n" +
+                "&7Items: &a%used_slots%&7/&a%max_slots%";
     }
 
     //---------------------------------------------------

@@ -297,7 +297,7 @@ public class SpawnerStorageUI {
     }
 
     private void startCleanupTask() {
-        cleanupTask = Scheduler.runTaskTimer(() -> cleanupCaches(), 20L * 30, 20L * 30); // Run every 30 seconds
+        cleanupTask = Scheduler.runTaskTimer(this::cleanupCaches, 20L * 30, 20L * 30); // Run every 30 seconds
     }
 
     public void cancelTasks() {

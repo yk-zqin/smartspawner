@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.utils;
+package github.nighter.smartspawner.spawner.gui.synchronization;
 
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
@@ -355,6 +355,38 @@ public class ItemUpdater {
         }
 
         return true;
+    }
+
+    /**
+     * Compares two ItemStacks for equality, focusing on display name and lore.
+     * This helps avoid unnecessary item updates in the GUI.
+     *
+     * @param item1 First ItemStack to compare
+     * @param item2 Second ItemStack to compare
+     * @return true if items have the same material, display name and lore
+     */
+    public static boolean areItemsEqual(ItemStack item1, ItemStack item2) {
+        if (item1 == item2) return true;  // Same instance
+        if (item1 == null || item2 == null) return false;
+
+        // Check material first (fast check)
+        if (item1.getType() != item2.getType()) return false;
+
+        // Get item metas
+        ItemMeta meta1 = item1.getItemMeta();
+        ItemMeta meta2 = item2.getItemMeta();
+
+        // If both have no meta, they're equal
+        if (meta1 == null && meta2 == null) return true;
+        // If only one has meta, they're not equal
+        if (meta1 == null || meta2 == null) return false;
+
+        // Check display name
+        if (meta1.hasDisplayName() != meta2.hasDisplayName()) return false;
+        if (meta1.hasDisplayName() && !meta1.getDisplayName().equals(meta2.getDisplayName())) return false;
+
+        // Check lore
+        return areLoreListsEqual(meta1.getLore(), meta2.getLore());
     }
 
     /**

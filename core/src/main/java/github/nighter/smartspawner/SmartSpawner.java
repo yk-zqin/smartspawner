@@ -5,7 +5,12 @@ import github.nighter.smartspawner.api.SmartSpawnerPlugin;
 import github.nighter.smartspawner.api.SmartSpawnerAPIImpl;
 import github.nighter.smartspawner.bstats.Metrics;
 import github.nighter.smartspawner.commands.CommandHandler;
+import github.nighter.smartspawner.commands.give.GiveCommand;
+import github.nighter.smartspawner.commands.hologram.HologramCommand;
+import github.nighter.smartspawner.commands.list.ListCommand;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
+import github.nighter.smartspawner.commands.list.UserPreferenceCache;
+import github.nighter.smartspawner.commands.reload.ReloadCommand;
 import github.nighter.smartspawner.configs.TimeFormatter;
 import github.nighter.smartspawner.economy.CustomEconomyManager;
 import github.nighter.smartspawner.economy.ItemPriceManager;
@@ -18,6 +23,7 @@ import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
+import github.nighter.smartspawner.spawner.gui.main.ItemCache;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerHandler;
@@ -76,6 +82,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerItemFactory spawnerItemFactory;
 
     // Core UI components
+    private final ItemCache itemCache = new ItemCache(500, 30);
     private SpawnerMenuUI spawnerMenuUI;
     private SpawnerStorageUI spawnerStorageUI;
     private SpawnerStackerUI spawnerStackerUI;
@@ -110,6 +117,14 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private EntityLootRegistry entityLootRegistry;
     private UpdateChecker updateChecker;
 
+    // Set up commands
+    private CommandHandler commandHandler;
+    private ReloadCommand reloadCommand;
+    private GiveCommand giveCommand;
+    private UserPreferenceCache userPreferenceCache;
+    private ListCommand listCommand;
+    private HologramCommand hologramCommand;
+
     // Integration flags - static for quick access
     public static boolean hasTowny = false;
     public static boolean hasLands = false;
@@ -128,6 +143,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         // Save default config
         saveDefaultConfig();
+        saveConfig();
         ensureMobDropsFileExists();
 
         // Initialize version-specific components
@@ -233,18 +249,17 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeCoreComponents() {
-        this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.spawnerFileHandler = new SpawnerFileHandler(this);
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerManager.reloadAllHolograms();
-        this.spawnerListGUI = new SpawnerListGUI(this);
+        this.spawnerStorageUI = new SpawnerStorageUI(this);
+        this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
     }
 
     private void initializeHandlers() {
-        this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerStackerUI = new SpawnerStackerUI(this);
 
         this.spawnEggHandler = new SpawnEggHandler(this);
@@ -291,7 +306,13 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void setupCommand() {
-        CommandHandler commandHandler = new CommandHandler(this);
+        this.reloadCommand = new ReloadCommand(this);
+        this.giveCommand = new GiveCommand(this);
+        this.userPreferenceCache = new UserPreferenceCache(this);
+        this.listCommand = new ListCommand(this);
+        this.spawnerListGUI = new SpawnerListGUI(this);
+        this.hologramCommand = new HologramCommand(this);
+        this.commandHandler = new CommandHandler(this);
         Objects.requireNonNull(getCommand("smartspawner")).setExecutor(commandHandler);
         Objects.requireNonNull(getCommand("smartspawner")).setTabCompleter(commandHandler);
     }
@@ -370,6 +391,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public void reload() {
         shopIntegrationManager.reload();
         itemPriceManager.reload();
+        clearItemCache();
 
         // Only initialize CustomEconomyManager if custom sell prices are enabled
         boolean shouldUseCustomSellPrices = getConfig().getBoolean("custom_sell_prices.enabled", false);
@@ -460,6 +482,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (timeFormatter != null) {
             timeFormatter.clearCache();
         }
+    }
+
+    public void clearItemCache() {
+        itemCache.clear();
     }
 
     public void debug(String message) {

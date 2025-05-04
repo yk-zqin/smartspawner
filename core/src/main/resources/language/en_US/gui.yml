@@ -21,8 +21,24 @@ gui_title_main:
   single_spawner: '%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
   stacked_spawner: '%amount% %ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
 
+# Spawner Storage Item Configuration
+
 spawner_storage_item:
+  # Available placeholders for name:
+  # %max_slots% - Maximum number of slots in the storage (formatted with commas)
+  # %current_items% - Current number of items in the storage
+  # %percent_storage% - Percentage of storage used (0-100)
+  # %entity% - The spawner's entity type (normal capitalization)
+  # %ᴇɴᴛɪᴛʏ% - The spawner's entity type (small caps)
   name: '&#fce96aꜱᴛᴏʀᴀɢᴇ'
+
+  # Available placeholders for all lore lines:
+  # %max_slots% - Maximum number of slots in the storage (formatted with commas)
+  # %current_items% - Current number of items in the storage
+  # %percent_storage% - Percentage of storage used (0-100)
+  # %loot_items% - The complete formatted list of loot items
+  # %entity% - The spawner's entity type (normal capitalization)
+  # %ᴇɴᴛɪᴛʏ% - The spawner's entity type (small caps)
   lore:
     - ''
     - '&#d9b50c◈ &#fce96aꜱᴛᴀᴛꜱ:'
@@ -30,7 +46,51 @@ spawner_storage_item:
     - '  &#f8f8ff•  ꜱᴛᴏʀᴀɢᴇ: &#f9cf51%percent_storage%%&#f8f8ff ꜰᴜʟʟ'
     - ''
     - '&#d9b50c⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ ꜱᴛᴏʀᴀɢᴇ'
+    # You can add an optional line to display all loot items:
+    # - '%loot_items%'
 
+  # This defines how each loot item will be displayed when using %loot_items%
+  # Available placeholders for each loot item:
+  # %item_name% - The name of the item (normal capitalization)
+  # %ɪᴛᴇᴍ_ɴᴀᴍᴇ% - The name of the item in small caps format
+  # %amount% - Number of items (formatted with commas)
+  # %raw_amount% - Number of items (without formatting)
+  # %chance% - The chance of this item dropping (with % symbol, e.g. "8.5%")
+  loot_items: '  &#f8f8ff• &#f9cf51%raw_amount% &#f8f8ff%ɪᴛᴇᴍ_ɴᴀᴍᴇ%'
+  loot_items_empty: '&#e6e6faɴᴏ ɪᴛᴇᴍ ᴅʀᴏᴘs'
+
+
+# Spawner Info Item Configuration
+# Available placeholders:
+#
+# Entity Information:
+# %entity%           - Formatted entity name (e.g., "Zombie")
+# %ᴇɴᴛɪᴛʏ%           - Entity name in small caps (e.g., "ᴢᴏᴍʙɪᴇ")
+# %entity_type%      - Raw entity type (e.g., "ZOMBIE")
+#
+# Stack Information:
+# %stack_size%       - Number of spawners stacked at this location
+#
+# Spawner Settings:
+# %range%            - Spawning range in blocks
+# %delay%            - Spawn delay in seconds
+# %delay_raw%        - Raw spawn delay in ticks
+# %min_mobs%         - Minimum number of mobs to spawn
+# %max_mobs%         - Maximum number of mobs to spawn
+#
+# Storage Information:
+# %current_items%    - Current number of items stored
+# %max_items%        - Maximum storage capacity for items
+# %percent_storage%  - Storage usage as integer percentage (e.g., "87")
+# %formatted_storage% - Storage usage as formatted percentage with decimal (e.g., "87.5")
+#
+# Experience Information:
+# %current_exp%      - Current experience stored (formatted with commas)
+# %max_exp%          - Maximum experience capacity (formatted with commas)
+# %raw_current_exp%  - Raw current experience number
+# %raw_max_exp%      - Raw maximum experience number
+# %percent_exp%      - Experience storage as integer percentage
+# %formatted_exp%    - Experience storage as formatted percentage with decimal (e.g., "42.7")
 spawner_info_item:
   name: '&#ab7afd%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
   lore:
@@ -44,6 +104,7 @@ spawner_info_item:
     - ''
     - '&#7b68ee⊳ &#f8f8ffʀɪɢʜᴛ-ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ &#ab7afdꜱᴛᴀᴄᴋᴇʀ ɢᴜɪ'
     - '&#7b68ee⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ&#f0c857 ꜱᴇʟʟ ɪᴛᴇᴍꜱ &#ab7afd& &#37eb9aᴄᴏʟʟᴇᴄᴛ xᴘ'
+  # Version used when shop integration is disabled or player lacks permission
   lore_no_shop:
     - ''
     - '&#7b68ee◈ &#8a2be2ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ:'
@@ -230,6 +291,34 @@ world_buttons:
 
 # Spawner List GUI
 gui_title_spawner_list: '%world% - [%current%/%total%]'
+
+filter:
+  button:
+    name: '&#37eb9aꜰɪʟᴛᴇʀ sᴘᴀᴡɴᴇʀs'
+    lore:
+      - '%all_color% • ᴀʟʟ'
+      - '%active_color% • ᴀᴄᴛɪᴠᴇ'
+      - '%inactive_color% • ɪɴᴀᴄᴛɪᴠᴇ'
+  all:
+    color: '&#37eb9a'
+  active:
+    color: '&a'
+  inactive:
+    color: '&#ff5252'
+
+sort:
+  button:
+    name: '&#37eb9aꜱᴏʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ'
+    lore:
+      - '%default_color% • ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
+      - '%stack_size_asc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
+      - '%stack_size_desc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
+  default:
+    color: '&#37eb9a'
+  stack_size_asc:
+    color: '&#37eb9a'
+  stack_size_desc:
+    color: '&#37eb9a'
 
 spawner_item_list:
   name: '&#ab7afdꜱᴘᴀᴡɴᴇʀ #%id%'

@@ -7,6 +7,7 @@ import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -16,11 +17,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ListCommand {
@@ -28,15 +25,18 @@ public class ListCommand {
     private final SpawnerManager spawnerManager;
     private final LanguageManager languageManager;
     private final MessageService messageService;
+    private final UserPreferenceCache userPreferenceCache;
     private static final int SPAWNERS_PER_PAGE = 45;
 
     public ListCommand(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.languageManager = plugin.getLanguageManager();
-        this.messageService = new MessageService(plugin, languageManager);
+        this.messageService = plugin.getMessageService();
+        this.userPreferenceCache = plugin.getUserPreferenceCache();
     }
 
+    // World selection GUI logic (unchanged)
     public void openWorldSelectionGUI(Player player) {
         if (!player.hasPermission("smartspawner.list")) {
             messageService.sendMessage(player, "no_permission");
@@ -227,15 +227,54 @@ public class ListCommand {
         return button;
     }
 
+    // Basic spawner list GUI opener with default filter and sort
     public void openSpawnerListGUI(Player player, String worldName, int page) {
+        // Check for saved preferences
+        UserPreferenceCache.UserPreference preference = userPreferenceCache.getPreference(player.getUniqueId(), worldName);
+
+        if (preference != null) {
+            // Use saved preferences if available
+            openSpawnerListGUI(player, worldName, page, preference.getFilterOption(), preference.getSortOption());
+        } else {
+            // Use default preferences
+            openSpawnerListGUI(player, worldName, page, FilterOption.ALL, SortOption.DEFAULT);
+        }
+    }
+
+    public void saveUserPreference(Player player, String worldName, FilterOption filter, SortOption sort) {
+        userPreferenceCache.savePreference(player.getUniqueId(), worldName, filter, sort);
+    }
+
+    // Main spawner list GUI method with filter and sort options
+    public void openSpawnerListGUI(Player player, String worldName, int page, FilterOption filter, SortOption sortType) {
         if (!player.hasPermission("smartspawner.list")) {
             messageService.sendMessage(player, "no_permission");
             return;
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+
+        // Get all spawners in the world
         List<SpawnerData> worldSpawners = spawnerManager.getAllSpawners().stream()
                 .filter(spawner -> spawner.getSpawnerLocation().getWorld().getName().equals(worldName))
-                .toList();
+                .collect(Collectors.toList());
+
+        // Apply filtering
+        if (filter == FilterOption.ACTIVE) {
+            worldSpawners = worldSpawners.stream()
+                    .filter(spawner -> !spawner.getSpawnerStop())
+                    .collect(Collectors.toList());
+        } else if (filter == FilterOption.INACTIVE) {
+            worldSpawners = worldSpawners.stream()
+                    .filter(SpawnerData::getSpawnerStop)
+                    .collect(Collectors.toList());
+        }
+
+        // Apply sorting
+        switch (sortType) {
+            case STACK_SIZE_ASC -> worldSpawners.sort(Comparator.comparingInt(SpawnerData::getStackSize));
+            case STACK_SIZE_DESC -> worldSpawners.sort(Comparator.comparingInt(SpawnerData::getStackSize).reversed());
+            default -> {} // Default sorting (by ID) - no additional sorting needed
+        }
 
         int totalPages = (int) Math.ceil((double) worldSpawners.size() / SPAWNERS_PER_PAGE);
         page = Math.max(1, Math.min(page, totalPages));
@@ -259,7 +298,7 @@ public class ListCommand {
 
         String title = languageManager.getGuiTitle("gui_title_spawner_list", titlePlaceholders);
 
-        Inventory inv = Bukkit.createInventory(new SpawnerListHolder(page, totalPages, worldName),
+        Inventory inv = Bukkit.createInventory(new SpawnerListHolder(page, totalPages, worldName, filter, sortType),
                 54, title);
 
         // Calculate start and end indices for current page
@@ -272,10 +311,101 @@ public class ListCommand {
             inv.addItem(createSpawnerInfoItem(spawner));
         }
 
-        // Add navigation buttons and back button
-        addNavigationButtons(inv, page, totalPages);
-        addBackButton(inv);
+        // Add filter and sort controls
+        addControlButtons(inv, filter, sortType);
+
+        // Add navigation buttons
+        if (page > 1) {
+            inv.setItem(45, createNavigationButton(Material.SPECTRAL_ARROW, "navigation.previous_page"));
+        }
+
+        // Back button
+        inv.setItem(49, createNavigationButton(Material.RED_STAINED_GLASS_PANE, "navigation.back"));
+
+        if (page < totalPages) {
+            inv.setItem(53, createNavigationButton(Material.SPECTRAL_ARROW, "navigation.next_page"));
+        }
+
         player.openInventory(inv);
+    }
+
+    // Create the new consolidated filter and sort buttons
+    private void addControlButtons(Inventory inv, FilterOption currentFilter, SortOption currentSort) {
+        // Filter button (updated material and position) - moved to slot 46
+        ItemStack filterButton = createEnhancedControlButton(
+                Material.CAULDRON,
+                "filter",
+                currentFilter
+        );
+
+        // Sort button (updated material and position) - moved to slot 52
+        ItemStack sortButton = createEnhancedControlButton(
+                Material.HOPPER,
+                "sort",
+                currentSort
+        );
+
+        // Updated positions for better symmetry
+        inv.setItem(48, filterButton);
+        inv.setItem(50, sortButton);
+    }
+
+    private ItemStack createEnhancedControlButton(Material material, String controlType, Enum<?> currentOption) {
+        ItemStack button = new ItemStack(material);
+        ItemMeta meta = button.getItemMeta();
+        if (meta == null) return button;
+
+        Map<String, String> placeholders = new HashMap<>();
+
+        if (controlType.equals("filter")) {
+            FilterOption currentFilter = (FilterOption) currentOption;
+
+            // Set up color placeholders for all filter options
+            for (FilterOption option : FilterOption.values()) {
+                // Set active color for current option, white for others
+                String colorKey = option.getName() + "_color";
+                if (option == currentFilter) {
+                    placeholders.put(colorKey, languageManager.getColorCode("filter." + option.getName() + ".color"));
+                } else {
+                    placeholders.put(colorKey, "&f");
+                }
+            }
+
+            // Set button name
+            meta.setDisplayName(languageManager.getGuiItemName("filter.button.name"));
+
+        } else if (controlType.equals("sort")) {
+            SortOption currentSort = (SortOption) currentOption;
+
+            // Set up color placeholders for all sort options
+            for (SortOption option : SortOption.values()) {
+                // Set active color for current option, white for others
+                String colorKey = option.getName() + "_color";
+                if (option == currentSort) {
+                    placeholders.put(colorKey, languageManager.getColorCode("sort." + option.getName() + ".color"));
+                } else {
+                    placeholders.put(colorKey, "&f");
+                }
+            }
+
+            // Set button name
+            meta.setDisplayName(languageManager.getGuiItemName("sort.button.name"));
+        }
+
+        // Set the lore using the appropriate button lore path and the placeholders
+        String lorePath = controlType + ".button.lore";
+        meta.setLore(languageManager.getGuiItemLoreAsList(lorePath, placeholders));
+
+        button.setItemMeta(meta);
+        return button;
+    }
+
+    private ItemStack createNavigationButton(Material material, String namePath) {
+        ItemStack button = new ItemStack(material);
+        ItemMeta meta = button.getItemMeta();
+        meta.setDisplayName(languageManager.getGuiItemName(namePath));
+        button.setItemMeta(meta);
+        return button;
     }
 
     private ItemStack createSpawnerInfoItem(SpawnerData spawner) {
@@ -330,30 +460,62 @@ public class ListCommand {
         return spawnerItem;
     }
 
-    private void addNavigationButtons(Inventory inv, int currentPage, int totalPages) {
-        if (currentPage > 1) {
-            ItemStack previousPage = new ItemStack(Material.SPECTRAL_ARROW);
-            ItemMeta previousMeta = previousPage.getItemMeta();
-            previousMeta.setDisplayName(languageManager.getGuiItemName("navigation.previous_page", new HashMap<>()));
-            previousPage.setItemMeta(previousMeta);
-            inv.setItem(45, previousPage);
+    @Getter
+    public enum FilterOption {
+        ALL("filter.all"),
+        ACTIVE("filter.active"),
+        INACTIVE("filter.inactive");
+
+        private final String langPath;
+
+        FilterOption(String langPath) {
+            this.langPath = langPath;
         }
 
-        if (currentPage < totalPages) {
-            ItemStack nextPage = new ItemStack(Material.SPECTRAL_ARROW);
-            ItemMeta nextMeta = nextPage.getItemMeta();
-            nextMeta.setDisplayName(languageManager.getGuiItemName("navigation.next_page", new HashMap<>()));
-            nextPage.setItemMeta(nextMeta);
-            inv.setItem(53, nextPage);
+        public FilterOption getNextOption() {
+            return switch (this) {
+                case ALL -> ACTIVE;
+                case ACTIVE -> INACTIVE;
+                case INACTIVE -> ALL;
+            };
+        }
+
+        public String getColorPath() {
+            return langPath + ".color";
+        }
+
+        public String getName() {
+            return name().toLowerCase();
         }
     }
 
-    private void addBackButton(Inventory inv) {
-        ItemStack backButton = new ItemStack(Material.RED_STAINED_GLASS_PANE);
-        ItemMeta meta = backButton.getItemMeta();
-        meta.setDisplayName(languageManager.getGuiItemName("navigation.back", new HashMap<>()));
-        backButton.setItemMeta(meta);
-        inv.setItem(49, backButton);
+    @Getter
+    public enum SortOption {
+        DEFAULT("sort.default"),
+        STACK_SIZE_ASC("sort.stack_size_asc"),
+        STACK_SIZE_DESC("sort.stack_size_desc");
+
+        private final String langPath;
+
+        SortOption(String langPath) {
+            this.langPath = langPath;
+        }
+
+        public SortOption getNextOption() {
+            return switch (this) {
+                case DEFAULT -> STACK_SIZE_ASC;
+                case STACK_SIZE_ASC -> STACK_SIZE_DESC;
+                case STACK_SIZE_DESC -> DEFAULT;
+            };
+        }
+
+        public String getColorPath() {
+            return langPath + ".color";
+        }
+
+        public String getName() {
+            return name().toLowerCase();
+        }
     }
 
     // Inventory Holders
@@ -369,11 +531,20 @@ public class ListCommand {
         private final int currentPage;
         private final int totalPages;
         private final String worldName;
+        private final FilterOption filterOption;
+        private final SortOption sortType;
 
         public SpawnerListHolder(int currentPage, int totalPages, String worldName) {
+            this(currentPage, totalPages, worldName, FilterOption.ALL, SortOption.DEFAULT);
+        }
+
+        public SpawnerListHolder(int currentPage, int totalPages, String worldName,
+                                 FilterOption filterOption, SortOption sortType) {
             this.currentPage = currentPage;
             this.totalPages = totalPages;
             this.worldName = worldName;
+            this.filterOption = filterOption;
+            this.sortType = sortType;
         }
 
         @Override

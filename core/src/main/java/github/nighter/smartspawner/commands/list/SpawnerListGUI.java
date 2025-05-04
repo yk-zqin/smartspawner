@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -11,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
@@ -23,18 +23,21 @@ public class SpawnerListGUI implements Listener {
     private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final ListCommand listCommand;
+    private final UserPreferenceCache userPreferenceCache;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD, Material.SPAWNER, Material.ZOMBIE_HEAD,
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
             Material.CREEPER_HEAD, Material.PIGLIN_HEAD
     );
     private static final String patternString = "#([A-Za-z0-9]+)";
+    private static final Pattern ID_PATTERN = Pattern.compile(patternString);
 
     public SpawnerListGUI(SmartSpawner plugin) {
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
-        this.listCommand = new ListCommand(plugin);
+        this.listCommand = plugin.getListCommand();
+        this.userPreferenceCache = plugin.getUserPreferenceCache();
     }
 
     @EventHandler
@@ -106,56 +109,115 @@ public class SpawnerListGUI implements Listener {
         event.setCancelled(true);
         if (event.getCurrentItem() == null) return;
 
-        // Navigation handling
-        if (event.getSlot() == 45 && holder.getCurrentPage() > 1) {
-            listCommand.openSpawnerListGUI(player, holder.getWorldName(), holder.getCurrentPage() - 1);
-        } else if (event.getSlot() == 53 && holder.getCurrentPage() < holder.getTotalPages()) {
-            listCommand.openSpawnerListGUI(player, holder.getWorldName(), holder.getCurrentPage() + 1);
+        // Get current state
+        String worldName = holder.getWorldName();
+        int currentPage = holder.getCurrentPage();
+        int totalPages = holder.getTotalPages();
+        ListCommand.FilterOption currentFilter = holder.getFilterOption();
+        ListCommand.SortOption currentSort = holder.getSortType();
+
+        // Handle filter button click
+        if (event.getSlot() == 48) {
+            // Cycle to next filter option
+            ListCommand.FilterOption nextFilter = currentFilter.getNextOption();
+
+            // Save user preference when they change filter
+            listCommand.saveUserPreference(player, worldName, nextFilter, currentSort);
+
+            listCommand.openSpawnerListGUI(player, worldName, 1, nextFilter, currentSort);
+            return;
         }
-        // Back button
-        else if (event.getSlot() == 49) {
+
+        // Handle sort button click
+        if (event.getSlot() == 50) {
+            // Cycle to next sort option
+            ListCommand.SortOption nextSort = currentSort.getNextOption();
+
+            // Save user preference when they change sort
+            listCommand.saveUserPreference(player, worldName, currentFilter, nextSort);
+
+            listCommand.openSpawnerListGUI(player, worldName, 1, currentFilter, nextSort);
+            return;
+        }
+
+        // Handle navigation
+        if (event.getSlot() == 45 && currentPage > 1) {
+            // Previous page
+            listCommand.openSpawnerListGUI(player, worldName, currentPage - 1, currentFilter, currentSort);
+            return;
+        }
+
+        if (event.getSlot() == 49) {
+            // Save preference before going back to world selection
+            listCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
+
+            // Back to world selection
             listCommand.openWorldSelectionGUI(player);
+            return;
         }
-        // Spawner click handling
-        else if (SPAWNER_MATERIALS.contains(event.getCurrentItem().getType())) {
-            handleSpawnerClick(event);
+
+        if (event.getSlot() == 53 && currentPage < totalPages) {
+            // Next page
+            listCommand.openSpawnerListGUI(player, worldName, currentPage + 1, currentFilter, currentSort);
+            return;
+        }
+
+
+        // Handle spawner item click (teleport functionality)
+        if (isSpawnerItemSlot(event.getSlot()) && isSpawnerItem(event.getCurrentItem())) {
+            handleSpawnerItemClick(player, event.getCurrentItem());
         }
     }
 
-    private void handleSpawnerClick(InventoryClickEvent event) {
-        ItemStack clickedItem = event.getCurrentItem();
-        if (clickedItem == null || !clickedItem.hasItemMeta()) return;
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getInventory().getHolder() instanceof ListCommand.SpawnerListHolder holder)) return;
+        if (!(event.getPlayer() instanceof Player player)) return;
 
-        String displayName = clickedItem.getItemMeta().getDisplayName();
-        if (displayName == null) return;
+        // Save user preferences when closing the inventory
+        String worldName = holder.getWorldName();
+        ListCommand.FilterOption currentFilter = holder.getFilterOption();
+        ListCommand.SortOption currentSort = holder.getSortType();
 
-        // Extract spawner ID from display name, now handling alphanumeric IDs
+        // Save preference when they close the GUI
+        listCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
+    }
+
+    private boolean isSpawnerItemSlot(int slot) {
+        // Check if slot is in the spawner display area (first 5 rows, excluding borders)
+        return slot < 45;
+    }
+
+    private boolean isSpawnerItem(ItemStack item) {
+        // Check if item is a spawner or mob head (used for spawner display)
+        return item != null && SPAWNER_MATERIALS.contains(item.getType()) &&
+                item.hasItemMeta() && item.getItemMeta().hasDisplayName();
+    }
+
+    private void handleSpawnerItemClick(Player player, ItemStack item) {
+        // Extract spawner ID from the item name
+        String displayName = item.getItemMeta().getDisplayName();
         Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(ChatColor.stripColor(displayName));
+        Matcher matcher = pattern.matcher(displayName);
 
         if (matcher.find()) {
             String spawnerId = matcher.group(1);
             SpawnerData spawner = spawnerManager.getSpawnerById(spawnerId);
 
             if (spawner != null) {
-                Player player = (Player) event.getWhoClicked();
-                Location loc = spawner.getSpawnerLocation();
-
-                // Use the Scheduler to handle teleportation properly for both Bukkit and Folia
-                player.teleportAsync(loc).thenAccept(success -> {
-                    if (success) {
-                        Scheduler.runEntityTask(player, () -> {
-                            messageService.sendMessage(player, "teleported_to_spawner");
-                        });
-                    }
-                });
+                // Check if player has teleport permission
+                if (player.hasPermission("smartspawner.list.teleport")) {
+                    // Teleport player to spawner location
+                    Location loc = spawner.getSpawnerLocation().clone().add(0.5, 1, 0.5);
+                    player.teleportAsync(loc);
+                    messageService.sendMessage(player, "teleported_to_spawner");
+                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+                } else {
+                    messageService.sendMessage(player, "no_permission_teleport");
+                }
             } else {
-                Player player = (Player) event.getWhoClicked();
                 messageService.sendMessage(player, "spawner_not_found");
             }
-        } else {
-            Player player = (Player) event.getWhoClicked();
-            messageService.sendMessage(player, "spawner_not_found");
         }
     }
 }

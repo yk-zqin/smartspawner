@@ -170,29 +170,6 @@ public class SpawnerLootGenerator {
                     }
 
                     try {
-                        // Cache viewers state to avoid multiple checks
-                        boolean hasLootViewers = false;
-                        boolean hasSpawnerViewers = false;
-
-                        Set<Player> viewers = spawnerGuiViewManager.getViewers(spawner.getSpawnerId());
-                        if (!viewers.isEmpty()) {
-                            for (Player viewer : viewers) {
-                                InventoryHolder holder = viewer.getOpenInventory().getTopInventory().getHolder();
-                                if (holder instanceof StoragePageHolder) {
-                                    hasLootViewers = true;
-                                } else if (holder instanceof SpawnerMenuHolder) {
-                                    hasSpawnerViewers = true;
-                                }
-
-                                if (hasLootViewers && hasSpawnerViewers) {
-                                    break;
-                                }
-                            }
-                        }
-
-                        // Cache pages calculation
-                        int oldTotalPages = hasLootViewers ? calculateTotalPages(spawner) : 0;
-
                         // Modified approach: Handle items and exp separately
                         boolean changed = false;
 
@@ -238,7 +215,7 @@ public class SpawnerLootGenerator {
                         spawner.updateCapacityStatus();
 
                         // Handle GUI updates in batches
-                        handleGuiUpdates(spawner, hasLootViewers, hasSpawnerViewers, oldTotalPages);
+                        handleGuiUpdates(spawner);
 
                         // Mark for saving only once
                         spawnerManager.markSpawnerModified(spawner.getSpawnerId());
@@ -345,8 +322,7 @@ public class SpawnerLootGenerator {
         return calculateSlots(simulatedItems);
     }
 
-    private void handleGuiUpdates(SpawnerData spawner, boolean hasLootViewers,
-                                  boolean hasSpawnerViewers, int oldTotalPages) {
+    private void handleGuiUpdates(SpawnerData spawner) {
         // Show particles if needed
         if (plugin.getConfig().getBoolean("particle.spawner_generate_loot", true)) {
             Location loc = spawner.getSpawnerLocation();
@@ -360,25 +336,10 @@ public class SpawnerLootGenerator {
             }
         }
 
-        // Batch GUI updates
-        if (hasLootViewers) {
-            if (spawner.getVirtualInventory().isDirty()) {
-                int newTotalPages = calculateTotalPages(spawner);
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
-            }
-        }
-
-        if (hasSpawnerViewers) {
-            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
-        }
+        spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
         if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
             spawner.updateHologramData();
         }
-    }
-
-    private int calculateTotalPages(SpawnerData spawner) {
-        int usedSlots = spawner.getVirtualInventory().getUsedSlots();
-        return Math.max(1, (int) Math.ceil((double) usedSlots / StoragePageHolder.MAX_ITEMS_PER_PAGE));
     }
 }
