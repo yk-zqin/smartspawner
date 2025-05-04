@@ -9,11 +9,9 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -32,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * Unified controller responsible for managing all spawner GUI interactions and updates.
- * Handles the tracking, updating, and synchronization of open spawner GUI interfaces.
+ * SpawnerGuiViewManager responsible for managing all spawner GUI interactions and updates.
+ * Handles the tracking, updating, and synchronization of open spawner GUI interfaces with improved performance.
  */
 public class SpawnerGuiViewManager implements Listener {
     private static final long UPDATE_INTERVAL_TICKS = 10L;
@@ -45,18 +43,44 @@ public class SpawnerGuiViewManager implements Listener {
     private static final int SPAWNER_INFO_SLOT = 13;
     private static final int EXP_SLOT = 15;
 
+    // Update flags - using bit flags for efficient state tracking
+    private static final int UPDATE_CHEST = 1;
+    private static final int UPDATE_INFO = 2;
+    private static final int UPDATE_EXP = 4;
+    private static final int UPDATE_ALL = UPDATE_CHEST | UPDATE_INFO | UPDATE_EXP;
+
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerMenuUI spawnerMenuUI;
 
-    // Data structures to track viewers
-    private final Map<UUID, SpawnerData> playerToSpawnerMap; // Player UUID -> SpawnerData
-    private final Map<String, Set<UUID>> spawnerToPlayersMap; // SpawnerID -> Set of Player UUIDs
+    // Optimized data structures to track viewers
+    private final Map<UUID, SpawnerViewerInfo> playerToSpawnerMap;
+    private final Map<String, Set<UUID>> spawnerToPlayersMap;
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
+
+    // Batched update tracking to reduce inventory updates
+    private final Set<UUID> pendingUpdates = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Integer> updateFlags = new ConcurrentHashMap<>();
 
     private Scheduler.Task updateTask;
     private volatile boolean isTaskRunning;
+
+    // For timer optimizations - these avoid constant string lookups
+    private String cachedTimerPrefix;
+    private String cachedInactiveText;
+    private String cachedFullText;
+
+    // Static class to hold viewer info more efficiently
+    private static class SpawnerViewerInfo {
+        final SpawnerData spawnerData;
+        final long lastUpdateTime;
+
+        SpawnerViewerInfo(SpawnerData spawnerData) {
+            this.spawnerData = spawnerData;
+            this.lastUpdateTime = System.currentTimeMillis();
+        }
+    }
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -70,6 +94,15 @@ public class SpawnerGuiViewManager implements Listener {
                 SpawnerMenuHolder.class,
                 StoragePageHolder.class
         );
+
+        // Preload commonly used strings to avoid repeated lookups
+        initCachedStrings();
+    }
+
+    private void initCachedStrings() {
+        this.cachedTimerPrefix = languageManager.getGuiItemName("spawner_info_item.lore_change");
+        this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
+        this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
     }
 
     // ===============================================================
@@ -112,7 +145,7 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
 
     public void trackViewer(UUID playerId, SpawnerData spawner) {
-        playerToSpawnerMap.put(playerId, spawner);
+        playerToSpawnerMap.put(playerId, new SpawnerViewerInfo(spawner));
         spawnerToPlayersMap.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
 
@@ -122,8 +155,9 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     public void untrackViewer(UUID playerId) {
-        SpawnerData spawner = playerToSpawnerMap.remove(playerId);
-        if (spawner != null) {
+        SpawnerViewerInfo info = playerToSpawnerMap.remove(playerId);
+        if (info != null) {
+            SpawnerData spawner = info.spawnerData;
             Set<UUID> viewers = spawnerToPlayersMap.get(spawner.getSpawnerId());
             if (viewers != null) {
                 viewers.remove(playerId);
@@ -132,6 +166,10 @@ public class SpawnerGuiViewManager implements Listener {
                 }
             }
         }
+
+        // Also remove from pending updates
+        pendingUpdates.remove(playerId);
+        updateFlags.remove(playerId);
 
         // Check if we need to stop the update task
         if (playerToSpawnerMap.isEmpty()) {
@@ -145,11 +183,15 @@ public class SpawnerGuiViewManager implements Listener {
             return Collections.emptySet();
         }
 
-        return viewerIds.stream()
-                .map(Bukkit::getPlayer)
-                .filter(Objects::nonNull)
-                .filter(Player::isOnline)
-                .collect(Collectors.toSet());
+        // More efficient collection of online players
+        Set<Player> onlineViewers = new HashSet<>(viewerIds.size());
+        for (UUID id : viewerIds) {
+            Player player = Bukkit.getPlayer(id);
+            if (player != null && player.isOnline()) {
+                onlineViewers.add(player);
+            }
+        }
+        return onlineViewers;
     }
 
     public boolean hasViewers(SpawnerData spawner) {
@@ -160,7 +202,8 @@ public class SpawnerGuiViewManager implements Listener {
     public void clearAllTrackedGuis() {
         playerToSpawnerMap.clear();
         spawnerToPlayersMap.clear();
-        // plugin.getLogger().info("Cleared all tracked spawner GUIs");
+        pendingUpdates.clear();
+        updateFlags.clear();
     }
 
     // ===============================================================
@@ -192,29 +235,8 @@ public class SpawnerGuiViewManager implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
 
-        if (!player.isOnline()) return;
-
-        // Capture necessary info before passing to scheduler
-        final UUID playerId = player.getUniqueId();
-        final Inventory closedInventory = event.getInventory();
-        final InventoryHolder holder = closedInventory.getHolder();
-
-        // Check if it's a valid holder without accessing block data
-        if (isValidHolder(holder)) {
-            // Safe to untrack the viewer immediately
-            untrackViewer(playerId);
-
-            // Any other cleanup or follow-up actions should happen in the player's region
-            // This prevents the "Cannot read world asynchronously" error
-            if (player.getLocation() != null) {
-                // Use region scheduler for the player's specific region
-                Scheduler.runLocationTask(player.getLocation(), () -> {
-                    // By this point we're in the correct region thread
-                    // Any world access can be safely done here
-                    // However, we've already untracked the viewer, so no additional work needed
-                });
-            }
-        }
+        // Simply untrack - no need for complex location-based logic here
+        untrackViewer(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -232,16 +254,17 @@ public class SpawnerGuiViewManager implements Listener {
             return;
         }
 
-        // Use iterator to avoid ConcurrentModificationException
-        Iterator<Map.Entry<UUID, SpawnerData>> iterator = playerToSpawnerMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<UUID, SpawnerData> entry = iterator.next();
+        // Process batched updates first
+        processPendingUpdates();
+
+        // Then handle regular timer updates
+        for (Map.Entry<UUID, SpawnerViewerInfo> entry : playerToSpawnerMap.entrySet()) {
             UUID playerId = entry.getKey();
-            SpawnerData spawner = entry.getValue();
+            SpawnerViewerInfo viewerInfo = entry.getValue();
+            SpawnerData spawner = viewerInfo.spawnerData;
             Player player = Bukkit.getPlayer(playerId);
 
             if (!isValidGuiSession(player)) {
-                iterator.remove();
                 untrackViewer(playerId);
                 continue;
             }
@@ -260,8 +283,7 @@ public class SpawnerGuiViewManager implements Listener {
 
                     if (holder instanceof SpawnerMenuHolder) {
                         if (!spawner.getIsAtCapacity()) {
-                            Inventory openInv = player.getOpenInventory().getTopInventory();
-                            updateSpawnerInfoItemTimer(openInv, spawner);
+                            updateSpawnerInfoItemTimer(openInventory, spawner);
                         }
                     } else if (!(holder instanceof StoragePageHolder)) {
                         // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
@@ -272,55 +294,217 @@ public class SpawnerGuiViewManager implements Listener {
         }
     }
 
+    private void processPendingUpdates() {
+        if (pendingUpdates.isEmpty()) return;
+
+        // Create a copy to avoid concurrent modification
+        Set<UUID> currentUpdates = new HashSet<>(pendingUpdates);
+        pendingUpdates.clear();
+
+        for (UUID playerId : currentUpdates) {
+            Player player = Bukkit.getPlayer(playerId);
+            if (!isValidGuiSession(player)) {
+                untrackViewer(playerId);
+                updateFlags.remove(playerId);
+                continue;
+            }
+
+            SpawnerViewerInfo info = playerToSpawnerMap.get(playerId);
+            if (info == null) {
+                updateFlags.remove(playerId);
+                continue;
+            }
+
+            int flags = updateFlags.getOrDefault(playerId, UPDATE_ALL);
+            updateFlags.remove(playerId);
+
+            Location loc = player.getLocation();
+            if (loc != null) {
+                final int finalFlags = flags;
+                final SpawnerData spawner = info.spawnerData;
+
+                Scheduler.runLocationTask(loc, () -> {
+                    if (!player.isOnline()) return;
+
+                    Inventory openInv = player.getOpenInventory().getTopInventory();
+                    if (openInv == null || !(openInv.getHolder() instanceof SpawnerMenuHolder)) return;
+
+                    processInventoryUpdate(player, openInv, spawner, finalFlags);
+                });
+            }
+        }
+    }
+
+    private void processInventoryUpdate(Player player, Inventory inventory, SpawnerData spawner, int flags) {
+        boolean needsUpdate = false;
+
+        if ((flags & UPDATE_CHEST) != 0) {
+            updateChestItem(inventory, spawner);
+            needsUpdate = true;
+        }
+
+        if ((flags & UPDATE_INFO) != 0) {
+            updateSpawnerInfoItem(inventory, spawner, player);
+            needsUpdate = true;
+        }
+
+        if ((flags & UPDATE_EXP) != 0) {
+            updateExpItem(inventory, spawner);
+            needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+            player.updateInventory();
+        }
+    }
+
     // ===============================================================
     //                      Main GUI Update
     // ===============================================================
 
+    /**
+     * Optimized version of updateSpawnerMenuViewers - The main entry point for other classes
+     * to trigger updates to spawner menus.
+     *
+     * @param spawner The spawner data that has been updated
+     */
     public void updateSpawnerMenuViewers(SpawnerData spawner) {
-        Set<Player> viewers = getViewers(spawner.getSpawnerId());
-        if (viewers.isEmpty()) return;
-        plugin.debug(viewers.size() + " spawner menu viewers to update for " + spawner.getSpawnerId());
+        Set<UUID> viewers = spawnerToPlayersMap.get(spawner.getSpawnerId());
+        if (viewers == null || viewers.isEmpty()) return;
 
-        for (Player viewer : viewers) {
-            if (!viewer.isOnline()) continue;
+        int viewerCount = viewers.size();
+        if (viewerCount > 10) {
+            plugin.debug(viewerCount + " spawner menu viewers to update for " + spawner.getSpawnerId() + " (batch update)");
+        }
 
-            // Schedule update on the correct thread for this player
-            Scheduler.runLocationTask(viewer.getLocation(), () -> {
+        // For storage viewers we need to calculate pages
+        int oldTotalPages = -1;
+        int newTotalPages = -1;
+
+        // Schedule updates for all viewers - but batch them efficiently
+        for (UUID viewerId : viewers) {
+            Player viewer = Bukkit.getPlayer(viewerId);
+            if (!isValidGuiSession(viewer)) {
+                untrackViewer(viewerId);
+                continue;
+            }
+
+            // Add to batch update with appropriate flags
+            pendingUpdates.add(viewerId);
+            updateFlags.put(viewerId, UPDATE_ALL);
+
+            // For efficiency, we'll check holder types once in a separate thread for large batches
+            if (viewerCount <= 5) {
+                // For small numbers of viewers, check inventory type now to determine storage page updates
+                Inventory openInv = viewer.getOpenInventory().getTopInventory();
+                if (openInv != null && openInv.getHolder() instanceof StoragePageHolder) {
+                    // Calculate pages only when needed
+                    if (oldTotalPages == -1) {
+                        StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
+                        oldTotalPages = calculateTotalPages(holder.getOldUsedSlots());
+                        newTotalPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
+                    }
+
+                    // Schedule storage update on player's thread
+                    processStorageUpdate(viewer, spawner, oldTotalPages, newTotalPages);
+                }
+            }
+        }
+
+        // For larger batches, we'll handle storage viewers in a separate pass
+        if (viewerCount > 5) {
+            for (UUID viewerId : viewers) {
+                Player viewer = Bukkit.getPlayer(viewerId);
+                if (!isValidGuiSession(viewer)) continue;
+
+                // Run on player's thread to check inventory type
+                Location loc = viewer.getLocation();
+                if (loc != null) {
+                    Scheduler.runLocationTask(loc, () -> {
+                        if (!viewer.isOnline()) return;
+
+                        Inventory openInv = viewer.getOpenInventory().getTopInventory();
+                        if (openInv != null && openInv.getHolder() instanceof StoragePageHolder) {
+                            // Calculate pages only when needed (but within player's thread)
+                            StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
+                            int oldPages = calculateTotalPages(holder.getOldUsedSlots());
+                            int newPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
+
+                            // Process the storage update directly since we're already in player's thread
+                            processStorageUpdateDirect(viewer, openInv, spawner, holder, oldPages, newPages);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    public void processStorageUpdate(Player viewer, SpawnerData spawner, int oldTotalPages, int newTotalPages) {
+        Location loc = viewer.getLocation();
+        if (loc != null) {
+            Scheduler.runLocationTask(loc, () -> {
                 if (!viewer.isOnline()) return;
 
                 Inventory openInv = viewer.getOpenInventory().getTopInventory();
-                if (openInv == null) return;
+                if (openInv == null || !(openInv.getHolder() instanceof StoragePageHolder)) return;
 
-                InventoryHolder holder = openInv.getHolder();
-                if (holder instanceof SpawnerMenuHolder) {
-                    updateSpawnerMenuGui(viewer, spawner, true);
-                } else if (holder instanceof StoragePageHolder storageHolder) {
-                    int oldTotalPages = calculateTotalPages(storageHolder.getOldUsedSlots());
-                    int newTotalPages = calculateTotalPages(spawner.getVirtualInventory().getUsedSlots());
-                    updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
-                }
+                StoragePageHolder holder = (StoragePageHolder) openInv.getHolder();
+                processStorageUpdateDirect(viewer, openInv, spawner, holder, oldTotalPages, newTotalPages);
             });
         }
     }
 
-    private int calculateTotalPages(int totalItems) {
-        if (totalItems <= 0) {
-            return 1; // At least one page for empty inventory
+    private void processStorageUpdateDirect(Player viewer, Inventory inventory, SpawnerData spawner,
+                                           StoragePageHolder holder, int oldTotalPages, int newTotalPages) {
+        // Check if we need a new inventory
+        boolean pagesChanged = oldTotalPages != newTotalPages;
+        int currentPage = holder.getCurrentPage();
+        boolean needsNewInventory = false;
+        int targetPage = currentPage;
+
+        // Determine if we need a new inventory
+        if (currentPage > newTotalPages) {
+            // if current page is out of bounds, set to last page
+            targetPage = newTotalPages;
+            holder.setCurrentPage(targetPage);
+            needsNewInventory = true;
+        } else if (pagesChanged) {
+            // If total pages changed but current page is still valid, update current page
+            needsNewInventory = true;
         }
-        return (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
+
+        if (needsNewInventory) {
+            try {
+                // Update inventory title and contents
+                String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + targetPage + "/" + newTotalPages + "]";
+                viewer.getOpenInventory().setTitle(newTitle);
+                spawnerStorageUI.updateDisplay(inventory, spawner, targetPage, newTotalPages);
+            } catch (Exception e) {
+                // Fall back to creating a new inventory
+                Inventory newInv = spawnerStorageUI.createInventory(
+                        spawner,
+                        languageManager.getGuiTitle("gui_title_storage"),
+                        targetPage,
+                        newTotalPages
+                );
+                viewer.closeInventory();
+                viewer.openInventory(newInv);
+            }
+        } else {
+            // Just update contents of current inventory
+            spawnerStorageUI.updateDisplay(inventory, spawner, targetPage, newTotalPages);
+            viewer.updateInventory();
+        }
+    }
+
+    private int calculateTotalPages(int totalItems) {
+        return totalItems <= 0 ? 1 : (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
     }
 
     public void updateSpawnerMenuGui(Player player, SpawnerData spawner, boolean forceUpdate) {
-        Inventory openInv = player.getOpenInventory().getTopInventory();
-        if (openInv.getHolder() instanceof SpawnerMenuHolder) {
-            SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
-            if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
-                updateChestItem(openInv, spawner);
-                updateSpawnerInfoItem(openInv, spawner, player);
-                updateExpItem(openInv, spawner);
-                player.updateInventory();
-            }
-        }
+        // Add to batch update instead of immediate processing
+        pendingUpdates.add(player.getUniqueId());
+        updateFlags.put(player.getUniqueId(), UPDATE_ALL);
     }
 
     private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner, Player player) {
@@ -328,62 +512,63 @@ public class SpawnerGuiViewManager implements Listener {
         ItemStack currentSpawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (currentSpawnerItem == null || !currentSpawnerItem.hasItemMeta()) return;
 
-        // If we can't find the player, return early
-        if (player == null) return;
-
         // Create a freshly generated spawner info item using the method from SpawnerMenuUI
         ItemStack newSpawnerItem = spawnerMenuUI.createSpawnerInfoItem(player, spawner);
 
         // If the new item is different from current item, update it
         if (!ItemUpdater.areItemsEqual(currentSpawnerItem, newSpawnerItem)) {
             // Before replacing the item, check if we need to preserve timer info
-            // This is important to maintain the countdown timer between full refreshes
-            ItemMeta currentMeta = currentSpawnerItem.getItemMeta();
-            ItemMeta newMeta = newSpawnerItem.getItemMeta();
-
-            if (currentMeta != null && currentMeta.hasLore() && newMeta != null && newMeta.hasLore()) {
-                List<String> currentLore = currentMeta.getLore();
-                List<String> newLore = newMeta.getLore();
-
-                // Find the countdown timer line in the current lore
-                String timerPrefix = languageManager.getGuiItemName("spawner_info_item.lore_change");
-                if (timerPrefix != null && !timerPrefix.isEmpty()) {
-                    String strippedPrefix = ChatColor.stripColor(timerPrefix);
-
-                    // Search for timer line in current lore
-                    String timerLine = null;
-                    for (String line : currentLore) {
-                        String strippedLine = ChatColor.stripColor(line);
-                        if (strippedLine.startsWith(strippedPrefix)) {
-                            timerLine = line;
-                            break;
-                        }
-                    }
-
-                    // If we found a timer line, preserve it in the new lore
-                    if (timerLine != null) {
-                        // Search for where to insert the timer line in new lore
-                        int insertIndex = -1;
-                        for (int i = 0; i < newLore.size(); i++) {
-                            String strippedLine = ChatColor.stripColor(newLore.get(i));
-                            if (strippedLine.startsWith(strippedPrefix)) {
-                                insertIndex = i;
-                                break;
-                            }
-                        }
-
-                        // If we found the matching position, update that line
-                        if (insertIndex >= 0) {
-                            newLore.set(insertIndex, timerLine);
-                            newMeta.setLore(newLore);
-                            newSpawnerItem.setItemMeta(newMeta);
-                        }
-                    }
-                }
-            }
+            preserveTimerInfo(currentSpawnerItem, newSpawnerItem);
 
             // Update the item in the inventory
             inventory.setItem(SPAWNER_INFO_SLOT, newSpawnerItem);
+        }
+    }
+
+    private void preserveTimerInfo(ItemStack currentItem, ItemStack newItem) {
+        // Exit early if prefix isn't available
+        if (cachedTimerPrefix == null || cachedTimerPrefix.isEmpty()) return;
+
+        ItemMeta currentMeta = currentItem.getItemMeta();
+        ItemMeta newMeta = newItem.getItemMeta();
+
+        if (currentMeta != null && currentMeta.hasLore() && newMeta != null && newMeta.hasLore()) {
+            List<String> currentLore = currentMeta.getLore();
+            List<String> newLore = newMeta.getLore();
+
+            if (currentLore == null || newLore == null) return;
+
+            String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
+
+            // Search for timer line in current lore
+            String timerLine = null;
+            for (String line : currentLore) {
+                String strippedLine = ChatColor.stripColor(line);
+                if (strippedLine.startsWith(strippedPrefix)) {
+                    timerLine = line;
+                    break;
+                }
+            }
+
+            // If we found a timer line, preserve it in the new lore
+            if (timerLine != null) {
+                // Search for where to insert the timer line in new lore
+                int insertIndex = -1;
+                for (int i = 0; i < newLore.size(); i++) {
+                    String strippedLine = ChatColor.stripColor(newLore.get(i));
+                    if (strippedLine.startsWith(strippedPrefix)) {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                // If we found the matching position, update that line
+                if (insertIndex >= 0) {
+                    newLore.set(insertIndex, timerLine);
+                    newMeta.setLore(newLore);
+                    newItem.setItemMeta(newMeta);
+                }
+            }
         }
     }
 
@@ -391,36 +576,40 @@ public class SpawnerGuiViewManager implements Listener {
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
-        ItemMeta meta = spawnerItem.getItemMeta();
-        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-
-        // Get the template string for the next spawn time
-        String nextSpawnTemplate = languageManager.getGuiItemName("spawner_info_item.lore_change");
-
         // If template is empty or just whitespace, skip countdown update entirely
-        if (nextSpawnTemplate == null || nextSpawnTemplate.trim().isEmpty()) {
+        if (cachedTimerPrefix == null || cachedTimerPrefix.trim().isEmpty()) {
             return;
         }
 
         // Calculate time until next spawn
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
-        String timeDisplay = getTimeDisplay(timeUntilNextSpawn);
+        String timeDisplay;
 
         // Check if spawner is at capacity and override display message
         if (spawner.getIsAtCapacity()) {
-            timeDisplay = languageManager.getGuiItemName("spawner_info_item.lore_full");
+            timeDisplay = cachedFullText;
+        } else if (timeUntilNextSpawn == -1) {
+            timeDisplay = cachedInactiveText;
+        } else {
+            timeDisplay = formatTime(timeUntilNextSpawn);
         }
 
         // Create the new line with template and time
-        String newLine = nextSpawnTemplate + timeDisplay;
+        String newLine = cachedTimerPrefix + timeDisplay;
 
         // Find existing line in lore if it exists
-        String strippedTemplate = ChatColor.stripColor(nextSpawnTemplate);
+        ItemMeta meta = spawnerItem.getItemMeta();
+        if (meta == null || !meta.hasLore()) return;
+
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
+
+        String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
         int lineIndex = -1;
 
         for (int i = 0; i < lore.size(); i++) {
             String strippedLine = ChatColor.stripColor(lore.get(i));
-            if (strippedLine.startsWith(ChatColor.stripColor(strippedTemplate))) {
+            if (strippedLine.startsWith(strippedPrefix)) {
                 lineIndex = i;
                 break;
             }
@@ -435,18 +624,8 @@ public class SpawnerGuiViewManager implements Listener {
         } else {
             // If line doesn't exist yet, add it
             lore.add(newLine);
-
             ItemUpdater.updateLore(spawnerItem, lore);
         }
-    }
-
-    private String getTimeDisplay(long timeUntilNextSpawn) {
-        if (timeUntilNextSpawn == -1) {
-            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
-        } else if (timeUntilNextSpawn <= 0) {
-            return formatTime(timeUntilNextSpawn);
-        }
-        return formatTime(timeUntilNextSpawn);
     }
 
     private long calculateTimeUntilNextSpawn(SpawnerData spawner) {
@@ -541,77 +720,6 @@ public class SpawnerGuiViewManager implements Listener {
         // If the new item is different from current item, update it
         if (!ItemUpdater.areItemsEqual(currentExpItem, newExpItem)) {
             inventory.setItem(EXP_SLOT, newExpItem);
-        }
-    }
-
-    // ===============================================================
-    //                      Storage GUI Update
-    // ===============================================================
-
-    private record UpdateAction(Player player, SpawnerData spawner, int page, int totalPages, boolean requiresNewInventory) {}
-
-    public void updateStorageGuiViewers(SpawnerData spawner, int oldTotalPages, int newTotalPages) {
-        // Check if total pages changed
-        boolean pagesChanged = oldTotalPages != newTotalPages;
-
-        // Batch all viewers that need updates
-        List<UpdateAction> updateQueue = new ArrayList<>();
-
-        Set<Player> viewers = getViewers(spawner.getSpawnerId());
-        for (Player player : viewers) {
-            if (!player.isOnline()) continue;
-
-            final Player currentPlayer = player;
-
-            // Execute within the player's region thread
-            Scheduler.runLocationTask(player.getLocation(), () -> {
-                if (!currentPlayer.isOnline()) return;
-
-                Inventory currentInv = currentPlayer.getOpenInventory().getTopInventory();
-                if (currentInv == null) return;
-
-                if (currentInv.getHolder() instanceof StoragePageHolder) {
-                    StoragePageHolder holder = (StoragePageHolder) currentInv.getHolder();
-                    int currentPage = holder.getCurrentPage();
-
-                    boolean needsNewInventory = false;
-                    int targetPage = currentPage;
-
-                    // Determine if we need a new inventory
-                    if (currentPage > newTotalPages) {
-                        // if current page is out of bounds, set to last page
-                        targetPage = newTotalPages;
-                        holder.setCurrentPage(targetPage);
-                        needsNewInventory = true;
-                    } else if (pagesChanged) {
-                        // If total pages changed but current page is still valid, update current page
-                        needsNewInventory = true;
-                    }
-
-                    if (needsNewInventory) {
-                        try {
-                            // Update inventory title and contents
-                            String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + targetPage + "/" + newTotalPages + "]";
-                            currentPlayer.getOpenInventory().setTitle(newTitle);
-                            spawnerStorageUI.updateDisplay(currentInv, spawner, targetPage, newTotalPages);
-                        } catch (Exception e) {
-                            // Fall back to creating a new inventory
-                            Inventory newInv = spawnerStorageUI.createInventory(
-                                    spawner,
-                                    languageManager.getGuiTitle("gui_title_storage"),
-                                    targetPage,
-                                    newTotalPages
-                            );
-                            currentPlayer.closeInventory();
-                            currentPlayer.openInventory(newInv);
-                        }
-                    } else {
-                        // Just update contents of current inventory
-                        spawnerStorageUI.updateDisplay(currentInv, spawner, targetPage, newTotalPages);
-                        currentPlayer.updateInventory();
-                    }
-                }
-            });
         }
     }
 

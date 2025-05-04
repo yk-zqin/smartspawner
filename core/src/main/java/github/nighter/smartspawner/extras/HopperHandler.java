@@ -269,21 +269,10 @@ public class HopperHandler implements Listener {
     }
 
     private void updateOpenGuis(SpawnerData spawner) {
-        // Keep track of the old used slots for page calculation
-        int oldUsedSlots = spawner.getVirtualInventory().getUsedSlots();
-
         // Use location-based scheduling for batch updates
         try {
             Scheduler.runLocationTaskLater(spawner.getSpawnerLocation(), () -> {
                 try {
-                    // Calculate total pages before and after the inventory change
-                    int oldTotalPages = (int) Math.ceil((double) oldUsedSlots / 45); // Using same ITEMS_PER_PAGE constant as in SpawnerGuiManager
-                    int newTotalPages = (int) Math.ceil((double) spawner.getVirtualInventory().getUsedSlots() / 45);
-
-                    // Update all storage GUI viewers
-                    spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
-
-                    // Update all spawner menu GUI viewers
                     spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "Error updating GUIs for spawner", e);

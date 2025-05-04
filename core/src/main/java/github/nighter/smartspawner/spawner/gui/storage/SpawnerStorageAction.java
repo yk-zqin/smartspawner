@@ -171,18 +171,12 @@ public class SpawnerStorageAction implements Listener {
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
 
         // Update hologram and capacity state
-        int oldTotalPages = calculateTotalPages(spawner);
         spawner.updateHologramData();
 
         // Synchronize total pages after item removal
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
         if (holder != null) {
-            int newTotalPages = calculateTotalPages(spawner);
-            if (newTotalPages != holder.getTotalPages()) {
-                holder.setTotalPages(newTotalPages);
-            }
-            holder.updateOldUsedSlots();
-            spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
             // Check if spawner is at capacity and update if necessary
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
@@ -233,7 +227,6 @@ public class SpawnerStorageAction implements Listener {
                 playerInv,
                 virtualInv
         );
-        int oldTotalPages = calculateTotalPages(spawner);
         if (result.getAmountMoved() > 0) {
             updateInventorySlot(sourceInv, slot, item, result.getAmountMoved());
             virtualInv.removeItems(result.getMovedItems());
@@ -245,12 +238,7 @@ public class SpawnerStorageAction implements Listener {
             // Synchronize total pages after item removal
             StoragePageHolder holder = (StoragePageHolder) sourceInv.getHolder();
             if (holder != null) {
-                int newTotalPages = calculateTotalPages(spawner);
-                if (newTotalPages != holder.getTotalPages()) {
-                    holder.setTotalPages(newTotalPages);
-                }
-                holder.updateOldUsedSlots();
-                spawnerGuiViewManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
+                spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
                 // Check if spawner is at capacity and update if necessary
                 if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
@@ -433,7 +421,7 @@ public class SpawnerStorageAction implements Listener {
         holder.updateOldUsedSlots();
 
         // Update all viewers
-        spawnerGuiViewManager.updateStorageGuiViewers(spawner, oldTotalPages, newTotalPages);
+        spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
         // Update the current inventory view
         updatePageContent(player, spawner, 1, inventory, true);
@@ -508,7 +496,6 @@ public class SpawnerStorageAction implements Listener {
         TransferResult result = transferItems(player, sourceInventory, sourceItems, virtualInv);
         sendTransferMessage(player, result);
         player.updateInventory();
-        int oldTotalPages = calculateTotalPages(spawner);
 
         // After items are taken, recalculate pages and update the UI
         if (result.anyItemMoved) {
@@ -518,13 +505,8 @@ public class SpawnerStorageAction implements Listener {
             // Update holder
             holder.setTotalPages(newTotalPages);
 
-            // Ensure current page is valid
-            int currentPage = Math.min(holder.getCurrentPage(), newTotalPages);
-            holder.setCurrentPage(currentPage);
-
             // Update the display and title
-            spawnerGuiViewManager.updateStorageGuiViewers(spawner,oldTotalPages,newTotalPages);
-            holder.updateOldUsedSlots();
+            spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
             // Check if spawner is at capacity and update if necessary
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
