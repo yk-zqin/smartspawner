@@ -36,10 +36,9 @@ import java.util.stream.Collectors;
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces.
  */
 public class SpawnerGuiViewManager implements Listener {
-    private static final int TICKS_PER_SECOND = 20;
     private static final long UPDATE_INTERVAL_TICKS = 10L;
     private static final long INITIAL_DELAY_TICKS = 10L;
-    private static final int ITEMS_PER_PAGE = 45; // Standard chest inventory size minus navigation items
+    private static final int ITEMS_PER_PAGE = 45;
 
     // GUI slot constants
     private static final int CHEST_SLOT = 11;
@@ -58,7 +57,6 @@ public class SpawnerGuiViewManager implements Listener {
 
     private Scheduler.Task updateTask;
     private volatile boolean isTaskRunning;
-    private long previousExpValue = 0;
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -317,10 +315,75 @@ public class SpawnerGuiViewManager implements Listener {
         if (openInv.getHolder() instanceof SpawnerMenuHolder) {
             SpawnerMenuHolder holder = (SpawnerMenuHolder) openInv.getHolder();
             if (holder.getSpawnerData().getSpawnerId().equals(spawner.getSpawnerId()) || forceUpdate) {
-                updateExpItem(openInv, spawner);
                 updateChestItem(openInv, spawner);
+                updateSpawnerInfoItem(openInv, spawner, player);
+                updateExpItem(openInv, spawner);
                 player.updateInventory();
             }
+        }
+    }
+
+    private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner, Player player) {
+        // Get the current spawner info item from the inventory
+        ItemStack currentSpawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        if (currentSpawnerItem == null || !currentSpawnerItem.hasItemMeta()) return;
+
+        // If we can't find the player, return early
+        if (player == null) return;
+
+        // Create a freshly generated spawner info item using the method from SpawnerMenuUI
+        ItemStack newSpawnerItem = spawnerMenuUI.createSpawnerInfoItem(player, spawner);
+
+        // If the new item is different from current item, update it
+        if (!ItemUpdater.areItemsEqual(currentSpawnerItem, newSpawnerItem)) {
+            // Before replacing the item, check if we need to preserve timer info
+            // This is important to maintain the countdown timer between full refreshes
+            ItemMeta currentMeta = currentSpawnerItem.getItemMeta();
+            ItemMeta newMeta = newSpawnerItem.getItemMeta();
+
+            if (currentMeta != null && currentMeta.hasLore() && newMeta != null && newMeta.hasLore()) {
+                List<String> currentLore = currentMeta.getLore();
+                List<String> newLore = newMeta.getLore();
+
+                // Find the countdown timer line in the current lore
+                String timerPrefix = languageManager.getGuiItemName("spawner_info_item.lore_change");
+                if (timerPrefix != null && !timerPrefix.isEmpty()) {
+                    String strippedPrefix = ChatColor.stripColor(timerPrefix);
+
+                    // Search for timer line in current lore
+                    String timerLine = null;
+                    for (String line : currentLore) {
+                        String strippedLine = ChatColor.stripColor(line);
+                        if (strippedLine.startsWith(strippedPrefix)) {
+                            timerLine = line;
+                            break;
+                        }
+                    }
+
+                    // If we found a timer line, preserve it in the new lore
+                    if (timerLine != null) {
+                        // Search for where to insert the timer line in new lore
+                        int insertIndex = -1;
+                        for (int i = 0; i < newLore.size(); i++) {
+                            String strippedLine = ChatColor.stripColor(newLore.get(i));
+                            if (strippedLine.startsWith(strippedPrefix)) {
+                                insertIndex = i;
+                                break;
+                            }
+                        }
+
+                        // If we found the matching position, update that line
+                        if (insertIndex >= 0) {
+                            newLore.set(insertIndex, timerLine);
+                            newMeta.setLore(newLore);
+                            newSpawnerItem.setItemMeta(newMeta);
+                        }
+                    }
+                }
+            }
+
+            // Update the item in the inventory
+            inventory.setItem(SPAWNER_INFO_SLOT, newSpawnerItem);
         }
     }
 
@@ -468,27 +531,16 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void updateExpItem(Inventory inventory, SpawnerData spawner) {
-        ItemStack expItem = inventory.getItem(EXP_SLOT);
-        if (expItem == null || !expItem.hasItemMeta()) return;
+        // Get the exp item from the inventory
+        ItemStack currentExpItem = inventory.getItem(EXP_SLOT);
+        if (currentExpItem == null || !currentExpItem.hasItemMeta()) return;
 
-        long currentExp = spawner.getSpawnerExp();
-        if (currentExp != previousExpValue) {
-            Map<String, String> nameReplacements = new HashMap<>();
-            int percentExp = (int) ((double) spawner.getSpawnerExp() / spawner.getMaxStoredExp() * 100);
+        // Create a freshly generated exp item using the method from SpawnerMenuUI
+        ItemStack newExpItem = spawnerMenuUI.createExpItem(spawner);
 
-            nameReplacements.put("current_exp", String.valueOf(spawner.getSpawnerExp()));
-            String name = languageManager.getGuiItemName("exp_info_item.name", nameReplacements);
-
-            Map<String, String> loreReplacements = new HashMap<>();
-            loreReplacements.put("current_exp", languageManager.formatNumber(currentExp));
-            loreReplacements.put("raw_current_exp", String.valueOf(currentExp));
-            loreReplacements.put("max_exp", languageManager.formatNumber(spawner.getMaxStoredExp()));
-            loreReplacements.put("percent_exp", String.valueOf(percentExp));
-            loreReplacements.put("u_max_exp", String.valueOf(spawner.getMaxStoredExp()));
-            List<String> expLore = languageManager.getGuiItemLoreAsList("exp_info_item.lore", loreReplacements);
-
-            ItemUpdater.updateItemMeta(expItem, name, expLore);
-            previousExpValue = currentExp;
+        // If the new item is different from current item, update it
+        if (!ItemUpdater.areItemsEqual(currentExpItem, newExpItem)) {
+            inventory.setItem(EXP_SLOT, newExpItem);
         }
     }
 
@@ -582,10 +634,6 @@ public class SpawnerGuiViewManager implements Listener {
         if (plugin.getSpawnerStackerHandler() != null) {
             plugin.getSpawnerStackerHandler().closeAllViewersInventory(spawnerId);
         }
-    }
-
-    private int calculatePercentage(long current, long maximum) {
-        return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
     }
 
     public void cleanup() {

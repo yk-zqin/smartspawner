@@ -203,21 +203,26 @@ public class SpawnerMenuUI {
         return chestItem;
     }
 
-    private ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
+    public ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
         // Get important data upfront
         EntityType entityType = spawner.getEntityType();
         int stackSize = spawner.getStackSize();
         VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
-        int percentStorage = calculatePercentage(currentItems, maxSlots);
+
+        // Calculate percentages with decimal precision
+        double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
+        String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
+
         long currentExp = spawner.getSpawnerExp();
         long maxExp = spawner.getMaxStoredExp();
-        int percentExp = calculatePercentage(currentExp, maxExp);
+        double percentExpDecimal = maxExp > 0 ? ((double) currentExp / maxExp) * 100 : 0;
+        String formattedPercentExp = String.format("%.1f", percentExpDecimal);
 
-        // Create cache key for this specific spawner's info state
+        // Create cache key for this specific spawner's info state - include the formatted percentages
         String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
-                + percentStorage + "|" + percentExp + "|" + spawner.getSpawnerRange() + "|"
+                + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
                 + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()
                 + "|" + (plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall"));
 
@@ -257,16 +262,14 @@ public class SpawnerMenuUI {
         // Storage information
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("max_items", languageManager.formatNumber(maxSlots));
-        placeholders.put("percent_storage", String.valueOf(percentStorage));
-        placeholders.put("formatted_storage", String.format("%.1f", (double)percentStorage));
+        placeholders.put("formatted_storage", formattedPercentStorage);
 
         // Experience information
         placeholders.put("current_exp", languageManager.formatNumber(currentExp));
         placeholders.put("max_exp", languageManager.formatNumber(maxExp));
         placeholders.put("raw_current_exp", String.valueOf(currentExp));
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
-        placeholders.put("percent_exp", String.valueOf(percentExp));
-        placeholders.put("formatted_exp", String.format("%.1f", (double)percentExp));
+        placeholders.put("formatted_exp", formattedPercentExp);
 
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
@@ -288,17 +291,31 @@ public class SpawnerMenuUI {
         return spawnerItem;
     }
 
-    private ItemStack createExpItem(SpawnerData spawner) {
+    public ItemStack createExpItem(SpawnerData spawner) {
+        // Get important data upfront
+        long currentExp = spawner.getSpawnerExp();
+        long maxExp = spawner.getMaxStoredExp();
+        int percentExp = calculatePercentage(currentExp, maxExp);
+
+        // Create cache key for this specific spawner's exp state
+        String cacheKey = spawner.getSpawnerId() + "|exp|" + currentExp + "|" + maxExp;
+
+        // Check if we have a cached item for this exact exp state
+        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
+        if (cachedItem != null) {
+            return cachedItem.clone();
+        }
+
+        // Not in cache, create the ItemStack
         ItemStack expItem = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta expMeta = expItem.getItemMeta();
         if (expMeta == null) return expItem;
 
-        long currentExp = spawner.getSpawnerExp();
-        long maxExp = spawner.getMaxStoredExp();
+        // Format numbers once for display
         String formattedExp = languageManager.formatNumber(currentExp);
         String formattedMaxExp = languageManager.formatNumber(maxExp);
-        int percentExp = calculatePercentage(currentExp, maxExp);
 
+        // Prepare all placeholders
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("current_exp", formattedExp);
         placeholders.put("raw_current_exp", String.valueOf(currentExp));
@@ -306,17 +323,29 @@ public class SpawnerMenuUI {
         placeholders.put("percent_exp", String.valueOf(percentExp));
         placeholders.put("u_max_exp", String.valueOf(maxExp));
 
+        // Set name and lore
         expMeta.setDisplayName(languageManager.getGuiItemName("exp_info_item.name", placeholders));
-
-        String[] loreArray = languageManager.getGuiItemLore("exp_info_item.lore", placeholders);
-        List<String> loreExp = Arrays.asList(loreArray);
-
+        List<String> loreExp = languageManager.getGuiItemLoreAsList("exp_info_item.lore", placeholders);
         expMeta.setLore(loreExp);
+
         expItem.setItemMeta(expMeta);
+
+        // Cache the result for future use
+        plugin.getItemCache().put(cacheKey, expItem.clone());
+
         return expItem;
     }
 
     private int calculatePercentage(long current, long maximum) {
         return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
+    }
+
+    private double calculatePercentageDecimal(long current, long maximum) {
+        return maximum > 0 ? ((double) current / maximum * 100) : 0;
+    }
+
+    private String formatPercentage(long current, long maximum) {
+        double percentage = calculatePercentageDecimal(current, maximum);
+        return String.format("%.1f", percentage);
     }
 }
