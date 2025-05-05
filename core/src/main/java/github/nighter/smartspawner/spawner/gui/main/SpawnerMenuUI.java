@@ -2,7 +2,6 @@ package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.SpawnerMenuHolder;
-import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
@@ -19,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerMenuUI {
     private static final int INVENTORY_SIZE = 27;
@@ -28,21 +28,41 @@ public class SpawnerMenuUI {
     private static final int TICKS_PER_SECOND = 20;
     private static final Map<String, String> EMPTY_PLACEHOLDERS = Collections.emptyMap();
 
+    // Cache frequently used formatting strings and pattern lookups
+    private static final String LOOT_ITEM_FORMAT_KEY = "spawner_storage_item.loot_items";
+    private static final String EMPTY_LOOT_MESSAGE_KEY = "spawner_storage_item.loot_items_empty";
+
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
+
+    // Format strings - initialized in constructor to avoid repeated lookups
+    private final String lootItemFormat;
+    private final String emptyLootMessage;
 
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
+
+        // Preload frequently used format strings
+        this.lootItemFormat = languageManager.getGuiItemName(LOOT_ITEM_FORMAT_KEY, EMPTY_PLACEHOLDERS);
+        this.emptyLootMessage = languageManager.getGuiItemName(EMPTY_LOOT_MESSAGE_KEY, EMPTY_PLACEHOLDERS);
     }
 
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
         Inventory menu = createMenu(spawner);
 
-        // Populate menu items
-        menu.setItem(CHEST_SLOT, createLootStorageItem(spawner));
-        menu.setItem(SPAWNER_INFO_SLOT, createSpawnerInfoItem(player, spawner));
-        menu.setItem(EXP_SLOT, createExpItem(spawner));
+        // Populate menu items - create all items before opening to avoid multiple inventory updates
+        ItemStack[] items = new ItemStack[INVENTORY_SIZE];
+        items[CHEST_SLOT] = createLootStorageItem(spawner);
+        items[SPAWNER_INFO_SLOT] = createSpawnerInfoItem(player, spawner);
+        items[EXP_SLOT] = createExpItem(spawner);
+
+        // Set all items at once instead of one by one
+        for (int i = 0; i < items.length; i++) {
+            if (items[i] != null) {
+                menu.setItem(i, items[i]);
+            }
+        }
 
         // Open inventory and play sound if not refreshing
         player.openInventory(menu);
@@ -53,10 +73,12 @@ public class SpawnerMenuUI {
     }
 
     private Inventory createMenu(SpawnerData spawner) {
+        // Get entity name with caching
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
+        String entityNameSmallCaps = languageManager.getSmallCaps(languageManager.getFormattedMobName(spawner.getEntityType()));
 
-        Map<String, String> placeholders = new HashMap<>();
+        // Use string builder for efficient placeholder creation
+        Map<String, String> placeholders = new HashMap<>(4);
         placeholders.put("entity", entityName);
         placeholders.put("ᴇɴᴛɪᴛʏ", entityNameSmallCaps);
         placeholders.put("amount", String.valueOf(spawner.getStackSize()));
@@ -72,10 +94,6 @@ public class SpawnerMenuUI {
     }
 
     public ItemStack createLootStorageItem(SpawnerData spawner) {
-        ItemStack chestItem = new ItemStack(Material.CHEST);
-        ItemMeta chestMeta = chestItem.getItemMeta();
-        if (chestMeta == null) return chestItem;
-
         // Get important data upfront
         VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
@@ -83,8 +101,7 @@ public class SpawnerMenuUI {
         int percentStorage = calculatePercentage(currentItems, maxSlots);
 
         // Create cache key for this specific spawner's storage state
-        // This helps avoid rebuilding the entire lore when nothing has changed
-        String cacheKey = spawner.getSpawnerId() + "|storage|" + currentItems + "|" + spawner.getEntityType();
+        final String cacheKey = spawner.getSpawnerId() + "|storage|" + currentItems + "|" + spawner.getEntityType();
 
         // Check if we have a cached item for this exact spawner state
         ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
@@ -92,8 +109,13 @@ public class SpawnerMenuUI {
             return cachedItem.clone();
         }
 
-        // Build base placeholders - these are needed regardless of caching
-        Map<String, String> placeholders = new HashMap<>();
+        // Not in cache, create new item
+        ItemStack chestItem = new ItemStack(Material.CHEST);
+        ItemMeta chestMeta = chestItem.getItemMeta();
+        if (chestMeta == null) return chestItem;
+
+        // Build base placeholders
+        Map<String, String> placeholders = new HashMap<>(4);
         placeholders.put("max_slots", languageManager.formatNumber(maxSlots));
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("percent_storage", String.valueOf(percentStorage));
@@ -101,92 +123,9 @@ public class SpawnerMenuUI {
         // Get consolidated items and prepare the loot items section
         Map<VirtualInventory.ItemSignature, Long> storedItems = virtualInventory.getConsolidatedItems();
 
-        // Create a map to efficiently look up stored amounts by material
-        Map<Material, Long> materialAmountMap = new HashMap<>();
-        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : storedItems.entrySet()) {
-            Material material = entry.getKey().getTemplateRef().getType();
-            materialAmountMap.merge(material, entry.getValue(), Long::sum);
-        }
-
-        // Get all possible loot items
-        EntityType entityType = spawner.getEntityType();
-        EntityLootConfig lootConfig = plugin.getEntityLootRegistry().getLootConfig(entityType);
-        List<LootItem> possibleLootItems = lootConfig != null
-                ? lootConfig.getValidItems(true)
-                : Collections.emptyList();
-
-        // Use StringBuilder for efficient string concatenation
-        StringBuilder lootItemsBuilder = new StringBuilder(possibleLootItems.size() * 40); // Estimate space needed
-
-        if (!possibleLootItems.isEmpty()) {
-            // Get the loot item format once to avoid repeated config lookups
-            String lootItemFormat = languageManager.getGuiItemName("spawner_storage_item.loot_items", EMPTY_PLACEHOLDERS);
-
-            // Sort items by name for consistent display
-            possibleLootItems.sort(Comparator.comparing(item ->
-                    languageManager.getVanillaItemName(item.getMaterial())));
-
-            for (LootItem lootItem : possibleLootItems) {
-                Material material = lootItem.getMaterial();
-                long amount = materialAmountMap.getOrDefault(material, 0L);
-
-                // Get cached item name if possible
-                String itemName = languageManager.getVanillaItemName(material);
-                String itemNameSmallCaps = languageManager.getSmallCaps(itemName);
-                String formattedAmount = languageManager.formatNumber(amount);
-
-                // Format the line with minimal placeholder replacements
-                String line = lootItemFormat
-                        .replace("%item_name%", itemName)
-                        .replace("%ɪᴛᴇᴍ_ɴᴀᴍᴇ%", itemNameSmallCaps)
-                        .replace("%amount%", formattedAmount)
-                        .replace("%raw_amount%", String.valueOf(amount))
-                        .replace("%chance%", String.format("%.1f", lootItem.getChance()) + "%");
-
-                lootItemsBuilder.append(line).append('\n');
-            }
-        } else if (!storedItems.isEmpty()) {
-            // Get format once
-            String lootItemFormat = languageManager.getGuiItemName("spawner_storage_item.loot_items", EMPTY_PLACEHOLDERS);
-
-            // Sort items by name
-            List<Map.Entry<VirtualInventory.ItemSignature, Long>> sortedItems =
-                    new ArrayList<>(storedItems.entrySet());
-            sortedItems.sort(Comparator.comparing(e -> e.getKey().getMaterialName()));
-
-            for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : sortedItems) {
-                ItemStack templateItem = entry.getKey().getTemplateRef();
-                long amount = entry.getValue();
-
-                String itemName = languageManager.getVanillaItemName(templateItem.getType());
-                String itemNameSmallCaps = languageManager.getSmallCaps(itemName);
-                String formattedAmount = languageManager.formatNumber(amount);
-
-                // Format with minimal replacements
-                String line = lootItemFormat
-                        .replace("%item_name%", itemName)
-                        .replace("%ɪᴛᴇᴍ_ɴᴀᴍᴇ%", itemNameSmallCaps)
-                        .replace("%amount%", formattedAmount)
-                        .replace("%raw_amount%", String.valueOf(amount))
-                        .replace("%chance%", "");
-
-                lootItemsBuilder.append(line).append('\n');
-            }
-        } else {
-            // Empty inventory - just add the empty message
-            String emptyMessage = languageManager.getGuiItemName("spawner_storage_item.loot_items_empty", EMPTY_PLACEHOLDERS);
-            if (!emptyMessage.isEmpty()) {
-                lootItemsBuilder.append(emptyMessage);
-            }
-        }
-
-        // Remove trailing newline if it exists
-        if (lootItemsBuilder.length() > 0 && lootItemsBuilder.charAt(lootItemsBuilder.length() - 1) == '\n') {
-            lootItemsBuilder.setLength(lootItemsBuilder.length() - 1);
-        }
-
-        // Add the loot_items string to the placeholders
-        placeholders.put("loot_items", lootItemsBuilder.toString());
+        // Build the loot items section efficiently
+        String lootItemsText = buildLootItemsText(spawner.getEntityType(), storedItems);
+        placeholders.put("loot_items", lootItemsText);
 
         // Set display name
         chestMeta.setDisplayName(languageManager.getGuiItemName("spawner_storage_item.name", placeholders));
@@ -203,6 +142,90 @@ public class SpawnerMenuUI {
         return chestItem;
     }
 
+    /**
+     * Builds the loot items text section efficiently using cached values where possible
+     */
+    private String buildLootItemsText(EntityType entityType, Map<VirtualInventory.ItemSignature, Long> storedItems) {
+        // Create material-to-amount map for quick lookups
+        Map<Material, Long> materialAmountMap = new HashMap<>();
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : storedItems.entrySet()) {
+            Material material = entry.getKey().getTemplateRef().getType();
+            materialAmountMap.merge(material, entry.getValue(), Long::sum);
+        }
+
+        // Get possible loot items
+        EntityLootConfig lootConfig = plugin.getEntityLootRegistry().getLootConfig(entityType);
+        List<LootItem> possibleLootItems = lootConfig != null
+                ? lootConfig.getValidItems(true)
+                : Collections.emptyList();
+
+        // Return early for empty cases
+        if (possibleLootItems.isEmpty() && storedItems.isEmpty()) {
+            return emptyLootMessage;
+        }
+
+        // Use StringBuilder for efficient string concatenation
+        StringBuilder builder = new StringBuilder(Math.max(possibleLootItems.size(), storedItems.size()) * 40);
+
+        if (!possibleLootItems.isEmpty()) {
+            // Sort items by name for consistent display
+            possibleLootItems.sort(Comparator.comparing(item -> languageManager.getVanillaItemName(item.getMaterial())));
+
+            for (LootItem lootItem : possibleLootItems) {
+                Material material = lootItem.getMaterial();
+                long amount = materialAmountMap.getOrDefault(material, 0L);
+
+                String materialName = languageManager.getVanillaItemName(material);
+                String materialNameSmallCaps = languageManager.getSmallCaps(languageManager.getVanillaItemName(material));
+                String formattedAmount = languageManager.formatNumber(amount);
+                String chance = String.format("%.1f", lootItem.getChance()) + "%";
+
+                // Format the line with minimal string operations
+                String line = lootItemFormat
+                        .replace("%item_name%", materialName)
+                        .replace("%ɪᴛᴇᴍ_ɴᴀᴍᴇ%", materialNameSmallCaps)
+                        .replace("%amount%", formattedAmount)
+                        .replace("%raw_amount%", String.valueOf(amount))
+                        .replace("%chance%", chance);
+
+                builder.append(line).append('\n');
+            }
+        } else if (!storedItems.isEmpty()) {
+            // Sort items by name
+            List<Map.Entry<VirtualInventory.ItemSignature, Long>> sortedItems =
+                    new ArrayList<>(storedItems.entrySet());
+            sortedItems.sort(Comparator.comparing(e -> e.getKey().getMaterialName()));
+
+            for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : sortedItems) {
+                ItemStack templateItem = entry.getKey().getTemplateRef();
+                Material material = templateItem.getType();
+                long amount = entry.getValue();
+
+                String materialName = languageManager.getVanillaItemName(material);
+                String materialNameSmallCaps = languageManager.getSmallCaps(languageManager.getVanillaItemName(material));
+                String formattedAmount = languageManager.formatNumber(amount);
+
+                // Format with minimal replacements
+                String line = lootItemFormat
+                        .replace("%item_name%", materialName)
+                        .replace("%ɪᴛᴇᴍ_ɴᴀᴍᴇ%", materialNameSmallCaps)
+                        .replace("%amount%", formattedAmount)
+                        .replace("%raw_amount%", String.valueOf(amount))
+                        .replace("%chance%", "");
+
+                builder.append(line).append('\n');
+            }
+        }
+
+        // Remove trailing newline if it exists
+        int length = builder.length();
+        if (length > 0 && builder.charAt(length - 1) == '\n') {
+            builder.setLength(length - 1);
+        }
+
+        return builder.toString();
+    }
+
     public ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
         // Get important data upfront
         EntityType entityType = spawner.getEntityType();
@@ -211,7 +234,7 @@ public class SpawnerMenuUI {
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
 
-        // Calculate percentages with decimal precision
+        // Calculate percentages with decimal precision - do this once
         double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
         String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
 
@@ -220,13 +243,14 @@ public class SpawnerMenuUI {
         double percentExpDecimal = maxExp > 0 ? ((double) currentExp / maxExp) * 100 : 0;
         String formattedPercentExp = String.format("%.1f", percentExpDecimal);
 
-        // Create cache key for this specific spawner's info state - include the formatted percentages
+        // Create cache key including all relevant state
+        boolean hasShopPermission = plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall");
         String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
                 + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
                 + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()
-                + "|" + (plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall"));
+                + "|" + hasShopPermission;
 
-        // Check if we have a cached item for this exact spawner state
+        // Check if we have a cached item
         ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
         if (cachedItem != null) {
             return cachedItem.clone();
@@ -237,12 +261,12 @@ public class SpawnerMenuUI {
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         if (spawnerMeta == null) return spawnerItem;
 
-        // Get entity names with proper formatting
+        // Get entity names with proper formatting - using cache
         String entityName = languageManager.getFormattedMobName(entityType);
-        String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
+        String entityNameSmallCaps = languageManager.getSmallCaps(languageManager.getFormattedMobName(entityType));
 
-        // Prepare all placeholders
-        Map<String, String> placeholders = new HashMap<>();
+        // Prepare all placeholders - reuse the map rather than creating a new one each time
+        Map<String, String> placeholders = new HashMap<>(16); // Preallocate with expected capacity
 
         // Entity information
         placeholders.put("entity", entityName);
@@ -254,7 +278,8 @@ public class SpawnerMenuUI {
 
         // Spawner settings
         placeholders.put("range", String.valueOf(spawner.getSpawnerRange()));
-        placeholders.put("delay", String.valueOf(spawner.getSpawnDelay() / TICKS_PER_SECOND));
+        long delaySeconds = spawner.getSpawnDelay() / TICKS_PER_SECOND;
+        placeholders.put("delay", String.valueOf(delaySeconds));
         placeholders.put("delay_raw", String.valueOf(spawner.getSpawnDelay()));
         placeholders.put("min_mobs", String.valueOf(spawner.getMinMobs()));
         placeholders.put("max_mobs", String.valueOf(spawner.getMaxMobs()));
@@ -265,8 +290,11 @@ public class SpawnerMenuUI {
         placeholders.put("formatted_storage", formattedPercentStorage);
 
         // Experience information
-        placeholders.put("current_exp", languageManager.formatNumber(currentExp));
-        placeholders.put("max_exp", languageManager.formatNumber(maxExp));
+        String formattedCurrentExp = languageManager.formatNumber(currentExp);
+        String formattedMaxExp = languageManager.formatNumber(maxExp);
+
+        placeholders.put("current_exp", formattedCurrentExp);
+        placeholders.put("max_exp", formattedMaxExp);
         placeholders.put("raw_current_exp", String.valueOf(currentExp));
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
@@ -275,7 +303,7 @@ public class SpawnerMenuUI {
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
 
         // Select appropriate lore based on shop integration availability
-        String loreKey = plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall")
+        String loreKey = hasShopPermission
                 ? "spawner_info_item.lore"
                 : "spawner_info_item.lore_no_shop";
 
@@ -316,7 +344,7 @@ public class SpawnerMenuUI {
         String formattedMaxExp = languageManager.formatNumber(maxExp);
 
         // Prepare all placeholders
-        Map<String, String> placeholders = new HashMap<>();
+        Map<String, String> placeholders = new HashMap<>(5); // Preallocate with expected capacity
         placeholders.put("current_exp", formattedExp);
         placeholders.put("raw_current_exp", String.valueOf(currentExp));
         placeholders.put("max_exp", formattedMaxExp);
@@ -336,16 +364,10 @@ public class SpawnerMenuUI {
         return expItem;
     }
 
+    /**
+     * Calculate percentage using integer division - simplified version
+     */
     private int calculatePercentage(long current, long maximum) {
         return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
-    }
-
-    private double calculatePercentageDecimal(long current, long maximum) {
-        return maximum > 0 ? ((double) current / maximum * 100) : 0;
-    }
-
-    private String formatPercentage(long current, long maximum) {
-        double percentage = calculatePercentageDecimal(current, maximum);
-        return String.format("%.1f", percentage);
     }
 }
