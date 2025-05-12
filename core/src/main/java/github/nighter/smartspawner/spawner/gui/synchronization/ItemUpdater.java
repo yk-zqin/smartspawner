@@ -395,7 +395,7 @@ public class ItemUpdater {
     public static void clearCache() {
         COLOR_TRANSLATION_CACHE.clear();
         lastCacheCleanup = System.currentTimeMillis();
-        LOGGER.info("Color translation cache cleared");
+        // LOGGER.info("Color translation cache cleared");
     }
 
     /**

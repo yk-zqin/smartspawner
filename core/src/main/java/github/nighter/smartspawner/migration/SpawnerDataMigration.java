@@ -15,24 +15,19 @@ public class SpawnerDataMigration {
     private static final String DATA_FILE = "spawners_data.yml";
     private static final String BACKUP_FILE = "spawners_data_backup.yml";
     private static final String MIGRATION_FLAG = "data_version";
-    private static final int CURRENT_VERSION = 2;
+    private final int CURRENT_VERSION;
 
     public SpawnerDataMigration(SmartSpawner plugin) {
         this.plugin = plugin;
         this.dataFolder = plugin.getDataFolder();
+        this.CURRENT_VERSION = plugin.getDATA_VERSION();
     }
 
     public boolean checkAndMigrateData() {
         File dataFile = new File(dataFolder, DATA_FILE);
 
         if (!dataFile.exists()) {
-            try {
-                FileConfiguration newConfig = new YamlConfiguration();
-                newConfig.set(MIGRATION_FLAG, CURRENT_VERSION);
-                newConfig.save(dataFile);
-            } catch (IOException e) {
-                plugin.getLogger().severe("Failed to create new data file: " + e.getMessage());
-            }
+            plugin.getLogger().info("Data file does not exist. No migration needed.");
             return false;
         }
 

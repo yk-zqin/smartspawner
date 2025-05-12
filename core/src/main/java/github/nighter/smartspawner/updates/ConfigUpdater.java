@@ -4,7 +4,6 @@ import github.nighter.smartspawner.SmartSpawner;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +42,7 @@ public class ConfigUpdater {
             return;
         }
 
-        plugin.debug("Updating config from version " + configVersionStr + " to " + currentVersion);
+        plugin.getLogger().info("Updating config from version " + configVersionStr + " to " + currentVersion);
 
         try {
             Map<String, Object> userValues = flattenConfig(currentConfig);

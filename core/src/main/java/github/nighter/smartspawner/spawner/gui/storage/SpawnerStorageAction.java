@@ -37,10 +37,10 @@ public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
-    private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final SpawnerMenuAction spawnerMenuAction;
     private final MessageService messageService;
+    private final FilterConfigUI filterConfigUI;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
@@ -48,9 +48,6 @@ public class SpawnerStorageAction implements Listener {
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
-
-    // Track currently selected slot for drop functionality
-    private final Map<UUID, SelectedItemInfo> selectedItems = new ConcurrentHashMap<>();
 
     // Anti spam click properties
     private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
@@ -60,10 +57,10 @@ public class SpawnerStorageAction implements Listener {
         this.languageManager = plugin.getLanguageManager();
         this.clickHandlers = initializeClickHandlers();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
-        this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.spawnerMenuAction = plugin.getSpawnerMenuAction();
         this.messageService = plugin.getMessageService();
+        this.filterConfigUI = plugin.getFilterConfigUI();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -77,13 +74,11 @@ public class SpawnerStorageAction implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player) ||
-                !(event.getInventory().getHolder() instanceof StoragePageHolder)) {
+        if (!(event.getWhoClicked() instanceof Player player) ||
+                !(event.getInventory().getHolder() instanceof StoragePageHolder holder)) {
             return;
         }
 
-        Player player = (Player) event.getWhoClicked();
-        StoragePageHolder holder = (StoragePageHolder) event.getInventory().getHolder();
         SpawnerData spawner = holder.getSpawnerData();
         int slot = event.getRawSlot();
 
@@ -188,32 +183,41 @@ public class SpawnerStorageAction implements Listener {
     private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
                                         SpawnerData spawner, Inventory inventory) {
         switch (slot) {
+            case 45:
+                handleDiscardAllItems(player, spawner, inventory);
+                break;
+            case 46:
+                openFilterConfig(player, spawner);
+                break;
             case 48:
                 if (holder.getCurrentPage() > 1) {
                     updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, false);
                 }
+                break;
+            case 49:
+                handleTakeAllItems(player, inventory);
                 break;
             case 50:
                 if (holder.getCurrentPage() < holder.getTotalPages()) {
                     updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, false);
                 }
                 break;
-            case 49:
-                handleSellAllItems(player, spawner, holder);
-                break;
             case 52:
-                handleDiscardAllItems(player, spawner, inventory);
+                if (plugin.hasShopIntegration()) {
+                    handleSellAllItems(player, spawner, holder);
+                }
                 break;
             case 53:
                 openMainMenu(player, spawner);
                 break;
-            case 45:
-                handleTakeAllItems(player, inventory);
-                break;
-            case 46:
-                handleToggleEquipment(player, spawner, inventory);
-                break;
         }
+    }
+
+    private void openFilterConfig(Player player, SpawnerData spawner) {
+        if (isClickTooFrequent(player)) {
+            return;
+        }
+        filterConfigUI.openFilterConfigGUI(player, spawner);
     }
 
     private void takeSingleItem(Player player, Inventory sourceInv, int slot, ItemStack item,
@@ -349,22 +353,11 @@ public class SpawnerStorageAction implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         lastItemClickTime.remove(playerId);
-        selectedItems.remove(playerId);
     }
 
     private void openMainMenu(Player player, SpawnerData spawner) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
-    }
-
-    private void handleToggleEquipment(Player player, SpawnerData spawner, Inventory inventory) {
-        if (isClickTooFrequent(player)) {
-            return;
-        }
-        spawner.setAllowEquipmentItems(!spawner.isAllowEquipmentItems());
-
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
-        updatePageContent(player, spawner, holder.getCurrentPage(), inventory, true);
     }
 
     private void handleDiscardAllItems(Player player, SpawnerData spawner, Inventory inventory) {
@@ -601,15 +594,11 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
-        if (event.getPlayer() instanceof Player) {
-            Player player = (Player) event.getPlayer();
+        if (event.getPlayer() instanceof Player player) {
             UUID playerId = player.getUniqueId();
             openStorageInventories.remove(playerId);
-            selectedItems.remove(playerId);
         }
     }
 
     private record TransferResult(boolean anyItemMoved, boolean inventoryFull, int totalMoved) {}
-
-    private record SelectedItemInfo(SpawnerData spawnerData, Inventory inventory, int slot, ItemStack item) {}
 }

@@ -33,11 +33,11 @@ spawner_properties:
     # Storage Settings - Defines internal inventory capacity
     max_storage_pages: 1  # Each page provides 45 inventory slots
     max_stored_exp: 1000  # Maximum experience points that can be stored
-    max_stack_size: 100000  # Maximum number of spawners that can be stacked
+    max_stack_size: 10000  # Maximum number of spawners that can be stacked
 
     # Behavior Settings - Controls special spawner functionality
     allow_exp_mending: true   # Allow spawners to repair items with stored XP
-    allow_explosions: false   # Protect spawners from explosion damage
+    protect_from_explosions: true   # Protect spawner blocks from explosion
 
 #---------------------------------------------------
 #           Spawner Breaking Mechanics

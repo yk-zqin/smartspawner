@@ -27,6 +27,7 @@ import github.nighter.smartspawner.spawner.gui.main.ItemCache;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerHandler;
+import github.nighter.smartspawner.spawner.gui.storage.FilterConfigUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
@@ -69,6 +70,7 @@ import java.util.logging.Level;
 public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     @Getter
     private static SmartSpawner instance;
+    public final int DATA_VERSION = 3;
     private final boolean debugMode = getConfig().getBoolean("debug", false);
 
     // Services
@@ -85,6 +87,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private final ItemCache itemCache = new ItemCache(500, 30);
     private SpawnerMenuUI spawnerMenuUI;
     private SpawnerStorageUI spawnerStorageUI;
+    private FilterConfigUI filterConfigUI;
     private SpawnerStackerUI spawnerStackerUI;
 
     // Core handlers
@@ -142,9 +145,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         instance = this;
 
         // Save default config
-        saveDefaultConfig();
-        saveConfig();
-        ensureMobDropsFileExists();
+        saveResourceAsDefault("spawners_data.yml");
+        saveResourceAsDefault("mob_drops.yml");
 
         // Initialize version-specific components
         initializeVersionComponents();
@@ -171,10 +173,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         return apiImpl;
     }
 
-    private void ensureMobDropsFileExists() {
-        // Check if mob_drops.yml exists, if not create it
-        if (!new File(getDataFolder(), "mob_drops.yml").exists()) {
-            saveResource("mob_drops.yml", true);
+    private void saveResourceAsDefault(String resourcePath) {
+        File resourceFile = new File(getDataFolder(), resourcePath);
+        if (!resourceFile.exists()) {
+            saveResource(resourcePath, false);
         }
     }
 
@@ -253,6 +255,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerManager.reloadAllHolograms();
         this.spawnerStorageUI = new SpawnerStorageUI(this);
+        this.filterConfigUI = new FilterConfigUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
@@ -410,6 +413,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
             customEconomyManager.shutdown();
             customEconomyManager = null;
         }
+    }
+
+    public void reloadStaticUI() {
+        this.spawnerStorageUI = new SpawnerStorageUI(this);
+        this.filterConfigUI = new FilterConfigUI(this);
     }
 
     @Override

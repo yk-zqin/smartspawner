@@ -9,6 +9,7 @@ import github.nighter.smartspawner.spawner.loot.LootItem;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -16,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
@@ -45,7 +47,7 @@ public class SpawnerData {
     @Getter @Setter private int maxStackSize;
 
     @Getter @Setter private VirtualInventory virtualInventory;
-    @Getter @Setter private boolean allowEquipmentItems;
+    @Getter private final Set<Material> filteredItems = new HashSet<>();
 
     private SpawnerHologram hologram;
     @Getter @Setter private long cachedSpawnDelay = 0;
@@ -63,7 +65,6 @@ public class SpawnerData {
         this.maxStackSize = plugin.getConfig().getInt("spawner_properties.default.max_stack_size", 1000);
         this.maxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
         this.maxSpawnerLootSlots = 45;
-        this.allowEquipmentItems = true;
         this.lootRegistry = plugin.getEntityLootRegistry();
         // Initialize loot config based on entity type
         this.lootConfig = lootRegistry.getLootConfig(entityType);
@@ -251,12 +252,6 @@ public class SpawnerData {
         }
     }
 
-    public void removeGhostHologram() {
-        if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
-            hologram.cleanupExistingHologram();
-        }
-    }
-
     public boolean isCompletelyFull() {
         return virtualInventory.getUsedSlots() >= maxSpawnerLootSlots
                 && spawnerExp >= maxStoredExp;
@@ -277,11 +272,35 @@ public class SpawnerData {
         updateHologramData();
     }
 
+    public boolean toggleItemFilter(Material material) {
+        boolean wasFiltered = filteredItems.contains(material);
+
+        if (wasFiltered) {
+            filteredItems.remove(material);
+        } else {
+            filteredItems.add(material);
+        }
+
+        return !wasFiltered; // Return new state
+    }
+
+    // Modified method to get valid loot items that respects the filter
     public List<LootItem> getValidLootItems() {
         if (lootConfig == null) {
             return Collections.emptyList();
         }
-        return lootConfig.getValidItems(allowEquipmentItems);
+
+        // Get all items first
+        List<LootItem> allItems = lootConfig.getAllItems();
+
+        // Filter based on equipment setting and filter list
+        return allItems.stream()
+                .filter(item -> {
+                    // Check if it's in the filtered list
+                    ItemStack example = item.createItemStack(new Random());
+                    return example != null && !filteredItems.contains(example.getType());
+                })
+                .collect(Collectors.toList());
     }
 
     public int getEntityExperienceValue() {

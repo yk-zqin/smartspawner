@@ -370,6 +370,35 @@ public class LanguageManager {
         return applyPlaceholdersAndColors(message, placeholders);
     }
 
+    public String getMessageWithoutPrefix(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
+        }
+
+        String message = cachedDefaultLocaleData.messages().getString(key + ".message");
+
+        if (message == null) {
+            return "Missing message: " + key;
+        }
+
+        // Apply placeholders and color formatting
+        return applyPlaceholdersAndColors(message, placeholders);
+    }
+
+    public String getMessageForConsole(String key, Map<String, String> placeholders) {
+        if (!isMessageEnabled(key)) {
+            return null;
+        }
+
+        String message = cachedDefaultLocaleData.messages().getString(key + ".message");
+
+        if (message == null) {
+            return "Missing message: " + key;
+        }
+
+        return applyOnlyPlaceholders(message, placeholders);
+    }
+
     public String getTitle(String key, Map<String, String> placeholders) {
         if (!isMessageEnabled(key)) {
             return null;
@@ -1020,6 +1049,36 @@ public class LanguageManager {
         }
 
         return applyPlaceholdersAndColors(colorStr, EMPTY_PLACEHOLDERS);
+    }
+
+    public String applyOnlyPlaceholders(String text, Map<String, String> placeholders) {
+        if (text == null) return null;
+
+        // Create a cache key based on the text and placeholders
+        String cacheKey = generateCacheKey(text, placeholders);
+
+        // Check if we have a cached result
+        String cachedResult = formattedStringCache.get(cacheKey);
+        if (cachedResult != null) {
+            cacheHits.incrementAndGet();
+            return cachedResult;
+        }
+
+        // Process the text if not cached
+        cacheMisses.incrementAndGet();
+        String result = text;
+
+        // Apply placeholders only if there are any
+        if (placeholders != null && !placeholders.isEmpty()) {
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                result = result.replace("%" + entry.getKey() + "%", entry.getValue());
+            }
+        }
+
+        // Cache the result for future use
+        formattedStringCache.put(cacheKey, result);
+
+        return result;
     }
 
     //---------------------------------------------------

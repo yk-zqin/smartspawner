@@ -2,6 +2,7 @@ package github.nighter.smartspawner.economy;
 
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
@@ -20,6 +21,7 @@ import java.util.logging.Level;
 
 public class CustomEconomyManager {
     private final SmartSpawner plugin;
+    private final LanguageManager languageManager;
     private final MessageService messageService;
     private final ItemPriceManager priceManager;
     private Economy economy;
@@ -35,6 +37,7 @@ public class CustomEconomyManager {
 
     public CustomEconomyManager(SmartSpawner plugin, ItemPriceManager priceManager) {
         this.plugin = plugin;
+        this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.priceManager = priceManager;
         this.isVaultAvailable = false;
@@ -232,13 +235,8 @@ public class CustomEconomyManager {
     }
 
     private void sendSellSuccessMessage(Player player, double amount, long itemCount) {
-        String formattedAmount = formatPrice(amount);
         messageService.sendMessage(player, "shop.sell_all",
-                Map.of("price", formattedAmount, "amount", String.valueOf(itemCount)));
-    }
-
-    private String formatPrice(double price) {
-        return plugin.getLanguageManager().formatNumber(price);
+                Map.of("price", languageManager.formatNumber(amount), "amount", languageManager.formatNumber(itemCount)));
     }
 
     public void reload() {

@@ -38,18 +38,12 @@ public class SpawnerLootGenerator {
     }
 
     public LootResult generateLoot(int minMobs, int maxMobs, SpawnerData spawner) {
-        EntityLootConfig config = spawner.getLootConfig();
-
-        if (config == null) {
-            return new LootResult(Collections.emptyList(), 0);
-        }
 
         int mobCount = random.nextInt(maxMobs - minMobs + 1) + minMobs;
-        int totalExperience = config.getExperience() * mobCount;
-        boolean allowEquipment = spawner.isAllowEquipmentItems();
+        int totalExperience = spawner.getEntityExperienceValue() * mobCount;
 
         // Get valid items from the spawner's EntityLootConfig
-        List<LootItem> validItems = config.getValidItems(allowEquipment);
+        List<LootItem> validItems =  spawner.getValidLootItems();
 
         if (validItems.isEmpty()) {
             return new LootResult(Collections.emptyList(), totalExperience);

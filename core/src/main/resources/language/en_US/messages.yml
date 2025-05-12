@@ -76,7 +76,7 @@ no_items_to_take:
   sound: block.note_block.pling
 
 take_all_items:
-  action_bar: "&#37eb9aᴛᴏᴏᴋ &#f8f8ff%amount% &#37eb9aɪᴛᴇᴍꜱ"
+  action_bar: "&#37eb9aᴛᴏᴏᴋ &#f8f8ff%amount% &#37eb9aɪᴛᴇᴍꜱ ꜰʀᴏᴍ ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.item.pickup
 
 # ------------------------------------------------------

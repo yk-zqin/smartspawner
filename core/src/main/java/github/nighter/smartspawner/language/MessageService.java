@@ -10,6 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
 public class MessageService {
@@ -21,6 +22,11 @@ public class MessageService {
 
     // Cache for key existence checks to reduce repeated lookups
     private final Map<String, Boolean> keyExistsCache = new ConcurrentHashMap<>(128);
+
+    // Patterns for color code stripping - precompile for better performance
+    private static final Pattern COLOR_CODES = Pattern.compile("§[0-9a-fA-FxX]|§[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|§[klmnorKLMNOR]");
+    private static final Pattern HEX_CODES = Pattern.compile("&#[0-9a-fA-F]{6}");
+    private static final Pattern AMPERSAND_CODES = Pattern.compile("&[0-9a-fA-FxXklmnorKLMNOR]");
 
     /**
      * Sends a message to a CommandSender with no placeholders
@@ -116,25 +122,34 @@ public class MessageService {
             return;
         }
 
-        // Get the raw message without prefix for console formatting
-        String message = languageManager.getRawMessage(key, placeholders);
+        // Get the message without prefix
+        String message = languageManager.getMessageForConsole(key, placeholders);
+
         if (message != null && !message.startsWith("Missing message:")) {
-            // Strip color codes for console
-            String consoleMessage = stripColorCodes(message);
+            // Strip all color codes for console
+            String consoleMessage = stripAllColorCodes(message);
             plugin.getLogger().info(consoleMessage);
+        } else {
+            // Log a warning if we still couldn't get the message
+            plugin.getLogger().warning("Failed to retrieve message for key: " + key);
         }
     }
 
     /**
-     * Strips color codes from a message for console output
+     * Strips all types of color codes from a message for console output
+     * Handles Minecraft color codes (§), hex codes (&#RRGGBB), and ampersand codes (&)
      * @param message The message with color codes
-     * @return The message without color codes
+     * @return The message without any color codes
      */
-    private String stripColorCodes(String message) {
-        // Remove standard color codes (§) and RGB hex codes
-        return message.replaceAll("§[0-9a-fA-Fk-oK-OrR]", "")
-                .replaceAll("&#[0-9a-fA-F]{6}", "")
-                .replaceAll("&[0-9a-fA-Fk-oK-OrR]", "");
+    private String stripAllColorCodes(String message) {
+        if (message == null) return "";
+
+        // Process each pattern in sequence
+        String result = COLOR_CODES.matcher(message).replaceAll("");  // Remove §a, §1, §f, etc. and §RRGGBB
+        result = HEX_CODES.matcher(result).replaceAll("");    // Remove &#RRGGBB
+        result = AMPERSAND_CODES.matcher(result).replaceAll(""); // Remove &a, &1, etc.
+
+        return result;
     }
 
     /**

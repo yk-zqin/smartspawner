@@ -4,6 +4,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerExplodeEvent;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,10 +18,12 @@ import java.util.List;
 public class SpawnerExplosionListener implements Listener {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
+    private final SpawnerFileHandler spawnerFileHandler;
 
     public SpawnerExplosionListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
+        this.spawnerFileHandler = plugin.getSpawnerFileHandler();
     }
 
     @EventHandler
@@ -33,19 +36,18 @@ public class SpawnerExplosionListener implements Listener {
 
                 if (spawnerData != null) {
                     SpawnerExplodeEvent e = null;
-                    if (!plugin.getConfig().getBoolean("spawner_properties.default.allow_explosions",false)) {
+                    if (plugin.getConfig().getBoolean("spawner_properties.default.protect_from_explosions",true)) {
+                        blocksToRemove.add(block);
+                        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawnerData);
                         if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
                             e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, false);
-                        // Add the spawner block to the list of blocks to remove
-                        blocksToRemove.add(block);
-                        // Close all viewers of the spawner
-                        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawnerData);
                     } else {
+                        spawnerData.setSpawnerStop(true);
                         String spawnerId = spawnerData.getSpawnerId();
                         if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
                             e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, true);
                         spawnerManager.removeSpawner(spawnerId);
-                        plugin.getRangeChecker().stopSpawnerTask(spawnerData);
+                        spawnerFileHandler.markSpawnerDeleted(spawnerId);
                     }
                     if(e != null)
                         Bukkit.getPluginManager().callEvent(e);

@@ -1,10 +1,12 @@
-data_version: 2
-
+# Warning: Do not modify this file while the server is running!
+# Format:
 #  spawners:
 #    spawnerId:
 #      location: world,x,y,z
 #      entityType: ENTITY_TYPE
-#      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
+#      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,maxStack,time,atCapacity
+#      filteredItems: MATERIAL1,MATERIAL2,...
 #      inventory:
-#        - ITEM_TYPE:amount
-#        - ITEM_TYPE;durability:amount,durability:amount,...
+#      - ITEM_TYPE:amount
+
+data_version: 3

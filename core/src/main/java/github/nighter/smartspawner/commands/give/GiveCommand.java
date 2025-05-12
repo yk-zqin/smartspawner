@@ -185,6 +185,7 @@ public class GiveCommand {
             }
 
             String entityName = languageManager.getFormattedMobName(entityType);
+            String smallCapsEntityName = languageManager.getSmallCaps(entityName);
 
             // Check inventory space
             HashMap<Integer, ItemStack> leftoverItems = target.getInventory().addItem(spawner);
@@ -192,7 +193,14 @@ public class GiveCommand {
             HashMap<String, String> placeholders = new HashMap<>();
             placeholders.put("player", target.getName());
             placeholders.put("entity", entityName);
+            placeholders.put("ᴇɴᴛɪᴛʏ", smallCapsEntityName);
             placeholders.put("amount", String.valueOf(amount));
+
+            HashMap<String, String> targetPlaceholders = new HashMap<>();
+            targetPlaceholders.put("amount", String.valueOf(amount));
+            targetPlaceholders.put("entity", entityName);
+            targetPlaceholders.put("ᴇɴᴛɪᴛʏ", smallCapsEntityName);
+
 
             if (!leftoverItems.isEmpty()) {
                 // Drop remaining items on the ground if inventory is full
@@ -203,9 +211,6 @@ public class GiveCommand {
                 target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f);
                 messageService.sendConsoleMessage(messageKey + "given_dropped", placeholders);
             } else {
-                HashMap<String, String> targetPlaceholders = new HashMap<>();
-                targetPlaceholders.put("amount", String.valueOf(amount));
-                targetPlaceholders.put("entity", entityName);
                 messageService.sendMessage(target, messageKey + "received", targetPlaceholders);
                 target.playSound(target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 messageService.sendConsoleMessage(messageKey + "given", placeholders);

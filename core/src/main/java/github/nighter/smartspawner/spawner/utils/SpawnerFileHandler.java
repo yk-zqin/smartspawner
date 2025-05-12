@@ -6,6 +6,7 @@ import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -19,12 +20,17 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class SpawnerFileHandler {
     private final SmartSpawner plugin;
     private final Logger logger;
     private File spawnerDataFile;
     private FileConfiguration spawnerData;
+
+    // Data version identifier
+    private static final String DATA_VERSION_KEY = "data_version";
+    private final int CURRENT_VERSION;
 
     // Write-behind caching strategy
     private final Set<String> dirtySpawners = ConcurrentHashMap.newKeySet();
@@ -39,6 +45,7 @@ public class SpawnerFileHandler {
     public SpawnerFileHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
+        this.CURRENT_VERSION = plugin.getDATA_VERSION();
         setupSpawnerDataFile();
         startSaveTask();
     }
@@ -54,19 +61,24 @@ public class SpawnerFileHandler {
             try {
                 spawnerDataFile.createNewFile();
                 String header = """
-                # SmartSpawner Data Storage
                 # Warning: Do not modify this file while the server is running!
                 # Format:
                 #  spawners:
                 #    spawnerId:
                 #      location: world,x,y,z
                 #      entityType: ENTITY_TYPE
-                #      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,time,equipment
+                #      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,maxStack,time,atCapacity
+                #      filteredItems: MATERIAL1,MATERIAL2,...
                 #      inventory:
-                #        - ITEM_TYPE:amount
+                #      - ITEM_TYPE:amount
                 """;
 
                 Files.write(spawnerDataFile.toPath(), header.getBytes(), StandardOpenOption.WRITE);
+
+                // Set data version
+                FileConfiguration config = YamlConfiguration.loadConfiguration(spawnerDataFile);
+                config.set(DATA_VERSION_KEY, CURRENT_VERSION);
+                config.save(spawnerDataFile);
             } catch (IOException e) {
                 logger.severe("Could not create spawners_data.yml!");
                 e.printStackTrace();
@@ -74,6 +86,13 @@ public class SpawnerFileHandler {
         }
 
         spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);
+
+        // Check current data version
+        int version = spawnerData.getInt(DATA_VERSION_KEY, 1);
+        if (version < CURRENT_VERSION) {
+            logger.info("Data version " + version + " detected. Current version is " + CURRENT_VERSION + ".");
+            logger.info("A migration will be attempted when the plugin fully loads.");
+        }
     }
 
     private void startSaveTask() {
@@ -180,6 +199,9 @@ public class SpawnerFileHandler {
                 spawnersSection = spawnerData.createSection("spawners");
             }
 
+            // Ensure data version is up to date
+            spawnerData.set(DATA_VERSION_KEY, CURRENT_VERSION);
+
             for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
                 String spawnerId = entry.getKey();
                 SpawnerData spawner = entry.getValue();
@@ -192,7 +214,9 @@ public class SpawnerFileHandler {
                 spawnerData.set(path + ".entityType", spawner.getEntityType() != null ?
                         spawner.getEntityType().name() : null);
 
-                String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%b",
+                // Updated settings format for version 3:
+                // exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,maxStack,time,atCapacity
+                String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%d,%b",
                         spawner.getSpawnerExp(),
                         spawner.getSpawnerActive(),
                         spawner.getSpawnerRange(),
@@ -203,10 +227,22 @@ public class SpawnerFileHandler {
                         spawner.getMinMobs(),
                         spawner.getMaxMobs(),
                         spawner.getStackSize(),
+                        spawner.getMaxStackSize(),
                         spawner.getLastSpawnTime(),
-                        spawner.isAllowEquipmentItems());
+                        spawner.getIsAtCapacity());
 
                 spawnerData.set(path + ".settings", settings);
+
+                // Save filtered items
+                Set<Material> filteredItems = spawner.getFilteredItems();
+                if (filteredItems != null && !filteredItems.isEmpty()) {
+                    List<String> materials = filteredItems.stream()
+                            .map(Material::name)
+                            .collect(Collectors.toList());
+                    spawnerData.set(path + ".filteredItems", String.join(",", materials));
+                } else {
+                    spawnerData.set(path + ".filteredItems", null);
+                }
 
                 VirtualInventory virtualInv = spawner.getVirtualInventory();
                 if (virtualInv != null) {
@@ -238,9 +274,8 @@ public class SpawnerFileHandler {
             deletedSpawners.clear();
             isSaving = true;
 
-            // Get data version
-            int dataVersion = spawnerData.getInt("data_version", 2);
-            spawnerData.set("data_version", dataVersion);
+            // Set data version
+            spawnerData.set(DATA_VERSION_KEY, CURRENT_VERSION);
 
             // Get or create spawners section
             ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
@@ -266,7 +301,8 @@ public class SpawnerFileHandler {
                 spawnerData.set(path + ".entityType", spawner.getEntityType() != null ?
                         spawner.getEntityType().name() : null);
 
-                String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%b",
+                // Updated settings format for v3
+                String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%d,%b",
                         spawner.getSpawnerExp(),
                         spawner.getSpawnerActive(),
                         spawner.getSpawnerRange(),
@@ -277,10 +313,20 @@ public class SpawnerFileHandler {
                         spawner.getMinMobs(),
                         spawner.getMaxMobs(),
                         spawner.getStackSize(),
+                        spawner.getMaxStackSize(),
                         spawner.getLastSpawnTime(),
-                        spawner.isAllowEquipmentItems());
+                        spawner.getIsAtCapacity());
 
                 spawnerData.set(path + ".settings", settings);
+
+                // Save filtered items
+                Set<Material> filteredItems = spawner.getFilteredItems();
+                if (filteredItems != null && !filteredItems.isEmpty()) {
+                    List<String> materials = filteredItems.stream()
+                            .map(Material::name)
+                            .collect(Collectors.toList());
+                    spawnerData.set(path + ".filteredItems", String.join(",", materials));
+                }
 
                 VirtualInventory virtualInv = spawner.getVirtualInventory();
                 if (virtualInv != null) {
@@ -388,8 +434,30 @@ public class SpawnerFileHandler {
         String settingsString = spawnerData.getString(path + ".settings");
         if (settingsString != null) {
             String[] settings = settingsString.split(",");
-            if (settings.length >= 12) {
-                try {
+
+            // Handle version differences based on data version
+            int version = spawnerData.getInt(DATA_VERSION_KEY, 1);
+
+            try {
+                if (version >= 3) {
+                    // Version 3 format
+                    if (settings.length >= 13) {
+                        spawner.setSpawnerExp(Integer.parseInt(settings[0]));
+                        spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
+                        spawner.setSpawnerRange(Integer.parseInt(settings[2]));
+                        spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
+                        spawner.setSpawnDelay(Integer.parseInt(settings[4]));
+                        spawner.setMaxSpawnerLootSlots(Integer.parseInt(settings[5]));
+                        spawner.setMaxStoredExp(Integer.parseInt(settings[6]));
+                        spawner.setMinMobs(Integer.parseInt(settings[7]));
+                        spawner.setMaxMobs(Integer.parseInt(settings[8]));
+                        spawner.setStackSize(Integer.parseInt(settings[9]));
+                        spawner.setMaxStackSize(Integer.parseInt(settings[10]));
+                        spawner.setLastSpawnTime(Long.parseLong(settings[11]));
+                        spawner.setIsAtCapacity(Boolean.parseBoolean(settings[12]));
+                    }
+                } else {
+                    // Version 1-2 format (handle missing fields with defaults)
                     spawner.setSpawnerExp(Integer.parseInt(settings[0]));
                     spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                     spawner.setSpawnerRange(Integer.parseInt(settings[2]));
@@ -401,12 +469,27 @@ public class SpawnerFileHandler {
                     spawner.setMaxMobs(Integer.parseInt(settings[8]));
                     spawner.setStackSize(Integer.parseInt(settings[9]));
                     spawner.setLastSpawnTime(Long.parseLong(settings[10]));
-                    spawner.setAllowEquipmentItems(Boolean.parseBoolean(settings[11]));
-                } catch (NumberFormatException e) {
-                    logger.warning("Invalid settings format for spawner " + spawnerId);
-                    logger.warning("Settings: " + settingsString);
-                    e.printStackTrace();
-                    return null;
+                    // Default values for new fields
+                    spawner.setIsAtCapacity(false);
+                }
+            } catch (NumberFormatException e) {
+                logger.warning("Invalid settings format for spawner " + spawnerId);
+                logger.warning("Settings: " + settingsString);
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        // Load filtered items
+        String filteredItemsStr = spawnerData.getString(path + ".filteredItems");
+        if (filteredItemsStr != null && !filteredItemsStr.isEmpty()) {
+            String[] materialNames = filteredItemsStr.split(",");
+            for (String materialName : materialNames) {
+                try {
+                    Material material = Material.valueOf(materialName.trim());
+                    spawner.getFilteredItems().add(material);
+                } catch (IllegalArgumentException e) {
+                    logger.warning("Invalid material in filtered items for spawner " + spawnerId + ": " + materialName);
                 }
             }
         }
@@ -443,6 +526,10 @@ public class SpawnerFileHandler {
 
     public void queueSpawnerForSaving(String spawnerId) {
         markSpawnerModified(spawnerId);
+    }
+
+    public int getDataVersion() {
+        return spawnerData.getInt(DATA_VERSION_KEY, 1);
     }
 
     public void shutdown() {

@@ -534,10 +534,6 @@ public class ListCommand {
         private final FilterOption filterOption;
         private final SortOption sortType;
 
-        public SpawnerListHolder(int currentPage, int totalPages, String worldName) {
-            this(currentPage, totalPages, worldName, FilterOption.ALL, SortOption.DEFAULT);
-        }
-
         public SpawnerListHolder(int currentPage, int totalPages, String worldName,
                                  FilterOption filterOption, SortOption sortType) {
             this.currentPage = currentPage;

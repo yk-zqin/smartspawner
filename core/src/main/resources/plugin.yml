@@ -18,6 +18,7 @@ softdepend:
   - Towny
   - SuperiorSkyblock2
   - Multiverse-Core
+  - Worlds
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

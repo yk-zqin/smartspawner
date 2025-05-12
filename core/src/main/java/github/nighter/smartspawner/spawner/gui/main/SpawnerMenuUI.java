@@ -156,7 +156,7 @@ public class SpawnerMenuUI {
         // Get possible loot items
         EntityLootConfig lootConfig = plugin.getEntityLootRegistry().getLootConfig(entityType);
         List<LootItem> possibleLootItems = lootConfig != null
-                ? lootConfig.getValidItems(true)
+                ? lootConfig.getAllItems()
                 : Collections.emptyList();
 
         // Return early for empty cases

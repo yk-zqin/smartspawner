@@ -123,7 +123,8 @@ public class SpawnerPlaceListener implements Listener {
 
                 if (resolvedEntityType == null || resolvedEntityType == EntityType.UNKNOWN) {
                     plugin.debug("Failed to resolve entity type from placed spawner, using default");
-                    resolvedEntityType = EntityType.PIG; // Default fallback entity
+                    return;
+                    // resolvedEntityType = EntityType.PIG; // Default fallback entity
                 }
 
                 plugin.debug("Resolved entity type from placed spawner: " + resolvedEntityType);

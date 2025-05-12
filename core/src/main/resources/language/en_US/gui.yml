@@ -179,13 +179,6 @@ navigation_button_next:
   lore:
     - '&#2cc483⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ᴛᴏ ᴘᴀɢᴇ &#37eb9a%target_page%'
 
-page_indicator:
-  name: '&#f0c857ᴘᴀɢᴇ &#f8f8ff[&#f0c857%current_page%&#f8f8ff/&#f0c857%total_pages%&#f8f8ff]'
-  lore:
-    - ''
-    - '&#d4a012◈ &#f8cb45ꜱᴛᴏʀᴀɢᴇ:'
-    - '  &#f8f8ff•  ᴜꜱᴇᴅ: &#f0c857%used_slots%&#d4a012/&#f0c857%max_slots%'
-
 shop_page_indicator:
   name: '&#f0c857ꜱᴇʟʟ ᴀʟʟ ɪᴛᴇᴍꜱ'
   lore:
@@ -202,21 +195,39 @@ return_button:
 take_all_button:
   name: '&#37eb9aᴛᴀᴋᴇ ᴀʟʟ ɪᴛᴇᴍꜱ'
 
-equipment_toggle:
-  name: '&#7b68eeꜰɪʟᴛᴇʀ ᴇQᴜɪᴘᴍᴇɴᴛ ᴅʀᴏᴘꜱ'
-
-equipment_toggle_enabled:
+item_filter_button:
+  name: '&#7b68eeꜰɪʟᴛᴇʀ ᴅʀᴏᴘꜱ'
   lore:
-    - '&#7b68ee⊳ &#f8f8ffꜱᴛᴀᴛᴜꜱ: &#37eb9aᴀʟʟᴏᴡᴇᴅ'
-
-equipment_toggle_disabled:
-  lore:
-    - '&#7b68ee⊳ &#f8f8ffꜱᴛᴀᴛᴜꜱ: &#ff5252ʙʟᴏᴄᴋᴇᴅ'
-
+    - '&#7b68ee⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴄᴏɴꜰɪɢᴜʀᴇ'
+    
 discard_all_button:
   name: '&#ff5252ᴅɪꜱᴄᴀʀᴅ ᴀʟʟ ɪᴛᴇᴍꜱ'
   lore:
     - '&#e63939⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ &#ff5252ʀᴇᴍᴏᴠᴇ&#f8f8ff ᴀʟʟ ɪᴛᴇᴍꜱ'
+
+# ---------------------------------------------------
+#             Filter Configuration GUI
+# ---------------------------------------------------
+gui_title_filter_config: ꜱᴘᴀᴡɴᴇʀ ɪᴛᴇᴍ ꜰɪʟᴛᴇʀ
+
+filter_divider:
+  name: '&#7b68eeꜰɪʟᴛᴇʀ ɪᴛᴇᴍ ᴅʀᴏᴘꜱ'
+  lore:
+    - ''
+    - '&#f8f8ff⋮ ʟᴇꜰᴛ ꜱɪᴅᴇ: &#37eb9aᴀʟʟᴏᴡᴇᴅ ɪᴛᴇᴍꜱ'
+    - '&#f8f8ff⋮ ʀɪɢʜᴛ ꜱɪᴅᴇ: &#ff5252ʙʟᴏᴄᴋᴇᴅ ɪᴛᴇᴍꜱ'
+    - ''
+    - '&#7b68ee⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ʀᴇᴛᴜʀɴ ᴛᴏ ꜱᴛᴏʀᴀɢᴇ'
+
+filter_item_allowed:
+  name: '&#37eb9a%item_name%'
+  lore:
+    - '&#f8f8ffꜱᴛᴀᴛᴜꜱ: &#37eb9aᴀʟʟᴏᴡᴇᴅ &#f8f8ff- ᴄʟɪᴄᴋ ᴛᴏ ʙʟᴏᴄᴋ'
+
+filter_item_blocked:
+  name: '&#ff5252%item_name%'
+  lore:
+    - '&#f8f8ffꜱᴛᴀᴛᴜꜱ: &#ff5252ʙʟᴏᴄᴋᴇᴅ &#f8f8ff- ᴄʟɪᴄᴋ ᴛᴏ ᴀʟʟᴏᴡ'
 
 # ---------------------------------------------------
 #                List Command GUIs

@@ -76,7 +76,7 @@ no_items_to_take:
   sound: block.note_block.pling
 
 take_all_items:
-  action_bar: "&#37eb9aĐã ʟấʏ &#f8f8ff%amount% &#37eb9aᴠậᴛ ᴘʜẩᴍ"
+  action_bar: "&#37eb9aĐã ʟấʏ &#f8f8ff%amount% &#37eb9aᴠậᴛ ᴘʜẩᴍ ᴛừ ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.item.pickup
 
 # ------------------------------------------------------
@@ -264,7 +264,7 @@ command_give_spawner_received:
   sound: entity.experience_orb.pickup
 
 command_give_spawner_given:
-  message: "&#37eb9ađã ᴛặɴɢ &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
+  message: "&#37eb9aĐã ᴄʜᴏ &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
   sound: entity.experience_orb.pickup
 
 # Hologram command messages

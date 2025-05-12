@@ -132,7 +132,7 @@ public class SpawnerItemFactory {
             String entityTypeNameSmallCaps = languageManager.getSmallCaps(entityTypeName);
 
             EntityLootConfig lootConfig = entityLootRegistry.getLootConfig(entityType);
-            List<LootItem> lootItems = lootConfig != null ? lootConfig.getValidItems(true) : Collections.emptyList();
+            List<LootItem> lootItems = lootConfig != null ? lootConfig.getAllItems() : Collections.emptyList();
 
             // Create placeholders map with both regular and small caps entity names
             Map<String, String> placeholders = new HashMap<>();

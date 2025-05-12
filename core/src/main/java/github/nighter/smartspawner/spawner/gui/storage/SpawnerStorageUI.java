@@ -3,7 +3,6 @@ package github.nighter.smartspawner.spawner.gui.storage;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.language.LanguageManager;
-import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.Scheduler;
@@ -26,7 +25,6 @@ public class SpawnerStorageUI {
 
     // Precomputed buttons to avoid repeated creation
     private final Map<String, ItemStack> staticButtons;
-    private final Map<Boolean, ItemStack> equipmentToggleButtons;
 
     // Lightweight caches with better eviction strategies
     private final Map<String, ItemStack> navigationButtonCache;
@@ -44,7 +42,6 @@ public class SpawnerStorageUI {
 
         // Initialize caches with appropriate initial capacity
         this.staticButtons = new HashMap<>(4);
-        this.equipmentToggleButtons = new HashMap<>(2);
         this.navigationButtonCache = new ConcurrentHashMap<>(16);
         this.pageIndicatorCache = new ConcurrentHashMap<>(16);
 
@@ -69,14 +66,17 @@ public class SpawnerStorageUI {
 
         // Create discard all button
         staticButtons.put("discardAll", createButton(
-                Material.LAVA_BUCKET,
+                Material.CAULDRON,
                 languageManager.getGuiItemName("discard_all_button.name"),
                 languageManager.getGuiItemLoreAsList("discard_all_button.lore")
         ));
 
         // Pre-create equipment toggle buttons
-        equipmentToggleButtons.put(true, createEquipmentToggleButton(true));
-        equipmentToggleButtons.put(false, createEquipmentToggleButton(false));
+        staticButtons.put("itemFilter", createButton(
+                Material.HOPPER,
+                languageManager.getGuiItemName("item_filter_button.name"),
+                languageManager.getGuiItemLoreAsList("item_filter_button.lore")
+        ));
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
@@ -185,12 +185,16 @@ public class SpawnerStorageUI {
         if (totalPages == -1) {
             totalPages = calculateTotalPages(spawner);
         }
+
+        // Navigation row base slot
+        int navRowBase = NAVIGATION_ROW * 9;
+
         // Add previous page button if not on first page
         if (page > 1) {
             String cacheKey = "prev-" + (page - 1);
             ItemStack prevButton = navigationButtonCache.computeIfAbsent(
                     cacheKey, k -> createNavigationButton("previous", page - 1));
-            updates.put(NAVIGATION_ROW * 9 + 3, prevButton);
+            updates.put(navRowBase + 3, prevButton);
         }
 
         // Add next page button if not on last page
@@ -198,22 +202,30 @@ public class SpawnerStorageUI {
             String cacheKey = "next-" + (page + 1);
             ItemStack nextButton = navigationButtonCache.computeIfAbsent(
                     cacheKey, k -> createNavigationButton("next", page + 1));
-            updates.put(NAVIGATION_ROW * 9 + 5, nextButton);
+            updates.put(navRowBase + 5, nextButton);
         }
 
-        // Add page indicator with key metrics for spawner
-        String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
-        int finalTotalPages = totalPages;
-        ItemStack pageIndicator = pageIndicatorCache.computeIfAbsent(
-                indicatorKey, k -> createPageIndicator(page, finalTotalPages, spawner)
-        );
-        updates.put(NAVIGATION_ROW * 9 + 4, pageIndicator);
+        // Add take all button in the center position (where page indicator was)
+        updates.put(navRowBase + 4, staticButtons.get("takeAll"));
 
-        // Add static buttons directly from cache
-        updates.put(NAVIGATION_ROW * 9 + 8, staticButtons.get("return"));
-        updates.put(NAVIGATION_ROW * 9 + 7, staticButtons.get("discardAll"));
-        updates.put(NAVIGATION_ROW * 9, staticButtons.get("takeAll"));
-        updates.put(NAVIGATION_ROW * 9 + 1, equipmentToggleButtons.get(spawner.isAllowEquipmentItems()));
+        // Add discard all button in the first position
+        updates.put(navRowBase, staticButtons.get("discardAll"));
+
+        // Add item filter button
+        updates.put(navRowBase + 1, staticButtons.get("itemFilter"));
+
+        // Add return button
+        updates.put(navRowBase + 8, staticButtons.get("return"));
+
+        // Add shop page indicator only if shop integration is available
+        if (plugin.hasShopIntegration()) {
+            String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
+            int finalTotalPages = totalPages;
+            ItemStack shopIndicator = pageIndicatorCache.computeIfAbsent(
+                    indicatorKey, k -> createShopPageIndicator(page, finalTotalPages, spawner)
+            );
+            updates.put(navRowBase + 7, shopIndicator);
+        }
     }
 
     private String getPageIndicatorKey(int page, int totalPages, SpawnerData spawner) {
@@ -260,18 +272,7 @@ public class SpawnerStorageUI {
         return createButton(Material.SPECTRAL_ARROW, buttonName, Arrays.asList(buttonLore));
     }
 
-    private ItemStack createEquipmentToggleButton(boolean currentState) {
-        String buttonKey = "equipment_toggle";
-        Map<String, String> placeholders = new HashMap<>();
-
-        String displayName = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
-        String loreKey = currentState ? buttonKey + "_enabled.lore" : buttonKey + "_disabled.lore";
-        String[] lore = languageManager.getGuiItemLore(loreKey, placeholders);
-
-        return createButton(Material.HOPPER, displayName, Arrays.asList(lore));
-    }
-
-    private ItemStack createPageIndicator(int currentPage, int totalPages, SpawnerData spawner) {
+    private ItemStack createShopPageIndicator(int currentPage, int totalPages, SpawnerData spawner) {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int usedSlots = virtualInv.getUsedSlots();
@@ -280,9 +281,6 @@ public class SpawnerStorageUI {
         String formattedMaxSlots = languageManager.formatNumber(maxSlots);
         String formattedUsedSlots = languageManager.formatNumber(usedSlots);
 
-        Material material = plugin.hasShopIntegration() ? Material.GOLD_INGOT : Material.PAPER;
-        String nameKey = plugin.hasShopIntegration() ? "shop_page_indicator" : "page_indicator";
-
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("current_page", String.valueOf(currentPage));
         placeholders.put("total_pages", String.valueOf(totalPages));
@@ -290,10 +288,10 @@ public class SpawnerStorageUI {
         placeholders.put("used_slots", formattedUsedSlots);
         placeholders.put("percent_storage", String.valueOf(percentStorage));
 
-        String name = plugin.getLanguageManager().getGuiItemName(nameKey +".name", placeholders);
-        List<String> lore = plugin.getLanguageManager().getGuiItemLoreAsList(nameKey +".lore", placeholders);
+        String name = plugin.getLanguageManager().getGuiItemName("shop_page_indicator.name", placeholders);
+        List<String> lore = plugin.getLanguageManager().getGuiItemLoreAsList("shop_page_indicator.lore", placeholders);
 
-        return createButton(material, name, lore);
+        return createButton(Material.GOLD_INGOT, name, lore);
     }
 
     private void startCleanupTask() {
