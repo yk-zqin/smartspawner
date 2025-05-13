@@ -12,18 +12,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class CheckStackBlock {
     // Check if player can place a block
-    public static boolean CanPlayerPlaceBlock(@NotNull final UUID playerUUID, @NotNull Location location) {
+    public static boolean CanPlayerPlaceBlock(@NotNull final Player player, @NotNull Location location) {
 
-        Player player = Bukkit.getServer().getPlayer(playerUUID);
+        if(player.isOp() || player.hasPermission("*")) return true;
 
-        if(player != null && (player.isOp() || player.hasPermission("*"))) return true;
-
-        if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerStackClaimBlock(playerUUID, location)) return false;
-        if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerStackBlockInRegion(playerUUID, location)) return false;
-        if (SmartSpawner.hasLands && !Lands.canPlayerStackClaimBlock(playerUUID, location)) return false;
-        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(playerUUID, location)) return false;
-        if (SmartSpawner.hasSuperiorSkyblock2 && SuperiorSkyblock2.canPlayerStackBlock(playerUUID, location)) return false;
-        if (SmartSpawner.hasBentoBox && !BentoBoxAPI.canPlayerStackBlock(playerUUID, location)) return false;
+        if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerStackClaimBlock(player, location)) return false;
+        if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerStackBlockInRegion(player, location)) return false;
+        if (SmartSpawner.hasLands && !Lands.canPlayerStackClaimBlock(player, location)) return false;
+        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(player, location)) return false;
+        if (SmartSpawner.hasSuperiorSkyblock2 && SuperiorSkyblock2.canPlayerStackBlock(player, location)) return false;
+        if (SmartSpawner.hasBentoBox && !BentoBoxAPI.canPlayerStackBlock(player, location)) return false;
+        if (SmartSpawner.hasSimpleClaimSystem && !SimpleClaimSystem.canPlayerStackClaimBlock(player, location)) return false;
 
         return true;
     }

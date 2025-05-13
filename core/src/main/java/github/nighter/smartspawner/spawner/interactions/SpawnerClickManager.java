@@ -157,7 +157,7 @@ public class SpawnerClickManager implements Listener {
     private void handleSpawnerInteraction(Player player, Block block, ItemStack heldItem, Material itemType, SpawnerData spawner) {
 
         // Check permission on claimed land
-        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player, block.getLocation())) {
             messageService.sendMessage(player, "spawner_protected");
             return;
         }
@@ -181,7 +181,7 @@ public class SpawnerClickManager implements Listener {
     private void handleInactiveSpawnerInteraction(Player player, Block block, SpawnerData spawner, ItemStack heldItem, Material itemType) {
 
         // Check permission on claimed land
-        if (!CheckOpenMenu.CanPlayerOpenMenu(player.getUniqueId(), block.getLocation())) {
+        if (!CheckOpenMenu.CanPlayerOpenMenu(player, block.getLocation())) {
             messageService.sendMessage(player, "spawner_protected");
             return;
         }

@@ -16,13 +16,12 @@ import java.util.UUID;
 
 public class WorldGuard {
     // Check if player can break in a location
-    public static boolean canPlayerBreakBlockInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
-        Player player = Bukkit.getServer().getPlayer(pUUID);
-        if (player != null && (player.isOp() || player.hasPermission("worldguard.region.bypass"))) {
+    public static boolean canPlayerBreakBlockInRegion(@NotNull Player player, @NotNull org.bukkit.Location location) {
+        if (player.isOp() || player.hasPermission("worldguard.region.bypass")) {
             return true;
         }
 
-        LocalPlayer localPlayer = player != null ? WorldGuardPlugin.inst().wrapPlayer(player) : WorldGuardPlugin.inst().wrapOfflinePlayer(Bukkit.getServer().getOfflinePlayer(pUUID));
+        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
         RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
@@ -31,14 +30,9 @@ public class WorldGuard {
     }
 
     // Check if player can place in a location
-    public static boolean canPlayerStackBlockInRegion(@NotNull UUID pUUID, @NotNull org.bukkit.Location location) {
-        Player player = Bukkit.getServer().getPlayer(pUUID);
-        if (player != null) {
-            if (player.isOp() || player.hasPermission("worldguard.region.bypass")) {
-                return true;
-            }
-        } else {
-            player = Bukkit.getServer().getOfflinePlayer(pUUID).getPlayer();
+    public static boolean canPlayerStackBlockInRegion(@NotNull Player player, @NotNull org.bukkit.Location location) {
+        if (player.isOp() || player.hasPermission("worldguard.region.bypass")) {
+            return true;
         }
 
         LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapOfflinePlayer(player);
@@ -50,12 +44,12 @@ public class WorldGuard {
     }
 
     // Check if player can interact in a location
-    public static boolean canPlayerInteractInRegion(@NotNull Player p, org.bukkit.Location location) {
-        if (p.isOp() || p.hasPermission("worldguard.region.bypass")) {
+    public static boolean canPlayerInteractInRegion(@NotNull Player player, org.bukkit.Location location) {
+        if (player.isOp() || player.hasPermission("worldguard.region.bypass")) {
             return true;
         }
         
-        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(p);
+        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
         Location loc = new Location(BukkitAdapter.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ());
         RegionContainer container = com.sk89q.worldguard.WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();

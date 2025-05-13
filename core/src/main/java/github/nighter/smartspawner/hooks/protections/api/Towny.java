@@ -8,11 +8,12 @@ import com.palmergames.bukkit.towny.object.Town;
 import java.util.UUID;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class Towny {
     // Check if player has a resident in the location
-    public static boolean canPlayerInteractSpawner(@NotNull UUID playerUUID, @NotNull Location location) {
+    public static boolean canPlayerInteractSpawner(@NotNull Player player, @NotNull Location location) {
 
         Town town = null;
         try {
@@ -23,7 +24,7 @@ public class Towny {
         }
 
         try {
-            Resident resident = TownyAPI.getInstance().getResident(playerUUID);
+            Resident resident = TownyAPI.getInstance().getResident(player.getUniqueId());
             return town.hasResident(resident) || town.hasTrustedResident(resident);
         } catch (Exception e) {
             return true;

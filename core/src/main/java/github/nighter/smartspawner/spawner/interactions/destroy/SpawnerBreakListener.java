@@ -66,7 +66,7 @@ public class SpawnerBreakListener implements Listener {
         }
 
         // Protection plugin integration
-        if (!CheckBreakBlock.CanPlayerBreakBlock(player.getUniqueId(), location)) {
+        if (!CheckBreakBlock.CanPlayerBreakBlock(player, location)) {
             event.setCancelled(true);
             return;
         }

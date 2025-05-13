@@ -1,5 +1,7 @@
 package github.nighter.smartspawner;
 
+import fr.xyness.SCS.API.SimpleClaimSystemAPI_Provider;
+import fr.xyness.SCS.SimpleClaimSystem;
 import github.nighter.smartspawner.api.SmartSpawnerAPI;
 import github.nighter.smartspawner.api.SmartSpawnerPlugin;
 import github.nighter.smartspawner.api.SmartSpawnerAPIImpl;
@@ -135,6 +137,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public static boolean hasGriefPrevention = false;
     public static boolean hasSuperiorSkyblock2 = false;
     public static boolean hasBentoBox = false;
+    public static boolean hasSimpleClaimSystem = false;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -374,6 +377,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
                 return true;
             }
             return false;
+        }, true);
+        hasSimpleClaimSystem = checkPlugin("SimpleClaimSystem", () -> {
+            Plugin simpleClaimPlugin = Bukkit.getPluginManager().getPlugin("SimpleClaimSystem");
+            SimpleClaimSystemAPI_Provider.initialize((SimpleClaimSystem) simpleClaimPlugin);
+            return simpleClaimPlugin != null;
         }, true);
     }
 

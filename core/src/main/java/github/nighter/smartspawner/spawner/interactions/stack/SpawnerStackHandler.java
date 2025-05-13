@@ -142,7 +142,7 @@ public class SpawnerStackHandler {
     }
 
     private boolean hasStackPermissions(Player player, Location location) {
-        if (!CheckStackBlock.CanPlayerPlaceBlock(player.getUniqueId(), location)) {
+        if (!CheckStackBlock.CanPlayerPlaceBlock(player, location)) {
             messageService.sendMessage(player, "spawner_protected");
             return false;
         }

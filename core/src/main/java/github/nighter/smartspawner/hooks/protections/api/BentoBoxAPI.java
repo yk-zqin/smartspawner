@@ -12,17 +12,17 @@ import java.util.UUID;
 
 public class BentoBoxAPI {
 
-    public static boolean canPlayerStackBlock(@NotNull UUID playerUUID, @NotNull Location location) {
+    public static boolean canPlayerStackBlock(@NotNull Player player, @NotNull Location location) {
 
         return BentoBox.getInstance().getIslandsManager().getIslandAt(location).
-                map(island -> island.isAllowed(User.getInstance(playerUUID), Flags.PLACE_BLOCKS)).
+                map(island -> island.isAllowed(User.getInstance(player.getUniqueId()), Flags.PLACE_BLOCKS)).
                 orElse(Flags.PLACE_BLOCKS.isSetForWorld(location.getWorld()));
     }
 
-    public static boolean canPlayerOpenMenu(@NotNull UUID playerUUID, @NotNull Location location) {
+    public static boolean canPlayerOpenMenu(@NotNull Player player, @NotNull Location location) {
 
         return BentoBox.getInstance().getIslandsManager().getIslandAt(location).
-                map(island -> island.isAllowed(User.getInstance(playerUUID), Flags.CONTAINER)).
+                map(island -> island.isAllowed(User.getInstance(player.getUniqueId()), Flags.CONTAINER)).
                 orElse(Flags.CONTAINER.isSetForWorld(location.getWorld()));
     }
 }

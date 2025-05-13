@@ -21,13 +21,8 @@ public class Lands {
         landsIntegration = LandsIntegration.of(smartSpawner);
     }
 
-    public static boolean canPlayerBreakClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerBreakClaimBlock(@NotNull Player player, @NotNull Location location) {
         if (landsIntegration == null) {
-            return true;
-        }
-
-        Player player = Bukkit.getPlayer(pUUID);
-        if (player == null) {
             return true;
         }
 
@@ -38,13 +33,8 @@ public class Lands {
         return true;
     }
 
-    public static boolean canPlayerStackClaimBlock(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean canPlayerStackClaimBlock(@NotNull Player player, @NotNull Location location) {
         if (landsIntegration == null) {
-            return true;
-        }
-
-        Player player = Bukkit.getPlayer(pUUID);
-        if (player == null) {
             return true;
         }
 
@@ -55,13 +45,8 @@ public class Lands {
         return true;
     }
 
-    public static boolean CanPlayerInteractContainer(@NotNull UUID pUUID, @NotNull Location location) {
+    public static boolean CanPlayerInteractContainer(@NotNull Player player, @NotNull Location location) {
         if (landsIntegration == null) {
-            return true;
-        }
-
-        Player player = Bukkit.getPlayer(pUUID);
-        if (player == null) {
             return true;
         }
 
