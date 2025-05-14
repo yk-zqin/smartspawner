@@ -80,14 +80,12 @@ public class HopperHandler implements Listener {
 
     private void processChunkHoppers(Chunk chunk) {
         try {
-            for (BlockState state : chunk.getTileEntities()) {
-                if (state.getType() == Material.HOPPER) {
-                    Block hopperBlock = state.getBlock();
-                    Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+            for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.HOPPER, false)) {
+                Block hopperBlock = state.getBlock();
+                Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
 
-                    if (aboveBlock.getType() == Material.SPAWNER) {
-                        startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
-                    }
+                if (aboveBlock.getType() == Material.SPAWNER) {
+                    startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
                 }
             }
         } catch (Exception e) {
@@ -117,10 +115,8 @@ public class HopperHandler implements Listener {
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
         Chunk chunk = event.getChunk();
-        for (BlockState state : chunk.getTileEntities()) {
-            if (state.getType() == Material.HOPPER) {
-                stopHopperTask(state.getLocation());
-            }
+        for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.HOPPER, false)) {
+            stopHopperTask(state.getLocation());
         }
     }
 
@@ -210,7 +206,7 @@ public class HopperHandler implements Listener {
 
         try {
             VirtualInventory virtualInv = spawner.getVirtualInventory();
-            Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
+            Hopper hopper = (Hopper) hopperLoc.getBlock().getState(false); // Should be fine to disable snapshots
 
             int itemsPerTransfer = plugin.getConfig().getInt("hopper.stack_per_transfer", 5);
             int transferred = 0;
