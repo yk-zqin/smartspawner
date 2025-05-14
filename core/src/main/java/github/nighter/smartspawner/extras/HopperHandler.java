@@ -206,7 +206,7 @@ public class HopperHandler implements Listener {
 
         try {
             VirtualInventory virtualInv = spawner.getVirtualInventory();
-            Hopper hopper = (Hopper) hopperLoc.getBlock().getState();
+            Hopper hopper = (Hopper) hopperLoc.getBlock().getState(false); // Should be fine to disable snapshots
 
             int itemsPerTransfer = plugin.getConfig().getInt("hopper.stack_per_transfer", 5);
             int transferred = 0;
