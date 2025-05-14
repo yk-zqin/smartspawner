@@ -79,11 +79,10 @@ public class SpawnerRangeChecker {
 
         // In Folia, we're now running this in the correct region thread,
         // so we can safely check for nearby entities
-        Collection<Entity> nearbyEntities = world.getNearbyEntities(spawnerLoc, range, range, range,
-                entity -> entity instanceof Player);
+        Collection<Player> nearbyPlayers = world.getNearbyPlayers(spawnerLoc, range, range, range);
 
-        for (Entity entity : nearbyEntities) {
-            if (entity.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
+        for (Player player : nearbyPlayers) {
+            if (player.getLocation().distanceSquared(spawnerLoc) <= rangeSquared) {
                 return true;
             }
         }
