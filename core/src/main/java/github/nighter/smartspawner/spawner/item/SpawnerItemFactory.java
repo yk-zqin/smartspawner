@@ -140,12 +140,19 @@ public class SpawnerItemFactory {
             placeholders.put("ᴇɴᴛɪᴛʏ", entityTypeNameSmallCaps);
             placeholders.put("exp", String.valueOf(lootConfig != null ? lootConfig.getExperience() : 0));
 
-            if (!lootItems.isEmpty()) {
+            // Sort the loot items for consistent ordering
+            List<LootItem> sortedLootItems = new ArrayList<>(lootItems);
+            // Sort by material name to ensure consistent order
+            sortedLootItems.sort(Comparator.comparing(item -> item.getMaterial().name()));
+            // Sort by material name in reverse order (Z to A)
+            // sortedLootItems.sort(Comparator.comparing((LootItem item) -> item.getMaterial().name()).reversed());
+
+            if (!sortedLootItems.isEmpty()) {
                 // Get the custom loot format from the config
                 String lootFormat = languageManager.getItemName("custom_item.spawner.loot_items", placeholders);
 
                 StringBuilder lootItemsBuilder = new StringBuilder();
-                for (LootItem item : lootItems) {
+                for (LootItem item : sortedLootItems) {
                     // Use LanguageManager's cached method
                     String itemName = languageManager.getVanillaItemName(item.getMaterial());
                     // Use LanguageManager's small caps method
@@ -170,7 +177,7 @@ public class SpawnerItemFactory {
                 }
 
                 // Remove the last newline character
-                if (lootItemsBuilder.length() > 0) {
+                if (!lootItemsBuilder.isEmpty()) {
                     lootItemsBuilder.setLength(lootItemsBuilder.length() - 1);
                 }
                 placeholders.put("loot_items", lootItemsBuilder.toString());
