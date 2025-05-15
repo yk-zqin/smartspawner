@@ -1,0 +1,104 @@
+#---------------------------------------------------
+#                 Number Formatting
+#---------------------------------------------------
+# Controls how large numbers are displayed in-game
+#---------------------------------------------------
+format_number:
+  thousand: "%s%K"    # Example: 5000 → 5K
+  million: "%s%M"     # Example: 2000000 → 2M
+  billion: "%s%B"     # Example: 1500000000 → 1.5B
+  trillion: "%s%T"    # Example: 1000000000000 → 1T
+  default: "%s%"      # Fallback format when no other rule matches
+
+#---------------------------------------------------
+#                 Mob Display Names
+#---------------------------------------------------
+# Defines how mob names appear in spawner GUIs, items, holograms and messages
+# Taken from: https://crowdin.com/editor/minecraft/10038/enus-it
+#---------------------------------------------------
+mob_names:
+  # Passive Mobs
+  #-------------------------
+  ALLAY: "Allay"
+  ARMADILLO: "Armadillo"
+  AXOLOTL: "Assolotto"
+  BAT: "Pipistrello"
+  BEE: "Ape"
+  CAMEL: "Cammello"
+  CAT: "Gatto"
+  CHICKEN: "Gallina"
+  COD: "Merluzzo"
+  COW: "Mucca"
+  DOLPHIN: "Delfino"
+  DONKEY: "Asino"
+  FOX: "Volpe"
+  FROG: "Rana"
+  GLOW_SQUID: "Calamaro Luminescente"
+  GOAT: "Capra"
+  HORSE: "Cavallo"
+  IRON_GOLEM: "Golem di Ferro"
+  LLAMA: "Lama"
+  MOOSHROOM: "Mooshroom"
+  MUSHROOM_COW: "Mooshroom" # Fallback for 1.20 version compatibility
+  MULE: "Mulo"
+  OCELOT: "Ocelotto"
+  PANDA: "Panda"
+  PARROT: "Pappagallo"
+  PIG: "Maiale"
+  POLAR_BEAR: "Orso Polare"
+  PUFFERFISH: "Pesce Palla"
+  RABBIT: "Coniglio"
+  SALMON: "Salmone"
+  SHEEP: "Pecora"
+  SNIFFER: "Fiutatore"
+  SNOW_GOLEM: "Golem di Neve"
+  SNOWMAN: "Golem di Neve" # Fallback for 1.20 version compatibility
+  SQUID: "Calamaro"
+  STRIDER: "Strider"
+  TADPOLE: "Girino"
+  TRADER_LLAMA: "Lama del Mercante"
+  TROPICAL_FISH: "Pesce Tropicale"
+  TURTLE: "Tartaruga"
+  VILLAGER: "Villico"
+  WANDERING_TRADER: "Mercante ambulante"
+  WOLF: "Lupo"
+
+  # Hostile Mobs
+  #-------------------------
+  BLAZE: "Blaze"
+  BOGGED: "Paludoso"
+  BREEZE: "Brezza"
+  CAVE_SPIDER: "Ragno delle Caverne"
+  CREEPER: "Creeper"
+  DROWNED: "Annegato"
+  ELDER_GUARDIAN: "Guardiano Antico"
+  ENDERMAN: "Enderman"
+  ENDERMITE: "Endermite"
+  EVOKER: "Evocatore"
+  GHAST: "Ghast"
+  GUARDIAN: "Guardiano"
+  HOGLIN: "Hoglin"
+  HUSK: "Mummia"
+  MAGMA_CUBE: "Cubo di Magma"
+  PHANTOM: "Fantasma"
+  PIGLIN: "Piglin"
+  PIGLIN_BRUTE: "Piglin Bruto"
+  PILLAGER: "Predone"
+  RAVAGER: "Devastatore"
+  SHULKER: "Shulker"
+  SILVERFISH: "Pesciolino d’Argento"
+  SKELETON: "Scheletro"
+  SKELETON_HORSE: "Cavallo Scheletro"
+  SLIME: "Slime"
+  SPIDER: "Ragno"
+  STRAY: "Errante"
+  VEX: "Vessante"
+  VINDICATOR: "Vendicatore"
+  WARDEN: "Sorvegliante"
+  WITCH: "Strega"
+  WITHER_SKELETON: "Scheletro di Wither"
+  ZOGLIN: "Zoglin"
+  ZOMBIE: "Zombie"
+  ZOMBIE_HORSE: "Cavallo Zombie"
+  ZOMBIE_VILLAGER: "Villico Zombie"
+  ZOMBIFIED_PIGLIN: "Piglin Zombie"

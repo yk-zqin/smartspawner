@@ -59,11 +59,12 @@
 
 | Language | Locale Code        | Contributor                                                                              | Version  |
 |----------|--------------------|------------------------------------------------------------------------------------------|----------|
-| [English](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/en_US.yml) | `en_US`            | Core language                                                                            | `Latest` |
-| [Vietnamese](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/vi_VN.yml) | `vi_VN`| [maiminhdung](https://github.com/maiminhdung), [ptthanh02](https://github.com/ptthanh02) | `Latest` |
-| [Chinese Simplified](https://github.com/ptthanh02/Smart-Spawner/blob/main/src/main/resources/messages/zh_CN.yml) | `zh_CN` (deprecated)           | [SnowCutieOwO](https://github.com/SnowCutieOwO)                                          | `v1.2.3` |
+| [English](https://github.com/ptthanh02/SmartSpawner/tree/main/core/src/main/resources/language/en_US) | `en_US`            | Core language                                                                            | `Latest` |
+| [Vietnamese](https://github.com/ptthanh02/SmartSpawner/tree/main/core/src/main/resources/language/vi_VN) | `vi_VN`| [maiminhdung](https://github.com/maiminhdung), [ptthanh02](https://github.com/ptthanh02) | `Latest` |
+| [Italian](https://github.com/ptthanh02/SmartSpawner/tree/main/core/src/main/resources/language/it_IT) | `vi_VN`| [RV_SkeLe](https://github.com/RVSkeLe) | `Latest` |
+| [Chinese Simplified](https://github.com/ptthanh02/SmartSpawner/blob/2e8e2f7b148c3233a97a9fa6da2fdcd3fb1aaad3/core/src/main/resources/messages/zh_CN.yml) | `zh_CN` (deprecated)           | [SnowCutieOwO](https://github.com/SnowCutieOwO)                                          | `v1.2.3` |
 
-> 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki/Translation-Guide)
+> 🔍 **Want to help translate?** Check our [Translation Guide](https://github.com/ptthanh02/SmartSpawner/wiki/Translation-Guide)
 
 ## ⚠️ Important Notes
 
@@ -134,8 +135,8 @@ We welcome contributions! Here's how you can help:
 [![Discord Banner](https://img.shields.io/discord/1299353023532896296?style=for-the-badge&logo=discord&logoColor=white&label=Join%20our%20Discord&color=5865F2)](https://discord.gg/zrnyG4CuuT)
 
 - 🎮 [Discord Community](https://discord.gg/zrnyG4CuuT)
-- 🐛 [Issue Tracker](https://github.com/ptthanh02/Smart-Spawner-Plugin/issues)
-- 📚 [Wiki Documentation](https://github.com/ptthanh02/Smart-Spawner-Plugin/wiki)
+- 🐛 [Issue Tracker](https://github.com/ptthanh02/SmartSpawner/issues)
+- 📚 [Wiki Documentation](https://github.com/ptthanh02/SmartSpawner/wiki)
 
 ## 📜 License
 
