@@ -116,6 +116,10 @@ public class LanguageManager {
         saveResource("language/DonutSMP/messages.yml");
         saveResource("language/DonutSMP/gui.yml");
         saveResource("language/DonutSMP/formatting.yml");
+        saveResource("language/it_IT/messages.yml");
+        saveResource("language/it_IT/gui.yml");
+        saveResource("language/it_IT/formatting.yml");
+        saveResource("language/it_IT/items.yml");
     }
 
     private void saveResource(String resourcePath) {

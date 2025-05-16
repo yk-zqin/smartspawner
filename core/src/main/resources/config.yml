@@ -12,7 +12,7 @@
 #---------------------------------------------------
 #               Language Settings
 #---------------------------------------------------
-# Language setting (available: en_US, vi_VN)
+# Language setting (available: en_US, vi_VN, it_IT)
 language: en_US
 
 # Enable or disable debug mode (provides verbose console output)
