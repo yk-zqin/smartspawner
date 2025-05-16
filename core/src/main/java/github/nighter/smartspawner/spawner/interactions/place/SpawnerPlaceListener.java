@@ -225,14 +225,15 @@ public class SpawnerPlaceListener implements Listener {
     }
 
     private void setupHopperIntegration(Block block) {
-        if (plugin.getConfig().getBoolean("hopper.enabled", false)) {
-            // Run this task in the block's region
-            Scheduler.runLocationTask(block.getLocation(), () -> {
-                Block blockBelow = block.getRelative(BlockFace.DOWN);
-                if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
-                    hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
-                }
-            });
-        }
+        Scheduler.runLocationTask(block.getLocation(), () -> {
+            plugin.debug("Checking for hopper integration...");
+            Block blockBelow = block.getRelative(BlockFace.DOWN);
+            if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
+                hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
+                plugin.debug("Hopper integration started for block: " + block.getLocation());
+            }
+            plugin.debug("Block below type: " + blockBelow.getType());
+            plugin.debug("hopperHandler: " + (hopperHandler != null ? "exists" : "null"));
+        });
     }
 }

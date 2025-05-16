@@ -215,11 +215,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Initialize UI and actions
         initializeUIAndActions();
 
-        // Initialize listeners
-        initializeListeners();
-
         // Initialize hopper handler if enabled in config
         setUpHopperHandler();
+
+        // Initialize listeners
+        initializeListeners();
 
         // Initialize API implementation
         this.apiImpl = new SmartSpawnerAPIImpl(this);

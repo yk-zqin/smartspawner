@@ -2,12 +2,14 @@ package github.nighter.smartspawner.spawner.interactions.destroy;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerExplodeEvent;
+import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -19,11 +21,13 @@ public class SpawnerExplosionListener implements Listener {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
     private final SpawnerFileHandler spawnerFileHandler;
+    private final HopperHandler hopperHandler;
 
     public SpawnerExplosionListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
         this.spawnerFileHandler = plugin.getSpawnerFileHandler();
+        this.hopperHandler = plugin.getHopperHandler();
     }
 
     @EventHandler
@@ -39,11 +43,13 @@ public class SpawnerExplosionListener implements Listener {
                     if (plugin.getConfig().getBoolean("spawner_properties.default.protect_from_explosions",true)) {
                         blocksToRemove.add(block);
                         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawnerData);
+                        cleanupAssociatedHopper(block);
                         if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
                             e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, false);
                     } else {
                         spawnerData.setSpawnerStop(true);
                         String spawnerId = spawnerData.getSpawnerId();
+                        cleanupAssociatedHopper(block);
                         if(SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0)
                             e = new SpawnerExplodeEvent(event.getEntity(), spawnerData.getSpawnerLocation(), 1, true);
                         spawnerManager.removeSpawner(spawnerId);
@@ -60,5 +66,12 @@ public class SpawnerExplosionListener implements Listener {
 
         // Remove the spawner blocks that should not be destroyed from the explosion list
         event.blockList().removeAll(blocksToRemove);
+    }
+
+    private void cleanupAssociatedHopper(Block block) {
+        Block blockBelow = block.getRelative(BlockFace.DOWN);
+        if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
+            hopperHandler.stopHopperTask(blockBelow.getLocation());
+        }
     }
 }

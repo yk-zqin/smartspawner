@@ -4,7 +4,6 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.language.LanguageManager;
-import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -30,17 +29,13 @@ public class HopperHandler implements Listener {
     private final SmartSpawner plugin;
     private final Map<Location, Scheduler.Task> activeHoppers = new ConcurrentHashMap<>();
     private final SpawnerManager spawnerManager;
-    private final SpawnerStorageUI spawnerStorageUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
-    private final LanguageManager languageManager;
     private final Map<String, ReentrantLock> spawnerLocks = new ConcurrentHashMap<>();
 
     public HopperHandler(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
-        this.spawnerStorageUI = plugin.getSpawnerStorageUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
-        this.languageManager = plugin.getLanguageManager();
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 

@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.utils;
 
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
@@ -13,6 +14,7 @@ public class ItemStackSerializer {
     private static final List<String> ARMOR_PIECES = Arrays.asList("_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS");
     private static final List<String> TOOL_TYPES = Arrays.asList("_SWORD", "_PICKAXE", "_AXE", "_SHOVEL", "_HOE");
 
+    @Getter
     public static class ItemGroup {
         private final Material material;
         private final Map<Short, Integer> durabilityCount;
@@ -31,18 +33,6 @@ public class ItemStackSerializer {
         public void addPotionArrow(PotionEffect effect, int count) {
             String effectKey = serializePotionEffect(effect);
             potionEffectCount.merge(effectKey, count, Integer::sum);
-        }
-
-        public Material getMaterial() {
-            return material;
-        }
-
-        public Map<Short, Integer> getDurabilityCount() {
-            return durabilityCount;
-        }
-
-        public Map<String, Integer> getPotionEffectCount() {
-            return potionEffectCount;
         }
 
         private String serializePotionEffect(PotionEffect effect) {
