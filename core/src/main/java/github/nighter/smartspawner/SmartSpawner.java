@@ -138,6 +138,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public static boolean hasSuperiorSkyblock2 = false;
     public static boolean hasBentoBox = false;
     public static boolean hasSimpleClaimSystem = false;
+    public static boolean hasRedProtect = false;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -382,6 +383,13 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
             Plugin simpleClaimPlugin = Bukkit.getPluginManager().getPlugin("SimpleClaimSystem");
             SimpleClaimSystemAPI_Provider.initialize((SimpleClaimSystem) simpleClaimPlugin);
             return simpleClaimPlugin != null;
+        }, true);
+        hasRedProtect = checkPlugin("RedProtect", () -> {
+            Plugin pRP = Bukkit.getPluginManager().getPlugin("RedProtect");
+            if (pRP != null && pRP.isEnabled()){
+                return true;
+            }
+            return false;
         }, true);
     }
 
