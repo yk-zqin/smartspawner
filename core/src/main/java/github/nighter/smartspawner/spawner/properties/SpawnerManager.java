@@ -395,4 +395,8 @@ public class SpawnerManager {
         worldIndex.clear();
         confirmedGhostSpawners.clear();
     }
+
+    public int getTotalSpawners() {
+        return this.spawners.size();
+    }
 }

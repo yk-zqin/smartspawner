@@ -326,8 +326,15 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
     private void setupBtatsMetrics() {
         Metrics metrics = new Metrics(this, 24822);
-        metrics.addCustomChart(new Metrics.SimplePie("players",
-                () -> String.valueOf(Bukkit.getOnlinePlayers().size())));
+        metrics.addCustomChart(new Metrics.SimplePie("holograms", () ->
+                String.valueOf(getConfig().getBoolean("hologram.enabled", false)))
+        );
+        metrics.addCustomChart(new Metrics.SimplePie("hoppers", () ->
+                String.valueOf(getConfig().getBoolean("hopper.enabled", false)))
+        );
+        metrics.addCustomChart(new Metrics.SimplePie("spawners", () ->
+                String.valueOf(this.spawnerManager.getTotalSpawners() / 1000 * 1000))
+        );
     }
 
     private void initializeSaleLogging() {
