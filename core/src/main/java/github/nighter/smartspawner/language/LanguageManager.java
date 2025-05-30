@@ -120,6 +120,10 @@ public class LanguageManager {
         saveResource("language/it_IT/gui.yml");
         saveResource("language/it_IT/formatting.yml");
         saveResource("language/it_IT/items.yml");
+        saveResource("language/tr_TR/messages.yml");
+        saveResource("language/tr_TR/gui.yml");
+        saveResource("language/tr_TR/formatting.yml");
+        saveResource("language/tr_TR/items.yml");
     }
 
     private void saveResource(String resourcePath) {

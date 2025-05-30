@@ -338,19 +338,15 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeSaleLogging() {
-        if (getConfig().getBoolean("log_transactions.enabled", true)) {
+        if (getConfig().getBoolean("log_transactions.enabled", false)) {
             SaleLogger.getInstance();
         }
     }
 
     private void checkProtectionPlugins() {
         hasWorldGuard = checkPlugin("WorldGuard", () -> {
-            try {
-                Class.forName("com.sk89q.worldguard.WorldGuard");
-                return com.sk89q.worldguard.WorldGuard.getInstance() != null;
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
+            Plugin worldGuardPlugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
+            return worldGuardPlugin != null && worldGuardPlugin.isEnabled();
         }, true);
 
         hasGriefPrevention = checkPlugin("GriefPrevention", () -> {
