@@ -352,7 +352,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         hasGriefPrevention = checkPlugin("GriefPrevention", () -> {
             Plugin griefPlugin = Bukkit.getPluginManager().getPlugin("GriefPrevention");
-            return griefPlugin != null && griefPlugin instanceof GriefPrevention;
+            return griefPlugin instanceof GriefPrevention;
         }, true);
 
         hasLands = checkPlugin("Lands", () -> {

@@ -226,14 +226,10 @@ public class SpawnerPlaceListener implements Listener {
 
     private void setupHopperIntegration(Block block) {
         Scheduler.runLocationTask(block.getLocation(), () -> {
-            plugin.debug("Checking for hopper integration...");
             Block blockBelow = block.getRelative(BlockFace.DOWN);
             if (blockBelow.getType() == Material.HOPPER && hopperHandler != null) {
                 hopperHandler.startHopperTask(blockBelow.getLocation(), block.getLocation());
-                plugin.debug("Hopper integration started for block: " + block.getLocation());
             }
-            plugin.debug("Block below type: " + blockBelow.getType());
-            plugin.debug("hopperHandler: " + (hopperHandler != null ? "exists" : "null"));
         });
     }
 }
