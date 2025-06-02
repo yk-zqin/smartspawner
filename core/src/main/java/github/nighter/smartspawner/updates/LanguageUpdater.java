@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.updates;
 
+import github.nighter.smartspawner.SmartSpawner;
 import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -14,18 +15,18 @@ import java.util.*;
 
 public class LanguageUpdater {
     private final String currentVersion;
-    private final JavaPlugin plugin;
+    private final SmartSpawner plugin;
     private static final String LANGUAGE_VERSION_KEY = "language_version";
     private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en_US", "vi_VN", "it_IT");
 
     // Track which file types to update
     private final Set<LanguageFileType> activeFileTypes = new HashSet<>();
 
-    public LanguageUpdater(JavaPlugin plugin) {
+    public LanguageUpdater(SmartSpawner plugin) {
         this(plugin, LanguageFileType.values());
     }
 
-    public LanguageUpdater(JavaPlugin plugin, LanguageFileType... fileTypes) {
+    public LanguageUpdater(SmartSpawner plugin, LanguageFileType... fileTypes) {
         this.plugin = plugin;
         this.currentVersion = plugin.getDescription().getVersion();
         activeFileTypes.addAll(Arrays.asList(fileTypes));
@@ -97,7 +98,7 @@ public class LanguageUpdater {
             }
 
             if (!configVersionStr.equals("0.0.0")) {
-                plugin.getLogger().info("Updating " + language + " " + fileType.getFileName() +
+                plugin.debug("Updating " + language + " " + fileType.getFileName() +
                         " from version " + configVersionStr + " to " + currentVersion);
             }
 
@@ -119,10 +120,10 @@ public class LanguageUpdater {
                 File backupFile = new File(plugin.getDataFolder(),
                         "language/" + language + "/" + fileType.getFileName().replace(".yml", "_backup_" + configVersionStr + ".yml"));
                 Files.copy(languageFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                plugin.getLogger().info(language + " " + fileType.getFileName() + " backup created at " + backupFile.getName());
+                plugin.debug(language + " " + fileType.getFileName() + " backup created at " + backupFile.getName());
             } else {
                 if (!configVersionStr.equals("0.0.0")) {
-                    plugin.getLogger().info("No significant changes detected in " + language + " " +
+                    plugin.debug("No significant changes detected in " + language + " " +
                             fileType.getFileName() + ", skipping backup creation");
                 }
             }

@@ -6,21 +6,28 @@ authors: [ https://github.com/ptthanh02/Smart-Spawner/graphs/contributors ]
 folia-supported: true
 loadbefore: [SuperiorSkyblock2]
 softdepend:
+  # Shop Plugins
   - EconomyShopGUI
   - EconomyShopGUI-Premium
   - ShopGUIPlus
   - zShop
   - Vault
+
+  # Utility/Economy Plugins
   - Essentials
-  - CMI
+  - Vault
+
+  # Protection/Region Plugins
   - WorldGuard
   - GriefPrevention
   - Lands
   - Towny
   - SimpleClaimSystem
+  - RedProtect
+
+  # World Management Plugins
   - Multiverse-Core
   - Worlds
-  - RedProtect
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
