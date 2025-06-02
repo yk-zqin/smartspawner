@@ -17,8 +17,6 @@
 
 </div>
 
-<br>
-
 ## Requirements
 
 - **Minecraft Version:** 1.20 - 1.21.4
@@ -73,8 +71,6 @@
 | Turkish | `tr_TR` | [@berkkorkmaz](https://discord.com/users/berkkorkmaz) | Latest |
 | Chinese Simplified | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | v1.2.3 |
 
-Want to contribute a translation? Check our [Translation Guide](https://github.com/ptthanh02/SmartSpawner/wiki/Translation-Guide).
-
 ## API
 
 For developers interested in integrating with SmartSpawner, visit our [API Documentation](https://github.com/ptthanh02/SmartSpawner/wiki/SmartSpawner-API-Documentation) for installation instructions and documentation.
@@ -82,8 +78,8 @@ For developers interested in integrating with SmartSpawner, visit our [API Docum
 ## Building
 
 ```bash
-git clone https://github.com/ptthanh02/Smart-Spawner-Plugin.git
-cd Smart-Spawner-Plugin
+git clone https://github.com/ptthanh02/SmartSpawner.git
+cd SmartSpawner
 ./gradlew build
 ```
 
@@ -102,7 +98,6 @@ The compiled JAR will be available in `build/libs/`
 
 - **Issues & Bug Reports:** [GitHub Issues](https://github.com/ptthanh02/SmartSprawner/issues)
 - **Discord Community:** [Join our Discord](https://discord.gg/zrnyG4CuuT)
-- **Documentation:** [Wiki](https://github.com/ptthanh02/SmartSpawner/wiki)
 
 ## Statistics
 
