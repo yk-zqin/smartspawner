@@ -96,9 +96,12 @@ public class GlobalEventHandlers implements Listener {
 
     @EventHandler
     public void onPluginEnable(PluginEnableEvent event) {
-        String pluginName = event.getPlugin().getName();
 
-        // Support EconomyShopGUI and EconomyShopGUI-Premium for double integration
+        if (plugin.getShopIntegrationManager().hasShopIntegration()) {
+            return;
+        }
+        String pluginName = event.getPlugin().getName();
+        // Support EconomyShopGUI for double integration
         if (pluginName.equalsIgnoreCase("EconomyShopGUI") ||
                 pluginName.equalsIgnoreCase("EconomyShopGUI-Premium")) {
             Scheduler.runTaskLater(() -> plugin.getShopIntegrationManager().reload(),
