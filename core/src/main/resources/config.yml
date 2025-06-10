@@ -113,7 +113,6 @@ custom_sell_prices:
   # This setting is only required when using COINSENGINE as the economy system
   coinsengine_currency: coins
 
-
   # Default sell price for items not specifically listed in item_prices.yml
   default_price: 1.0
 
