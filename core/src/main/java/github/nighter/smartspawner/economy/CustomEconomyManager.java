@@ -11,6 +11,8 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import su.nightexpress.coinsengine.api.CoinsEngineAPI;
+import su.nightexpress.coinsengine.api.currency.Currency;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +28,8 @@ public class CustomEconomyManager {
     private final ItemPriceManager priceManager;
     private Economy economy;
     private boolean isVaultAvailable;
+    private boolean isCoinsEngineAvailable;
+    private Currency currency;
     private final Map<String, CacheEntry> transactionCache = new ConcurrentHashMap<>();
     private final Map<Material, Double> materialPriceCache = new ConcurrentHashMap<>();
     private Scheduler.Task cleanupTask;
@@ -43,12 +47,19 @@ public class CustomEconomyManager {
         this.isVaultAvailable = false;
 
         String currencyType = plugin.getConfig().getString("custom_sell_prices.currency", "VAULT");
+
         if (currencyType.equalsIgnoreCase("VAULT")) {
             if (setupVaultEconomy()) {
                 startCleanupTask();
             }
+
+        } else if (currencyType.equalsIgnoreCase("COINSENGINE")) {
+            if (setupCoinsEngineEconomy()) {
+                startCleanupTask();
+            }
+
         } else {
-            plugin.getLogger().warning("Unsupported currency type: " + currencyType + ". Currently only VAULT is supported.");
+            plugin.getLogger().warning("Unsupported currency type: " + currencyType + ". Currently only VAULT and COINSENGINE are supported.");
         }
     }
 
@@ -115,6 +126,28 @@ public class CustomEconomyManager {
         return isVaultAvailable;
     }
 
+    private boolean setupCoinsEngineEconomy() {
+        if (plugin.getServer().getPluginManager().getPlugin("CoinsEngine") == null) {
+            plugin.getLogger().warning("CoinsEngine not found! Custom sell prices system disabled.");
+            return false;
+        }
+
+        String currencyConfig = plugin.getConfig().getString("custom_sell_prices.coinsengine_currency", "coins");
+
+        Currency c = CoinsEngineAPI.getCurrency(currencyConfig);
+        if (c == null) {
+            isCoinsEngineAvailable = false;
+            plugin.getLogger().warning("Could not find CoinsEngine currency: " + currencyConfig + "! Custom sell prices system disabled.");
+            return false;
+        }
+
+        currency = c;
+        isCoinsEngineAvailable = true;
+        plugin.getLogger().info("Successfully connected to CoinsEngine: " + currency.getName());
+        return isCoinsEngineAvailable;
+    }
+
+
     public boolean sellAllItems(Player player, SpawnerData spawner) {
         if (!isEnabled()) {
             return false;
@@ -170,8 +203,17 @@ public class CustomEconomyManager {
             return false;
         }
 
-        // Use a single transaction for adding money to player's account
-        if (economy.depositPlayer(player, totalValue).transactionSuccess()) {
+        String currencyType = plugin.getConfig().getString("custom_sell_prices.currency", "VAULT");
+        boolean success = false;
+
+        if (currencyType.equalsIgnoreCase("COINSENGINE")) {
+            CoinsEngineAPI.addBalance(player, currency, totalValue);
+            success = true;
+        } else if (currencyType.equalsIgnoreCase("VAULT")) {
+            success = economy.depositPlayer(player, totalValue).transactionSuccess();
+        }
+
+        if (success) {
             // Use bulk removal of items for better performance
             virtualInv.removeItems(itemsToRemove);
 
@@ -226,7 +268,8 @@ public class CustomEconomyManager {
     }
 
     public boolean isEnabled() {
-        return plugin.getConfig().getBoolean("custom_sell_prices.enabled", false) && isVaultAvailable;
+        return plugin.getConfig().getBoolean("custom_sell_prices.enabled", false)
+                && (isVaultAvailable || isCoinsEngineAvailable);
     }
 
     public double getLatestTransactionAmount(Player player) {
@@ -247,11 +290,21 @@ public class CustomEconomyManager {
         }
 
         isVaultAvailable = false;
+        isCoinsEngineAvailable = false;
         String currencyType = plugin.getConfig().getString("custom_sell_prices.currency", "VAULT");
-        if (plugin.getConfig().getBoolean("custom_sell_prices.enabled", false) &&
-                currencyType.equalsIgnoreCase("VAULT")) {
-            setupVaultEconomy();
-            startCleanupTask();
+
+        if (plugin.getConfig().getBoolean("custom_sell_prices.enabled", false)) {
+            if (currencyType.equalsIgnoreCase("VAULT")) {
+                if (setupVaultEconomy()) {
+                    startCleanupTask();
+                }
+            } else if (currencyType.equalsIgnoreCase("COINSENGINE")) {
+                if (setupCoinsEngineEconomy()) {
+                    startCleanupTask();
+                }
+            } else {
+                plugin.getLogger().warning("Unsupported currency type: " + currencyType + ". Currently only VAULT and COINSENGINE are supported.");
+            }
         }
 
         // Clear caches

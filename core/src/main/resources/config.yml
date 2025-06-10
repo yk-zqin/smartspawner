@@ -106,8 +106,13 @@ custom_sell_prices:
   enabled: false
 
   # Economy system to use for handling transactions
-  # Supported options: VAULT (more options will be added in the future)
+  # Supported options: VAULT, COINSENGINE (more options will be added in the future)
   currency: VAULT
+
+  # Specifies the name of the currency used by COINSENGINE
+  # This setting is only required when using COINSENGINE as the economy system
+  coinsengine_currency: coins
+
 
   # Default sell price for items not specifically listed in item_prices.yml
   default_price: 1.0
