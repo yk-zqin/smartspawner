@@ -167,37 +167,21 @@ natural_spawner_break_blocked:
 # ------------------------------------------------------
 #              Shop Integration Messages
 # ------------------------------------------------------
-shop:
-  # Tin nhắn quá trình giao dịch
-  transaction_in_progress:
-    action_bar: "&#e9b949⌛ Đang xử lí giao dịch..."
-    sound: block.note_block.chime
+sale_failed:
+  message: "&#ff5252ᴋʜôɴɢ ᴛʜể ʙáɴ ᴠậᴛ ᴘʜẩᴍ! Vᴜɪ ʟòɴɢ ᴛʜử ʟạɪ."
+  sound: entity.item.break
 
-  sale_failed:
-    message: "&#ff5252ᴋʜôɴɢ ᴛʜể ʙáɴ ᴠậᴛ ᴘʜẩᴍ! Vᴜɪ ʟòɴɢ ᴛʜử ʟạɪ."
-    sound: entity.item.break
+no_items:
+  message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʙáɴ"
+  sound: block.note_block.pling
 
-  sell_cooldown:
-    action_bar: "&#ff5252ᴠᴜɪ ʟòɴɢ đợɪ &#f8f8ff%time% &#ff5252ᴛʀướᴄ ᴋʜɪ ʙáɴ ʟạɪ"
-    sound: block.note_block.pling
+no_sellable_items:
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ᴛʜể ʙáɴ"
+  sound: block.note_block.pling
 
-  no_items:
-    message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʙáɴ"
-    sound: block.note_block.pling
-
-  no_sellable_items:
-    message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ᴛʜể ʙáɴ"
-    sound: block.note_block.pling
-
-  # Tin nhắn bán thành công
-  sell_all:
-    message: "&#e6e6faĐã ʙáɴ &#f0c857%amount% ᴠậᴛ ᴘʜẩᴍ&#e6e6fa ᴠớɪ ɢɪá &#37eb9a+$%price%"
-    sound: block.note_block.bell
-
-  sell_all_with_tax:
-    message: "&#e6e6faĐã bán &#f0c857%amount% ᴠậᴛ ᴘʜẩᴍ&#e6e6fa ᴠớɪ ɢɪá &#37eb9a+$%price%"
-    action_bar: "&#37eb9a$%gross% &#f8f8ff| &#ff5252ᴛʜᴜế: -%tax%%"
-    sound: block.note_block.bell
+sell_success:
+  message: "&#e6e6faĐã ʙáɴ &#f0c857%amount% ᴠậᴛ ᴘʜẩᴍ&#e6e6fa ᴠớɪ ɢɪá &#37eb9a+$%price%"
+  sound: block.note_block.bell
 
 # ------------------------------------------------------
 #                Plugin command messages

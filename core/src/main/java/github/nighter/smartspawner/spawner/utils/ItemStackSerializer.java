@@ -6,6 +6,8 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
 import java.util.*;
 
 public class ItemStackSerializer {
@@ -118,7 +120,7 @@ public class ItemStackSerializer {
                     PotionMeta meta = (PotionMeta) arrow.getItemMeta();
                     if (meta != null) {
                         PotionEffect effect = new PotionEffect(
-                                org.bukkit.potion.PotionEffectType.getByName(effectData[0]),
+                                Objects.requireNonNull(PotionEffectType.getByName(effectData[0])),
                                 Integer.parseInt(effectData[1]),
                                 Integer.parseInt(effectData[2])
                         );

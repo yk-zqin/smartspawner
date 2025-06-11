@@ -17,8 +17,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
-
 public class SuperiorSkyblock2 implements Listener {
 
     private static final String SPAWNER_STACK_PERM = "spawner_stack";

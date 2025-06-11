@@ -109,21 +109,17 @@ public class LanguageManager {
     //---------------------------------------------------
 
     private void saveDefaultFiles() {
-        saveResource("language/vi_VN/messages.yml");
-        saveResource("language/vi_VN/gui.yml");
-        saveResource("language/vi_VN/formatting.yml");
-        saveResource("language/vi_VN/items.yml");
-        saveResource("language/DonutSMP/messages.yml");
-        saveResource("language/DonutSMP/gui.yml");
-        saveResource("language/DonutSMP/formatting.yml");
-        saveResource("language/it_IT/messages.yml");
-        saveResource("language/it_IT/gui.yml");
-        saveResource("language/it_IT/formatting.yml");
-        saveResource("language/it_IT/items.yml");
-        saveResource("language/tr_TR/messages.yml");
-        saveResource("language/tr_TR/gui.yml");
-        saveResource("language/tr_TR/formatting.yml");
-        saveResource("language/tr_TR/items.yml");
+        Map<String, Set<LanguageFileType>> localeFileMap = new HashMap<>();
+        localeFileMap.put("vi_VN", EnumSet.allOf(LanguageFileType.class));
+        localeFileMap.put("DonutSMP", EnumSet.allOf(LanguageFileType.class));
+        localeFileMap.put("it_IT", EnumSet.allOf(LanguageFileType.class));
+        localeFileMap.put("tr_TR", EnumSet.allOf(LanguageFileType.class));
+
+        localeFileMap.forEach((locale, fileTypes) -> {
+            fileTypes.forEach(fileType -> {
+                saveResource(String.format("language/%s/%s", locale, fileType.getFileName()));
+            });
+        });
     }
 
     private void saveResource(String resourcePath) {

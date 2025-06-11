@@ -167,35 +167,21 @@ natural_spawner_break_blocked:
 # ------------------------------------------------------
 #         Market Entegrasyon Mesajları
 # ------------------------------------------------------
-shop:
-  transaction_in_progress:
-    action_bar: '&#e9b949⌛ İşlem sürüyor...'
-    sound: block.note_block.chime
+sale_failed:
+  message: '&#ff5252Satış başarısız! Tekrar dene!'
+  sound: entity.item.break
 
-  sale_failed:
-    message: '&#ff5252Satış başarısız! Tekrar dene!'
-    sound: entity.item.break
+no_items:
+  message: '&#ff5252Satılabilecek öğe yok.'
+  sound: block.note_block.pling
 
-  sell_cooldown:
-    action_bar: '&#ff5252LÜTFEN BEKLE %time% ÖNCE'
-    sound: block.note_block.pling
+no_sellable_items:
+  message: '&#ff5252Satılabilir öğe yok.'
+  sound: block.note_block.pling
 
-  no_items:
-    message: '&#ff5252Satılabilecek öğe yok.'
-    sound: block.note_block.pling
-
-  no_sellable_items:
-    message: '&#ff5252Satılabilir öğe yok.'
-    sound: block.note_block.pling
-
-  sell_all:
-    message: '&#e6e6fa%amount% öğe satıldı &#37eb9a+$%price%'
-    sound: block.note_block.bell
-
-  sell_all_with_tax:
-    message: '&#e6e6fa%amount% öğe satıldı. &#37eb9a+$%price%'
-    action_bar: '&#37eb9a$%gross% &#f8f8ff| &#ff5252VERGİ: -%tax%%'
-    sound: block.note_block.bell
+sell_success:
+  message: '&#e6e6fa%amount% öğe satıldı &#37eb9a+$%price%'
+  sound: block.note_block.bell
 
 # ------------------------------------------------------
 #        Eklenti Komut Mesajları

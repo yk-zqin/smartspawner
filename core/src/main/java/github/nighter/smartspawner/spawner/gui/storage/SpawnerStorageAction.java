@@ -13,6 +13,7 @@ import github.nighter.smartspawner.holders.StoragePageHolder;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
+import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -38,9 +39,9 @@ public class SpawnerStorageAction implements Listener {
     private final LanguageManager languageManager;
     private final SpawnerMenuUI spawnerMenuUI;
     private final SpawnerGuiViewManager spawnerGuiViewManager;
-    private final SpawnerMenuAction spawnerMenuAction;
     private final MessageService messageService;
     private final FilterConfigUI filterConfigUI;
+    private final SpawnerSellManager spawnerSellManager;
 
     private static final int INVENTORY_SIZE = 54;
     private static final int STORAGE_SLOTS = 45;
@@ -58,9 +59,9 @@ public class SpawnerStorageAction implements Listener {
         this.clickHandlers = initializeClickHandlers();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
-        this.spawnerMenuAction = plugin.getSpawnerMenuAction();
         this.messageService = plugin.getMessageService();
         this.filterConfigUI = plugin.getFilterConfigUI();
+        this.spawnerSellManager = plugin.getSpawnerSellManager();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -203,8 +204,16 @@ public class SpawnerStorageAction implements Listener {
                 }
                 break;
             case 52:
-                if (plugin.hasShopIntegration()) {
-                    handleSellAllItems(player, spawner, holder);
+                if (plugin.hasSellIntegration()) {
+                    if (!player.hasPermission("smartspawner.sellall")) {
+                        messageService.sendMessage(player, "no_permission");
+                        return;
+                    }
+                    if (isClickTooFrequent(player)) {
+                        return;
+                    }
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+                    spawnerSellManager.sellAllItems(player, spawner);
                 }
                 break;
             case 53:
@@ -303,42 +312,6 @@ public class SpawnerStorageAction implements Listener {
         } catch (Exception e) {
             // Fallback: if title update fails, recreate and reopen the inventory
             openLootPage(player, spawner, page, false);
-        }
-    }
-
-    private void handleSellAllItems(Player player, SpawnerData spawner, StoragePageHolder holder) {
-        if (!plugin.hasShopIntegration()) return;
-
-        if (isClickTooFrequent(player)) {
-            return;
-        }
-
-        // Play click sound
-        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-
-        // Permission check
-        if (!player.hasPermission("smartspawner.sellall")) {
-            messageService.sendMessage(player, "no_permission");
-            return;
-        }
-
-        // Use the cooldown system from SpawnerMenuAction
-        if (spawnerMenuAction.isSellCooldownActive(player)) {
-            Map<String, String> placeholders = new HashMap<>();
-            placeholders.put("time", spawnerMenuAction.getRemainingCooldownTimeFormatted(player));
-            messageService.sendMessage(player, "shop.sell_cooldown", placeholders);
-            return;
-        }
-
-        // Update cooldown timestamp before processing
-        spawnerMenuAction.updateSellCooldown(player);
-
-        // Process the sale through shop integration
-        boolean success = plugin.getShopIntegration().sellAllItems(player, spawner);
-
-        // Reset at capacity if successful
-        if (success && spawner.getIsAtCapacity()) {
-            spawner.setIsAtCapacity(false);
         }
     }
 

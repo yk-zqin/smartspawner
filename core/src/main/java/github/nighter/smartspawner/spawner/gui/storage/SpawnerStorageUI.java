@@ -218,7 +218,7 @@ public class SpawnerStorageUI {
         updates.put(navRowBase + 8, staticButtons.get("return"));
 
         // Add shop page indicator only if shop integration is available
-        if (plugin.hasShopIntegration()) {
+        if (plugin.hasSellIntegration()) {
             String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
             int finalTotalPages = totalPages;
             ItemStack shopIndicator = pageIndicatorCache.computeIfAbsent(

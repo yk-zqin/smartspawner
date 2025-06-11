@@ -58,6 +58,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
             // Reload components in dependency order
             plugin.setUpHopperHandler();
+            plugin.getItemPriceManager().reload();
             plugin.getEntityLootRegistry().reload();
             reloadSpawnerLootConfigs();
             plugin.getLanguageManager().reloadLanguages();
@@ -65,7 +66,6 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             // Reload factory AFTER its dependencies (loot registry, language manager)
             plugin.getSpawnerItemFactory().reload();
             plugin.getSpawnerManager().reloadAllHolograms();
-            plugin.getSpawnerMenuAction().updateCooldownSettings();
             plugin.getRangeChecker().reload();
             plugin.reload();
             plugin.reloadStaticUI();

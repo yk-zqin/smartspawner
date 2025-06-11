@@ -22,7 +22,7 @@ public class LootItem {
     private final String potionEffectType;
     private final Integer potionDuration;
     private final Integer potionAmplifier;
-    private final double sellPrice; // Added sell price field
+    private final double sellPrice;
 
     public LootItem(Material material, int minAmount, int maxAmount, double chance,
                     Integer minDurability, Integer maxDurability, String potionEffectType,
@@ -78,9 +78,5 @@ public class LootItem {
 
     public int generateAmount(Random random) {
         return random.nextInt(maxAmount - minAmount + 1) + minAmount;
-    }
-
-    public double calculateSellValue(int amount) {
-        return sellPrice * amount;
     }
 }

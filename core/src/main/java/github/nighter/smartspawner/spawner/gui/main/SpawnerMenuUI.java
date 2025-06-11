@@ -18,7 +18,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerMenuUI {
     private static final int INVENTORY_SIZE = 27;
@@ -241,7 +240,7 @@ public class SpawnerMenuUI {
         String formattedPercentExp = String.format("%.1f", percentExpDecimal);
 
         // Create cache key including all relevant state
-        boolean hasShopPermission = plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall");
+        boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
         String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
                 + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
                 + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()

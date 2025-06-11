@@ -28,18 +28,13 @@ public class SpawnerFileHandler {
     private File spawnerDataFile;
     private FileConfiguration spawnerData;
 
-    // Data version identifier
     private static final String DATA_VERSION_KEY = "data_version";
     private final int CURRENT_VERSION;
 
-    // Write-behind caching strategy
     private final Set<String> dirtySpawners = ConcurrentHashMap.newKeySet();
     private final Set<String> deletedSpawners = ConcurrentHashMap.newKeySet();
 
-    // Lock to prevent concurrent file operations
     private volatile boolean isSaving = false;
-
-    // Task for periodic save
     private Scheduler.Task saveTask = null;
 
     public SpawnerFileHandler(SmartSpawner plugin) {
@@ -75,7 +70,6 @@ public class SpawnerFileHandler {
 
                 Files.write(spawnerDataFile.toPath(), header.getBytes(), StandardOpenOption.WRITE);
 
-                // Set data version
                 FileConfiguration config = YamlConfiguration.loadConfiguration(spawnerDataFile);
                 config.set(DATA_VERSION_KEY, CURRENT_VERSION);
                 config.save(spawnerDataFile);
@@ -87,7 +81,6 @@ public class SpawnerFileHandler {
 
         spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);
 
-        // Check current data version
         int version = spawnerData.getInt(DATA_VERSION_KEY, 1);
         if (version < CURRENT_VERSION) {
             logger.info("Data version " + version + " detected. Current version is " + CURRENT_VERSION + ".");
@@ -112,7 +105,7 @@ public class SpawnerFileHandler {
     public void markSpawnerModified(String spawnerId) {
         if (spawnerId != null) {
             dirtySpawners.add(spawnerId);
-            deletedSpawners.remove(spawnerId); // If it was marked for deletion but modified again
+            deletedSpawners.remove(spawnerId);
         }
     }
 
@@ -120,7 +113,7 @@ public class SpawnerFileHandler {
         if (spawnerId != null) {
             plugin.debug("Marking spawner " + spawnerId + " for deletion");
             deletedSpawners.add(spawnerId);
-            dirtySpawners.remove(spawnerId); // No need to save if it's deleted
+            dirtySpawners.remove(spawnerId);
         }
     }
 
@@ -138,10 +131,8 @@ public class SpawnerFileHandler {
         isSaving = true;
         plugin.debug("Flushing " + dirtySpawners.size() + " modified and " + deletedSpawners.size() + " deleted spawners");
 
-        // Process asynchronously
         Scheduler.runTaskAsync(() -> {
             try {
-                // Handle updates
                 if (!dirtySpawners.isEmpty()) {
                     Set<String> toUpdate = new HashSet<>(dirtySpawners);
                     dirtySpawners.removeAll(toUpdate);
@@ -159,7 +150,6 @@ public class SpawnerFileHandler {
                     }
                 }
 
-                // Handle deletions
                 if (!deletedSpawners.isEmpty()) {
                     Set<String> toDelete = new HashSet<>(deletedSpawners);
                     deletedSpawners.removeAll(toDelete);
@@ -177,7 +167,6 @@ public class SpawnerFileHandler {
                 plugin.getLogger().severe("Error during flush: " + e.getMessage());
                 e.printStackTrace();
 
-                // Put failed operations back into the queue
                 for (String id : dirtySpawners) {
                     dirtySpawners.add(id);
                 }
@@ -199,7 +188,6 @@ public class SpawnerFileHandler {
                 spawnersSection = spawnerData.createSection("spawners");
             }
 
-            // Ensure data version is up to date
             spawnerData.set(DATA_VERSION_KEY, CURRENT_VERSION);
 
             for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
@@ -214,8 +202,6 @@ public class SpawnerFileHandler {
                 spawnerData.set(path + ".entityType", spawner.getEntityType() != null ?
                         spawner.getEntityType().name() : null);
 
-                // Updated settings format for version 3:
-                // exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,maxStack,time,atCapacity
                 String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%d,%b",
                         spawner.getSpawnerExp(),
                         spawner.getSpawnerActive(),
@@ -233,7 +219,6 @@ public class SpawnerFileHandler {
 
                 spawnerData.set(path + ".settings", settings);
 
-                // Save filtered items
                 Set<Material> filteredItems = spawner.getFilteredItems();
                 if (filteredItems != null && !filteredItems.isEmpty()) {
                     List<String> materials = filteredItems.stream()
@@ -259,107 +244,6 @@ public class SpawnerFileHandler {
             e.printStackTrace();
             return false;
         }
-    }
-
-    public boolean saveAllSpawners(Map<String, SpawnerData> spawners) {
-        try {
-            // Cancel any pending save task
-            if (saveTask != null) {
-                saveTask.cancel();
-                saveTask = null;
-            }
-
-            // Clear any pending operations
-            dirtySpawners.clear();
-            deletedSpawners.clear();
-            isSaving = true;
-
-            // Set data version
-            spawnerData.set(DATA_VERSION_KEY, CURRENT_VERSION);
-
-            // Get or create spawners section
-            ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
-            if (spawnersSection == null) {
-                spawnersSection = spawnerData.createSection("spawners");
-            } else {
-                // Clear existing data
-                for (String key : spawnersSection.getKeys(false)) {
-                    spawnersSection.set(key, null);
-                }
-            }
-
-            // Save all current spawners
-            for (Map.Entry<String, SpawnerData> entry : spawners.entrySet()) {
-                String spawnerId = entry.getKey();
-                SpawnerData spawner = entry.getValue();
-                Location loc = spawner.getSpawnerLocation();
-                String path = "spawners." + spawnerId;
-
-                spawnerData.set(path + ".location", String.format("%s,%d,%d,%d",
-                        loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-
-                spawnerData.set(path + ".entityType", spawner.getEntityType() != null ?
-                        spawner.getEntityType().name() : null);
-
-                // Updated settings format for v3
-                String settings = String.format("%d,%b,%d,%b,%d,%d,%d,%d,%d,%d,%d,%d,%b",
-                        spawner.getSpawnerExp(),
-                        spawner.getSpawnerActive(),
-                        spawner.getSpawnerRange(),
-                        spawner.getSpawnerStop(),
-                        spawner.getSpawnDelay(),
-                        spawner.getMaxSpawnerLootSlots(),
-                        spawner.getMaxStoredExp(),
-                        spawner.getMinMobs(),
-                        spawner.getMaxMobs(),
-                        spawner.getStackSize(),
-                        spawner.getMaxStackSize(),
-                        spawner.getLastSpawnTime(),
-                        spawner.getIsAtCapacity());
-
-                spawnerData.set(path + ".settings", settings);
-
-                // Save filtered items
-                Set<Material> filteredItems = spawner.getFilteredItems();
-                if (filteredItems != null && !filteredItems.isEmpty()) {
-                    List<String> materials = filteredItems.stream()
-                            .map(Material::name)
-                            .collect(Collectors.toList());
-                    spawnerData.set(path + ".filteredItems", String.join(",", materials));
-                }
-
-                VirtualInventory virtualInv = spawner.getVirtualInventory();
-                if (virtualInv != null) {
-                    Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
-                    List<String> serializedItems = ItemStackSerializer.serializeInventory(items);
-                    spawnerData.set(path + ".inventory", serializedItems);
-                }
-            }
-
-            spawnerData.save(spawnerDataFile);
-            isSaving = false;
-
-            // Only restart save task if plugin is still enabled
-            if (plugin.isEnabled()) {
-                startSaveTask();
-            }
-            return true;
-        } catch (IOException e) {
-            logger.severe("Could not save spawners_data.yml!");
-            e.printStackTrace();
-            isSaving = false;
-            // Only restart save task if plugin is still enabled
-            if (plugin.isEnabled()) {
-                startSaveTask();
-            }
-            return false;
-        }
-    }
-
-    public boolean deleteSpawnerFromFile(String spawnerId) {
-        markSpawnerDeleted(spawnerId);
-        flushChanges();
-        return true;
     }
 
     public Map<String, SpawnerData> loadAllSpawners() {
@@ -435,12 +319,10 @@ public class SpawnerFileHandler {
         if (settingsString != null) {
             String[] settings = settingsString.split(",");
 
-            // Handle version differences based on data version
             int version = spawnerData.getInt(DATA_VERSION_KEY, 1);
 
             try {
                 if (version >= 3) {
-                    // Version 3 format
                     if (settings.length >= 13) {
                         spawner.setSpawnerExp(Integer.parseInt(settings[0]));
                         spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
@@ -457,7 +339,6 @@ public class SpawnerFileHandler {
                         spawner.setIsAtCapacity(Boolean.parseBoolean(settings[12]));
                     }
                 } else {
-                    // Version 1-2 format (handle missing fields with defaults)
                     spawner.setSpawnerExp(Integer.parseInt(settings[0]));
                     spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                     spawner.setSpawnerRange(Integer.parseInt(settings[2]));
@@ -469,7 +350,6 @@ public class SpawnerFileHandler {
                     spawner.setMaxMobs(Integer.parseInt(settings[8]));
                     spawner.setStackSize(Integer.parseInt(settings[9]));
                     spawner.setLastSpawnTime(Long.parseLong(settings[10]));
-                    // Default values for new fields
                     spawner.setIsAtCapacity(false);
                 }
             } catch (NumberFormatException e) {
@@ -480,7 +360,6 @@ public class SpawnerFileHandler {
             }
         }
 
-        // Load filtered items
         String filteredItemsStr = spawnerData.getString(path + ".filteredItems");
         if (filteredItemsStr != null && !filteredItemsStr.isEmpty()) {
             String[] materialNames = filteredItemsStr.split(",");
@@ -538,12 +417,10 @@ public class SpawnerFileHandler {
             saveTask = null;
         }
 
-        // Synchronously flush any pending changes on shutdown
         if (!dirtySpawners.isEmpty() || !deletedSpawners.isEmpty()) {
             try {
                 isSaving = true;
 
-                // Process updates
                 if (!dirtySpawners.isEmpty()) {
                     Map<String, SpawnerData> batch = new HashMap<>();
                     for (String id : dirtySpawners) {
@@ -558,7 +435,6 @@ public class SpawnerFileHandler {
                     }
                 }
 
-                // Process deletions
                 if (!deletedSpawners.isEmpty()) {
                     for (String id : deletedSpawners) {
                         String path = "spawners." + id;

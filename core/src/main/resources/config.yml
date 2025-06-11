@@ -12,7 +12,7 @@
 #---------------------------------------------------
 #               Language Settings
 #---------------------------------------------------
-# Language setting (available: en_US, vi_VN, it_IT)
+# Language setting (available: en_US, vi_VN, it_IT, tr_TR, DonutSMP)
 language: en_US
 
 # Enable or disable debug mode (provides verbose console output)
@@ -72,45 +72,57 @@ natural_spawner:
   breakable: false       # Whether vanilla/natural spawners can be broken and converted into smart spawner
 
 #---------------------------------------------------
-#             Shop Integration Settings
+#                Economy Settings
 #---------------------------------------------------
-# For selling of items from spawner with prices from the shop plugin
-shop_integration:
+# Economy Configuration for selling items from spawners inventory
+custom_economy:
+
+  # Enable or disable selling items from spawners
   enabled: true
-  # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
-  # 'auto' will attempt to detect your installed shop plugin automatically
-  type: auto
 
-# Transaction cooldown to prevent abuse
-sell_cooldown:
-  enabled: true
-  duration: 3s          # Time between allowed transactions (see time format guide above)
-
-# Economy taxation system for spawner sales
-tax:
-  enabled: false        # Apply tax to spawner sales
-  percentage: 10.0      # Percentage of sale value taken as tax
-
-# Transaction logging for security and monitoring
-log_transactions:
-  enabled: false
-  file_path: "logs/shop_transactions.log"  # Path relative to plugin directory
-
-# ---------------------------------------------------
-#             Custom Sell Prices Settings
-# ---------------------------------------------------
-# For adding custom sell prices for items without requiring a shop plugin
-# NOTE: If 'custom_sell_prices' is enabled, 'shop_integration' will be disabled
-custom_sell_prices:
-  # Enable or disable custom sell prices system
-  enabled: false
-
-  # Economy system to use for handling transactions
-  # Supported options: VAULT (more options will be added in the future)
+  # Supported types: VAULT (more will be added in the future)
   currency: VAULT
 
-  # Default sell price for items not specifically listed in item_prices.yml
+  # Default price for items without specific pricing
   default_price: 1.0
+
+  # SHOP_ONLY:
+  #   - Uses ONLY shop integration prices (e.g., ShopGUI+, EconomyShopGUI, etc.)
+  #   - Custom prices are completely ignored, even if enabled
+  #   - Items without shop prices cannot be sold
+  #   - Requires valid shop integration to function
+  #
+  # SHOP_PRIORITY: (Recommended for most servers)
+  #   - Primary: Shop integration prices
+  #   - Fallback: Custom prices (if shop price not found)
+  #   - Best for servers that primarily use shop plugins but want
+  #     custom prices as backup for items not in the shop
+  #
+  # CUSTOM_ONLY:
+  #   - Uses ONLY custom prices from the price configuration file
+  #   - Shop integration prices are completely ignored
+  #   - Items without custom prices cannot be sold
+  #   - Requires custom prices to be configured
+  #
+  # CUSTOM_PRIORITY:
+  #   - Primary: Custom prices from configuration file
+  #   - Fallback: Shop integration prices (if custom price not found)
+  #   - Ideal for servers that want full control over spawner item prices
+  #     while still benefiting from shop integration for unconfigured items
+  price_source_mode: SHOP_PRIORITY
+
+  # Shop plugin integration
+  shop_integration:
+    enabled: true
+    # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
+    # 'auto' will attempt to detect your installed shop plugin automatically
+    preferred_plugin: auto
+
+  # Custom sell price configuration
+  custom_prices:
+    enabled: true
+    # Path to custom item prices file
+    price_file_name: "item_prices.yml"
 
 #---------------------------------------------------
 #              Item Collection System

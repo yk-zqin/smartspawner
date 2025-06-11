@@ -1,12 +1,9 @@
 package github.nighter.smartspawner.hooks.protections.api;
 
-import java.util.UUID;
-
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.flags.Flags;
 import me.angeschossen.lands.api.land.LandWorld;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
