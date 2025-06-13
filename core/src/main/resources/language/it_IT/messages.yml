@@ -164,39 +164,23 @@ natural_spawner_break_blocked:
   sound: block.note_block.pling
 
 # ------------------------------------------------------
-#              Shop Integration Messages
+#              Sell Integration Messages
 # ------------------------------------------------------
-shop:
-  # Transaction process messages
-  transaction_in_progress:
-    action_bar: "&#e9b949⌛ ᴛʀᴀɴꜱᴀᴢɪᴏɴᴇ ɪɴ ᴄᴏʀꜱᴏ..."
-    sound: block.note_block.chime
+sale_failed:
+  message: "&#ff5252ᴠᴇɴᴅɪᴛᴀ ꜰᴀʟʟɪᴛᴀ! ʀɪᴘʀᴏᴠᴀ."
+  sound: entity.item.break
 
-  sale_failed:
-    message: "&#ff5252ᴠᴇɴᴅɪᴛᴀ ꜰᴀʟʟɪᴛᴀ! ʀɪᴘʀᴏᴠᴀ."
-    sound: entity.item.break
+no_items:
+  message: "&#ff5252ɴᴏɴ ᴄɪ ꜱᴏɴᴏ ᴏɢɢᴇᴛᴛɪ"
+  sound: block.note_block.pling
 
-  sell_cooldown:
-    action_bar: "&#ff5252ᴀᴛᴛᴇɴᴅɪ &#f8f8ff%time% &#ff5252ᴘʀɪᴍᴀ ᴅɪ ᴠᴇɴᴅᴇʀᴇ ᴅɪ ɴᴜᴏᴠᴏ"
-    sound: block.note_block.pling
+no_sellable_items:
+  message: "&#ff5252ɴᴏɴ ᴄɪ ꜱᴏɴᴏ ᴏɢɢᴇᴛᴛɪ ᴅᴀ ᴠᴇɴᴅᴇʀᴇ"
+  sound: block.note_block.pling
 
-  no_items:
-    message: "&#ff5252ɴᴏɴ ᴄɪ ꜱᴏɴᴏ ᴏɢɢᴇᴛᴛɪ"
-    sound: block.note_block.pling
-
-  no_sellable_items:
-    message: "&#ff5252ɴᴏɴ ᴄɪ ꜱᴏɴᴏ ᴏɢɢᴇᴛᴛɪ ᴅᴀ ᴠᴇɴᴅᴇʀᴇ"
-    sound: block.note_block.pling
-
-  # Sale success messages
-  sell_all:
-    message: "&#e6e6faᴠᴇɴᴅᴜᴛɪ &#f0c857%amount% ᴏɢɢᴇᴛᴛɪ&#e6e6fa ᴘᴇʀ &#37eb9a+$%price%"
-    sound: block.note_block.bell
-
-  sell_all_with_tax:
-    message: "&#e6e6faᴠᴇɴᴅᴜᴛɪ &#f0c857%amount% ᴏɢɢᴇᴛᴛɪ&#e6e6fa ᴘᴇʀ &#37eb9a+$%price%"
-    action_bar: "&#37eb9a$%gross% &#f8f8ff| &#ff5252ᴛᴀꜱꜱᴇ: -%tax%%"
-    sound: block.note_block.bell
+sell_success:
+  message: "&#e6e6faᴠᴇɴᴅᴜᴛɪ &#f0c857%amount% ᴏɢɢᴇᴛᴛɪ&#e6e6fa ᴘᴇʀ &#37eb9a+$%price%"
+  sound: block.note_block.bell
 
 # ------------------------------------------------------
 #                Plugin command messages

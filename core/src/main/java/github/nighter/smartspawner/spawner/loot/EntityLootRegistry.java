@@ -1,43 +1,45 @@
 package github.nighter.smartspawner.spawner.loot;
 
+import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.economy.ItemPriceManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EntityLootRegistry {
-    private final JavaPlugin plugin;
+    private final SmartSpawner plugin;
     private FileConfiguration lootConfig;
     private final Map<String, EntityLootConfig> entityLootConfigs;
-    private final ItemPriceManager priceManager;
+    private ItemPriceManager priceManager;
     private final Map<Material, Double> cachedPrices;
+    private final Set<Material> loadedMaterials;
 
-    public EntityLootRegistry(JavaPlugin plugin, ItemPriceManager priceManager) {
+    public EntityLootRegistry(SmartSpawner plugin, ItemPriceManager priceManager) {
         this.plugin = plugin;
         this.lootConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "mob_drops.yml"));
         this.entityLootConfigs = new ConcurrentHashMap<>();
         this.priceManager = priceManager;
         this.cachedPrices = new ConcurrentHashMap<>();
+        this.loadedMaterials = new HashSet<>();
         loadConfigurations();
     }
 
-    private void loadConfigurations() {
-        // Clear caches before reloading
+    public void loadConfigurations() {
         entityLootConfigs.clear();
         cachedPrices.clear();
+        loadedMaterials.clear();
 
-        // Iterate through all top-level keys (entity names)
         for (String entityName : lootConfig.getKeys(false)) {
-            // Skip any sections that might be comments or other non-entity configs
             if (entityName.startsWith("#") || entityName.equals("per_mob_drop")) {
                 continue;
             }
@@ -56,12 +58,13 @@ public class EntityLootRegistry {
 
                     try {
                         Material material = Material.valueOf(itemKey.toUpperCase());
+                        loadedMaterials.add(material);
+
                         String[] amounts = itemSection.getString("amount", "1-1").split("-");
                         int minAmount = Integer.parseInt(amounts[0]);
                         int maxAmount = Integer.parseInt(amounts.length > 1 ? amounts[1] : amounts[0]);
                         double chance = itemSection.getDouble("chance", 100.0);
 
-                        // Get the sell price from the price manager, using cache for performance
                         double sellPrice = getSellPrice(material);
 
                         Integer minDurability = null;
@@ -80,11 +83,8 @@ public class EntityLootRegistry {
                             ConfigurationSection potionSection = itemSection.getConfigurationSection("potion_effect");
                             if (potionSection != null) {
                                 potionEffectType = potionSection.getString("effect");
-
-                                // Convert seconds to ticks (20 ticks = 1 second)
                                 int seconds = potionSection.getInt("duration", 5);
                                 potionDuration = seconds * 20;
-
                                 potionAmplifier = potionSection.getInt("level", 0);
                             }
                         }
@@ -101,9 +101,10 @@ public class EntityLootRegistry {
 
             entityLootConfigs.put(entityName.toLowerCase(), new EntityLootConfig(experience, items));
         }
+
+        priceManager.debugPricesForMaterials(loadedMaterials);
     }
 
-    // Cached method to get sell price
     private double getSellPrice(Material material) {
         return cachedPrices.computeIfAbsent(material, priceManager::getPrice);
     }
@@ -115,9 +116,12 @@ public class EntityLootRegistry {
         return entityLootConfigs.get(entityType.name().toLowerCase());
     }
 
+    public Set<Material> getLoadedMaterials() {
+        return new HashSet<>(loadedMaterials);
+    }
+
     public void reload() {
-        entityLootConfigs.clear();
-        cachedPrices.clear();
+        this.priceManager = plugin.getItemPriceManager();
         this.lootConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "mob_drops.yml"));
         loadConfigurations();
     }

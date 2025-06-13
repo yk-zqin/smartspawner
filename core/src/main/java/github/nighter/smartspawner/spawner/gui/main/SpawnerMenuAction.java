@@ -9,6 +9,7 @@ import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -25,12 +26,7 @@ import org.bukkit.inventory.meta.Damageable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
-/**
- * Handles all click interactions within the spawner menu interface.
- * Processes various actions based on clicked items and manages related UIs.
- */
 public class SpawnerMenuAction implements Listener {
     private static final Set<Material> SPAWNER_INFO_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD,
@@ -48,16 +44,10 @@ public class SpawnerMenuAction implements Listener {
     private final SpawnerGuiViewManager spawnerGuiViewManager;
     private final LanguageManager languageManager;
     private final MessageService messageService;
+    private final SpawnerSellManager spawnerSellManager;
 
-    // Add cooldown system properties
-    private final Map<UUID, Long> sellCooldowns = new ConcurrentHashMap<>();
+    // Anti spam click properties
     private final Map<UUID, Long> lastInfoClickTime = new ConcurrentHashMap<>();
-
-    // Cache for cooldown configuration to avoid repeated config lookups
-    private boolean cooldownEnabled = true;
-    private long cooldownDurationMs = 3000; // Default 3s in milliseconds
-    private long lastConfigReloadTime = 0;
-    private static final long CONFIG_CACHE_TTL = 60000; // Cache config for 60 seconds
 
     public SpawnerMenuAction(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -67,9 +57,7 @@ public class SpawnerMenuAction implements Listener {
         this.spawnerGuiViewManager = plugin.getSpawnerGuiViewManager();
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
-
-        // Initialize cooldown settings from config
-        updateCooldownSettings();
+        this.spawnerSellManager = plugin.getSpawnerSellManager();
     }
 
     @EventHandler
@@ -122,19 +110,15 @@ public class SpawnerMenuAction implements Listener {
         }
 
         // Determine which mode we're in based on shop integration
-        boolean hasShopIntegration = plugin.hasShopIntegration() && player.hasPermission("smartspawner.sellall");
+        boolean hasShopIntegration = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
 
         // Handle clicks based on shop integration mode
         if (hasShopIntegration) {
             // Standard mode: Left click for selling/XP, right click for stacker
             if (clickType == ClickType.LEFT) {
                 // Collect EXP and sell items in storage
-                boolean hasExp = handleExpBottleClick(player, spawner, true);
-                boolean soldItems = handleSellAllItems(player, spawner);
-
-                if (soldItems && spawner.getIsAtCapacity()) {
-                    spawner.setIsAtCapacity(false);
-                }
+                handleExpBottleClick(player, spawner, true);
+                handleSellAllItems(player, spawner);
             } else if (clickType == ClickType.RIGHT) {
                 // Check stacker permission
                 if (!player.hasPermission("smartspawner.stack")) {
@@ -169,172 +153,30 @@ public class SpawnerMenuAction implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         lastInfoClickTime.remove(event.getPlayer().getUniqueId());
-        sellCooldowns.remove(event.getPlayer().getUniqueId());
     }
 
-    private boolean handleSellAllItems(Player player, SpawnerData spawner) {
-        if (!plugin.hasShopIntegration()) return false;
+    private void handleSellAllItems(Player player, SpawnerData spawner) {
+        if (!plugin.hasSellIntegration()) return;
 
         // Permission check
         if (!player.hasPermission("smartspawner.sellall")) {
             messageService.sendMessage(player, "no_permission");
-            return false;
-        }
-
-        // Check if cooldowns are up to date
-        checkConfigReload();
-
-        // Skip cooldown check if disabled
-        if (!cooldownEnabled) {
-            return plugin.getShopIntegration().sellAllItems(player, spawner);
-        }
-
-        // Anti-spam cooldown check
-        long remainingTime = getRemainingCooldownTime(player);
-        if (remainingTime > 0) {
-            sendCooldownMessage(player, remainingTime);
-            return false;
-        }
-
-        // Update cooldown timestamp before processing
-        updateCooldown(player);
-
-        // Clean up old cooldowns periodically (e.g., every 10th call)
-        if (Math.random() < 0.1) {
-            clearOldCooldowns();
-        }
-
-        // Process the sale through shop integration
-        return plugin.getShopIntegration().sellAllItems(player, spawner);
-    }
-
-    /**
-     * Check if config needs to be reloaded and update the cached settings if needed
-     */
-    private void checkConfigReload() {
-        long now = System.currentTimeMillis();
-        // Only update settings if our cache has expired
-        if (now - lastConfigReloadTime > CONFIG_CACHE_TTL) {
-            updateCooldownSettings();
-            lastConfigReloadTime = now;
-        }
-    }
-
-    /**
-     * Update cached cooldown configuration settings
-     */
-    public void updateCooldownSettings() {
-        // Read enabled setting
-        cooldownEnabled = plugin.getConfig().getBoolean("sell_cooldown.enabled", true);
-
-        // Read duration and convert from ticks to milliseconds
-        long durationTicks = plugin.getTimeFromConfig("sell_cooldown.duration", "3s");
-        cooldownDurationMs = durationTicks * 50; // 1 tick = 50ms
-    }
-
-    /**
-     * Calculate and return the remaining cooldown time in milliseconds
-     * @param player The player to check
-     * @return Remaining cooldown time in milliseconds, 0 if no cooldown
-     */
-    private long getRemainingCooldownTime(Player player) {
-        if (!cooldownEnabled || cooldownDurationMs <= 0) {
-            return 0;
-        }
-
-        long lastSellTime = sellCooldowns.getOrDefault(player.getUniqueId(), 0L);
-        long currentTime = System.currentTimeMillis();
-        long elapsed = currentTime - lastSellTime;
-
-        return elapsed >= cooldownDurationMs ? 0 : cooldownDurationMs - elapsed;
-    }
-
-    /**
-     * Send a cooldown message to the player with the remaining time
-     * @param player The player to send the message to
-     * @param remainingTimeMs The remaining cooldown time in milliseconds
-     */
-    private void sendCooldownMessage(Player player, long remainingTimeMs) {
-        // Convert remaining time to seconds (rounded up)
-        int remainingSeconds = (int) Math.ceil(remainingTimeMs / 1000.0);
-
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("seconds", String.valueOf(remainingSeconds));
-        placeholders.put("time", formatRemainingTime(remainingTimeMs));
-
-        messageService.sendMessage(player, "shop.sell_cooldown", placeholders);
-    }
-
-    /**
-     * Format the remaining time in a human-readable format
-     * @param milliseconds The time in milliseconds
-     * @return A formatted string representing the time
-     */
-    private String formatRemainingTime(long milliseconds) {
-        // For very short times, show in milliseconds
-        if (milliseconds < 1000) {
-            return milliseconds + "ms";
-        }
-
-        // For times under a minute, show in seconds with decimal precision
-        if (milliseconds < 60000) {
-            return String.format("%.1fs", milliseconds / 1000.0);
-        }
-
-        // For longer times, format as minutes and seconds
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds);
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
-                TimeUnit.MINUTES.toSeconds(minutes);
-
-        return String.format("%dm %ds", minutes, seconds);
-    }
-
-    private void updateCooldown(Player player) {
-        sellCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-    }
-
-    private void clearOldCooldowns() {
-        if (!cooldownEnabled || cooldownDurationMs <= 0) {
-            // If cooldown is disabled, clear all entries
-            sellCooldowns.clear();
             return;
         }
-
-        long currentTime = System.currentTimeMillis();
-        long expirationThreshold = cooldownDurationMs * 2; // Keep entries for twice the cooldown duration
-
-        sellCooldowns.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue()) > expirationThreshold);
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+        spawnerSellManager.sellAllItems(player, spawner);
     }
 
-    public boolean isSellCooldownActive(Player player) {
-        return getRemainingCooldownTime(player) > 0;
-    }
-
-    public void updateSellCooldown(Player player) {
-        updateCooldown(player);
-    }
-
-    /**
-     * Get the formatted remaining cooldown time for a player
-     * @param player The player to check
-     * @return Formatted time string or null if no active cooldown
-     */
-    public String getRemainingCooldownTimeFormatted(Player player) {
-        long remaining = getRemainingCooldownTime(player);
-        return remaining > 0 ? formatRemainingTime(remaining) : null;
-    }
-
-    public boolean handleExpBottleClick(Player player, SpawnerData spawner, boolean isSell) {
+    public void handleExpBottleClick(Player player, SpawnerData spawner, boolean isSell) {
         if (isClickTooFrequent(player) && !isSell) {
-            return false;
+            return;
         }
 
         int exp = spawner.getSpawnerExp();
 
         if (exp <= 0 && !isSell) {
             messageService.sendMessage(player, "no_exp");
-            return false;
+            return;
 
         }
 
@@ -369,8 +211,6 @@ public class SpawnerMenuAction implements Listener {
 
         // Send appropriate message based on exp distribution
         sendExpCollectionMessage(player, initialExp, expUsedForMending);
-
-        return true;
     }
 
     private int applyMendingFromExp(Player player, int availableExp) {

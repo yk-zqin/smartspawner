@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.spawner.properties;
 
+import lombok.Getter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -8,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualInventory {
     private final Map<ItemSignature, Long> consolidatedItems;
+    @Getter
     private final int maxSlots;
     private final Map<Integer, ItemStack> displayInventoryCache;
     private boolean displayCacheDirty;
@@ -16,10 +18,6 @@ public class VirtualInventory {
     private boolean metricsCacheDirty;
     // Cache sorted entries to avoid resorting when display isn't changing
     private List<Map.Entry<ItemSignature, Long>> sortedEntriesCache;
-
-    // Simple item comparator that only sorts by material name
-    private static final Comparator<Map.Entry<ItemSignature, Long>> ITEM_COMPARATOR =
-            Comparator.comparing(e -> e.getKey().getTemplateRef().getType().name());
 
     // Add an LRU cache for expensive item operations
     private static final int ITEM_CACHE_SIZE = 128;
@@ -45,7 +43,7 @@ public class VirtualInventory {
     public static class ItemSignature {
         private final ItemStack template;
         private final int hashCode;
-        // Cache material name to avoid repeatedly accessing it
+        @Getter
         private final String materialName;
 
         public ItemSignature(ItemStack item) {
@@ -115,10 +113,6 @@ public class VirtualInventory {
             return template;
         }
 
-        // Getter for cached material name
-        public String getMaterialName() {
-            return materialName;
-        }
     }
 
     public static ItemSignature getSignature(ItemStack item) {
@@ -261,10 +255,6 @@ public class VirtualInventory {
 
         // Return unmodifiable map to prevent external changes
         return Collections.unmodifiableMap(displayInventoryCache);
-    }
-
-    public int getMaxSlots() {
-        return maxSlots;
     }
 
     public long getTotalItems() {

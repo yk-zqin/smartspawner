@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.hooks.shops.api.shopguiplus;
+package github.nighter.smartspawner.economy.shops.providers.shopguiplus;
 
 import github.nighter.smartspawner.SmartSpawner;
 import net.brcdev.shopgui.ShopGuiPlusApi;

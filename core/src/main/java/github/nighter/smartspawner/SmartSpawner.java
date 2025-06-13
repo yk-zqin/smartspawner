@@ -14,16 +14,11 @@ import github.nighter.smartspawner.commands.list.SpawnerListGUI;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.reload.ReloadCommand;
 import github.nighter.smartspawner.configs.TimeFormatter;
-import github.nighter.smartspawner.economy.CustomEconomyManager;
 import github.nighter.smartspawner.economy.ItemPriceManager;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
 import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
-import github.nighter.smartspawner.hooks.shops.IShopIntegration;
-import github.nighter.smartspawner.hooks.shops.SaleLogger;
-import github.nighter.smartspawner.hooks.shops.ShopIntegrationManager;
-import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerHook;
-import github.nighter.smartspawner.hooks.shops.api.shopguiplus.SpawnerProvider;
+import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
 import github.nighter.smartspawner.spawner.gui.main.ItemCache;
@@ -45,6 +40,7 @@ import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
 import github.nighter.smartspawner.spawner.loot.EntityLootRegistry;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerRangeChecker;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
@@ -102,11 +98,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerMenuAction spawnerMenuAction;
     private SpawnerStackerHandler spawnerStackerHandler;
     private SpawnerStorageAction spawnerStorageAction;
+    private SpawnerSellManager spawnerSellManager;
 
     // Core managers
     private SpawnerFileHandler spawnerFileHandler;
     private SpawnerManager spawnerManager;
-    private ShopIntegrationManager shopIntegrationManager;
     private HopperHandler hopperHandler;
 
     // Event handlers and utilities
@@ -119,7 +115,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
     private ItemPriceManager itemPriceManager;
-    private CustomEconomyManager customEconomyManager;
     private EntityLootRegistry entityLootRegistry;
     private UpdateChecker updateChecker;
 
@@ -167,7 +162,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         setupCommand();
         setupBtatsMetrics();
         registerListeners();
-        initializeSaleLogging();
 
         long loadTime = System.currentTimeMillis() - startTime;
         getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
@@ -239,18 +233,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeEconomyComponents() {
-        this.shopIntegrationManager = new ShopIntegrationManager(this);
         this.itemPriceManager = new ItemPriceManager(this);
         this.itemPriceManager.init();
-
-        // Only initialize if custom sell prices should be used
-        if (getConfig().getBoolean("custom_sell_prices.enabled", false)) {
-            this.customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
-        } else {
-            this.customEconomyManager = null;
-        }
-
-        shopIntegrationManager.initialize();
         this.entityLootRegistry = new EntityLootRegistry(this, itemPriceManager);
         this.spawnerItemFactory = new SpawnerItemFactory(this);
     }
@@ -264,12 +248,12 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerMenuUI = new SpawnerMenuUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
+        this.spawnerSellManager = new SpawnerSellManager(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
     }
 
     private void initializeHandlers() {
         this.spawnerStackerUI = new SpawnerStackerUI(this);
-
         this.spawnEggHandler = new SpawnEggHandler(this);
         this.spawnerStackHandler = new SpawnerStackHandler(this);
         this.spawnerClickManager = new SpawnerClickManager(this);
@@ -306,11 +290,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
         pm.registerEvents(spawnerStackerHandler, this);
-
-        // Register shop integration listeners if available
-        if (shopIntegrationManager.isShopGUIPlusEnabled()) {
-            pm.registerEvents(new SpawnerHook(this), this);
-        }
     }
 
     private void setupCommand() {
@@ -336,12 +315,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         metrics.addCustomChart(new Metrics.SimplePie("spawners", () ->
                 String.valueOf(this.spawnerManager.getTotalSpawners() / 1000 * 1000))
         );
-    }
-
-    private void initializeSaleLogging() {
-        if (getConfig().getBoolean("log_transactions.enabled", false)) {
-            SaleLogger.getInstance();
-        }
     }
 
     private void checkProtectionPlugins() {
@@ -419,27 +392,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     public void reload() {
-        shopIntegrationManager.reload();
-        itemPriceManager.reload();
         clearItemCache();
-
-        // Only initialize CustomEconomyManager if custom sell prices are enabled
-        boolean shouldUseCustomSellPrices = getConfig().getBoolean("custom_sell_prices.enabled", false);
-
-        // Handle CustomEconomyManager based on current configuration
-        if (shouldUseCustomSellPrices) {
-            if (customEconomyManager == null) {
-                // Initialize if it wasn't active before
-                customEconomyManager = new CustomEconomyManager(this, itemPriceManager);
-            } else {
-                // Just reload if it already exists
-                customEconomyManager.reload();
-            }
-        } else if (customEconomyManager != null) {
-            // Shut down if it's no longer needed
-            customEconomyManager.shutdown();
-            customEconomyManager = null;
-        }
     }
 
     public void reloadStaticUI() {
@@ -451,15 +404,12 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public void onDisable() {
         saveAndCleanup();
         SpawnerMobHeadTexture.clearCache();
-        shutdownSaleLogger();
         getLogger().info("SmartSpawner has been disabled!");
     }
 
     private void saveAndCleanup() {
         if (spawnerManager != null) {
             try {
-                // First shutdown the file handler to flush any pending changes
-                // but avoid starting new tasks
                 if (spawnerFileHandler != null) {
                     spawnerFileHandler.shutdown();
                 }
@@ -469,6 +419,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, "Error saving spawner data during shutdown", e);
             }
+        }
+
+        if (itemPriceManager != null) {
+            itemPriceManager.cleanup();
         }
 
         // Clean up resources
@@ -482,13 +436,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerHandler != null) spawnerStackerHandler.cleanupAll();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
-        if (customEconomyManager != null) customEconomyManager.shutdown();
-    }
-
-    private void shutdownSaleLogger() {
-        if (getConfig().getBoolean("log_transactions.enabled", true)) {
-            SaleLogger.getInstance().shutdown();
-        }
     }
 
     @FunctionalInterface
@@ -496,12 +443,20 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         boolean check();
     }
 
-    public boolean hasShopIntegration() {
-        return shopIntegrationManager.hasShopIntegration();
+    public boolean hasSellIntegration() {
+        if (itemPriceManager == null) {
+            return false;
+        }
+        return itemPriceManager.hasSellIntegration();
     }
 
-    public IShopIntegration getShopIntegration() {
-        return shopIntegrationManager.getShopIntegration();
+    public boolean hasShopIntegration() {
+        if (itemPriceManager == null) {
+            return false;
+        }
+
+        return itemPriceManager.getShopIntegrationManager() != null &&
+                itemPriceManager.getShopIntegrationManager().hasActiveProvider();
     }
 
     // Spawner Provider for ShopGUI+ integration
