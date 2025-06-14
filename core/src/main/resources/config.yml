@@ -80,8 +80,12 @@ custom_economy:
   # Enable or disable selling items from spawners
   enabled: true
 
-  # Supported types: VAULT (more will be added in the future)
+  # Supported types: VAULT, COINSENGINE (more will be added in the future)
   currency: VAULT
+
+  # Specifies the name of the currency used by COINSENGINE
+  # This setting is only required when using COINSENGINE as the economy currency
+  coinsengine_currency: coins
 
   # Default price for items without specific pricing
   default_price: 1.0
