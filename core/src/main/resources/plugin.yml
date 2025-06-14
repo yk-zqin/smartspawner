@@ -35,18 +35,6 @@ commands:
     permission: smartspawner.reload
 
 permissions:
-  smartspawner.*:
-    description: Grants access to all SmartSpawner permissions
-    default: op
-    children:
-      smartspawner.reload: true
-      smartspawner.give: true
-      smartspawner.stack: true
-      smartspawner.changetype: true
-      smartspawner.break: true
-      smartspawner.sellall: true
-      smartspawner.list: true
-      smartspawner.hologram: true
   smartspawner.reload:
     description: Permission to reload SmartSpawner plugin
     default: op
@@ -71,3 +59,6 @@ permissions:
   smartspawner.sellall:
     description: Allow selling items in spawner storage GUI
     default: true
+  smartspawner.limits.bypass:
+    description: Bypass spawner limits per chunk
+    default: false

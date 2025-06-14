@@ -65,6 +65,16 @@ spawner_break:
     level: 1            # Minimum level of Silk Touch required
 
 #---------------------------------------------------
+#               Spawner Limitations
+#---------------------------------------------------
+spawner_limits:
+  # Maximum number of spawners (including stacks) allowed per chunk
+  # Set to -1 for unlimited spawners per chunk
+  # Each spawner in a stack counts toward the limit (not just 1 per stack)
+  # Example: 1 spawner with 64 stack + 1 spawner with 6 stack = 70 total count in chunk
+  max_per_chunk: -1
+
+#---------------------------------------------------
 #               Natural Spawner Settings
 #---------------------------------------------------
 # Controls behavior of naturally generated dungeon spawners
@@ -87,9 +97,6 @@ custom_economy:
   # This setting is only required when using COINSENGINE as the economy currency
   coinsengine_currency: coins
 
-  # Default price for items without specific pricing
-  default_price: 1.0
-
   # SHOP_ONLY:
   #   - Uses ONLY shop integration prices (e.g., ShopGUI+, EconomyShopGUI, etc.)
   #   - Custom prices are completely ignored, even if enabled
@@ -105,7 +112,7 @@ custom_economy:
   # CUSTOM_ONLY:
   #   - Uses ONLY custom prices from the price configuration file
   #   - Shop integration prices are completely ignored
-  #   - Items without custom prices cannot be sold
+  #   - Items without custom prices will use the default price
   #   - Requires custom prices to be configured
   #
   # CUSTOM_PRIORITY:
@@ -127,6 +134,10 @@ custom_economy:
     enabled: true
     # Path to custom item prices file
     price_file_name: "item_prices.yml"
+
+    # Default price for items without specific custom prices
+    # Set to 0.0 to disable selling items without custom prices
+    default_price: 1.0
 
 #---------------------------------------------------
 #              Item Collection System

@@ -10,6 +10,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.Scheduler;
+import github.nighter.smartspawner.spawner.limits.ChunkSpawnerLimiter;
 
 import github.nighter.smartspawner.utils.SpawnerTypeChecker;
 import org.bukkit.Bukkit;
@@ -41,6 +42,7 @@ public class SpawnerStackerHandler implements Listener {
     private final SpawnerMenuUI spawnerMenuUI;
     private final LanguageManager languageManager;
     private final SpawnerItemFactory spawnerItemFactory;
+    private ChunkSpawnerLimiter chunkSpawnerLimiter;
 
     // Sound constants
     private static final Sound STACK_SOUND = Sound.ENTITY_EXPERIENCE_ORB_PICKUP;
@@ -75,6 +77,7 @@ public class SpawnerStackerHandler implements Listener {
         this.messageService = plugin.getMessageService();
         this.spawnerItemFactory = plugin.getSpawnerItemFactory();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
+        this.chunkSpawnerLimiter = plugin.getChunkSpawnerLimiter();
 
         // Start cleanup task - increased interval for less overhead
         startCleanupTask();
@@ -287,6 +290,10 @@ public class SpawnerStackerHandler implements Listener {
             Bukkit.getPluginManager().callEvent(e);
             if (e.isCancelled()) return;
         }
+
+        // Update chunk limiter - unregister the removed spawners
+        chunkSpawnerLimiter.unregisterSpawner(spawner.getSpawnerLocation(), actualChange);
+
         // Update stack size and give spawners to player
         spawner.setStackSize(targetSize, player);
         giveSpawnersToPlayer(player, actualChange, spawner.getEntityType());
@@ -312,6 +319,15 @@ public class SpawnerStackerHandler implements Listener {
 
         // Limit change to available space
         int actualChange = Math.min(changeAmount, spaceLeft);
+
+        // Check chunk limits before proceeding
+        if (!chunkSpawnerLimiter.canStackSpawner(player, spawner.getSpawnerLocation(), actualChange)) {
+            Map<String, String> placeholders = new HashMap<>(2);
+            placeholders.put("limit", String.valueOf(chunkSpawnerLimiter.getMaxSpawnersPerChunk()));
+            messageService.sendMessage(player, "spawner_chunk_limit_reached", placeholders);
+            return;
+        }
+
         EntityType requiredType = spawner.getEntityType();
 
         // Analyze inventory in a single pass to get both counts and check types
@@ -338,9 +354,12 @@ public class SpawnerStackerHandler implements Listener {
             Bukkit.getPluginManager().callEvent(e);
             if (e.isCancelled()) return;
         }
+
+        // Update chunk limiter - register the added spawners
+        chunkSpawnerLimiter.registerSpawnerStack(spawner.getSpawnerLocation(), actualChange);
+
         removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
         spawner.setStackSize(currentSize + actualChange, player);
-
 
         // Notify if max stack reached
         if (actualChange < changeAmount) {
@@ -644,29 +663,6 @@ public class SpawnerStackerHandler implements Listener {
             if (viewer != null && viewer.isOnline()) {
                 viewer.closeInventory();
             }
-        }
-    }
-
-    // Helper classes for optimized inventory scanning
-    private static class SpawnerSlot {
-        final int slotIndex;
-        final int amount;
-
-        SpawnerSlot(int slotIndex, int amount) {
-            this.slotIndex = slotIndex;
-            this.amount = amount;
-        }
-    }
-
-    private static class InventoryScanResult {
-        final int availableSpawners;
-        final boolean hasDifferentType;
-        final List<SpawnerSlot> spawnerSlots;
-
-        InventoryScanResult(int availableSpawners, boolean hasDifferentType, List<SpawnerSlot> spawnerSlots) {
-            this.availableSpawners = availableSpawners;
-            this.hasDifferentType = hasDifferentType;
-            this.spawnerSlots = spawnerSlots;
         }
     }
 }

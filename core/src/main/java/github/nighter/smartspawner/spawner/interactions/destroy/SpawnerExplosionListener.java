@@ -6,6 +6,7 @@ import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
+import github.nighter.smartspawner.spawner.limits.ChunkSpawnerLimiter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -31,6 +32,8 @@ public class SpawnerExplosionListener implements Listener {
         this.hopperHandler = plugin.getHopperHandler();
     }
 
+
+
     @EventHandler
     public void onEntityExplosion(EntityExplodeEvent event) {
         handleExplosion(event.blockList());
@@ -38,7 +41,6 @@ public class SpawnerExplosionListener implements Listener {
 
     @EventHandler
     public void onBlockExplosion(BlockExplodeEvent event) {
-        // Handle respawn anchor explosions and other block explosions
         handleExplosion(event.blockList());
     }
 
@@ -52,7 +54,6 @@ public class SpawnerExplosionListener implements Listener {
                 if (spawnerData != null) {
                     SpawnerExplodeEvent e = null;
                     if (plugin.getConfig().getBoolean("spawner_properties.default.protect_from_explosions", true)) {
-                        // Protect spawner from explosion
                         blocksToRemove.add(block);
                         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawnerData);
                         cleanupAssociatedHopper(block);
@@ -60,10 +61,15 @@ public class SpawnerExplosionListener implements Listener {
                             e = new SpawnerExplodeEvent(null, spawnerData.getSpawnerLocation(), 1, false);
                         }
                     } else {
-                        // Allow spawner to be destroyed
                         spawnerData.setSpawnerStop(true);
                         String spawnerId = spawnerData.getSpawnerId();
+                        int stackSize = spawnerData.getStackSize();
+
                         cleanupAssociatedHopper(block);
+
+                        // Unregister spawner from chunk limiter
+                        plugin.getChunkSpawnerLimiter().unregisterSpawner(block.getLocation(), stackSize);
+
                         if (SpawnerExplodeEvent.getHandlerList().getRegisteredListeners().length != 0) {
                             e = new SpawnerExplodeEvent(null, spawnerData.getSpawnerLocation(), 1, true);
                         }
@@ -74,13 +80,10 @@ public class SpawnerExplosionListener implements Listener {
                         Bukkit.getPluginManager().callEvent(e);
                     }
                 } else {
-                    // If no spawner data is found, allow the spawner block to be destroyed
-                    // So don't add it to the blocksToRemove list
+                    // Allow vanilla spawners to be destroyed
                 }
             } else if (block.getType() == Material.RESPAWN_ANCHOR) {
-                // Handle respawn anchor explosion protection using existing config
                 if (plugin.getConfig().getBoolean("spawner_properties.default.protect_from_explosions", true)) {
-                    // Check if there are any spawners nearby that should be protected
                     if (hasProtectedSpawnersNearby(block)) {
                         blocksToRemove.add(block);
                     }
@@ -88,7 +91,6 @@ public class SpawnerExplosionListener implements Listener {
             }
         }
 
-        // Remove the protected blocks from the explosion list
         blockList.removeAll(blocksToRemove);
     }
 
@@ -106,7 +108,7 @@ public class SpawnerExplosionListener implements Listener {
                     if (nearbyBlock.getType() == Material.SPAWNER) {
                         SpawnerData spawnerData = spawnerManager.getSpawnerByLocation(nearbyBlock.getLocation());
                         if (spawnerData != null) {
-                            return true; // Found a protected spawner nearby
+                            return true;
                         }
                     }
                 }

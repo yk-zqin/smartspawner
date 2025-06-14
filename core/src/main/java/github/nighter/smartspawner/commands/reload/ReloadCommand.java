@@ -69,6 +69,7 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             plugin.getRangeChecker().reload();
             plugin.reload();
             plugin.reloadStaticUI();
+            plugin.getChunkSpawnerLimiter().reloadConfig();
 
             // Log new cache stats after reload if in debug mode
             if (plugin.getConfig().getBoolean("debug", false)) {

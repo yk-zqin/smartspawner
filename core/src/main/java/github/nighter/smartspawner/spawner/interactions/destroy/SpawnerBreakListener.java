@@ -9,6 +9,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.item.SpawnerItemFactory;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
+import github.nighter.smartspawner.spawner.limits.ChunkSpawnerLimiter;
 import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -28,10 +29,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Map;
 
-/**
- * Handles spawner break interactions, including permissions checking,
- * silk touch requirements, and drop processing.
- */
 public class SpawnerBreakListener implements Listener {
     private static final int MAX_STACK_SIZE = 64;
 
@@ -41,6 +38,7 @@ public class SpawnerBreakListener implements Listener {
     private final HopperHandler hopperHandler;
     private final SpawnerItemFactory spawnerItemFactory;
     private final SpawnerFileHandler spawnerFileHandler;
+    private ChunkSpawnerLimiter chunkSpawnerLimiter;
 
     public SpawnerBreakListener(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -49,6 +47,7 @@ public class SpawnerBreakListener implements Listener {
         this.hopperHandler = plugin.getHopperHandler();
         this.spawnerItemFactory = plugin.getSpawnerItemFactory();
         this.spawnerFileHandler = plugin.getSpawnerFileHandler();
+        this.chunkSpawnerLimiter = plugin.getChunkSpawnerLimiter();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -57,30 +56,24 @@ public class SpawnerBreakListener implements Listener {
         final Block block = event.getBlock();
         final Location location = block.getLocation();
 
-        // Quick return if not a spawner
         if (block.getType() != Material.SPAWNER) {
             return;
         }
 
-        // Protection plugin integration
         if (!CheckBreakBlock.CanPlayerBreakBlock(player, location)) {
             event.setCancelled(true);
             return;
         }
 
-        // Feature toggle check
         if (!plugin.getConfig().getBoolean("spawner_break.enabled", true)) {
             event.setCancelled(true);
             return;
         }
 
-        // Get spawner data and check if it's a natural spawner
         final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
 
-        // Check if natural spawner interaction is disabled
         if (!plugin.getConfig().getBoolean("natural_spawner.breakable", true)) {
             if (spawner == null) {
-                // Handle like vanilla - break with no drops
                 block.setType(Material.AIR);
                 event.setCancelled(true);
                 messageService.sendMessage(player, "natural_spawner_break_blocked");
@@ -88,20 +81,16 @@ public class SpawnerBreakListener implements Listener {
             }
         }
 
-        // Permission check
         if (!player.hasPermission("smartspawner.break")) {
             event.setCancelled(true);
             messageService.sendMessage(player, "spawner_break_no_permission");
             return;
         }
 
-        // Handle spawner based on type
         if (spawner != null) {
             handleSpawnerBreak(block, spawner, player);
-            // Clean up associated tasks
             plugin.getRangeChecker().stopSpawnerTask(spawner);
         } else {
-            // Fallback to vanilla spawner handling
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
             if(callAPIEvent(player, block.getLocation(), 1)) {
                 event.setCancelled(true);
@@ -110,10 +99,7 @@ public class SpawnerBreakListener implements Listener {
             handleVanillaSpawnerBreak(block, creatureSpawner, player);
         }
 
-        // Cancel vanilla event as we handle it ourselves
         event.setCancelled(true);
-
-        // Clean up associated hopper if present
         cleanupAssociatedHopper(block);
     }
 
@@ -127,11 +113,9 @@ public class SpawnerBreakListener implements Listener {
 
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
 
-        // Process drops based on crouching state
         SpawnerBreakResult result = processDrops(player, location, spawner, player.isSneaking(), block);
 
         if (result.isSuccess()) {
-            // Handle tool durability
             if (player.getGameMode() != GameMode.CREATIVE) {
                 reduceDurability(tool, player, result.getDurabilityLoss());
             }
@@ -146,24 +130,22 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        // Get entity type and create appropriate item using the factory
         EntityType entityType = creatureSpawner.getSpawnedType();
         ItemStack spawnerItem = spawnerItemFactory.createSpawnerItem(entityType);
 
-        // Check if direct to inventory is enabled
         boolean directToInventory = plugin.getConfig().getBoolean("spawner_break.direct_to_inventory", false);
 
-        // Drop item or add to inventory based on configuration
         World world = location.getWorld();
         if (world != null) {
             block.setType(Material.AIR);
 
+            // Unregister vanilla spawner from chunk limiter (stack size 1)
+            chunkSpawnerLimiter.unregisterSpawner(location, 1);
+
             if (directToInventory) {
-                // Add directly to inventory
                 giveSpawnersToPlayer(player, 1, spawnerItem);
                 player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
             } else {
-                // Drop naturally in the world
                 world.dropItemNaturally(location, spawnerItem);
             }
 
@@ -172,7 +154,6 @@ public class SpawnerBreakListener implements Listener {
     }
 
     private boolean validateBreakConditions(Player player, ItemStack tool, SpawnerData spawner) {
-        // Skip validation for creative mode players
         if (player.getGameMode() == GameMode.CREATIVE) {
             return true;
         }
@@ -187,7 +168,6 @@ public class SpawnerBreakListener implements Listener {
             return false;
         }
 
-        // Silk touch validation
         if (plugin.getConfig().getBoolean("spawner_break.silk_touch.required", true)) {
             int requiredLevel = plugin.getConfig().getInt("spawner_break.silk_touch.level", 1);
             if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < requiredLevel) {
@@ -208,29 +188,29 @@ public class SpawnerBreakListener implements Listener {
             return new SpawnerBreakResult(false, 0, durabilityLoss);
         }
 
-        // Create template item for spawner drops
         EntityType entityType = spawner.getEntityType();
         ItemStack template = spawnerItemFactory.createSpawnerItem(entityType);
 
         int dropAmount;
 
         if (isCrouching) {
-            // Crouching behavior: Drop up to MAX_STACK_SIZE (64)
             if (currentStackSize <= MAX_STACK_SIZE) {
-                // If stack is 64 or less, drop all and remove spawner
                 dropAmount = currentStackSize;
                 if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
-
+                // Unregister entire spawner stack
+                chunkSpawnerLimiter.unregisterSpawner(location, currentStackSize);
             } else {
-                // If stack is more than 64, drop 64 and reduce stack
                 dropAmount = MAX_STACK_SIZE;
                 if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
+                // Unregister only the dropped amount
+                chunkSpawnerLimiter.unregisterSpawner(location, MAX_STACK_SIZE);
                 spawner.setStackSize(currentStackSize - MAX_STACK_SIZE);
             }
         } else {
-            // Normal behavior: Drop 1 spawner
             dropAmount = 1;
             if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
+            // Unregister only 1 spawner
+            chunkSpawnerLimiter.unregisterSpawner(location, 1);
             spawner.decreaseStackSizeByOne();
         }
 
@@ -240,15 +220,12 @@ public class SpawnerBreakListener implements Listener {
             spawnerManager.markSpawnerModified(spawner.getSpawnerId());
         }
 
-        // Check if direct to inventory is enabled
         boolean directToInventory = plugin.getConfig().getBoolean("spawner_break.direct_to_inventory", false);
 
         if (directToInventory) {
-            // Add directly to inventory
             giveSpawnersToPlayer(player, dropAmount, template);
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
         } else {
-            // Drop the items individually (no batch operations)
             template.setAmount(dropAmount);
             world.dropItemNaturally(location, template.clone());
         }
@@ -277,7 +254,6 @@ public class SpawnerBreakListener implements Listener {
             int newDurability = currentDurability + durabilityLoss;
 
             if (newDurability >= tool.getType().getMaxDurability()) {
-                // Tool breaks
                 player.getInventory().setItemInMainHand(null);
                 player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
             } else {
@@ -288,17 +264,12 @@ public class SpawnerBreakListener implements Listener {
     }
 
     private void cleanupSpawner(Block block, SpawnerData spawner) {
-        // Stop the spawner and remove the block
         spawner.setSpawnerStop(true);
         block.setType(Material.AIR);
 
-        // Get ID before removing from manager
         String spawnerId = spawner.getSpawnerId();
 
-        // Remove from memory first
         spawnerManager.removeSpawner(spawnerId);
-
-        // Mark for deletion instead of immediately deleting
         spawnerFileHandler.markSpawnerDeleted(spawnerId);
     }
 
@@ -316,18 +287,14 @@ public class SpawnerBreakListener implements Listener {
         return plugin.getConfig().getStringList("spawner_break.required_tools").contains(tool.getType().name());
     }
 
-    // Method to add spawners to player inventory similar to SpawnerStackerHandler
     private void giveSpawnersToPlayer(Player player, int amount, ItemStack template) {
         final int MAX_STACK_SIZE = 64;
 
-        // Create a new spawner item with proper amount
         ItemStack itemToGive = template.clone();
         itemToGive.setAmount(Math.min(amount, MAX_STACK_SIZE));
 
-        // Try to add to inventory
         Map<Integer, ItemStack> failedItems = player.getInventory().addItem(itemToGive);
 
-        // Drop any items that couldn't fit
         if (!failedItems.isEmpty()) {
             for (ItemStack failedItem : failedItems.values()) {
                 player.getWorld().dropItemNaturally(player.getLocation(), failedItem);
@@ -335,7 +302,6 @@ public class SpawnerBreakListener implements Listener {
             messageService.sendMessage(player, "inventory_full_items_dropped");
         }
 
-        // Update inventory
         player.updateInventory();
     }
 
@@ -360,12 +326,10 @@ public class SpawnerBreakListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
 
-        // Quick return if not a spawner
         if (block.getType() != Material.SPAWNER) {
             return;
         }
 
-        // Skip feedback in creative mode
         if (player.getGameMode() == GameMode.CREATIVE) {
             return;
         }
@@ -375,13 +339,11 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
-        // Warn about breaking
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(block.getLocation());
         if (spawner != null) {
             messageService.sendMessage(player, "spawner_break_warning");
         }
 
-        // Provide appropriate feedback based on tool and permissions
         if (isValidTool(tool)) {
             if (plugin.getConfig().getBoolean("spawner_break.silk_touch.required", true)) {
                 int requiredLevel = plugin.getConfig().getInt("spawner_break.silk_touch.level", 1);
@@ -396,7 +358,6 @@ public class SpawnerBreakListener implements Listener {
             }
 
         } else {
-            // Inform about required tools
             messageService.sendMessage(player, "spawner_break_required_tools");
         }
     }

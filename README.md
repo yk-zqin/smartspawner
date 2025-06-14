@@ -54,24 +54,25 @@
 
 | Permission | Default | Description |
 |------------|---------|-------------|
-| `smartspawner.reload` | OP | Access to reload command |
-| `smartspawner.give` | OP | Access to give command |
-| `smartspawner.list` | OP | Access to admin GUI |
-| `smartspawner.hologram` | OP | Toggle hologram display |
-| `smartspawner.stack` | true | Allow spawner stacking |
-| `smartspawner.break` | true | Allow spawner breaking |
-| `smartspawner.sellall` | true | Allow selling storage items |
-| `smartspawner.changetype` | OP | Allow changing spawner types with eggs |
+| `smartspawner.reload` | OP      | Access to reload command |
+| `smartspawner.give` | OP      | Access to give command |
+| `smartspawner.list` | OP      | Access to admin GUI |
+| `smartspawner.hologram` | OP      | Toggle hologram display |
+| `smartspawner.stack` | true    | Allow spawner stacking |
+| `smartspawner.break` | true    | Allow spawner breaking |
+| `smartspawner.sellall` | true    | Allow selling storage items |
+| `smartspawner.changetype` | OP      | Allow changing spawner types with eggs |
+| `smartspawner.limits.bypass` | false   | Bypass spawner limits per chunk |
 
 ## Localization
 
 | Language | Locale Code | Contributor | Status |
 |----------|-------------|-------------|--------|
-| English | `en_US` | Core language | Latest |
-| Vietnamese | `vi_VN` | [maiminhdung](https://github.com/maiminhdung), [ptthanh02](https://github.com/ptthanh02) | Latest |
-| Italian | `it_IT` | [RV_SkeLe](https://github.com/RVSkeLe) | Latest |
-| Turkish | `tr_TR` | [@berkkorkmaz](https://discord.com/users/berkkorkmaz) | Latest |
 | Chinese Simplified | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | v1.2.3 |
+| English | `en_US` | Core language | Latest |
+| Italian | `it_IT` | [RV_SkeLe](https://github.com/RVSkeLe) | v1.3.5 |
+| Turkish | `tr_TR` | berkkorkmaz | v1.3.5 |
+| Vietnamese | `vi_VN` | [maiminhdung](https://github.com/maiminhdung), [ptthanh02](https://github.com/ptthanh02) | Latest |
 
 ## API
 

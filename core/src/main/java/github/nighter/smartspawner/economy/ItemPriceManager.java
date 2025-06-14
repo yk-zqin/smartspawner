@@ -101,7 +101,7 @@ public class ItemPriceManager {
             this.priceFileName += ".yml";
         }
 
-        this.defaultPrice = config.getDouble("custom_economy.default_price", 1.0);
+        this.defaultPrice = config.getDouble("custom_economy.custom_prices.default_price", 1.0);
         this.customPricesEnabled = config.getBoolean("custom_economy.custom_prices.enabled", true);
         this.shopIntegrationEnabled = config.getBoolean("custom_economy.shop_integration.enabled", true);
 

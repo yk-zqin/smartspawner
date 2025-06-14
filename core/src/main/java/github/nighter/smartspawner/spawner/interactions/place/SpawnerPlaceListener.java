@@ -5,15 +5,15 @@ import github.nighter.smartspawner.api.events.SpawnerPlaceEvent;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
+import github.nighter.smartspawner.spawner.limits.ChunkSpawnerLimiter;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.Scheduler;
-import github.nighter.smartspawner.utils.SpawnerTypeChecker; // Add this import
+import github.nighter.smartspawner.utils.SpawnerTypeChecker;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -27,14 +27,11 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-/**
- * Handles spawner placement events, including entity type inheritance
- * and activation behavior.
- */
 public class SpawnerPlaceListener implements Listener {
     private static final double PARTICLE_OFFSET = 0.5;
 
@@ -42,12 +39,14 @@ public class SpawnerPlaceListener implements Listener {
     private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final HopperHandler hopperHandler;
+    private ChunkSpawnerLimiter chunkSpawnerLimiter;
 
     public SpawnerPlaceListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
         this.hopperHandler = plugin.getHopperHandler();
+        this.chunkSpawnerLimiter = plugin.getChunkSpawnerLimiter();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -74,6 +73,17 @@ public class SpawnerPlaceListener implements Listener {
 
         // Check if this is a vanilla or smart spawner using our utility class
         boolean isVanillaSpawner = SpawnerTypeChecker.isVanillaSpawner(item);
+
+        // For smart spawners, check chunk limits
+        if (!isVanillaSpawner) {
+            if (!chunkSpawnerLimiter.canPlaceSpawner(player, block.getLocation())) {
+                Map<String, String> placeholders = new HashMap<>();
+                placeholders.put("limit", String.valueOf(chunkSpawnerLimiter.getMaxSpawnersPerChunk()));
+                messageService.sendMessage(player, "spawner_chunk_limit_reached", placeholders);
+                event.setCancelled(true);
+                return;
+            }
+        }
 
         // Extract entity type from spawner item
         EntityType storedEntityType = null;
@@ -156,6 +166,7 @@ public class SpawnerPlaceListener implements Listener {
 
         // Register with manager
         spawnerManager.addSpawner(spawnerId, spawner);
+        chunkSpawnerLimiter.registerSpawnerPlacement(block.getLocation(), spawner.getStackSize());
 
         // Save spawner data
         spawnerManager.queueSpawnerForSaving(spawnerId);
