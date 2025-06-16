@@ -26,6 +26,7 @@ import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.util.Vector;
 
 import java.util.Map;
 
@@ -146,7 +147,7 @@ public class SpawnerBreakListener implements Listener {
                 giveSpawnersToPlayer(player, 1, spawnerItem);
                 player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
             } else {
-                world.dropItemNaturally(location, spawnerItem);
+                world.dropItemNaturally(location.toCenterLocation(), spawnerItem);
             }
 
             reduceDurability(tool, player, plugin.getConfig().getInt("spawner_break.durability_loss", 1));
@@ -227,7 +228,7 @@ public class SpawnerBreakListener implements Listener {
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
         } else {
             template.setAmount(dropAmount);
-            world.dropItemNaturally(location, template.clone());
+            world.dropItemNaturally(location.toCenterLocation(), template.clone()).getVelocity();
         }
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
@@ -297,7 +298,7 @@ public class SpawnerBreakListener implements Listener {
 
         if (!failedItems.isEmpty()) {
             for (ItemStack failedItem : failedItems.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), failedItem);
+                player.getWorld().dropItemNaturally(player.getLocation().toCenterLocation(), failedItem);
             }
             messageService.sendMessage(player, "inventory_full_items_dropped");
         }
