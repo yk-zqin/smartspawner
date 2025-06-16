@@ -227,7 +227,7 @@ public class SpawnerBreakListener implements Listener {
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
         } else {
             template.setAmount(dropAmount);
-            world.dropItemNaturally(location.toCenterLocation(), template.clone()).getVelocity();
+            world.dropItemNaturally(location.toCenterLocation(), template.clone());
         }
 
         return new SpawnerBreakResult(true, dropAmount, durabilityLoss);
