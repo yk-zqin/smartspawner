@@ -88,7 +88,7 @@ public class SpawnerBreakListener implements Listener {
         }
 
         if (spawner != null) {
-            handleSpawnerBreak(block, spawner, player);
+            handleVanillaSpawnerBreak(block, spawner, player);
             plugin.getRangeChecker().stopSpawnerTask(spawner);
         } else {
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
@@ -96,14 +96,14 @@ public class SpawnerBreakListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
-            handleVanillaSpawnerBreak(block, creatureSpawner, player);
+            handleSpawnerBreak(block, creatureSpawner, player);
         }
 
         event.setCancelled(true);
         cleanupAssociatedHopper(block);
     }
 
-    private void handleSpawnerBreak(Block block, SpawnerData spawner, Player player) {
+    private void handleVanillaSpawnerBreak(Block block, SpawnerData spawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
@@ -122,7 +122,7 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    private void handleVanillaSpawnerBreak(Block block, CreatureSpawner creatureSpawner, Player player) {
+    private void handleSpawnerBreak(Block block, CreatureSpawner creatureSpawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
