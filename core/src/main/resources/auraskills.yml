@@ -1,0 +1,65 @@
+# AuraSkills Integration Configuration
+# This file configures which spawner entities give skill XP and how much
+
+# Global settings
+enabled: true
+
+# Entity to skill mapping
+# Define which entities give XP to which skills when collected from spawners
+# List of skills can be found in the AuraSkills https://wiki.aurelium.dev/auraskills/skills
+# The ratio to apply to spawner exp when converting to skill XP
+# Example: If spawner gives 100 exp and ratio is 0.5, player gets 50 skill XP
+entity_skills:
+  # Combat entities (Fighting skill)
+  zombie:
+    skill: "FIGHTING"
+    ratio: 0.5
+  skeleton:
+    skill: "FIGHTING"
+    ratio: 0.5
+  creeper:
+    skill: "FIGHTING"
+    ratio: 0.5
+  spider:
+    skill: "FIGHTING"
+    ratio: 0.5
+  enderman:
+    skill: "FIGHTING"
+    ratio: 0.6
+  blaze:
+    skill: "FIGHTING"
+    ratio: 0.7
+  wither_skeleton:
+    skill: "FIGHTING"
+    ratio: 0.8
+
+  # Farming entities (Farming skill)
+  cow:
+    skill: "FARMING"
+    ratio: 0.3
+  pig:
+    skill: "FARMING"
+    ratio: 0.3
+  chicken:
+    skill: "FARMING"
+    ratio: 0.3
+  sheep:
+    skill: "FARMING"
+    ratio: 0.3
+  rabbit:
+    skill: "FARMING"
+    ratio: 0.3
+  horse:
+    skill: "FARMING"
+    ratio: 0.4
+  llama:
+    skill: "FARMING"
+    ratio: 0.4
+
+  # Mixed entities - you can assign any skill
+  wandering_trader:
+    skill: "ENCHANTING"
+    ratio: 1.0
+  witch:
+    skill: "SORCERY"
+    ratio: 0.2

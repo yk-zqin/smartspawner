@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.spawner.interactions;
+package github.nighter.smartspawner.spawner.interactions.click;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.protections.CheckOpenMenu;
@@ -27,13 +27,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Manages player interactions with spawner blocks
- * Handles right-click events on spawners for various actions:
- * - Opening spawner menu
- * - Changing spawner type with spawn eggs
- * - Stacking spawners
- */
+import static org.bukkit.GameMode.CREATIVE;
+
 public class SpawnerClickManager implements Listener {
     private static final long COOLDOWN_MS = 250;
     private static final long CLEANUP_INTERVAL_TICKS = 6000L; // 5 minutes
@@ -80,7 +75,9 @@ public class SpawnerClickManager implements Listener {
         }
 
         ItemStack heldItem = player.getInventory().getItemInMainHand();
+        ItemStack offhandItem = player.getInventory().getItemInOffHand();
         Material itemType = heldItem.getType();
+        Material offhandType = offhandItem.getType();
 
         // Allow normal block placement when sneaking with placeable block
         if (shouldAllowNormalBlockPlacement(player, itemType)) {
@@ -89,6 +86,11 @@ public class SpawnerClickManager implements Listener {
 
         // Special handling for Bedrock players using tools
         if (isBedrockPlayerUsingTool(player, itemType)) {
+            return;
+        }
+
+        // Check if player is holding armor in either hand - allow equipping but don't open menu
+        if (isArmor(itemType) || isArmor(offhandType)) {
             return;
         }
 
@@ -103,18 +105,12 @@ public class SpawnerClickManager implements Listener {
         handleSpawnerInteraction(player, block, heldItem, itemType, spawner);
     }
 
-    /**
-     * Validates if the event is a right-click on a spawner block
-     */
     private boolean isValidSpawnerInteraction(PlayerInteractEvent event) {
         return event.getAction() == Action.RIGHT_CLICK_BLOCK &&
                 event.getClickedBlock() != null &&
                 event.getClickedBlock().getType() == Material.SPAWNER;
     }
 
-    /**
-     * Checks if the player's interaction should be allowed based on cooldown
-     */
     private boolean isInteractionAllowed(Player player) {
         long currentTime = System.currentTimeMillis();
         Long lastInteraction = playerCooldowns.get(player.getUniqueId());
@@ -127,16 +123,10 @@ public class SpawnerClickManager implements Listener {
         return true;
     }
 
-    /**
-     * Determines if normal block placement should be allowed
-     */
     private boolean shouldAllowNormalBlockPlacement(Player player, Material itemType) {
         return player.isSneaking() && itemType.isBlock() && itemType != Material.SPAWNER;
     }
 
-    /**
-     * Checks if the player is a Bedrock player using a tool
-     */
     private boolean isBedrockPlayerUsingTool(Player player, Material itemType) {
         if (!isBedrockPlayer(player)) {
             return false;
@@ -151,9 +141,24 @@ public class SpawnerClickManager implements Listener {
         return isTool;
     }
 
-    /**
-     * Main handler for spawner interactions
-     */
+    private boolean isArmor(Material material) {
+        String name = material.name();
+        return name.endsWith("_HELMET") ||
+                name.endsWith("_CHESTPLATE") ||
+                name.endsWith("_LEGGINGS") ||
+                name.endsWith("_BOOTS") ||
+                material == Material.ELYTRA ||
+                material == Material.CARVED_PUMPKIN ||
+                material == Material.SKELETON_SKULL ||
+                material == Material.WITHER_SKELETON_SKULL ||
+                material == Material.ZOMBIE_HEAD ||
+                material == Material.PLAYER_HEAD ||
+                material == Material.DRAGON_HEAD ||
+                material == Material.PIGLIN_HEAD ||
+                material == Material.CREEPER_HEAD ||
+                material == Material.TURTLE_HELMET;
+    }
+
     private void handleSpawnerInteraction(Player player, Block block, ItemStack heldItem, Material itemType, SpawnerData spawner) {
 
         // Check permission on claimed land
@@ -207,24 +212,15 @@ public class SpawnerClickManager implements Listener {
         openSpawnerMenu(player, spawner);
     }
 
-    /**
-     * Opens the spawner menu if possible
-     */
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         // Open the menu as normal
         spawnerMenuUI.openSpawnerMenu(player, spawner, false);
     }
 
-    /**
-     * Checks if the material is a spawn egg
-     */
     private boolean isSpawnEgg(Material material) {
         return material.name().endsWith("_SPAWN_EGG");
     }
 
-    /**
-     * Spawns particles at the given location to indicate spawner activation
-     */
     private void spawnActivationParticles(Location location) {
         Scheduler.runLocationTask(location, () -> {
             location.getWorld().spawnParticle(
@@ -235,9 +231,6 @@ public class SpawnerClickManager implements Listener {
         });
     }
 
-    /**
-     * Detects if a player is connecting from Bedrock Edition
-     */
     private boolean isBedrockPlayer(Player player) {
         try {
             FloodgateApi api = FloodgateApi.getInstance();
@@ -247,16 +240,10 @@ public class SpawnerClickManager implements Listener {
         }
     }
 
-    /**
-     * Initializes the periodic cooldown cleanup task
-     */
     private void initCleanupTask() {
         Scheduler.runTaskTimer(this::cleanupCooldowns, CLEANUP_INTERVAL_TICKS, CLEANUP_INTERVAL_TICKS);
     }
 
-    /**
-     * Removes expired cooldown entries
-     */
     public void cleanupCooldowns() {
         long expirationThreshold = System.currentTimeMillis() - (COOLDOWN_MS * 10);
         playerCooldowns.entrySet().removeIf(entry -> entry.getValue() < expirationThreshold);

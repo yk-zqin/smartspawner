@@ -330,7 +330,7 @@ public class ItemPriceManager {
     }
 
     public void debugPricesForMaterials(Set<Material> materials) {
-        plugin.debug("=== ItemPriceManager Debug Info ===");
+        plugin.debug("=== Item Prices Debug Info ===");
         plugin.debug("Economy Enabled: " + economyEnabled);
         plugin.debug("Mode: " + priceSourceMode);
         plugin.debug("Custom Prices Enabled: " + customPricesEnabled);

@@ -29,6 +29,10 @@ softdepend:
   - MultiWorld
   - Worlds
   - SuperiorSkyblock2
+
+  # RPG/Skill Plugins
+  - AuraSkills
+
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

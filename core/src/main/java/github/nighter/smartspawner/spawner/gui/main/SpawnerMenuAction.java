@@ -2,6 +2,7 @@ package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.holders.SpawnerMenuHolder;
+import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
@@ -13,6 +14,7 @@ import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -189,6 +191,11 @@ public class SpawnerMenuAction implements Listener {
             exp -= expUsedForMending;
         }
 
+        // Give AuraSkills XP if integration is enabled
+        if (plugin.getAuraSkillsIntegration() != null && plugin.getAuraSkillsIntegration().isEnabled()) {
+            giveAuraSkillsXp(player, spawner, initialExp);
+        }
+
         // Give remaining exp to player
         if (exp > 0) {
             player.giveExp(exp);
@@ -287,6 +294,29 @@ public class SpawnerMenuAction implements Listener {
                 placeholders.put("exp", plugin.getLanguageManager().formatNumber(totalExp));
                 messageService.sendMessage(player, "exp_collected", placeholders);
             }
+        }
+    }
+
+    private void giveAuraSkillsXp(Player player, SpawnerData spawner, int totalExp) {
+        try {
+            AuraSkillsIntegration auraSkills = plugin.getAuraSkillsIntegration();
+            if (auraSkills == null || !auraSkills.isEnabled()) {
+                return;
+            }
+
+            // Get the entity type from the spawner
+            EntityType entityType = spawner.getEntityType();
+            if (entityType == null) {
+                plugin.debug("Could not determine entity type for spawner at " + spawner.getSpawnerLocation());
+                return;
+            }
+
+            // Give skill XP based on the entity type and exp amount
+            auraSkills.giveSkillXp(player, entityType, totalExp);
+
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error giving AuraSkills XP: " + e.getMessage());
+            plugin.debug("AuraSkills integration error: " + e.toString());
         }
     }
 }

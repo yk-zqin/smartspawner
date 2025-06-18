@@ -19,6 +19,7 @@ import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
 import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
 import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerProvider;
+import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
 import github.nighter.smartspawner.spawner.gui.main.ItemCache;
@@ -30,7 +31,7 @@ import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewMan
 import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageAction;
-import github.nighter.smartspawner.spawner.interactions.SpawnerClickManager;
+import github.nighter.smartspawner.spawner.interactions.click.SpawnerClickManager;
 import github.nighter.smartspawner.spawner.interactions.destroy.SpawnerBreakListener;
 import github.nighter.smartspawner.spawner.interactions.destroy.SpawnerExplosionListener;
 import github.nighter.smartspawner.spawner.interactions.place.SpawnerPlaceListener;
@@ -128,6 +129,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private ListCommand listCommand;
     private HologramCommand hologramCommand;
 
+    // Integration with AuraSkills
+    private AuraSkillsIntegration auraSkillsIntegration;
+    public static boolean hasAuraSkills = false;
+
     // Integration flags - static for quick access
     public static boolean hasTowny = false;
     public static boolean hasLands = false;
@@ -161,6 +166,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         // Setup plugin infrastructure
         checkProtectionPlugins();
+        checkIntegrationPlugins();
         setupCommand();
         setupBtatsMetrics();
         registerListeners();
@@ -380,6 +386,17 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         }, true);
     }
 
+    private void checkIntegrationPlugins() {
+        hasAuraSkills = checkPlugin("AuraSkills", () -> {
+            Plugin auraSkillsPlugin = Bukkit.getPluginManager().getPlugin("AuraSkills");
+            if (auraSkillsPlugin != null && auraSkillsPlugin.isEnabled()) {
+                this.auraSkillsIntegration = new AuraSkillsIntegration(this);
+                return true;
+            }
+            return false;
+        }, true);
+    }
+
     private boolean checkPlugin(String pluginName, PluginCheck checker, boolean logSuccess) {
         try {
             if (checker.check()) {
@@ -395,7 +412,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     public void reload() {
-        clearItemCache();
+        itemCache.clear();
+        if (auraSkillsIntegration != null) {
+            auraSkillsIntegration.reloadConfig();
+        }
     }
 
     public void reloadStaticUI() {
@@ -475,10 +495,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (timeFormatter != null) {
             timeFormatter.clearCache();
         }
-    }
-
-    public void clearItemCache() {
-        itemCache.clear();
     }
 
     public void debug(String message) {
