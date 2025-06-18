@@ -26,6 +26,7 @@ softdepend:
 
   # World Management Plugins
   - Multiverse-Core
+  - MultiWorld
   - Worlds
   - SuperiorSkyblock2
 commands:
