@@ -23,26 +23,23 @@ public class SpawnerListGUI implements Listener {
     private final MessageService messageService;
     private final SpawnerManager spawnerManager;
     private final ListCommand listCommand;
-    private final UserPreferenceCache userPreferenceCache;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD, Material.SPAWNER, Material.ZOMBIE_HEAD,
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
             Material.CREEPER_HEAD, Material.PIGLIN_HEAD
     );
     private static final String patternString = "#([A-Za-z0-9]+)";
-    private static final Pattern ID_PATTERN = Pattern.compile(patternString);
 
     public SpawnerListGUI(SmartSpawner plugin) {
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
         this.listCommand = plugin.getListCommand();
-        this.userPreferenceCache = plugin.getUserPreferenceCache();
     }
 
     @EventHandler
     public void onWorldSelectionClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ListCommand.WorldSelectionHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof WorldSelectionHolder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
@@ -99,7 +96,7 @@ public class SpawnerListGUI implements Listener {
 
     @EventHandler
     public void onSpawnerListClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ListCommand.SpawnerListHolder holder)) return;
+        if (!(event.getInventory().getHolder() instanceof SpawnerListHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         if (!player.hasPermission("smartspawner.list")) {
@@ -171,7 +168,7 @@ public class SpawnerListGUI implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ListCommand.SpawnerListHolder holder)) return;
+        if (!(event.getInventory().getHolder() instanceof SpawnerListHolder holder)) return;
         if (!(event.getPlayer() instanceof Player player)) return;
 
         // Save user preferences when closing the inventory

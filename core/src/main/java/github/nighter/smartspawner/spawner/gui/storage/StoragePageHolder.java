@@ -1,5 +1,6 @@
-package github.nighter.smartspawner.holders;
+package github.nighter.smartspawner.spawner.gui.storage;
 
+import github.nighter.smartspawner.spawner.gui.SpawnerHolder;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

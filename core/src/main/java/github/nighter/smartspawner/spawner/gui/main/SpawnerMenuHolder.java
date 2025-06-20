@@ -1,13 +1,14 @@
-package github.nighter.smartspawner.holders;
+package github.nighter.smartspawner.spawner.gui.main;
 
+import github.nighter.smartspawner.spawner.gui.SpawnerHolder;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-public class SpawnerStackerHolder implements InventoryHolder, SpawnerHolder {
+public class SpawnerMenuHolder implements InventoryHolder, SpawnerHolder {
     private final SpawnerData spawnerData;
 
-    public SpawnerStackerHolder(SpawnerData spawnerData) {
+    public SpawnerMenuHolder(SpawnerData spawnerData) {
         this.spawnerData = spawnerData;
     }
 

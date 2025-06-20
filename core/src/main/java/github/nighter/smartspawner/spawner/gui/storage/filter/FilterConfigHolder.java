@@ -1,9 +1,11 @@
-package github.nighter.smartspawner.holders;
+package github.nighter.smartspawner.spawner.gui.storage.filter;
 
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import lombok.Getter;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
+@Getter
 public class FilterConfigHolder implements InventoryHolder {
     private final SpawnerData spawnerData;
 
@@ -16,7 +18,4 @@ public class FilterConfigHolder implements InventoryHolder {
         return null;
     }
 
-    public SpawnerData getSpawnerData() {
-        return spawnerData;
-    }
 }

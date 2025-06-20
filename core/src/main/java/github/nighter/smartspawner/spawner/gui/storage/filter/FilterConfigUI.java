@@ -1,8 +1,8 @@
-package github.nighter.smartspawner.spawner.gui.storage;
+package github.nighter.smartspawner.spawner.gui.storage.filter;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.holders.FilterConfigHolder;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.Bukkit;

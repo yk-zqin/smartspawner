@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.holders.SpawnerMenuHolder;
 import github.nighter.smartspawner.spawner.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;

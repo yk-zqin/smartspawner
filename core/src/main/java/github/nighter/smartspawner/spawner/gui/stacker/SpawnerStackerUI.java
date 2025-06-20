@@ -1,7 +1,6 @@
 package github.nighter.smartspawner.spawner.gui.stacker;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.holders.SpawnerStackerHolder;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import org.bukkit.Bukkit;

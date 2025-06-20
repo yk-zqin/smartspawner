@@ -1,8 +1,8 @@
 package github.nighter.smartspawner.spawner.gui.synchronization;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.holders.SpawnerMenuHolder;
-import github.nighter.smartspawner.holders.StoragePageHolder;
+import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuHolder;
+import github.nighter.smartspawner.spawner.gui.storage.StoragePageHolder;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;

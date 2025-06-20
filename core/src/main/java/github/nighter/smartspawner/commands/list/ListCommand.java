@@ -517,35 +517,4 @@ public class ListCommand {
             return name().toLowerCase();
         }
     }
-
-    // Inventory Holders
-    public static class WorldSelectionHolder implements InventoryHolder {
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-    }
-
-    @Getter
-    public static class SpawnerListHolder implements InventoryHolder {
-        private final int currentPage;
-        private final int totalPages;
-        private final String worldName;
-        private final FilterOption filterOption;
-        private final SortOption sortType;
-
-        public SpawnerListHolder(int currentPage, int totalPages, String worldName,
-                                 FilterOption filterOption, SortOption sortType) {
-            this.currentPage = currentPage;
-            this.totalPages = totalPages;
-            this.worldName = worldName;
-            this.filterOption = filterOption;
-            this.sortType = sortType;
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return null;
-        }
-    }
 }

@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.holders;
+package github.nighter.smartspawner.spawner.gui;
 
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 
