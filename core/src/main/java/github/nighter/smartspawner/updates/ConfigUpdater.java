@@ -115,22 +115,30 @@ public class ConfigUpdater {
     }
 
     private void createDefaultConfigWithHeader(File destinationFile) {
-        try (InputStream in = plugin.getResource("config.yml")) {
-            if (in != null) {
-                List<String> defaultLines = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))
-                        .lines()
-                        .toList();
+        try {
+            // Ensure parent directory exists (plugins/PluginName/)
+            File parentDir = destinationFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
 
-                List<String> newLines = new ArrayList<>();
-                newLines.add("# Configuration version - Do not modify this value");
-                newLines.add(CONFIG_VERSION_KEY + ": " + currentVersion);
-                newLines.add("");
-                newLines.addAll(defaultLines);
+            try (InputStream in = plugin.getResource("config.yml")) {
+                if (in != null) {
+                    List<String> defaultLines = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))
+                            .lines()
+                            .toList();
 
-                Files.write(destinationFile.toPath(), newLines, StandardCharsets.UTF_8);
-            } else {
-                plugin.getLogger().warning("Default config.yml not found in the plugin's resources.");
-                destinationFile.createNewFile();
+                    List<String> newLines = new ArrayList<>();
+                    newLines.add("# Configuration version - Do not modify this value");
+                    newLines.add(CONFIG_VERSION_KEY + ": " + currentVersion);
+                    newLines.add("");
+                    newLines.addAll(defaultLines);
+
+                    Files.write(destinationFile.toPath(), newLines, StandardCharsets.UTF_8);
+                } else {
+                    plugin.getLogger().warning("Default config.yml not found in the plugin's resources.");
+                    destinationFile.createNewFile();
+                }
             }
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to create default config with header: " + e.getMessage());

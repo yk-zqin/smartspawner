@@ -56,7 +56,7 @@ public class ShopIntegrationManager {
                     try {
                         plugin.getServer().getPluginManager().registerEvents(new SpawnerHook(plugin), plugin);
                         spawnerHookRegistered = true;
-                        plugin.debug("Registered SpawnerHook event listener for ShopGUIPlus");
+                        plugin.debug("Auto detect: Registered SpawnerHook event listener for ShopGUIPlus");
                     } catch (Exception e) {
                         plugin.debug("Failed to register SpawnerHook: " + e.getMessage());
                         throw e; // Re-throw to prevent provider registration
@@ -115,7 +115,7 @@ public class ShopIntegrationManager {
         // If we already have an active provider and we're in single-provider mode, skip
         if (!availableProviders.isEmpty()) {
             plugin.debug("Skipping " + providerName + " registration - already have active provider: " +
-                    availableProviders.get(0).getPluginName());
+                    availableProviders.getFirst().getPluginName());
             return;
         }
 

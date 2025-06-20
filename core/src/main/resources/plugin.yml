@@ -13,7 +13,7 @@ softdepend:
   - Vault
 
   # Utility/Economy Plugins
-  - Essentials
+  - CoinEngine
   - Vault
 
   # Protection/Region Plugins

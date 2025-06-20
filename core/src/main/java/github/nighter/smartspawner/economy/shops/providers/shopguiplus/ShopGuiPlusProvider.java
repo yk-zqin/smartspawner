@@ -24,7 +24,8 @@ public class ShopGuiPlusProvider implements ShopProvider {
             Plugin shopGuiPlugin = Bukkit.getPluginManager().getPlugin("ShopGUIPlus");
             if (shopGuiPlugin != null && shopGuiPlugin.isEnabled()) {
                 Class.forName("net.brcdev.shopgui.ShopGuiPlusApi");
-                return ShopGuiPlusApi.getPlugin().getShopManager().areShopsLoaded();
+                // return ShopGuiPlusApi.getPlugin().getShopManager().areShopsLoaded();
+                return true;
             }
         } catch (ClassNotFoundException | NoClassDefFoundError e) {
             plugin.debug("ShopGUIPlus API not found: " + e.getMessage());

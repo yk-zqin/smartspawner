@@ -26,12 +26,20 @@ public class EntityLootRegistry {
 
     public EntityLootRegistry(SmartSpawner plugin, ItemPriceManager priceManager) {
         this.plugin = plugin;
-        this.lootConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "mob_drops.yml"));
         this.entityLootConfigs = new ConcurrentHashMap<>();
         this.priceManager = priceManager;
         this.cachedPrices = new ConcurrentHashMap<>();
         this.loadedMaterials = new HashSet<>();
+        setupLootConfigFile();
         loadConfigurations();
+    }
+
+    private void setupLootConfigFile() {
+        File lootConfigFile = new File(plugin.getDataFolder(), "mob_drops.yml");
+        if (!lootConfigFile.exists()) {
+            plugin.saveResource("mob_drops.yml", false);
+        }
+        lootConfig = YamlConfiguration.loadConfiguration(lootConfigFile);
     }
 
     public void loadConfigurations() {
@@ -122,7 +130,7 @@ public class EntityLootRegistry {
 
     public void reload() {
         this.priceManager = plugin.getItemPriceManager();
-        this.lootConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "mob_drops.yml"));
+        setupLootConfigFile();
         loadConfigurations();
     }
 }

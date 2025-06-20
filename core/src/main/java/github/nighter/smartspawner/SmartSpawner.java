@@ -15,10 +15,10 @@ import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.reload.ReloadCommand;
 import github.nighter.smartspawner.configs.TimeFormatter;
 import github.nighter.smartspawner.economy.ItemPriceManager;
+import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.extras.HopperHandler;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
 import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
-import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
@@ -62,7 +62,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.util.Objects;
 import java.util.logging.Level;
 
@@ -151,10 +150,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         long startTime = System.currentTimeMillis();
         instance = this;
 
-        // Save default config
-        saveResourceAsDefault("spawners_data.yml");
-        saveResourceAsDefault("mob_drops.yml");
-
         // Initialize version-specific components
         initializeVersionComponents();
 
@@ -178,13 +173,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     @Override
     public SmartSpawnerAPI getAPI() {
         return apiImpl;
-    }
-
-    private void saveResourceAsDefault(String resourcePath) {
-        File resourceFile = new File(getDataFolder(), resourcePath);
-        if (!resourceFile.exists()) {
-            saveResource(resourcePath, false);
-        }
     }
 
     private void initializeVersionComponents() {
@@ -412,15 +400,15 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     public void reload() {
-        itemCache.clear();
+        // reload static components
+        this.spawnerStorageUI = new SpawnerStorageUI(this);
+        this.filterConfigUI = new FilterConfigUI(this);
+        // reload services
         if (auraSkillsIntegration != null) {
             auraSkillsIntegration.reloadConfig();
         }
-    }
-
-    public void reloadStaticUI() {
-        this.spawnerStorageUI = new SpawnerStorageUI(this);
-        this.filterConfigUI = new FilterConfigUI(this);
+        timeFormatter.clearCache();
+        itemCache.clear();
     }
 
     @Override
@@ -466,6 +454,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         boolean check();
     }
 
+    // Spawner Provider for ShopGUI+ integration
+    public SpawnerProvider getSpawnerProvider() {
+        return new SpawnerProvider(this);
+    }
+
     public boolean hasSellIntegration() {
         if (itemPriceManager == null) {
             return false;
@@ -482,19 +475,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
                 itemPriceManager.getShopIntegrationManager().hasActiveProvider();
     }
 
-    // Spawner Provider for ShopGUI+ integration
-    public SpawnerProvider getSpawnerProvider() {
-        return new SpawnerProvider(this);
-    }
-
     public long getTimeFromConfig(String path, String defaultValue) {
         return timeFormatter.getTimeFromConfig(path, defaultValue);
-    }
-
-    public void refreshTimeCache() {
-        if (timeFormatter != null) {
-            timeFormatter.clearCache();
-        }
     }
 
     public void debug(String message) {

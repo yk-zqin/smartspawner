@@ -46,37 +46,9 @@ public class SpawnerFileHandler {
     }
 
     private void setupSpawnerDataFile() {
-        if (!plugin.getDataFolder().exists()) {
-            plugin.getDataFolder().mkdirs();
-        }
-
         spawnerDataFile = new File(plugin.getDataFolder(), "spawners_data.yml");
-
         if (!spawnerDataFile.exists()) {
-            try {
-                spawnerDataFile.createNewFile();
-                String header = """
-                # Warning: Do not modify this file while the server is running!
-                # Format:
-                #  spawners:
-                #    spawnerId:
-                #      location: world,x,y,z
-                #      entityType: ENTITY_TYPE
-                #      settings: exp,active,range,stop,delay,slots,maxExp,minMobs,maxMobs,stack,maxStack,time,atCapacity
-                #      filteredItems: MATERIAL1,MATERIAL2,...
-                #      inventory:
-                #      - ITEM_TYPE:amount
-                """;
-
-                Files.write(spawnerDataFile.toPath(), header.getBytes(), StandardOpenOption.WRITE);
-
-                FileConfiguration config = YamlConfiguration.loadConfiguration(spawnerDataFile);
-                config.set(DATA_VERSION_KEY, CURRENT_VERSION);
-                config.save(spawnerDataFile);
-            } catch (IOException e) {
-                logger.severe("Could not create spawners_data.yml!");
-                e.printStackTrace();
-            }
+            plugin.saveResource("spawners_data.yml", false);
         }
 
         spawnerData = YamlConfiguration.loadConfiguration(spawnerDataFile);

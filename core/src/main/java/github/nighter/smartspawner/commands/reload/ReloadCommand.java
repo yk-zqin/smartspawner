@@ -54,7 +54,6 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
             // Reload all configurations
             plugin.reloadConfig();
-            plugin.refreshTimeCache();
 
             // Reload components in dependency order
             plugin.setUpHopperHandler();
@@ -68,7 +67,6 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             plugin.getSpawnerManager().reloadAllHolograms();
             plugin.getRangeChecker().reload();
             plugin.reload();
-            plugin.reloadStaticUI();
             plugin.getChunkSpawnerLimiter().reloadConfig();
 
             // Log new cache stats after reload if in debug mode
