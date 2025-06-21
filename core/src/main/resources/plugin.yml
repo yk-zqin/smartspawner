@@ -10,7 +10,7 @@ softdepend:
   - EconomyShopGUI-Premium
   - ShopGUIPlus
   - zShop
-  - Vault
+  - ExcellentShop
 
   # Utility/Economy Plugins
   - CoinEngine

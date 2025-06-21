@@ -125,7 +125,7 @@ custom_economy:
   # Shop plugin integration
   shop_integration:
     enabled: true
-    # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop
+    # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop, ExcellentShop
     # 'auto' will attempt to detect your installed shop plugin automatically
     preferred_plugin: auto
 
