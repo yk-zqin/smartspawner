@@ -3,6 +3,7 @@ package github.nighter.smartspawner.economy.shops;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.economy.shops.api.ShopProvider;
 import github.nighter.smartspawner.economy.shops.providers.economyshopgui.EconomyShopGUIProvider;
+import github.nighter.smartspawner.economy.shops.providers.excellentshop.ExcellentShopProvider;
 import github.nighter.smartspawner.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
 import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.economy.shops.providers.zshop.ZShopProvider;
@@ -69,6 +70,7 @@ public class ShopIntegrationManager {
         }
 
         registerProviderIfAvailable("ZShop", () -> new ZShopProvider(plugin));
+        registerProviderIfAvailable("ExcellentShop", () -> new ExcellentShopProvider(plugin));
     }
 
     private boolean tryRegisterSpecificProvider(String providerName) {
@@ -96,6 +98,12 @@ public class ShopIntegrationManager {
                 case "zshop":
                     if (isPluginAvailable("ZShop")) {
                         registerProviderIfAvailable("ZShop", () -> new ZShopProvider(plugin));
+                        return !availableProviders.isEmpty();
+                    }
+                    break;
+                case "excellentshop":
+                    if (isPluginAvailable("ExcellentShop")) {
+                        registerProviderIfAvailable("ExcellentShop", () -> new ExcellentShopProvider(plugin));
                         return !availableProviders.isEmpty();
                     }
                     break;
