@@ -25,7 +25,7 @@ spawner_storage_item:
   name: '&#F97603sᴘᴀᴡɴᴇʀ sᴛᴏʀᴀɢᴇ'
   lore:
     - '%loot_items%'
-  loot_items: '&#F97603%raw_amount% &f%ɪᴛᴇᴍ_ɴᴀᴍᴇ%'
+  loot_items: '&#F97603%amount% &f%ɪᴛᴇᴍ_ɴᴀᴍᴇ%'
   loot_items_empty: '&#e6e6faɴᴏ ɪᴛᴇᴍ ᴅʀᴏᴘs'
 
 spawner_info_item:
@@ -85,33 +85,32 @@ button_add:
 # ---------------------------------------------------
 #             Spawner Storage GUI
 # ---------------------------------------------------
-gui_title_storage: ꜱᴘᴀᴡɴᴇʀ ꜱᴛᴏʀᴀɢᴇ
+gui_title_storage: "&#545454ꜱᴘᴀᴡɴᴇʀ ꜱᴛᴏʀᴀɢᴇ"
 
 navigation_button_previous:
-  name: '&#37eb9aᴘʀᴇᴠɪᴏᴜꜱ ᴘᴀɢᴇ'
+  name: '&#7AFC00ᴘʀᴇᴠɪᴏᴜꜱ'
   lore:
-    - '&#2cc483⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ᴛᴏ ᴘᴀɢᴇ &#37eb9a%target_page%'
+    - '&fClick to go back a page'
 
 navigation_button_next:
-  name: '&#37eb9aɴᴇxᴛ ᴘᴀɢᴇ'
+  name: '&#7AFC00ɴᴇxᴛ'
   lore:
-    - '&#2cc483⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ᴛᴏ ᴘᴀɢᴇ &#37eb9a%target_page%'
+    - '&fClick to go forward a page'
 
 shop_page_indicator:
-  name: '&#f0c857ꜱᴇʟʟ ᴀʟʟ ɪᴛᴇᴍꜱ'
+  name: '&#00F986ꜱᴇʟʟ ᴀʟʟ'
   lore:
-    - ''
-    - '&#d4a012◈ &#f8cb45ꜱᴛᴏʀᴀɢᴇ:'
-    - '  &#f8f8ff•  ꜱʟᴏᴛꜱ: &#f0c857%used_slots%&#d4a012/&#f0c857%max_slots%'
-    - '  &#f8f8ff•  ꜱᴛᴏʀᴀɢᴇ: &#f0c857%percent_storage%%&#f8f8ff ꜰᴜʟʟ'
-    - ''
-    - '&#d4a012⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜱᴇʟʟ ᴀʟʟ ɪᴛᴇᴍꜱ'
+    - '&fClick to sell all mob drops'
 
 return_button:
-  name: '&#ff5252ʀᴇᴛᴜʀɴ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ'
+  name: '&#FC0000ʀᴇᴛᴜʀɴ'
+  lore:
+    - '&fClick to return to the main menu'
 
 take_all_button:
-  name: '&#37eb9aᴛᴀᴋᴇ ᴀʟʟ ɪᴛᴇᴍꜱ'
+  name: '&#FCE300ᴛᴀᴋᴇ ᴀʟʟ'
+  lore:
+    - '&#FCE300● &fCollect loot from the storage'
 
 item_filter_button:
   name: '&#7b68eeꜰɪʟᴛᴇʀ ᴅʀᴏᴘꜱ'
@@ -122,6 +121,11 @@ discard_all_button:
   name: '&#ff5252ᴅɪꜱᴄᴀʀᴅ ᴀʟʟ ɪᴛᴇᴍꜱ'
   lore:
     - '&#e63939⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ &#ff5252ʀᴇᴍᴏᴠᴇ&#f8f8ff ᴀʟʟ ɪᴛᴇᴍꜱ'
+
+drop_page_button:
+  name: '&#00F986ᴅʀᴏᴘ ʟᴏᴏᴛ'
+  lore:
+    - '&fClick to drop all the loot on the page'
 
 # ---------------------------------------------------
 #             Filter Configuration GUI

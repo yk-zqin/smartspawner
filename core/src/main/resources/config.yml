@@ -15,6 +15,9 @@
 # Language setting (available: en_US, vi_VN, it_IT, tr_TR, DonutSMP)
 language: en_US
 
+# Spawner GUI layout configuration (available: default, DonutSMP)
+gui_layout: default
+
 # Enable or disable debug mode (provides verbose console output)
 debug: false
 
@@ -125,7 +128,7 @@ custom_economy:
   # Shop plugin integration
   shop_integration:
     enabled: true
-    # Supported shop plugins: auto, EconomyShopGUI, EconomyShopGUI-Premium, ShopGUIPlus, zShop, ExcellentShop
+    # Supported shop plugins: auto, EconomyShopGUI, ShopGUIPlus, zShop, ExcellentShop
     # 'auto' will attempt to detect your installed shop plugin automatically
     preferred_plugin: auto
 

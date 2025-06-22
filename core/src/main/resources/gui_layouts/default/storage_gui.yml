@@ -1,0 +1,46 @@
+# Default Storage GUI Layout Configuration
+# Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
+# Valid materials can be found at: https://jd.papermc.io/paper/1.21.6/org/bukkit/Material.html
+
+buttons:
+  # Discard all items button
+  discard_all:
+    slot: 1
+    material: CAULDRON
+    enabled: true
+
+  # Item filter configuration button
+  item_filter:
+    slot: 2
+    material: HOPPER
+    enabled: true
+
+  # Previous page navigation button
+  previous_page:
+    slot: 4
+    material: SPECTRAL_ARROW
+    enabled: true
+
+  # Take all items button
+  take_all:
+    slot: 5
+    material: CHEST
+    enabled: true
+
+  # Next page navigation button
+  next_page:
+    slot: 6
+    material: SPECTRAL_ARROW
+    enabled: true
+
+  # Shop/sell indicator button (requires sell integration)
+  shop_indicator:
+    slot: 8
+    material: GOLD_INGOT
+    enabled: true
+
+  # Return to main menu button
+  return:
+    slot: 9
+    material: RED_STAINED_GLASS_PANE
+    enabled: true

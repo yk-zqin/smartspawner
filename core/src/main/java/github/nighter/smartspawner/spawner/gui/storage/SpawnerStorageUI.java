@@ -2,10 +2,14 @@ package github.nighter.smartspawner.spawner.gui.storage;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.Scheduler.Task;
+import lombok.Getter;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -16,11 +20,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SpawnerStorageUI {
-    private static final int NAVIGATION_ROW = 5;
     private static final int INVENTORY_SIZE = 54;
 
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
+    @Getter
+    private GuiLayoutConfig layoutConfig;
 
     // Precomputed buttons to avoid repeated creation
     private final Map<String, ItemStack> staticButtons;
@@ -38,9 +43,10 @@ public class SpawnerStorageUI {
     public SpawnerStorageUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
+        this.layoutConfig = plugin.getGuiLayoutConfig();
 
         // Initialize caches with appropriate initial capacity
-        this.staticButtons = new HashMap<>(4);
+        this.staticButtons = new HashMap<>(8);
         this.navigationButtonCache = new ConcurrentHashMap<>(16);
         this.pageIndicatorCache = new ConcurrentHashMap<>(16);
 
@@ -48,34 +54,71 @@ public class SpawnerStorageUI {
         startCleanupTask();
     }
 
+    public void reload() {
+        // Reload layout configuration
+        this.layoutConfig = plugin.getGuiLayoutConfig();
+
+        // Clear caches to force reloading of buttons
+        navigationButtonCache.clear();
+        pageIndicatorCache.clear();
+        staticButtons.clear();
+
+        // Reinitialize static buttons
+        initializeStaticButtons();
+    }
+
     private void initializeStaticButtons() {
+        GuiLayout layout = layoutConfig.getCurrentLayout();
+
         // Create return button
-        staticButtons.put("return", createButton(
-                Material.RED_STAINED_GLASS_PANE,
-                languageManager.getGuiItemName("return_button.name"),
-                languageManager.getGuiItemLoreAsList("return_button.lore")
-        ));
+        GuiButton returnButton = layout.getButton("return");
+        if (returnButton != null) {
+            staticButtons.put("return", createButton(
+                    returnButton.getMaterial(),
+                    languageManager.getGuiItemName("return_button.name"),
+                    languageManager.getGuiItemLoreAsList("return_button.lore")
+            ));
+        }
 
         // Create take all button
-        staticButtons.put("takeAll", createButton(
-                Material.CHEST,
-                languageManager.getGuiItemName("take_all_button.name"),
-                languageManager.getGuiItemLoreAsList("take_all_button.lore" )
-        ));
+        GuiButton takeAllButton = layout.getButton("take_all");
+        if (takeAllButton != null) {
+            staticButtons.put("takeAll", createButton(
+                    takeAllButton.getMaterial(),
+                    languageManager.getGuiItemName("take_all_button.name"),
+                    languageManager.getGuiItemLoreAsList("take_all_button.lore")
+            ));
+        }
 
         // Create discard all button
-        staticButtons.put("discardAll", createButton(
-                Material.CAULDRON,
-                languageManager.getGuiItemName("discard_all_button.name"),
-                languageManager.getGuiItemLoreAsList("discard_all_button.lore")
-        ));
+        GuiButton discardAllButton = layout.getButton("discard_all");
+        if (discardAllButton != null) {
+            staticButtons.put("discardAll", createButton(
+                    discardAllButton.getMaterial(),
+                    languageManager.getGuiItemName("discard_all_button.name"),
+                    languageManager.getGuiItemLoreAsList("discard_all_button.lore")
+            ));
+        }
 
-        // Pre-create equipment toggle buttons
-        staticButtons.put("itemFilter", createButton(
-                Material.HOPPER,
-                languageManager.getGuiItemName("item_filter_button.name"),
-                languageManager.getGuiItemLoreAsList("item_filter_button.lore")
-        ));
+        // Create drop page button
+        GuiButton dropPageButton = layout.getButton("drop_page");
+        if (dropPageButton != null) {
+            staticButtons.put("dropPage", createButton(
+                    dropPageButton.getMaterial(),
+                    languageManager.getGuiItemName("drop_page_button.name"),
+                    languageManager.getGuiItemLoreAsList("drop_page_button.lore")
+            ));
+        }
+
+        // Create item filter button
+        GuiButton itemFilterButton = layout.getButton("item_filter");
+        if (itemFilterButton != null) {
+            staticButtons.put("itemFilter", createButton(
+                    itemFilterButton.getMaterial(),
+                    languageManager.getGuiItemName("item_filter_button.name"),
+                    languageManager.getGuiItemLoreAsList("item_filter_button.lore")
+            ));
+        }
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
@@ -121,7 +164,7 @@ public class SpawnerStorageUI {
         // Add items from virtual inventory
         addPageItems(updates, slotsToEmpty, spawner, page);
 
-        // Add navigation buttons
+        // Add navigation buttons based on layout
         addNavigationButtons(updates, spawner, page, totalPages);
 
         // Apply all updates in a batch
@@ -185,45 +228,65 @@ public class SpawnerStorageUI {
             totalPages = calculateTotalPages(spawner);
         }
 
-        // Navigation row base slot
-        int navRowBase = NAVIGATION_ROW * 9;
+        GuiLayout layout = layoutConfig.getCurrentLayout();
 
-        // Add previous page button if not on first page
-        if (page > 1) {
+        // Add previous page button if not on first page and button is enabled
+        if (page > 1 && layout.hasButton("previous_page")) {
+            GuiButton prevButton = layout.getButton("previous_page");
             String cacheKey = "prev-" + (page - 1);
-            ItemStack prevButton = navigationButtonCache.computeIfAbsent(
-                    cacheKey, k -> createNavigationButton("previous", page - 1));
-            updates.put(navRowBase + 3, prevButton);
+            ItemStack prevItem = navigationButtonCache.computeIfAbsent(
+                    cacheKey, k -> createNavigationButton("previous", page - 1, prevButton.getMaterial()));
+            updates.put(prevButton.getSlot(), prevItem);
         }
 
-        // Add next page button if not on last page
-        if (page < totalPages) {
+        // Add next page button if not on last page and button is enabled
+        if (page < totalPages && layout.hasButton("next_page")) {
+            GuiButton nextButton = layout.getButton("next_page");
             String cacheKey = "next-" + (page + 1);
-            ItemStack nextButton = navigationButtonCache.computeIfAbsent(
-                    cacheKey, k -> createNavigationButton("next", page + 1));
-            updates.put(navRowBase + 5, nextButton);
+            ItemStack nextItem = navigationButtonCache.computeIfAbsent(
+                    cacheKey, k -> createNavigationButton("next", page + 1, nextButton.getMaterial()));
+            updates.put(nextButton.getSlot(), nextItem);
         }
 
-        // Add take all button in the center position (where page indicator was)
-        updates.put(navRowBase + 4, staticButtons.get("takeAll"));
+        // Add take all button if enabled
+        if (layout.hasButton("take_all")) {
+            GuiButton takeAllButton = layout.getButton("take_all");
+            updates.put(takeAllButton.getSlot(), staticButtons.get("takeAll"));
+        }
 
-        // Add discard all button in the first position
-        updates.put(navRowBase, staticButtons.get("discardAll"));
+        // Add discard all button if enabled
+        if (layout.hasButton("discard_all")) {
+            GuiButton discardAllButton = layout.getButton("discard_all");
+            updates.put(discardAllButton.getSlot(), staticButtons.get("discardAll"));
+        }
 
-        // Add item filter button
-        updates.put(navRowBase + 1, staticButtons.get("itemFilter"));
+        // Add drop page button if enabled
+        if (layout.hasButton("drop_page")) {
+            GuiButton dropPageButton = layout.getButton("drop_page");
+            updates.put(dropPageButton.getSlot(), staticButtons.get("dropPage"));
+        }
 
-        // Add return button
-        updates.put(navRowBase + 8, staticButtons.get("return"));
+        // Add item filter button if enabled
+        if (layout.hasButton("item_filter")) {
+            GuiButton itemFilterButton = layout.getButton("item_filter");
+            updates.put(itemFilterButton.getSlot(), staticButtons.get("itemFilter"));
+        }
 
-        // Add shop page indicator only if shop integration is available
-        if (plugin.hasSellIntegration()) {
+        // Add return button if enabled
+        if (layout.hasButton("return")) {
+            GuiButton returnButton = layout.getButton("return");
+            updates.put(returnButton.getSlot(), staticButtons.get("return"));
+        }
+
+        // Add shop page indicator only if shop integration is available and button is enabled
+        if (plugin.hasSellIntegration() && layout.hasButton("shop_indicator")) {
+            GuiButton shopButton = layout.getButton("shop_indicator");
             String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
             int finalTotalPages = totalPages;
             ItemStack shopIndicator = pageIndicatorCache.computeIfAbsent(
-                    indicatorKey, k -> createShopPageIndicator(page, finalTotalPages, spawner)
+                    indicatorKey, k -> createShopPageIndicator(page, finalTotalPages, spawner, shopButton.getMaterial())
             );
-            updates.put(navRowBase + 7, shopIndicator);
+            updates.put(shopButton.getSlot(), shopIndicator);
         }
     }
 
@@ -252,7 +315,7 @@ public class SpawnerStorageUI {
         return item;
     }
 
-    private ItemStack createNavigationButton(String type, int targetPage) {
+    private ItemStack createNavigationButton(String type, int targetPage, Material material) {
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("target_page", String.valueOf(targetPage));
 
@@ -268,10 +331,10 @@ public class SpawnerStorageUI {
         buttonName = languageManager.getGuiItemName(buttonKey + ".name", placeholders);
         String[] buttonLore = languageManager.getGuiItemLore(buttonKey + ".lore", placeholders);
 
-        return createButton(Material.SPECTRAL_ARROW, buttonName, Arrays.asList(buttonLore));
+        return createButton(material, buttonName, Arrays.asList(buttonLore));
     }
 
-    private ItemStack createShopPageIndicator(int currentPage, int totalPages, SpawnerData spawner) {
+    private ItemStack createShopPageIndicator(int currentPage, int totalPages, SpawnerData spawner, Material material) {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int usedSlots = virtualInv.getUsedSlots();
@@ -290,7 +353,7 @@ public class SpawnerStorageUI {
         String name = languageManager.getGuiItemName("shop_page_indicator.name", placeholders);
         List<String> lore = languageManager.getGuiItemLoreAsList("shop_page_indicator.lore", placeholders);
 
-        return createButton(Material.GOLD_INGOT, name, lore);
+        return createButton(material, name, lore);
     }
 
     private void startCleanupTask() {

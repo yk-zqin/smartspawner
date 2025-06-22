@@ -296,7 +296,7 @@ public class SpawnerFileHandler {
             try {
                 if (version >= 3) {
                     if (settings.length >= 13) {
-                        spawner.setSpawnerExp(Integer.parseInt(settings[0]));
+                        spawner.setSpawnerExpData(Integer.parseInt(settings[0]));
                         spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                         spawner.setSpawnerRange(Integer.parseInt(settings[2]));
                         spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
@@ -311,7 +311,7 @@ public class SpawnerFileHandler {
                         spawner.setIsAtCapacity(Boolean.parseBoolean(settings[12]));
                     }
                 } else {
-                    spawner.setSpawnerExp(Integer.parseInt(settings[0]));
+                    spawner.setSpawnerExpData(Integer.parseInt(settings[0]));
                     spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                     spawner.setSpawnerRange(Integer.parseInt(settings[2]));
                     spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));

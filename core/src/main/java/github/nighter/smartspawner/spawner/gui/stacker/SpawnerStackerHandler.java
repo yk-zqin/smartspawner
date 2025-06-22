@@ -294,7 +294,7 @@ public class SpawnerStackerHandler implements Listener {
         chunkSpawnerLimiter.unregisterSpawner(spawner.getSpawnerLocation(), actualChange);
 
         // Update stack size and give spawners to player
-        spawner.setStackSize(targetSize, player);
+        spawner.setStackSize(targetSize);
         giveSpawnersToPlayer(player, actualChange, spawner.getEntityType());
 
         // Play sound
@@ -358,7 +358,7 @@ public class SpawnerStackerHandler implements Listener {
         chunkSpawnerLimiter.registerSpawnerStack(spawner.getSpawnerLocation(), actualChange);
 
         removeValidSpawnersFromInventory(player, requiredType, actualChange, scanResult.spawnerSlots);
-        spawner.setStackSize(currentSize + actualChange, player);
+        spawner.setStackSize(currentSize + actualChange);
 
         // Notify if max stack reached
         if (actualChange < changeAmount) {

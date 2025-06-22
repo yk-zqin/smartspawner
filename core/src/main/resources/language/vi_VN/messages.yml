@@ -79,6 +79,10 @@ take_all_items:
   action_bar: "&#37eb9aĐã ʟấʏ &#f8f8ff%amount% &#37eb9aᴠậᴛ ᴘʜẩᴍ ᴛừ ʟồɴɢ sᴘᴀᴡɴ"
   sound: entity.item.pickup
 
+no_items_to_drop:
+  message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ᴛʜả"
+  sound: block.note_block.pling
+
 # ------------------------------------------------------
 #         Spawner - Stacker GUI Interaction
 # ------------------------------------------------------

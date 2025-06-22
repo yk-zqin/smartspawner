@@ -176,10 +176,6 @@ public class SpawnerData {
     }
 
     public void setStackSize(int stackSize) {
-        setStackSize(stackSize, null);
-    }
-
-    public void setStackSize(int stackSize, Player player) {
         lock.lock();
         try {
             updateStackSize(stackSize);
@@ -209,6 +205,7 @@ public class SpawnerData {
 
         this.stackSize = newStackSize;
         loadConfigurationValues();
+        this.spawnerExp = Math.min(this.spawnerExp, this.maxStoredExp);
         this.lastSpawnTime = System.currentTimeMillis() + this.spawnDelay;
         this.virtualInventory = newInventory;
 
@@ -241,6 +238,10 @@ public class SpawnerData {
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(Math.max(0, exp), maxStoredExp);
         updateHologramData();
+    }
+
+    public void setSpawnerExpData(int exp) {
+        this.spawnerExp = exp;
     }
 
     public Map<Integer, ItemStack> getDisplayInventory() {

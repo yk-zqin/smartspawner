@@ -46,6 +46,13 @@ public class FilterConfigUI implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
+    public void reload() {
+        // Clear existing static buttons
+        staticButtons.clear();
+        // Reinitialize static buttons
+        initializeStaticButtons();
+    }
+
     private void initializeStaticButtons() {
         // Create divider button that also functions as return button
         staticButtons.put("divider", createButton(

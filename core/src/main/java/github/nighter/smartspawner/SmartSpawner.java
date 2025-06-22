@@ -22,6 +22,7 @@ import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
 import github.nighter.smartspawner.spawner.gui.main.ItemCache;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
@@ -84,6 +85,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerItemFactory spawnerItemFactory;
 
     // Core UI components
+    private GuiLayoutConfig guiLayoutConfig;
     private final ItemCache itemCache = new ItemCache(500, 30);
     private SpawnerMenuUI spawnerMenuUI;
     private SpawnerStorageUI spawnerStorageUI;
@@ -239,6 +241,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerFileHandler = new SpawnerFileHandler(this);
         this.spawnerManager = new SpawnerManager(this);
         this.spawnerManager.reloadAllHolograms();
+        this.guiLayoutConfig = new GuiLayoutConfig(this);
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.filterConfigUI = new FilterConfigUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
@@ -400,9 +403,12 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     public void reload() {
-        // reload static components
-        this.spawnerStorageUI = new SpawnerStorageUI(this);
-        this.filterConfigUI = new FilterConfigUI(this);
+        // reload gui components
+        guiLayoutConfig.reloadLayouts();
+        spawnerStorageAction.reload();
+        spawnerStorageUI.reload();
+        filterConfigUI.reload();
+
         // reload services
         if (auraSkillsIntegration != null) {
             auraSkillsIntegration.reloadConfig();
