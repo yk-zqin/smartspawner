@@ -25,5 +25,9 @@ public class TextureInitializer {
                 EntityType.SNOW_GOLEM,
                 "1fdfd1f7538c040258be7a91446da89ed845cc5ef728eb5e690543378fcf4"
         );
+        TextureWrapper.addVersionSpecificTexture(
+                EntityType.CREAKING,
+                "ac91c87bbe7f4c586e0f8b60f9b76d173a41daa302944531703be9ff4fd117f8"
+        );
     }
 }
