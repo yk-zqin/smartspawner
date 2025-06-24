@@ -2,6 +2,8 @@ plugins {
     id 'java-library'
 }
 
+group 'NMS:v1_20'
+
 dependencies {
     implementation project(':core')
     implementation project(':api')
