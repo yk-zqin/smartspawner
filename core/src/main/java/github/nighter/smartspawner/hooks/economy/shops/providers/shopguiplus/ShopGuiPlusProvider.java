@@ -1,7 +1,7 @@
-package github.nighter.smartspawner.economy.shops.providers.shopguiplus;
+package github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
 import lombok.RequiredArgsConstructor;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import org.bukkit.Bukkit;

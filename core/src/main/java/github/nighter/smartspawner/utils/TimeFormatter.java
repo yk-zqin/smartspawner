@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.configs;
+package github.nighter.smartspawner.utils;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

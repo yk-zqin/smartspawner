@@ -46,6 +46,7 @@ public class SpawnerMenuAction implements Listener {
     private final LanguageManager languageManager;
     private final MessageService messageService;
     private final SpawnerSellManager spawnerSellManager;
+    private AuraSkillsIntegration auraSkills;
 
     // Anti spam click properties
     private final Map<UUID, Long> lastInfoClickTime = new ConcurrentHashMap<>();
@@ -59,6 +60,11 @@ public class SpawnerMenuAction implements Listener {
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.spawnerSellManager = plugin.getSpawnerSellManager();
+        this.auraSkills = plugin.getIntegrationManager().getAuraSkillsIntegration();
+    }
+
+    public void reload() {
+        this.auraSkills = plugin.getIntegrationManager().getAuraSkillsIntegration();
     }
 
     @EventHandler
@@ -191,7 +197,7 @@ public class SpawnerMenuAction implements Listener {
         }
 
         // Give AuraSkills XP if integration is enabled
-        if (plugin.getAuraSkillsIntegration() != null && plugin.getAuraSkillsIntegration().isEnabled()) {
+        if (auraSkills != null) {
             giveAuraSkillsXp(player, spawner, initialExp);
         }
 
@@ -298,7 +304,6 @@ public class SpawnerMenuAction implements Listener {
 
     private void giveAuraSkillsXp(Player player, SpawnerData spawner, int totalExp) {
         try {
-            AuraSkillsIntegration auraSkills = plugin.getAuraSkillsIntegration();
             if (auraSkills == null || !auraSkills.isEnabled()) {
                 return;
             }

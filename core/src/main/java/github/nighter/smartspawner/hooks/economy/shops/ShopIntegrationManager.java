@@ -1,12 +1,12 @@
-package github.nighter.smartspawner.economy.shops;
+package github.nighter.smartspawner.hooks.economy.shops;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.shops.api.ShopProvider;
-import github.nighter.smartspawner.economy.shops.providers.economyshopgui.EconomyShopGUIProvider;
-import github.nighter.smartspawner.economy.shops.providers.excellentshop.ExcellentShopProvider;
-import github.nighter.smartspawner.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
-import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerHook;
-import github.nighter.smartspawner.economy.shops.providers.zshop.ZShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.EconomyShopGUIProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.excellentshop.ExcellentShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerHook;
+import github.nighter.smartspawner.hooks.economy.shops.providers.zshop.ZShopProvider;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;

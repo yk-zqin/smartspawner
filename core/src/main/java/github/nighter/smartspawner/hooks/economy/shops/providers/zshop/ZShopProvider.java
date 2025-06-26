@@ -1,9 +1,9 @@
-package github.nighter.smartspawner.economy.shops.providers.zshop;
+package github.nighter.smartspawner.hooks.economy.shops.providers.zshop;
 
 import fr.maxlego08.zshop.api.ShopManager;
 import fr.maxlego08.zshop.api.buttons.ItemButton;
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

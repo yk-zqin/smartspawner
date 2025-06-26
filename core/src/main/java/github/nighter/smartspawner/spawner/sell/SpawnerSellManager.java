@@ -164,10 +164,10 @@ public class SpawnerSellManager {
         List<ItemStack> itemsToRemove = new ArrayList<>();
 
         // Get valid loot items for price lookup
-        List<LootItem> validLootItems = spawner.getValidLootItems();
+        List<LootItem> allLootItems = spawner.getLootConfig().getAllItems();
 
         // Create durability-ignorant price cache for efficiency
-        Map<String, Double> priceCache = createDurabilityIgnorantPriceCache(validLootItems);
+        Map<String, Double> priceCache = createDurabilityIgnorantPriceCache(allLootItems);
 
         // Process each item type in the inventory
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : consolidatedItems.entrySet()) {

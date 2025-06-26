@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.v1_21;
+package github.nighter.smartspawner.v1_21_4;
 
 import github.nighter.smartspawner.nms.ParticleWrapper;
 import org.bukkit.Particle;

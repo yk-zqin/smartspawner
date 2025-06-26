@@ -1,8 +1,8 @@
-package github.nighter.smartspawner.economy;
+package github.nighter.smartspawner.hooks.economy;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.currency.CurrencyManager;
-import github.nighter.smartspawner.economy.shops.ShopIntegrationManager;
+import github.nighter.smartspawner.hooks.economy.currency.CurrencyManager;
+import github.nighter.smartspawner.hooks.economy.shops.ShopIntegrationManager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;

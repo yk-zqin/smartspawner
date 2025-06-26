@@ -2,23 +2,23 @@ package github.nighter.smartspawner.hooks.protections;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.protections.api.*;
+import github.nighter.smartspawner.hooks.IntegrationManager;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class CheckBreakBlock {
-    // Check if player can break a block
     public static boolean CanPlayerBreakBlock(@NotNull final Player player, @NotNull Location location) {
-
         if(player.isOp() || player.hasPermission("*")) return true;
 
-        if (SmartSpawner.hasGriefPrevention && !GriefPrevention.canPlayerBreakClaimBlock(player, location)) return false;
-        if (SmartSpawner.hasWorldGuard && !WorldGuard.canPlayerBreakBlockInRegion(player, location)) return false;
-        if (SmartSpawner.hasLands && !Lands.canPlayerBreakClaimBlock(player, location)) return false;
-        if (SmartSpawner.hasTowny && !Towny.canPlayerInteractSpawner(player, location)) return false;
-        if (SmartSpawner.hasSimpleClaimSystem && !SimpleClaimSystem.canPlayerBreakClaimBlock(player, location)) return false;
+        IntegrationManager integrationManager = SmartSpawner.getInstance().getIntegrationManager();
+
+        if (integrationManager.isHasGriefPrevention() && !GriefPrevention.canPlayerBreakClaimBlock(player, location)) return false;
+        if (integrationManager.isHasWorldGuard() && !WorldGuard.canPlayerBreakBlockInRegion(player, location)) return false;
+        if (integrationManager.isHasLands() && !Lands.canPlayerBreakClaimBlock(player, location)) return false;
+        if (integrationManager.isHasTowny() && !Towny.canPlayerInteractSpawner(player, location)) return false;
+        if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerBreakClaimBlock(player, location)) return false;
         return true;
     }
-
 }

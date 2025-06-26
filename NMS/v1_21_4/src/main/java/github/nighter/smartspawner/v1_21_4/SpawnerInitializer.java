@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.v1_21;
+package github.nighter.smartspawner.v1_21_4;
 import org.bukkit.entity.EntityType;
 import github.nighter.smartspawner.nms.SpawnerWrapper;
 import java.util.Arrays;

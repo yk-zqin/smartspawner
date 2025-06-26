@@ -104,6 +104,11 @@ public class SpawnerPlaceListener implements Listener {
     }
 
     private void handleSpawnerSetup(Block block, Player player, EntityType entityType, boolean isVanillaSpawner) {
+        // Validate entity type
+        if (entityType == null || entityType == EntityType.UNKNOWN) {
+            return;
+        }
+
         // Get the spawner state once
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
 
@@ -114,8 +119,7 @@ public class SpawnerPlaceListener implements Listener {
             return;
         }
 
-        // For smart spawners, only use scheduler if actually needed
-        // Some servers might not need this delay, so consider making it configurable
+        // For smart spawners, we need to delay the setup to ensure the block is fully placed
         Scheduler.runLocationTaskLater(block.getLocation(), () -> {
             // Recheck the block state in case it changed during the delay
             if (block.getType() != Material.SPAWNER) {

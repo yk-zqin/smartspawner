@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.economy.currency;
+package github.nighter.smartspawner.hooks.economy.currency;
 
 import github.nighter.smartspawner.SmartSpawner;
 import lombok.Getter;

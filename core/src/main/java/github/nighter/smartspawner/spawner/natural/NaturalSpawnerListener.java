@@ -1,37 +1,34 @@
-package github.nighter.smartspawner;
+package github.nighter.smartspawner.spawner.natural;
 
-import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-
+import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.SpawnerSpawnEvent;
-import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.SpawnerSpawnEvent;
 
-import java.util.List;
-
-public class GlobalEventHandlers implements Listener {
+public class NaturalSpawnerListener implements Listener {
     private final SmartSpawner plugin;
     private final SpawnerManager spawnerManager;
-    private static final int CHECK_RADIUS = 4; // Radius to check around the chicken
+    private static final int CHECK_RADIUS = 4;
 
-    public GlobalEventHandlers(SmartSpawner plugin) {
+    public NaturalSpawnerListener(SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerManager = plugin.getSpawnerManager();
     }
 
-    // Prevent spawner from spawning mobs
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onCreatureSpawn(SpawnerSpawnEvent event){
         if (event.getSpawner() == null) return;
         SpawnerData spawner = spawnerManager.getSpawnerByLocation(event.getSpawner().getLocation());
         if (spawner != null && spawner.getSpawnerActive()) {
+            // Prevent smart spawner from spawning mobs
             event.setCancelled(true);
         }
     }
@@ -94,39 +91,5 @@ public class GlobalEventHandlers implements Listener {
             }
         }
         return false;
-    }
-
-    @EventHandler
-    public void onPluginEnable(PluginEnableEvent event) {
-        if (plugin.hasShopIntegration()) {
-            plugin.debug("Shop integration already active, ignoring plugin enable event for: " +
-                    event.getPlugin().getName());
-            return;
-        }
-
-        String pluginName = event.getPlugin().getName();
-
-        // Support EconomyShopGUI for double integration
-        if (pluginName.equalsIgnoreCase("EconomyShopGUI") ||
-                pluginName.equalsIgnoreCase("EconomyShopGUI-Premium")) {
-
-            Scheduler.runTaskLater(() -> {
-                plugin.getItemPriceManager().reload();
-                plugin.getEntityLootRegistry().loadConfigurations();
-                reloadSpawnerLootConfigs();
-            }, 20L); // Run after 1 second to ensure the plugin is fully loaded
-        }
-    }
-
-    private void reloadSpawnerLootConfigs() {
-        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-        for (SpawnerData spawner : allSpawners) {
-            try {
-                spawner.reloadLootConfig();
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to reload loot config for spawner " +
-                        spawner.getSpawnerId() + ": " + e.getMessage());
-            }
-        }
     }
 }

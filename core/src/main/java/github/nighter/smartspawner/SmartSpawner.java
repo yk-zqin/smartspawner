@@ -1,7 +1,5 @@
 package github.nighter.smartspawner;
 
-import fr.xyness.SCS.API.SimpleClaimSystemAPI_Provider;
-import fr.xyness.SCS.SimpleClaimSystem;
 import github.nighter.smartspawner.api.SmartSpawnerAPI;
 import github.nighter.smartspawner.api.SmartSpawnerPlugin;
 import github.nighter.smartspawner.api.SmartSpawnerAPIImpl;
@@ -13,13 +11,13 @@ import github.nighter.smartspawner.commands.list.ListCommand;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.reload.ReloadCommand;
-import github.nighter.smartspawner.configs.TimeFormatter;
-import github.nighter.smartspawner.economy.ItemPriceManager;
-import github.nighter.smartspawner.economy.shops.providers.shopguiplus.SpawnerProvider;
+import github.nighter.smartspawner.hooks.PluginCompatibilityHandler;
+import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
+import github.nighter.smartspawner.utils.TimeFormatter;
+import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
+import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerProvider;
 import github.nighter.smartspawner.extras.HopperHandler;
-import github.nighter.smartspawner.hooks.protections.api.Lands;
-import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
-import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
+import github.nighter.smartspawner.hooks.IntegrationManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
@@ -50,16 +48,13 @@ import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.updates.ConfigUpdater;
 import github.nighter.smartspawner.nms.VersionInitializer;
-
 import github.nighter.smartspawner.updates.LanguageUpdater;
 import github.nighter.smartspawner.updates.UpdateChecker;
 import github.nighter.smartspawner.utils.SpawnerTypeChecker;
+
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -73,6 +68,9 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private static SmartSpawner instance;
     public final int DATA_VERSION = 3;
     private final boolean debugMode = getConfig().getBoolean("debug", false);
+
+    // Integration Manager
+    private IntegrationManager integrationManager;
 
     // Services
     private TimeFormatter timeFormatter;
@@ -109,7 +107,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private HopperHandler hopperHandler;
 
     // Event handlers and utilities
-    private GlobalEventHandlers globalEventHandlers;
+    private PluginCompatibilityHandler pluginCompatibilityHandler;
+    private NaturalSpawnerListener naturalSpawnerListener;
     private SpawnerLootGenerator spawnerLootGenerator;
     private SpawnerListGUI spawnerListGUI;
     private SpawnerRangeChecker rangeChecker;
@@ -130,20 +129,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private ListCommand listCommand;
     private HologramCommand hologramCommand;
 
-    // Integration with AuraSkills
-    private AuraSkillsIntegration auraSkillsIntegration;
-    public static boolean hasAuraSkills = false;
-
-    // Integration flags - static for quick access
-    public static boolean hasTowny = false;
-    public static boolean hasLands = false;
-    public static boolean hasWorldGuard = false;
-    public static boolean hasGriefPrevention = false;
-    public static boolean hasSuperiorSkyblock2 = false;
-    public static boolean hasBentoBox = false;
-    public static boolean hasSimpleClaimSystem = false;
-    public static boolean hasRedProtect = false;
-
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
 
@@ -155,15 +140,17 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Initialize version-specific components
         initializeVersionComponents();
 
+        // Initialize plugin integrations
+        this.integrationManager = new IntegrationManager(this);
+        integrationManager.initializeIntegrations();
+
         // Check for data migration needs
         migrateDataIfNeeded();
 
-        // Initialize core components in the same order as before
+        // Initialize core components
         initializeComponents();
 
         // Setup plugin infrastructure
-        checkProtectionPlugins();
-        checkIntegrationPlugins();
         setupCommand();
         setupBtatsMetrics();
         registerListeners();
@@ -266,7 +253,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeListeners() {
-        this.globalEventHandlers = new GlobalEventHandlers(this);
+        this.pluginCompatibilityHandler = new PluginCompatibilityHandler(this);
+        this.naturalSpawnerListener = new NaturalSpawnerListener(this);
         this.spawnerExplosionListener = new SpawnerExplosionListener(this);
         this.spawnerBreakListener = new SpawnerBreakListener(this);
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
@@ -280,7 +268,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         PluginManager pm = getServer().getPluginManager();
 
         // Register core listeners
-        pm.registerEvents(globalEventHandlers, this);
+        pm.registerEvents(pluginCompatibilityHandler, this);
         pm.registerEvents(spawnerListGUI, this);
         pm.registerEvents(spawnerBreakListener, this);
         pm.registerEvents(spawnerPlaceListener, this);
@@ -317,91 +305,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         );
     }
 
-    private void checkProtectionPlugins() {
-        hasWorldGuard = checkPlugin("WorldGuard", () -> {
-            Plugin worldGuardPlugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
-            return worldGuardPlugin != null && worldGuardPlugin.isEnabled();
-        }, true);
-
-        hasGriefPrevention = checkPlugin("GriefPrevention", () -> {
-            Plugin griefPlugin = Bukkit.getPluginManager().getPlugin("GriefPrevention");
-            return griefPlugin instanceof GriefPrevention;
-        }, true);
-
-        hasLands = checkPlugin("Lands", () -> {
-            Plugin landsPlugin = Bukkit.getPluginManager().getPlugin("Lands");
-            if (landsPlugin != null) {
-                new Lands(this);
-                return true;
-            }
-            return false;
-        }, true);
-
-        hasTowny = checkPlugin("Towny", () -> {
-            try {
-                Class.forName("com.palmergames.bukkit.towny.TownyAPI");
-                return com.palmergames.bukkit.towny.TownyAPI.getInstance() != null;
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
-        }, true);
-
-        hasSuperiorSkyblock2 = checkPlugin("SuperiorSkyblock2", () -> {
-            Plugin superiorSkyblock2 = Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2");
-            if(superiorSkyblock2 != null) {
-                SuperiorSkyblock2 ssb2 = new SuperiorSkyblock2();
-                Bukkit.getPluginManager().registerEvents(ssb2, this);
-                return true;
-            }
-            return false;
-        }, true);
-
-        hasBentoBox = checkPlugin("BentoBox", () -> {
-            Plugin bentoPlugin = Bukkit.getPluginManager().getPlugin("BentoBox");
-            if (bentoPlugin != null) {
-                return true;
-            }
-            return false;
-        }, true);
-        hasSimpleClaimSystem = checkPlugin("SimpleClaimSystem", () -> {
-            Plugin simpleClaimPlugin = Bukkit.getPluginManager().getPlugin("SimpleClaimSystem");
-            SimpleClaimSystemAPI_Provider.initialize((SimpleClaimSystem) simpleClaimPlugin);
-            return simpleClaimPlugin != null;
-        }, true);
-        hasRedProtect = checkPlugin("RedProtect", () -> {
-            Plugin pRP = Bukkit.getPluginManager().getPlugin("RedProtect");
-            if (pRP != null && pRP.isEnabled()){
-                return true;
-            }
-            return false;
-        }, true);
-    }
-
-    private void checkIntegrationPlugins() {
-        hasAuraSkills = checkPlugin("AuraSkills", () -> {
-            Plugin auraSkillsPlugin = Bukkit.getPluginManager().getPlugin("AuraSkills");
-            if (auraSkillsPlugin != null && auraSkillsPlugin.isEnabled()) {
-                this.auraSkillsIntegration = new AuraSkillsIntegration(this);
-                return true;
-            }
-            return false;
-        }, true);
-    }
-
-    private boolean checkPlugin(String pluginName, PluginCheck checker, boolean logSuccess) {
-        try {
-            if (checker.check()) {
-                if (logSuccess) {
-                    getLogger().info(pluginName + " integration enabled successfully!");
-                }
-                return true;
-            }
-        } catch (NoClassDefFoundError | NullPointerException e) {
-            // Silent fail - plugin not available
-        }
-        return false;
-    }
-
     public void reload() {
         // reload gui components
         guiLayoutConfig.reloadLayouts();
@@ -410,9 +313,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         filterConfigUI.reload();
 
         // reload services
-        if (auraSkillsIntegration != null) {
-            auraSkillsIntegration.reloadConfig();
-        }
+        integrationManager.reload();
+        spawnerMenuAction.reload();
         timeFormatter.clearCache();
         itemCache.clear();
     }
@@ -453,11 +355,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (spawnerClickManager != null) spawnerClickManager.cleanup();
         if (spawnerStackerHandler != null) spawnerStackerHandler.cleanupAll();
         if (spawnerStorageUI != null) spawnerStorageUI.cleanup();
-    }
-
-    @FunctionalInterface
-    private interface PluginCheck {
-        boolean check();
     }
 
     // Spawner Provider for ShopGUI+ integration

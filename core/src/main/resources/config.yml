@@ -147,7 +147,6 @@ custom_economy:
 #---------------------------------------------------
 # Configuration for automated item collection
 hopper:
-  # Need a full server restart to apply changes to this setting
   enabled: false
   check_delay: 3s       # Time between collection checks (see time format guide above)
   stack_per_transfer: 5 # Number of item stacks transferred in one operation (max 5)

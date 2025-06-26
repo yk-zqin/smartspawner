@@ -115,7 +115,12 @@ public class FilterConfigUI implements Listener {
         inventory.clear();
 
         // Get all available loot items
-        List<LootItem> allLootItems = spawner.getLootConfig().getAllItems();
+        List<LootItem> allLootItems;
+        if (spawner.getLootConfig() == null) {
+            allLootItems = Collections.emptyList();
+        } else {
+            allLootItems = spawner.getLootConfig().getAllItems();
+        }
 
         // Get currently filtered items for quick lookup
         Set<Material> filteredItems = spawner.getFilteredItems();

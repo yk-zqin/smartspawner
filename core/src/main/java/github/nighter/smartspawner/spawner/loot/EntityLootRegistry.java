@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.spawner.loot;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.ItemPriceManager;
+import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;

@@ -1,7 +1,7 @@
-package github.nighter.smartspawner.economy.shops.providers.economyshopgui;
+package github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
 import lombok.RequiredArgsConstructor;
 import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
 import me.gypopo.economyshopgui.objects.ShopItem;
@@ -17,6 +17,9 @@ public class EconomyShopGUIProvider implements ShopProvider {
 
     @Override
     public String getPluginName() {
+        if (plugin.getServer().getPluginManager().getPlugin("EconomyShopGUI-Premium") != null) {
+            return "EconomyShopGUI-Premium";
+        }
         return "EconomyShopGUI";
     }
 
@@ -35,7 +38,8 @@ public class EconomyShopGUIProvider implements ShopProvider {
             if (economyShopGUI != null && economyShopGUI.isEnabled()) {
                 // Verify the API is available
                 Class.forName("me.gypopo.economyshopgui.api.EconomyShopGUIHook");
-                return true;
+                ShopItem shopItem = EconomyShopGUIHook.getShopItem(new ItemStack(Material.BONE));
+                return shopItem != null; // Check if we can retrieve a shop item
             }
         } catch (ClassNotFoundException | NoClassDefFoundError e) {
             plugin.debug("EconomyShopGUI API not found: " + e.getMessage());
