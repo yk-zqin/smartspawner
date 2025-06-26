@@ -60,6 +60,7 @@ public class VersionInitializer {
         Map<String, String> supportedVersions = new HashMap<>();
         supportedVersions.put("1.20", "v1_20");
         supportedVersions.put("1.21", "v1_21");
+        supportedVersions.put("1.21.4", "v1_21_4");
 
         // Find matching version path
         for (Map.Entry<String, String> entry : supportedVersions.entrySet()) {
