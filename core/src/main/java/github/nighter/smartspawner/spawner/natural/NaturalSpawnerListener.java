@@ -24,12 +24,20 @@ public class NaturalSpawnerListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onCreatureSpawn(SpawnerSpawnEvent event){
+    public void onSpawnerSpawn(SpawnerSpawnEvent event) {
         if (event.getSpawner() == null) return;
-        SpawnerData spawner = spawnerManager.getSpawnerByLocation(event.getSpawner().getLocation());
-        if (spawner != null && spawner.getSpawnerActive()) {
-            // Prevent smart spawner from spawning mobs
+
+        SpawnerData smartSpawner = spawnerManager.getSpawnerByLocation(event.getSpawner().getLocation());
+
+        if (smartSpawner != null) {
             event.setCancelled(true);
+            plugin.debug("Prevented natural spawn from spawner at " + event.getSpawner().getLocation());
+        } else {
+            // This is a natural spawner - check if natural spawning is allowed
+            if (!plugin.getConfig().getBoolean("natural_spawner.spawn_mobs", true)) {
+                event.setCancelled(true);
+                plugin.debug("Prevented natural spawn from spawner at " + event.getSpawner().getLocation() + " due to config setting");
+            }
         }
     }
 

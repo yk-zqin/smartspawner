@@ -78,11 +78,22 @@ spawner_limits:
   max_per_chunk: -1
 
 #---------------------------------------------------
-#               Natural Spawner Settings
+#           Natural/Vanilla Spawner Settings
 #---------------------------------------------------
 # Controls behavior of naturally generated dungeon spawners
 natural_spawner:
-  breakable: false       # Whether vanilla/natural spawners can be broken and converted into smart spawner
+  # Whether natural spawners can be broken and collected
+  breakable: false
+
+  # Convert natural spawners to smart spawners when broken
+  # If false, natural spawners will drop vanilla spawner items
+  convert_to_smart_spawner: false
+
+  # Whether natural spawners will spawn mobs
+  spawn_mobs: true
+
+  # Whether natural spawner block will be protected from explosions
+  protect_from_explosions: false
 
 #---------------------------------------------------
 #                Economy Settings

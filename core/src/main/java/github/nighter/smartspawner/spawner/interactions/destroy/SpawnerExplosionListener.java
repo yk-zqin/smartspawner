@@ -32,8 +32,6 @@ public class SpawnerExplosionListener implements Listener {
         this.hopperHandler = plugin.getHopperHandler();
     }
 
-
-
     @EventHandler
     public void onEntityExplosion(EntityExplodeEvent event) {
         handleExplosion(event.blockList());
@@ -81,6 +79,9 @@ public class SpawnerExplosionListener implements Listener {
                     }
                 } else {
                     // Allow vanilla spawners to be destroyed
+                    if (plugin.getConfig().getBoolean("natural_spawner.protect_from_explosions", false)) {
+                        blocksToRemove.add(block);
+                    }
                 }
             } else if (block.getType() == Material.RESPAWN_ANCHOR) {
                 if (plugin.getConfig().getBoolean("spawner_properties.default.protect_from_explosions", true)) {

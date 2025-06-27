@@ -72,7 +72,7 @@ public class SpawnerBreakListener implements Listener {
 
         final SpawnerData spawner = spawnerManager.getSpawnerByLocation(location);
 
-        if (!plugin.getConfig().getBoolean("natural_spawner.breakable", true)) {
+        if (!plugin.getConfig().getBoolean("natural_spawner.breakable", false)) {
             if (spawner == null) {
                 block.setType(Material.AIR);
                 event.setCancelled(true);
@@ -88,7 +88,7 @@ public class SpawnerBreakListener implements Listener {
         }
 
         if (spawner != null) {
-            handleVanillaSpawnerBreak(block, spawner, player);
+            handleSmartSpawnerBreak(block, spawner, player);
             plugin.getRangeChecker().stopSpawnerTask(spawner);
         } else {
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
@@ -96,14 +96,14 @@ public class SpawnerBreakListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
-            handleSpawnerBreak(block, creatureSpawner, player);
+            handleVanillaSpawnerBreak(block, creatureSpawner, player);
         }
 
         event.setCancelled(true);
         cleanupAssociatedHopper(block);
     }
 
-    private void handleVanillaSpawnerBreak(Block block, SpawnerData spawner, Player player) {
+    private void handleSmartSpawnerBreak(Block block, SpawnerData spawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
@@ -122,7 +122,7 @@ public class SpawnerBreakListener implements Listener {
         }
     }
 
-    private void handleSpawnerBreak(Block block, CreatureSpawner creatureSpawner, Player player) {
+    private void handleVanillaSpawnerBreak(Block block, CreatureSpawner creatureSpawner, Player player) {
         Location location = block.getLocation();
         ItemStack tool = player.getInventory().getItemInMainHand();
 
@@ -131,7 +131,12 @@ public class SpawnerBreakListener implements Listener {
         }
 
         EntityType entityType = creatureSpawner.getSpawnedType();
-        ItemStack spawnerItem = spawnerItemFactory.createSpawnerItem(entityType);
+        ItemStack spawnerItem;
+        if (plugin.getConfig().getBoolean("natural_spawner.convert_to_smart_spawner", false)) {
+            spawnerItem = spawnerItemFactory.createSpawnerItem(entityType);
+        } else {
+            spawnerItem = spawnerItemFactory.createVanillaSpawnerItem(entityType);
+        }
 
         boolean directToInventory = plugin.getConfig().getBoolean("spawner_break.direct_to_inventory", false);
 

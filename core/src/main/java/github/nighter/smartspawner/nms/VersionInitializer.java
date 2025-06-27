@@ -59,6 +59,7 @@ public class VersionInitializer {
         // Define supported versions and their package names
         // Order matters: more specific versions should come first
         Map<String, String> supportedVersions = new LinkedHashMap<>();
+        supportedVersions.put("1.21.6", "v1_21_6");
         supportedVersions.put("1.21.4", "v1_21_4");
         supportedVersions.put("1.21", "v1_21");
         supportedVersions.put("1.20", "v1_20");

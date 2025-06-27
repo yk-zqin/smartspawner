@@ -239,6 +239,10 @@ public class SpawnerItemFactory {
         return spawner;
     }
 
+    public ItemStack createVanillaSpawnerItem(EntityType entityType) {
+        return createVanillaSpawnerItem(entityType, 1);
+    }
+
     public ItemStack createVanillaSpawnerItem(EntityType entityType, int amount) {
         ItemStack spawner = new ItemStack(Material.SPAWNER, amount);
         ItemMeta meta = spawner.getItemMeta();
