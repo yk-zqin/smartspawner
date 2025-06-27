@@ -23,8 +23,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -33,88 +32,44 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: gradle
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v2
 
-      # Alternative caching strategy when GitHub cache fails
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-disabled: false
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
-          gradle-home-cache-cleanup: true
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      # Combine build and test in one step to reduce overhead
-      - name: Build and test with Gradle
-        run: ./gradlew build --no-daemon --parallel --build-cache --configuration-cache
-        env:
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m" -Dorg.gradle.daemon=false
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
 
-      - name: Extract version information
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Extract version
         id: extract_version
         run: |
-          # More robust version extraction that handles different formats
-          if [ -f "build.gradle" ]; then
-            VERSION=$(grep -E "version\s*=\s*['\"]" build.gradle | head -n 1 | sed -E "s/.*version\s*=\s*['\"]([^'\"]*)['\"].*/\1/")
-          elif [ -f "build.gradle.kts" ]; then
-            VERSION=$(grep -E "version\s*=\s*['\"]" build.gradle.kts | head -n 1 | sed -E "s/.*version\s*=\s*['\"]([^'\"]*)['\"].*/\1/")
-          else
-            VERSION="unknown"
-          fi
-          
-          if [ -z "$VERSION" ] || [ "$VERSION" = "unknown" ]; then
-            VERSION="dev-$(date +%Y%m%d)"
-          fi
-          
-          COMMIT_SHA_SHORT=$(git rev-parse --short HEAD)
-          
+          VERSION=$(grep 'version =' build.gradle | head -n 1 | awk -F "'" '{print $2}')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          COMMIT_SHA_SHORT=$(git rev-parse --short HEAD)
           echo "COMMIT_SHA_SHORT=$COMMIT_SHA_SHORT" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "commit_sha_short=$COMMIT_SHA_SHORT" >> $GITHUB_OUTPUT
-          
           echo "Version: $VERSION (Commit: $COMMIT_SHA_SHORT)"
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SmartSpawner-${{ env.VERSION }}-${{ env.COMMIT_SHA_SHORT }}
-          path: |
-            core/build/libs/SmartSpawner-*.jar
-            build/libs/SmartSpawner-*.jar
+          name: SmartSpawner-${{ env.VERSION }}
+          path: core/build/libs/SmartSpawner-${{ env.VERSION }}.jar
           retention-days: 90
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Upload test reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-${{ env.COMMIT_SHA_SHORT }}
-          path: |
-            **/build/reports/tests/
-            **/build/test-results/
+          path: build/reports/tests/
           retention-days: 7
-          if-no-files-found: ignore
-
-      # Optional: Add summary for better visibility
-      - name: Build Summary
-        if: always()
-        run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ env.COMMIT_SHA_SHORT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
