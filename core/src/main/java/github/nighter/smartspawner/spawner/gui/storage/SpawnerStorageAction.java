@@ -83,7 +83,7 @@ public class SpawnerStorageAction implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player) ||
-                !(event.getInventory().getHolder() instanceof StoragePageHolder holder)) {
+                !(event.getInventory().getHolder(false) instanceof StoragePageHolder holder)) {
             return;
         }
 
@@ -129,7 +129,7 @@ public class SpawnerStorageAction implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof StoragePageHolder) {
+        if (event.getInventory().getHolder(false) instanceof StoragePageHolder) {
             event.setCancelled(true);
         }
     }
@@ -170,7 +170,7 @@ public class SpawnerStorageAction implements Listener {
 
         spawner.updateHologramData();
 
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
         if (holder != null) {
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
@@ -241,7 +241,7 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
         if (holder == null) {
             return;
         }
@@ -324,7 +324,7 @@ public class SpawnerStorageAction implements Listener {
 
             spawner.updateHologramData();
 
-            StoragePageHolder holder = (StoragePageHolder) sourceInv.getHolder();
+            StoragePageHolder holder = (StoragePageHolder) sourceInv.getHolder(false);
             if (holder != null) {
                 spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
@@ -350,7 +350,7 @@ public class SpawnerStorageAction implements Listener {
 
     private void updatePageContent(Player player, SpawnerData spawner, int newPage, Inventory inventory, boolean uiClickSound) {
         SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
 
         int totalPages = calculateTotalPages(spawner);
 
@@ -434,7 +434,7 @@ public class SpawnerStorageAction implements Listener {
 
         virtualInv.removeItems(itemsToRemove);
 
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder();
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
         int oldTotalPages = calculateTotalPages(spawner);
 
         spawner.updateHologramData();
@@ -467,8 +467,8 @@ public class SpawnerStorageAction implements Listener {
         UUID playerId = player.getUniqueId();
         Inventory existingInventory = openStorageInventories.get(playerId);
 
-        if (existingInventory != null && !refresh && existingInventory.getHolder() instanceof StoragePageHolder) {
-            StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder();
+        if (existingInventory != null && !refresh && existingInventory.getHolder(false) instanceof StoragePageHolder) {
+            StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder(false);
 
             holder.setTotalPages(totalPages);
             holder.setCurrentPage(page);
@@ -493,7 +493,7 @@ public class SpawnerStorageAction implements Listener {
         if (isClickTooFrequent(player)) {
             return;
         }
-        StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder();
+        StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder(false);
         SpawnerData spawner = holder.getSpawnerData();
         VirtualInventory virtualInv = spawner.getVirtualInventory();
 
@@ -589,7 +589,7 @@ public class SpawnerStorageAction implements Listener {
 
         if (!itemsToRemove.isEmpty()) {
             virtualInv.removeItems(itemsToRemove);
-            StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder();
+            StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder(false);
             holder.getSpawnerData().updateHologramData();
             holder.updateOldUsedSlots();
         }
@@ -609,7 +609,7 @@ public class SpawnerStorageAction implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof StoragePageHolder)) {
+        if (!(event.getInventory().getHolder(false) instanceof StoragePageHolder)) {
             return;
         }
 
