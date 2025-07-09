@@ -8,7 +8,9 @@ import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.Sho
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.hooks.economy.shops.providers.zshop.ZShopProvider;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
@@ -20,12 +22,11 @@ public class ShopIntegrationManager {
     private final SmartSpawner plugin;
     private ShopProvider activeProvider;
     private final List<ShopProvider> availableProviders = new ArrayList<>();
-    private boolean spawnerHookRegistered = false;
+    private SpawnerHook spawnerHook = null;
 
     public void initialize() {
         availableProviders.clear();
         activeProvider = null;
-        spawnerHookRegistered = false;
 
         detectAndRegisterActiveProviders();
         selectActiveProvider();
@@ -53,10 +54,10 @@ public class ShopIntegrationManager {
         if (isPluginAvailable("ShopGUIPlus")) {
             registerProviderIfAvailable("ShopGUIPlus", () -> {
                 // Register the spawner hook event listener before creating the provider
-                if (!spawnerHookRegistered) {
+                if (spawnerHook == null) {
                     try {
-                        plugin.getServer().getPluginManager().registerEvents(new SpawnerHook(plugin), plugin);
-                        spawnerHookRegistered = true;
+                        spawnerHook = new SpawnerHook(plugin);
+                        plugin.getServer().getPluginManager().registerEvents(spawnerHook, plugin);
                         plugin.debug("Auto detect: Registered SpawnerHook event listener for ShopGUIPlus");
                     } catch (Exception e) {
                         plugin.debug("Failed to register SpawnerHook: " + e.getMessage());
@@ -85,9 +86,9 @@ public class ShopIntegrationManager {
                 case "shopguiplus":
                     if (isPluginAvailable("ShopGUIPlus")) {
                         registerProviderIfAvailable("ShopGUIPlus", () -> {
-                            if (!spawnerHookRegistered) {
-                                plugin.getServer().getPluginManager().registerEvents(new SpawnerHook(plugin), plugin);
-                                spawnerHookRegistered = true;
+                            if (spawnerHook == null) {
+                                spawnerHook = new SpawnerHook(plugin);
+                                plugin.getServer().getPluginManager().registerEvents(spawnerHook, plugin);
                                 plugin.debug("Registered SpawnerHook event listener for ShopGUIPlus");
                             }
                             return new ShopGuiPlusProvider(plugin);
@@ -174,6 +175,9 @@ public class ShopIntegrationManager {
     public void cleanup() {
         availableProviders.clear();
         activeProvider = null;
-        spawnerHookRegistered = false;
+        if (spawnerHook != null) {
+            spawnerHook.unregister();
+            spawnerHook = null;
+        }
     }
 }
