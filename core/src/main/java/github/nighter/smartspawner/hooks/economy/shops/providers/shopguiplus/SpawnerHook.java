@@ -54,4 +54,10 @@ public class SpawnerHook implements Listener{
             }
         }
     }
+
+    public void unregister() {
+        ShopGUIPlusPostEnableEvent.getHandlerList().unregister(this);
+        ShopsPostLoadEvent.getHandlerList().unregister(this);
+        plugin.debug("Unregistered SpawnerHook event listener");
+    }
 }
