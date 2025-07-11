@@ -31,12 +31,10 @@ public class NaturalSpawnerListener implements Listener {
 
         if (smartSpawner != null) {
             event.setCancelled(true);
-            plugin.debug("Prevented natural spawn from spawner at " + event.getSpawner().getLocation());
         } else {
             // This is a natural spawner - check if natural spawning is allowed
             if (!plugin.getConfig().getBoolean("natural_spawner.spawn_mobs", true)) {
                 event.setCancelled(true);
-                plugin.debug("Prevented natural spawn from spawner at " + event.getSpawner().getLocation() + " due to config setting");
             }
         }
     }
@@ -74,7 +72,6 @@ public class NaturalSpawnerListener implements Listener {
         if (isNearZombieSpawner(entity.getLocation())) {
             // Cancel chicken spawn if near zombie spawner (unless from breeding)
             event.setCancelled(true);
-            plugin.debug("Prevented chicken spawn near zombie spawner at " + entity.getLocation());
         }
     }
 

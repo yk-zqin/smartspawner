@@ -4,41 +4,35 @@ import github.nighter.smartspawner.SmartSpawner;
 import org.bukkit.Bukkit;
 
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * Handles version-specific initialization for the SmartSpawner plugin.
- * This class manages loading appropriate implementation classes based on the server version.
- *
- */
 public class VersionInitializer {
     private final SmartSpawner plugin;
     private final String serverVersion;
     private final String basePackage = "github.nighter.smartspawner";
 
-    // Component definitions - each entry contains component type and initializer class name
     private final String[][] components = {
             {"Particles", "ParticleInitializer"},
             {"Textures", "TextureInitializer"},
             {"Spawners", "SpawnerInitializer"}
     };
 
-    /**
-     * Creates a new VersionInitializer for the specified plugin.
-     *
-     * @param plugin The plugin instance
-     */
+    // Supported versions in descending order (newest first)
+    private final List<Version> supportedVersions = Arrays.asList(
+            new Version(1, 21, 6, "v1_21_6"),
+            new Version(1, 21, 4, "v1_21_4"),
+            new Version(1, 21, 0, "v1_21"),
+            new Version(1, 20, 0, "v1_20")
+    );
+
     public VersionInitializer(SmartSpawner plugin) {
         this.plugin = plugin;
         this.serverVersion = Bukkit.getServer().getBukkitVersion();
     }
 
-    /**
-     * Initializes all version-specific components.
-     *
-     * @throws IllegalStateException if the server version is not supported
-     */
     public void initialize() {
         String versionPath = determineVersionPath();
         if (versionPath == null) {
@@ -49,28 +43,20 @@ public class VersionInitializer {
         initializeComponentsForVersion(versionPath);
     }
 
-    /**
-     * Determines the appropriate version package path based on the server version.
-     * Uses LinkedHashMap to maintain insertion order for proper version matching priority.
-     *
-     * @return The version package path, or null if not supported
-     */
     private String determineVersionPath() {
-        // Define supported versions and their package names
-        // Order matters: more specific versions should come first
-        Map<String, String> supportedVersions = new LinkedHashMap<>();
-        supportedVersions.put("1.21.6", "v1_21_6");
-        supportedVersions.put("1.21.4", "v1_21_4");
-        supportedVersions.put("1.21", "v1_21");
-        supportedVersions.put("1.20", "v1_20");
-
         plugin.debug("Checking server version: " + serverVersion);
 
-        // Find matching version path - check most specific versions first
-        for (Map.Entry<String, String> entry : supportedVersions.entrySet()) {
-            if (serverVersion.contains(entry.getKey())) {
-                plugin.debug("Matched version " + entry.getKey() + " -> " + entry.getValue());
-                return entry.getValue();
+        Version currentVersion = parseVersion(serverVersion);
+        if (currentVersion == null) {
+            plugin.debug("Failed to parse version: " + serverVersion);
+            return null;
+        }
+
+        // Find the best matching version (highest supported version that's <= current version)
+        for (Version supportedVersion : supportedVersions) {
+            if (currentVersion.isGreaterThanOrEqualTo(supportedVersion)) {
+                plugin.debug("Matched version " + currentVersion + " -> " + supportedVersion.packageName);
+                return supportedVersion.packageName;
             }
         }
 
@@ -78,24 +64,27 @@ public class VersionInitializer {
         return null;
     }
 
-    /**
-     * Initializes all components for the detected version.
-     *
-     * @param versionPath The version package path
-     */
+    private Version parseVersion(String versionString) {
+        // Extract version numbers from strings like "1.21.6-R0.1-SNAPSHOT"
+        Pattern pattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+        Matcher matcher = pattern.matcher(versionString);
+
+        if (matcher.find()) {
+            int major = Integer.parseInt(matcher.group(1));
+            int minor = Integer.parseInt(matcher.group(2));
+            int patch = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+            return new Version(major, minor, patch, null);
+        }
+
+        return null;
+    }
+
     private void initializeComponentsForVersion(String versionPath) {
         for (String[] component : components) {
             initializeComponent(component[0], component[1], versionPath);
         }
     }
 
-    /**
-     * Initializes a specific component for the detected version.
-     *
-     * @param componentName The name of the component (for logging)
-     * @param initializerClass The class name of the initializer
-     * @param versionPath The version package path
-     */
     private void initializeComponent(String componentName, String initializerClass, String versionPath) {
         try {
             String className = String.format("%s.%s.%s", basePackage, versionPath, initializerClass);
@@ -107,6 +96,31 @@ public class VersionInitializer {
                     componentName, serverVersion, e.getMessage()));
             plugin.debug("Stack trace for " + componentName + " initialization failure: " + e.toString());
             throw new RuntimeException("Failed to initialize " + componentName, e);
+        }
+    }
+
+    private static class Version {
+        final int major;
+        final int minor;
+        final int patch;
+        final String packageName;
+
+        Version(int major, int minor, int patch, String packageName) {
+            this.major = major;
+            this.minor = minor;
+            this.patch = patch;
+            this.packageName = packageName;
+        }
+
+        boolean isGreaterThanOrEqualTo(Version other) {
+            if (this.major != other.major) return this.major >= other.major;
+            if (this.minor != other.minor) return this.minor >= other.minor;
+            return this.patch >= other.patch;
+        }
+
+        @Override
+        public String toString() {
+            return major + "." + minor + "." + patch;
         }
     }
 }

@@ -32,6 +32,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.util.Vector;
+import org.bukkit.World;
+import org.bukkit.entity.Item;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,8 +54,8 @@ public class SpawnerStorageAction implements Listener {
 
     private final Map<ClickType, ItemClickHandler> clickHandlers;
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
-
     private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
+    private Random random = new Random();
 
     public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -160,12 +162,32 @@ public class SpawnerStorageAction implements Listener {
             inventory.setItem(slot, remainingItem);
         }
 
-        Location dropLocation = player.getLocation().clone();
+        Location playerLoc = player.getLocation();
+        World world = player.getWorld();
+        UUID playerUUID = player.getUniqueId();
 
-        double yaw = Math.toRadians(player.getLocation().getYaw());
-        dropLocation.add(-Math.sin(yaw) * 1.8, 0.1, Math.cos(yaw) * 1.8);
+        double yaw = Math.toRadians(playerLoc.getYaw());
+        double pitch = Math.toRadians(playerLoc.getPitch());
 
-        player.getWorld().dropItem(dropLocation, droppedItem);
+        double sinYaw = -Math.sin(yaw);
+        double cosYaw = Math.cos(yaw);
+        double cosPitch = Math.cos(pitch);
+        double sinPitch = -Math.sin(pitch);
+
+        Location dropLocation = playerLoc.clone();
+        dropLocation.add(sinYaw * 0.3, 1.2, cosYaw * 0.3);
+        Item droppedItemWorld = world.dropItem(dropLocation, droppedItem, drop -> {
+            drop.setThrower(playerUUID);
+            drop.setPickupDelay(40);
+        });
+
+        Vector velocity = new Vector(
+                sinYaw * cosPitch * 0.3 + (random.nextDouble() - 0.5) * 0.1,
+                sinPitch * 0.3 + 0.1 + (random.nextDouble() - 0.5) * 0.1,
+                cosYaw * cosPitch * 0.3 + (random.nextDouble() - 0.5) * 0.1
+        );
+
+        droppedItemWorld.setVelocity(velocity);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
 
         spawner.updateHologramData();
@@ -291,13 +313,37 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
-        Location dropLocation = player.getLocation().clone();
-        dropLocation.setY(dropLocation.getY() + 0.2);
+        Location playerLoc = player.getLocation();
+        World world = player.getWorld();
+        UUID playerUUID = player.getUniqueId();
+
+        double yaw = Math.toRadians(playerLoc.getYaw());
+        double pitch = Math.toRadians(playerLoc.getPitch());
+
+        double sinYaw = -Math.sin(yaw);
+        double cosYaw = Math.cos(yaw);
+        double cosPitch = Math.cos(pitch);
+        double sinPitch = -Math.sin(pitch);
+
+        Location dropLocation = playerLoc.clone();
+        dropLocation.add(sinYaw * 0.3, 1.2, cosYaw * 0.3);
 
         for (ItemStack item : items) {
-            player.getWorld().dropItem(dropLocation, item);
+            Item droppedItem = world.dropItem(dropLocation, item, drop -> {
+                drop.setThrower(playerUUID);
+                drop.setPickupDelay(40);
+            });
+
+            Vector velocity = new Vector(
+                    sinYaw * cosPitch * 0.3 + (random.nextDouble() - 0.5) * 0.1,
+                    sinPitch * 0.3 + 0.1 + (random.nextDouble() - 0.5) * 0.1,
+                    cosYaw * cosPitch * 0.3 + (random.nextDouble() - 0.5) * 0.1
+            );
+
+            droppedItem.setVelocity(velocity);
         }
     }
+
 
     private void openFilterConfig(Player player, SpawnerData spawner) {
         if (isClickTooFrequent(player)) {
