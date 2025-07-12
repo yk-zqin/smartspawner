@@ -23,6 +23,7 @@ public class SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
 
     // Core dependencies
+    @Getter
     private final SmartSpawner plugin;
     private final EntityLootRegistry lootRegistry;
 
