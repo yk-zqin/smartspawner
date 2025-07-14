@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerExpClaimEvent;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
@@ -10,6 +11,7 @@ import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -203,6 +205,12 @@ public class SpawnerMenuAction implements Listener {
 
         // Give remaining exp to player
         if (exp > 0) {
+            if(SpawnerExpClaimEvent.getHandlerList().getRegisteredListeners().length != 0) {
+                SpawnerExpClaimEvent expClaimEvent = new SpawnerExpClaimEvent(player, spawner.getSpawnerLocation(), exp);
+                Bukkit.getPluginManager().callEvent(expClaimEvent);
+                if(expClaimEvent.isCancelled()) return;
+                if(exp != expClaimEvent.getExpQuantity()) exp = expClaimEvent.getExpQuantity();
+            }
             player.giveExp(exp);
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
         }
