@@ -231,11 +231,6 @@ public class SpawnerData {
         newInventory.addItems(itemsToTransfer);
     }
 
-    public void decreaseStackSizeByOne() {
-        this.stackSize = Math.max(1, this.stackSize - 1);
-        updateHologramData();
-    }
-
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(Math.max(0, exp), maxStoredExp);
         updateHologramData();

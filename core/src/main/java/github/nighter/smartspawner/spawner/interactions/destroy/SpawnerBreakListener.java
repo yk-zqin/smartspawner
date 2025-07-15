@@ -197,6 +197,7 @@ public class SpawnerBreakListener implements Listener {
         ItemStack template = spawnerItemFactory.createSpawnerItem(entityType);
 
         int dropAmount;
+        boolean shouldDeleteSpawner = false;
 
         if (isCrouching) {
             if (currentStackSize <= MAX_STACK_SIZE) {
@@ -216,10 +217,14 @@ public class SpawnerBreakListener implements Listener {
             if(callAPIEvent(player, location, dropAmount)) return new SpawnerBreakResult(false, dropAmount, 0);
             // Unregister only 1 spawner
             chunkSpawnerLimiter.unregisterSpawner(location, 1);
-            spawner.decreaseStackSizeByOne();
+            if (currentStackSize <= 1) {
+                shouldDeleteSpawner = true;
+            } else {
+                spawner.setStackSize(currentStackSize - 1);
+            }
         }
 
-        if(dropAmount == currentStackSize) {
+        if (dropAmount == currentStackSize || shouldDeleteSpawner) {
             cleanupSpawner(spawnerBlock, spawner);
         } else {
             spawnerManager.markSpawnerModified(spawner.getSpawnerId());

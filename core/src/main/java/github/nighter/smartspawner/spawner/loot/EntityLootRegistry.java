@@ -2,6 +2,7 @@ package github.nighter.smartspawner.spawner.loot;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
+import github.nighter.smartspawner.nms.MaterialWrapper;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -65,7 +66,14 @@ public class EntityLootRegistry {
                     if (itemSection == null) continue;
 
                     try {
-                        Material material = Material.valueOf(itemKey.toUpperCase());
+                        // Use MaterialWrapper to get the material with version compatibility
+                        Material material = MaterialWrapper.getMaterial(itemKey);
+                        if (material == null) {
+                            plugin.getLogger().warning("Material '" + itemKey + "' is not available in server version " +
+                                    plugin.getServer().getBukkitVersion() + " - skipping for entity " + entityName);
+                            continue;
+                        }
+
                         loadedMaterials.add(material);
 
                         String[] amounts = itemSection.getString("amount", "1-1").split("-");
@@ -101,8 +109,8 @@ public class EntityLootRegistry {
                                 minDurability, maxDurability, potionEffectType,
                                 potionDuration, potionAmplifier, sellPrice));
 
-                    } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("Invalid material name: " + itemKey + " in entity loot config for " + entityName);
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Error processing material '" + itemKey + "' for entity " + entityName + ": " + e.getMessage());
                     }
                 }
             }

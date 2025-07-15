@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.spawner.loot;
 
+import github.nighter.smartspawner.nms.MaterialWrapper;
 import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -40,6 +41,10 @@ public class LootItem {
     }
 
     public ItemStack createItemStack(Random random) {
+        if (material == null) {
+            return null; // Material not available in this version
+        }
+
         ItemStack item = new ItemStack(material, 1);
 
         // Apply durability only if needed
@@ -53,7 +58,7 @@ public class LootItem {
         }
 
         // Handle potion effects for tipped arrows
-        if (material == Material.TIPPED_ARROW && potionEffectType != null) {
+        if (isTippedArrow() && potionEffectType != null) {
             PotionEffectType effectType = PotionEffectType.getByName(potionEffectType);
             if (effectType != null && potionDuration != null && potionAmplifier != null) {
                 PotionMeta meta = (PotionMeta) item.getItemMeta();
@@ -78,5 +83,17 @@ public class LootItem {
 
     public int generateAmount(Random random) {
         return random.nextInt(maxAmount - minAmount + 1) + minAmount;
+    }
+
+    public boolean isAvailable() {
+        return material != null;
+    }
+
+    private boolean isTippedArrow() {
+        if (material == null) return false;
+
+        // Check if TIPPED_ARROW is available in current version
+        Material tippedArrow = MaterialWrapper.getMaterial("TIPPED_ARROW");
+        return tippedArrow != null && material == tippedArrow;
     }
 }

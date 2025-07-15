@@ -15,6 +15,7 @@ public class VersionInitializer {
     private final String basePackage = "github.nighter.smartspawner";
 
     private final String[][] components = {
+            {"Materials", "MaterialInitializer"},
             {"Particles", "ParticleInitializer"},
             {"Textures", "TextureInitializer"},
             {"Spawners", "SpawnerInitializer"}
