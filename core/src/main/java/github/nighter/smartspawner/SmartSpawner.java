@@ -11,7 +11,6 @@ import github.nighter.smartspawner.commands.list.ListCommand;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.reload.ReloadCommand;
-import github.nighter.smartspawner.hooks.PluginCompatibilityHandler;
 import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
 import github.nighter.smartspawner.utils.TimeFormatter;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
@@ -107,7 +106,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private HopperHandler hopperHandler;
 
     // Event handlers and utilities
-    private PluginCompatibilityHandler pluginCompatibilityHandler;
     private NaturalSpawnerListener naturalSpawnerListener;
     private SpawnerLootGenerator spawnerLootGenerator;
     private SpawnerListGUI spawnerListGUI;
@@ -253,7 +251,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeListeners() {
-        this.pluginCompatibilityHandler = new PluginCompatibilityHandler(this);
         this.naturalSpawnerListener = new NaturalSpawnerListener(this);
         this.spawnerExplosionListener = new SpawnerExplosionListener(this);
         this.spawnerBreakListener = new SpawnerBreakListener(this);
@@ -268,7 +265,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         PluginManager pm = getServer().getPluginManager();
 
         // Register core listeners
-        pm.registerEvents(pluginCompatibilityHandler, this);
         pm.registerEvents(naturalSpawnerListener, this);
         pm.registerEvents(spawnerListGUI, this);
         pm.registerEvents(spawnerBreakListener, this);

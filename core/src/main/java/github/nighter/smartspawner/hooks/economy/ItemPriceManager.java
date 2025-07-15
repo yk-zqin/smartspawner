@@ -243,6 +243,17 @@ public class ItemPriceManager {
         }
     }
 
+    public void reloadShopIntegration() {
+        if (shopIntegrationEnabled) {
+            if (shopIntegrationManager == null) {
+                shopIntegrationManager = new ShopIntegrationManager(plugin);
+            }
+            shopIntegrationManager.initialize();
+        } else {
+            shopIntegrationManager = null;
+        }
+    }
+
     public boolean hasSellIntegration() {
         // If economy is globally disabled, always return false
         if (!economyEnabled) {

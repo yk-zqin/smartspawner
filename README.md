@@ -21,7 +21,7 @@
 
 ## Requirements
 
-- **Minecraft Version:** 1.20 - 1.21.6
+- **Minecraft Version:** 1.20 - 1.21.7
 - **Server Software:** Paper, Folia or compatible forks
 - **Java Version:** 21+
 

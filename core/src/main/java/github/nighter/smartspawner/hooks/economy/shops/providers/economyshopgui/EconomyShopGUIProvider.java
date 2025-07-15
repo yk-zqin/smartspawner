@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.ShopProvider;
 import lombok.RequiredArgsConstructor;
 import me.gypopo.economyshopgui.api.EconomyShopGUIHook;
 import me.gypopo.economyshopgui.objects.ShopItem;
@@ -14,6 +14,7 @@ import org.bukkit.plugin.Plugin;
 public class EconomyShopGUIProvider implements ShopProvider {
     private final SmartSpawner plugin;
     private static final String[] PLUGIN_NAMES = {"EconomyShopGUI", "EconomyShopGUI-Premium"};
+    private PluginCompatibilityHandler pluginCompatibilityHandler = null;
 
     @Override
     public String getPluginName() {
@@ -29,20 +30,20 @@ public class EconomyShopGUIProvider implements ShopProvider {
             Plugin economyShopGUI = null;
             for (String pluginName : PLUGIN_NAMES) {
                 economyShopGUI = Bukkit.getPluginManager().getPlugin(pluginName);
-                if (economyShopGUI != null && economyShopGUI.isEnabled()) {
+                if (economyShopGUI != null) {
                     plugin.debug("Found " + pluginName + " plugin");
                     break;
                 }
             }
 
-            if (economyShopGUI != null && economyShopGUI.isEnabled()) {
-                // Verify the API is available
-                Class.forName("me.gypopo.economyshopgui.api.EconomyShopGUIHook");
-                ShopItem shopItem = EconomyShopGUIHook.getShopItem(new ItemStack(Material.BONE));
-                return shopItem != null; // Check if we can retrieve a shop item
+            if (economyShopGUI != null) {
+                if (pluginCompatibilityHandler == null) {
+                    pluginCompatibilityHandler = new PluginCompatibilityHandler(plugin);
+                    plugin.getServer().getPluginManager().registerEvents(pluginCompatibilityHandler, plugin);
+                    plugin.getLogger().info("Waiting for EconomyShopGUI to load...");
+                }
+                return true;
             }
-        } catch (ClassNotFoundException | NoClassDefFoundError e) {
-            plugin.debug("EconomyShopGUI API not found: " + e.getMessage());
         } catch (Exception e) {
             plugin.getLogger().warning("Error initializing EconomyShopGUI integration: " + e.getMessage());
         }

@@ -22,7 +22,6 @@ public class SpawnerHook implements Listener{
 
     @EventHandler
     public void onShopGUIPlusPostEnable(ShopGUIPlusPostEnableEvent event) {
-        plugin.debug("SpawnerHook: ShopGUIPlusPostEnableEvent triggered");
         if (Bukkit.getPluginManager().getPlugin("ShopGUIPlus") != null) {
             try {
                 ShopGuiPlusApi.registerSpawnerProvider(plugin.getSpawnerProvider());
@@ -35,9 +34,8 @@ public class SpawnerHook implements Listener{
 
     @EventHandler
     public void onShopsPostLoad(ShopsPostLoadEvent event) {
-        plugin.debug("SpawnerHook: ShopsPostLoadEvent triggered");
         Scheduler.runTaskLater(() -> {
-            plugin.getItemPriceManager().reload();
+            plugin.getItemPriceManager().reloadShopIntegration();
             plugin.getEntityLootRegistry().loadConfigurations();
             reloadSpawnerLootConfigs();
         }, 100L); // Run after 5 second to ensure the plugin is fully loaded
@@ -58,6 +56,5 @@ public class SpawnerHook implements Listener{
     public void unregister() {
         ShopGUIPlusPostEnableEvent.getHandlerList().unregister(this);
         ShopsPostLoadEvent.getHandlerList().unregister(this);
-        plugin.debug("Unregistered SpawnerHook event listener");
     }
 }

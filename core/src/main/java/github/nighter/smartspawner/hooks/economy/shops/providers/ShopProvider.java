@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.hooks.economy.shops.api;
+package github.nighter.smartspawner.hooks.economy.shops.providers;
 
 import org.bukkit.Material;
 

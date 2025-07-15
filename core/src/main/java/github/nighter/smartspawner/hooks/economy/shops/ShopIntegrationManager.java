@@ -1,16 +1,15 @@
 package github.nighter.smartspawner.hooks.economy.shops;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.hooks.economy.shops.api.ShopProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.ShopProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.EconomyShopGUIProvider;
+import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.PluginCompatibilityHandler;
 import github.nighter.smartspawner.hooks.economy.shops.providers.excellentshop.ExcellentShopProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerHook;
 import github.nighter.smartspawner.hooks.economy.shops.providers.zshop.ZShopProvider;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
@@ -142,7 +141,7 @@ public class ShopIntegrationManager {
 
     private void selectActiveProvider() {
         if (availableProviders.isEmpty()) {
-            plugin.getLogger().info("No compatible shop plugins found. Shop integration disabled.");
+            plugin.getLogger().info("No compatible shop plugins found. Shop integration is disabled.");
             return;
         }
 
