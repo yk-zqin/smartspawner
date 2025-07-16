@@ -5,8 +5,8 @@ import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 
 import java.util.*;
 
@@ -20,28 +20,28 @@ public class ItemStackSerializer {
     public static class ItemGroup {
         private final Material material;
         private final Map<Short, Integer> durabilityCount;
-        private final Map<String, Integer> potionEffectCount; // For TIPPED_ARROW
+        private final Map<String, Integer> potionDataCount; // For TIPPED_ARROW
 
         public ItemGroup(Material material) {
             this.material = material;
             this.durabilityCount = new HashMap<>();
-            this.potionEffectCount = new HashMap<>();
+            this.potionDataCount = new HashMap<>();
         }
 
         public void addItem(short durability, int count) {
             durabilityCount.merge(durability, count, Integer::sum);
         }
 
-        public void addPotionArrow(PotionEffect effect, int count) {
-            String effectKey = serializePotionEffect(effect);
-            potionEffectCount.merge(effectKey, count, Integer::sum);
+        public void addPotionArrow(PotionData potionData, int count) {
+            String potionKey = serializePotionData(potionData);
+            potionDataCount.merge(potionKey, count, Integer::sum);
         }
 
-        private String serializePotionEffect(PotionEffect effect) {
-            return String.format("%s;%d;%d",
-                    effect.getType().getName(),
-                    effect.getDuration(),
-                    effect.getAmplifier());
+        private String serializePotionData(PotionData potionData) {
+            return String.format("%s;%s;%s",
+                    potionData.getType().name(),
+                    potionData.isExtended(),
+                    potionData.isUpgraded());
         }
     }
 
@@ -55,8 +55,12 @@ public class ItemStackSerializer {
 
             if (material == Material.TIPPED_ARROW) {
                 PotionMeta meta = (PotionMeta) template.getItemMeta();
-                if (meta != null && !meta.getCustomEffects().isEmpty()) {
-                    group.addPotionArrow(meta.getCustomEffects().get(0), entry.getValue().intValue());
+                if (meta != null && meta.getBasePotionData() != null) {
+                    group.addPotionArrow(meta.getBasePotionData(), entry.getValue().intValue());
+                } else {
+                    // Handle case where tipped arrow has no potion data (default to WATER)
+                    PotionData defaultData = new PotionData(PotionType.WATER, false, false);
+                    group.addPotionArrow(defaultData, entry.getValue().intValue());
                 }
             } else if (isDestructibleItem(material)) {
                 // Only add durability for items that can be damaged
@@ -70,10 +74,10 @@ public class ItemStackSerializer {
         List<String> serializedItems = new ArrayList<>();
         for (ItemGroup group : groupedItems.values()) {
             if (group.getMaterial() == Material.TIPPED_ARROW) {
-                // Format: TIPPED_ARROW;effect_type;duration;amplifier:count,...
+                // Format: TIPPED_ARROW#potion_type;extended;upgraded:count,...
                 StringBuilder sb = new StringBuilder("TIPPED_ARROW#");
                 boolean first = true;
-                for (Map.Entry<String, Integer> entry : group.getPotionEffectCount().entrySet()) {
+                for (Map.Entry<String, Integer> entry : group.getPotionDataCount().entrySet()) {
                     if (!first) {
                         sb.append(',');
                     }
@@ -109,23 +113,30 @@ public class ItemStackSerializer {
 
         for (String entry : data) {
             if (entry.startsWith("TIPPED_ARROW#")) {
-                // Handle TIPPED_ARROW with potion effects
-                String[] effectEntries = entry.substring("TIPPED_ARROW#".length()).split(",");
-                for (String effectEntry : effectEntries) {
-                    String[] parts = effectEntry.split(":");
-                    String[] effectData = parts[0].split(";");
+                // Handle TIPPED_ARROW with potion data
+                String[] potionEntries = entry.substring("TIPPED_ARROW#".length()).split(",");
+                for (String potionEntry : potionEntries) {
+                    String[] parts = potionEntry.split(":");
+                    String[] potionData = parts[0].split(";");
                     int count = Integer.parseInt(parts[1]);
 
                     ItemStack arrow = new ItemStack(Material.TIPPED_ARROW);
                     PotionMeta meta = (PotionMeta) arrow.getItemMeta();
                     if (meta != null) {
-                        PotionEffect effect = new PotionEffect(
-                                Objects.requireNonNull(PotionEffectType.getByName(effectData[0])),
-                                Integer.parseInt(effectData[1]),
-                                Integer.parseInt(effectData[2])
-                        );
-                        meta.addCustomEffect(effect, true);
-                        arrow.setItemMeta(meta);
+                        try {
+                            PotionType potionType = PotionType.valueOf(potionData[0]);
+                            boolean isExtended = Boolean.parseBoolean(potionData[1]);
+                            boolean isUpgraded = Boolean.parseBoolean(potionData[2]);
+
+                            PotionData potionDataMeta = new PotionData(potionType, isExtended, isUpgraded);
+                            meta.setBasePotionData(potionDataMeta);
+                            arrow.setItemMeta(meta);
+                        } catch (IllegalArgumentException e) {
+                            // Handle case where potion type is not valid, default to WATER
+                            PotionData defaultData = new PotionData(PotionType.WATER, false, false);
+                            meta.setBasePotionData(defaultData);
+                            arrow.setItemMeta(meta);
+                        }
                     }
                     result.put(arrow, count);
                 }

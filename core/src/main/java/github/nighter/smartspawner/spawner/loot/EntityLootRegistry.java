@@ -8,6 +8,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -91,23 +93,38 @@ public class EntityLootRegistry {
                             maxDurability = Integer.parseInt(durabilities.length > 1 ? durabilities[1] : durabilities[0]);
                         }
 
-                        String potionEffectType = null;
-                        Integer potionDuration = null;
-                        Integer potionAmplifier = null;
+                        PotionType potionType = null;
+                        boolean isExtended = false;
+                        boolean isUpgraded = false;
 
                         if (material == Material.TIPPED_ARROW && itemSection.contains("potion_effect")) {
                             ConfigurationSection potionSection = itemSection.getConfigurationSection("potion_effect");
                             if (potionSection != null) {
-                                potionEffectType = potionSection.getString("effect");
-                                int seconds = potionSection.getInt("duration", 5);
-                                potionDuration = seconds * 20;
-                                potionAmplifier = potionSection.getInt("level", 0);
+                                String potionTypeName = potionSection.getString("type");
+                                if (potionTypeName != null) {
+                                    try {
+                                        potionType = PotionType.valueOf(potionTypeName.toUpperCase());
+                                    } catch (IllegalArgumentException e) {
+                                        plugin.getLogger().warning("Invalid potion type '" + potionTypeName +
+                                                "' for entity " + entityName + ". Available types: " +
+                                                java.util.Arrays.toString(PotionType.values()));
+                                        continue;
+                                    }
+                                }
+                                isExtended = potionSection.getBoolean("extended", false);
+                                isUpgraded = potionSection.getBoolean("upgraded", false);
+
+                                // Warning if both extended and upgraded are true
+                                if (isExtended && isUpgraded) {
+                                    plugin.getLogger().warning("Entity " + entityName + " has tipped arrow with both 'extended' and 'upgraded' set to true. " +
+                                            "This may not work as expected in Minecraft. Consider using only one enhancement type.");
+                                }
                             }
                         }
 
                         items.add(new LootItem(material, minAmount, maxAmount, chance,
-                                minDurability, maxDurability, potionEffectType,
-                                potionDuration, potionAmplifier, sellPrice));
+                                minDurability, maxDurability, potionType,
+                                isExtended, isUpgraded, sellPrice));
 
                     } catch (Exception e) {
                         plugin.getLogger().warning("Error processing material '" + itemKey + "' for entity " + entityName + ": " + e.getMessage());

@@ -9,66 +9,38 @@
 #
 #   OVERVIEW:
 #   This configuration defines drop rates and experience values for all mob
-#   spawners in the SmartSpawner system. Each time a spawner is triggered,
-#   it will generate between min_mobs and max_mobs (default: 1-4) entities
-#   with the drops specified below.
+#   spawners in SmartSpawner. Each time a spawner is triggered,
+#   it will generate between min_mobs and max_mobs (default: 1 to 4) times the drops specified below.
 #
-#   FORMAT EXPLANATION:
-#   - experience: XP points awarded when killing this mob
-#   - loot: Items that can be dropped by this mob
-#     - ITEM_ID:
-#       - amount: Range of possible item quantities (min-max)
-#       - chance: Percentage chance of drop (0.0-100.0)
-#       - durability: For tools/weapons, range of possible durability values
-#       - potion_effect: For potion-based items, effect details
-#
-#   All drop rates and values are based on the official Minecraft Wiki.
+#   For detailed configuration guide and examples, please visit:
+#   https://github.com/ptthanh02/SmartSpawner/wiki/SmartSpawner-Mob-Drops-Configuration-Wiki
 #
 # ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
-
 
 #===============================================================================
 #                           PASSIVE MOBS
 #===============================================================================
 
-#---------------------------------------
-# ALLAY
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Allay#Drops
 ALLAY:
   experience: 0
 
-#---------------------------------------
-# ARMADILLO
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Armadillo#Drops
 ARMADILLO:
   experience: 3
 
-#---------------------------------------
-# AXOLOTL
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Axolotl#Drops
 AXOLOTL:
   experience: 1
 
-#---------------------------------------
-# BAT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Bat#Drops
 BAT:
   experience: 1
 
-#---------------------------------------
-# BEE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Bee#Drops
 BEE:
   experience: 3
 
-#---------------------------------------
-# CAMEL
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Camel#Drops
 CAMEL:
   experience: 3
@@ -77,9 +49,6 @@ CAMEL:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# CAT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Cat#Drops
 CAT:
   experience: 1
@@ -88,9 +57,6 @@ CAT:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# CHICKEN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Chicken#Drops
 CHICKEN:
   experience: 3
@@ -102,9 +68,6 @@ CHICKEN:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------
-# COD
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Cod#Drops
 COD:
   experience: 1
@@ -116,9 +79,6 @@ COD:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------
-# COW
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Cow#Drops
 COW:
   experience: 3
@@ -130,16 +90,10 @@ COW:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# DOLPHIN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Dolphin#Drops
 DOLPHIN:
   experience: 1
 
-#---------------------------------------
-# DONKEY
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Donkey#Drops
 DONKEY:
   experience: 1
@@ -148,23 +102,14 @@ DONKEY:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# FOX
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Fox#Drops
 FOX:
   experience: 1
 
-#---------------------------------------
-# FROG
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Frog#Drops
 FROG:
   experience: 1
 
-#---------------------------------------
-# GLOW_SQUID
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Glow_Squid#Drops
 GLOW_SQUID:
   experience: 1
@@ -173,16 +118,10 @@ GLOW_SQUID:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# GOAT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Goat#Drops
 GOAT:
   experience: 1
 
-#---------------------------------------
-# HORSE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Horse#Drops
 HORSE:
   experience: 1
@@ -195,9 +134,6 @@ HORSE:
 #                           HOSTILE MOBS
 #===============================================================================
 
-#---------------------------------------
-# BLAZE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Blaze#Drops
 BLAZE:
   experience: 10
@@ -206,9 +142,6 @@ BLAZE:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------
-# BOGGED
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Bogged#Drops
 BOGGED:
   experience: 5
@@ -227,13 +160,10 @@ BOGGED:
       amount: 0-2
       chance: 50.0
       potion_effect:
-        effect: POISON
-        duration: 5  # Duration in seconds
-        level: 0     # Level 0 = I, 1 = II, etc.
+        type: POISON
+        extended: false
+        upgraded: false
 
-#---------------------------------------
-# BREEZE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Breeze#Drops
 BREEZE:
   experience: 10
@@ -242,9 +172,6 @@ BREEZE:
       amount: 1-2
       chance: 100.0
 
-#---------------------------------------
-# CAVE_SPIDER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Cave_Spider#Drops
 CAVE_SPIDER:
   experience: 5
@@ -256,9 +183,6 @@ CAVE_SPIDER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# CREEPER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Creeper#Drops
 CREEPER:
   experience: 5
@@ -267,16 +191,10 @@ CREEPER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# CREAKING
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Creaking#Drops
 CREAKING:
   experience: 0
 
-#---------------------------------------
-# DROWNED
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Drowned#Drops
 DROWNED:
   experience: 5
@@ -292,9 +210,6 @@ DROWNED:
       chance: 0.53  # 6.25% spawn with trident × 8.5% drop chance = 0.53125%
       durability: 1-250
 
-#---------------------------------------
-# ELDER_GUARDIAN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Elder_Guardian#Drops
 ELDER_GUARDIAN:
   experience: 10
@@ -312,9 +227,6 @@ ELDER_GUARDIAN:
       amount: 1-1
       chance: 20.0
 
-#---------------------------------------
-# ENDERMAN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Enderman#Drops
 ENDERMAN:
   experience: 5
@@ -323,16 +235,10 @@ ENDERMAN:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------
-# ENDERMITE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Endermite#Drops
 ENDERMITE:
   experience: 3
 
-#---------------------------------------
-# EVOKER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Evoker#Drops
 EVOKER:
   experience: 10
@@ -344,9 +250,6 @@ EVOKER:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------
-# GHAST
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Ghast#Drops
 GHAST:
   experience: 5
@@ -358,9 +261,6 @@ GHAST:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# GUARDIAN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Guardian#Drops
 GUARDIAN:
   experience: 10
@@ -372,9 +272,6 @@ GUARDIAN:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------
-# HOGLIN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Hoglin#Drops
 HOGLIN:
   experience: 5
@@ -386,9 +283,6 @@ HOGLIN:
       amount: 2-4
       chance: 100.0
 
-#---------------------------------------
-# HUSK
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Husk#Drops
 HUSK:
   experience: 5
@@ -406,9 +300,6 @@ HUSK:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------
-# IRON_GOLEM
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Iron_Golem#Drops
 IRON_GOLEM:
   experience: 0
@@ -420,9 +311,6 @@ IRON_GOLEM:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# LLAMA
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Llama#Drops
 LLAMA:
   experience: 1
@@ -431,9 +319,6 @@ LLAMA:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# MAGMA_CUBE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Magma_Cube#Drops
 MAGMA_CUBE:  # Average drops across all sizes
   experience: 4
@@ -442,9 +327,6 @@ MAGMA_CUBE:  # Average drops across all sizes
       amount: 2-6
       chance: 25.0
 
-#---------------------------------------
-# MOOSHROOM
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Mooshroom#Drops
 MOOSHROOM:
   experience: 1
@@ -456,9 +338,6 @@ MOOSHROOM:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# MUSHROOM_COW
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Mooshroom#Drops
 # Legacy 1.20 fallback
 MUSHROOM_COW:
@@ -471,9 +350,6 @@ MUSHROOM_COW:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# MULE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Mule#Drops
 MULE:
   experience: 1
@@ -482,23 +358,14 @@ MULE:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# OCELOT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Ocelot#Drops
 OCELOT:
   experience: 1
 
-#---------------------------------------
-# PANDA
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Panda#Drops
 PANDA:
   experience: 1
 
-#---------------------------------------
-# PARROT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Parrot#Drops
 PARROT:
   experience: 1
@@ -507,9 +374,6 @@ PARROT:
       amount: 1-2
       chance: 100.0
 
-#---------------------------------------
-# PHANTOM
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Phantom#Drops
 PHANTOM:
   experience: 5
@@ -518,9 +382,6 @@ PHANTOM:
       amount: 0-1
       chance: 100.0
 
-#---------------------------------------
-# PIG
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Pig#Drops
 PIG:
   experience: 1
@@ -529,9 +390,6 @@ PIG:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# PIGLIN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Piglin#Drops
 PIGLIN:
   experience: 5
@@ -545,9 +403,6 @@ PIGLIN:
       chance: 8.5
       durability: 1-32
 
-#---------------------------------------
-# PIGLIN_BRUTE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Piglin_Brute#Drops
 PIGLIN_BRUTE:
   experience: 20
@@ -557,9 +412,6 @@ PIGLIN_BRUTE:
       chance: 8.5
       durability: 1-32
 
-#---------------------------------------
-# PILLAGER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Pillager#Drops
 PILLAGER:
   experience: 5
@@ -572,9 +424,6 @@ PILLAGER:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# POLAR_BEAR
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Polar_Bear#Drops
 POLAR_BEAR:
   experience: 1
@@ -586,9 +435,6 @@ POLAR_BEAR:
       amount: 0-2
       chance: 25.0
 
-#---------------------------------------
-# PUFFERFISH
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Pufferfish#Drops
 PUFFERFISH:
   experience: 3
@@ -600,9 +446,6 @@ PUFFERFISH:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------
-# RABBIT
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Rabbit#Drops
 RABBIT:
   experience: 3
@@ -617,9 +460,6 @@ RABBIT:
       amount: 1-1
       chance: 10.0
 
-#---------------------------------------
-# RAVAGER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Ravager#Drops
 RAVAGER:
   experience: 20
@@ -628,9 +468,6 @@ RAVAGER:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------
-# SALMON
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Salmon#Drops
 SALMON:
   experience: 1
@@ -642,9 +479,6 @@ SALMON:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------
-# SHEEP
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Sheep#Drops
 SHEEP:
   experience: 1
@@ -656,9 +490,6 @@ SHEEP:
       amount: 1-2
       chance: 100.0
 
-#---------------------------------------
-# SHULKER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Shulker#Drops
 SHULKER:
   experience: 5
@@ -667,16 +498,10 @@ SHULKER:
       amount: 1-1
       chance: 50.0
 
-#---------------------------------------
-# SILVERFISH
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Silverfish#Drops
 SILVERFISH:
   experience: 5
 
-#---------------------------------------
-# SKELETON
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Skeleton#Drops
 SKELETON:
   experience: 5
@@ -690,11 +515,8 @@ SKELETON:
     BOW:
       amount: 1-1
       chance: 8.5
-      durability: 1-384  # Maximum bow durability is 384
+      durability: 1-384
 
-#---------------------------------------
-# SKELETON_HORSE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Skeleton_Horse#Drops
 SKELETON_HORSE:
   experience: 3
@@ -703,9 +525,6 @@ SKELETON_HORSE:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# SLIME
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Slime#Drops
 SLIME:  # Average drops across all sizes
   experience: 4
@@ -714,16 +533,10 @@ SLIME:  # Average drops across all sizes
       amount: 1-6
       chance: 100.0
 
-#---------------------------------------
-# SNIFFER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Sniffer#Drops
 SNIFFER:
   experience: 5
 
-#---------------------------------------
-# SNOW_GOLEM
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Snow_Golem#Drops
 SNOW_GOLEM:
   experience: 0
@@ -732,9 +545,6 @@ SNOW_GOLEM:
       amount: 0-15
       chance: 100.0
 
-#---------------------------------------
-# SNOWMAN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Snow_Golem#Drops
 # Legacy 1.20 fallback
 SNOWMAN:
@@ -744,9 +554,6 @@ SNOWMAN:
       amount: 0-15
       chance: 100.0
 
-#---------------------------------------
-# SPIDER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Spider#Drops
 SPIDER:
   experience: 5
@@ -758,9 +565,6 @@ SPIDER:
       amount: 1-1
       chance: 33.33
 
-#---------------------------------------
-# SQUID
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Squid#Drops
 SQUID:
   experience: 3
@@ -769,9 +573,6 @@ SQUID:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# STRAY
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Stray#Drops
 STRAY:
   experience: 5
@@ -790,13 +591,10 @@ STRAY:
       amount: 0-2
       chance: 50.0
       potion_effect:
-        effect: SLOWNESS
-        duration: 5  # Duration in seconds
-        level: 0     # Level 0 = I, 1 = II, etc.
+        type: SLOWNESS
+        extended: false
+        upgraded: false
 
-#---------------------------------------
-# STRIDER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Strider#Drops
 STRIDER:
   experience: 3
@@ -805,16 +603,10 @@ STRIDER:
       amount: 2-5
       chance: 100.0
 
-#---------------------------------------
-# TADPOLE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Tadpole#Drops
 TADPOLE:
   experience: 0
 
-#---------------------------------------
-# TRADER_LLAMA
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Trader_Llama#Drops
 TRADER_LLAMA:
   experience: 1
@@ -823,9 +615,6 @@ TRADER_LLAMA:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# TROPICAL_FISH
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Tropical_Fish#Drops
 TROPICAL_FISH:
   experience: 1
@@ -837,9 +626,6 @@ TROPICAL_FISH:
       amount: 1-1
       chance: 5.0
 
-#---------------------------------------
-# TURTLE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Turtle#Drops
 TURTLE:
   experience: 1
@@ -848,23 +634,14 @@ TURTLE:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# VEX
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Vex#Drops
 VEX:
   experience: 3
 
-#---------------------------------------
-# VILLAGER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Villager#Drops
 VILLAGER:
   experience: 0
 
-#---------------------------------------
-# VINDICATOR
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Vindicator#Drops
 VINDICATOR:
   experience: 10
@@ -877,16 +654,10 @@ VINDICATOR:
       chance: 8.5
       durability: 1-250
 
-#---------------------------------------
-# WANDERING_TRADER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Wandering_Trader#Drops
 WANDERING_TRADER:
   experience: 0
 
-#---------------------------------------
-# WARDEN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Warden#Drops
 WARDEN:
   experience: 50
@@ -895,9 +666,6 @@ WARDEN:
       amount: 1-1
       chance: 100.0
 
-#---------------------------------------
-# WITCH
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Witch#Drops
 WITCH:
   experience: 5
@@ -924,9 +692,6 @@ WITCH:
       amount: 0-2
       chance: 0.27
 
-#---------------------------------------
-# WITHER_SKELETON
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Wither_Skeleton#Drops
 WITHER_SKELETON:
   experience: 5
@@ -945,16 +710,10 @@ WITHER_SKELETON:
       chance: 8.5
       durability: 1-131
 
-#---------------------------------------
-# WOLF
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Wolf#Drops
 WOLF:
   experience: 3
 
-#---------------------------------------
-# ZOGLIN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Zoglin#Drops
 ZOGLIN:
   experience: 5
@@ -963,9 +722,6 @@ ZOGLIN:
       amount: 1-3
       chance: 100.0
 
-#---------------------------------------
-# ZOMBIE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Zombie#Drops
 ZOMBIE:
   experience: 5
@@ -983,9 +739,6 @@ ZOMBIE:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------
-# ZOMBIE_HORSE
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Zombie_Horse#Drops
 ZOMBIE_HORSE:
   experience: 3
@@ -994,9 +747,6 @@ ZOMBIE_HORSE:
       amount: 0-2
       chance: 100.0
 
-#---------------------------------------
-# ZOMBIE_VILLAGER
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Zombie_Villager#Drops
 ZOMBIE_VILLAGER:
   experience: 5
@@ -1014,9 +764,6 @@ ZOMBIE_VILLAGER:
       amount: 1-1
       chance: 0.83
 
-#---------------------------------------
-# ZOMBIFIED_PIGLIN
-#---------------------------------------
 # Reference: https://minecraft.wiki/w/Zombified_Piglin#Drops
 ZOMBIFIED_PIGLIN:
   experience: 5
