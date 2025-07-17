@@ -34,6 +34,9 @@ softdepend:
   # RPG/Skill Plugins
   - AuraSkills
 
+  #Drops Plugins
+  - MythicMobs
+
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin

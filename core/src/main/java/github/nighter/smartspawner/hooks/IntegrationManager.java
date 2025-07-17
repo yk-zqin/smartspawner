@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.hooks;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.hooks.drops.MythicMobsHook;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
 import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
@@ -27,6 +28,7 @@ public class IntegrationManager {
     private boolean hasSimpleClaimSystem = false;
     private boolean hasRedProtect = false;
     private boolean hasMinePlots = false;
+    private boolean hasMythicMobs = false;
 
     // Integration plugin flags
     private boolean hasAuraSkills = false;
@@ -102,8 +104,17 @@ public class IntegrationManager {
         }, true);
 
         hasMinePlots = checkPlugin("MinePlots", () -> {
-            Plugin pRP = Bukkit.getPluginManager().getPlugin("MinePlots");
-            return pRP != null && pRP.isEnabled();
+            Plugin mP = Bukkit.getPluginManager().getPlugin("MinePlots");
+            return mP != null && mP.isEnabled();
+        }, true);
+
+        hasMythicMobs = checkPlugin("MythicMobs", () -> {
+            Plugin mm = Bukkit.getPluginManager().getPlugin("MythicMobs");
+            if(mm != null && mm.isEnabled()) {
+                Bukkit.getPluginManager().registerEvents(new MythicMobsHook(), SmartSpawner.getInstance());
+                return true;
+            }
+            return false;
         }, true);
     }
 
