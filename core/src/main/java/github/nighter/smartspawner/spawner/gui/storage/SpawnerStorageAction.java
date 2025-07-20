@@ -10,6 +10,7 @@ import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveResult;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -46,6 +47,7 @@ public class SpawnerStorageAction implements Listener {
     private final MessageService messageService;
     private final FilterConfigUI filterConfigUI;
     private final SpawnerSellManager spawnerSellManager;
+    private final SpawnerManager spawnerManager;
     @Setter
     private GuiLayoutConfig guiLayoutConfig;
 
@@ -67,6 +69,7 @@ public class SpawnerStorageAction implements Listener {
         this.filterConfigUI = plugin.getFilterConfigUI();
         this.spawnerSellManager = plugin.getSpawnerSellManager();
         this.guiLayoutConfig = plugin.getGuiLayoutConfig();
+        this.spawnerManager = plugin.getSpawnerManager();
     }
 
     public void reload() {
@@ -126,6 +129,62 @@ public class SpawnerStorageAction implements Listener {
         ItemClickHandler handler = clickHandlers.get(event.getClick());
         if (handler != null) {
             handler.handle(player, event.getInventory(), slot, clickedItem, spawner);
+        }
+    }
+
+    private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
+                                        SpawnerData spawner, Inventory inventory) {
+        GuiLayout layout = plugin.getSpawnerStorageUI().getLayoutConfig().getCurrentLayout();
+        if (layout == null) {
+            return;
+        }
+
+        Optional<String> buttonTypeOpt = layout.getButtonTypeAtSlot(slot);
+        if (buttonTypeOpt.isEmpty()) {
+            return;
+        }
+
+        String buttonType = buttonTypeOpt.get();
+
+        switch (buttonType) {
+            case "discard_all":
+                handleDiscardAllItems(player, spawner, inventory);
+                break;
+            case "item_filter":
+                openFilterConfig(player, spawner);
+                break;
+            case "previous_page":
+                if (holder.getCurrentPage() > 1) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, true);
+                }
+                break;
+            case "take_all":
+                handleTakeAllItems(player, inventory);
+                break;
+            case "next_page":
+                if (holder.getCurrentPage() < holder.getTotalPages()) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, true);
+                }
+                break;
+            case "drop_page":
+                handleDropPageItems(player, spawner, inventory);
+                break;
+            case "shop_indicator":
+                if (plugin.hasSellIntegration()) {
+                    if (!player.hasPermission("smartspawner.sellall")) {
+                        messageService.sendMessage(player, "no_permission");
+                        return;
+                    }
+                    if (isClickTooFrequent(player)) {
+                        return;
+                    }
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+                    spawnerSellManager.sellAllItems(player, spawner);
+                }
+                break;
+            case "return":
+                openMainMenu(player, spawner);
+                break;
         }
     }
 
@@ -195,66 +254,10 @@ public class SpawnerStorageAction implements Listener {
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
         if (holder != null) {
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
-
+            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
                 spawner.setIsAtCapacity(false);
             }
-        }
-    }
-
-    private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
-                                        SpawnerData spawner, Inventory inventory) {
-        GuiLayout layout = plugin.getSpawnerStorageUI().getLayoutConfig().getCurrentLayout();
-        if (layout == null) {
-            return;
-        }
-
-        Optional<String> buttonTypeOpt = layout.getButtonTypeAtSlot(slot);
-        if (buttonTypeOpt.isEmpty()) {
-            return;
-        }
-
-        String buttonType = buttonTypeOpt.get();
-
-        switch (buttonType) {
-            case "discard_all":
-                handleDiscardAllItems(player, spawner, inventory);
-                break;
-            case "item_filter":
-                openFilterConfig(player, spawner);
-                break;
-            case "previous_page":
-                if (holder.getCurrentPage() > 1) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, true);
-                }
-                break;
-            case "take_all":
-                handleTakeAllItems(player, inventory);
-                break;
-            case "next_page":
-                if (holder.getCurrentPage() < holder.getTotalPages()) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, true);
-                }
-                break;
-            case "drop_page":
-                handleDropPageItems(player, spawner, inventory);
-                break;
-            case "shop_indicator":
-                if (plugin.hasSellIntegration()) {
-                    if (!player.hasPermission("smartspawner.sellall")) {
-                        messageService.sendMessage(player, "no_permission");
-                        return;
-                    }
-                    if (isClickTooFrequent(player)) {
-                        return;
-                    }
-                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                    spawnerSellManager.sellAllItems(player, spawner);
-                }
-                break;
-            case "return":
-                openMainMenu(player, spawner);
-                break;
         }
     }
 
@@ -303,6 +306,7 @@ public class SpawnerStorageAction implements Listener {
         if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
             spawner.setIsAtCapacity(false);
         }
+        spawnerManager.markSpawnerModified(spawner.getSpawnerId());
 
         updatePageContent(player, spawner, holder.getCurrentPage(), inventory, false);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.8f, 0.8f);
@@ -500,6 +504,7 @@ public class SpawnerStorageAction implements Listener {
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("amount", languageManager.formatNumber(totalItems));
         messageService.sendMessage(player, "discard_all_success", placeholders);
+        spawnerManager.markSpawnerModified(spawner.getSpawnerId());
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
@@ -570,6 +575,7 @@ public class SpawnerStorageAction implements Listener {
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
                 spawner.setIsAtCapacity(false);
             }
+            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
         }
     }
 
