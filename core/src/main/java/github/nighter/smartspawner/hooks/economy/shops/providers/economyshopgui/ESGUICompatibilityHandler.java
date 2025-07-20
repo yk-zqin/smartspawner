@@ -8,10 +8,10 @@ import me.gypopo.economyshopgui.api.events.ShopItemsLoadEvent;
 
 import java.util.List;
 
-public class PluginCompatibilityHandler implements Listener {
+public class ESGUICompatibilityHandler implements Listener {
     private final SmartSpawner plugin;
 
-    public PluginCompatibilityHandler(SmartSpawner plugin) {
+    public ESGUICompatibilityHandler(SmartSpawner plugin) {
         this.plugin = plugin;
     }
 

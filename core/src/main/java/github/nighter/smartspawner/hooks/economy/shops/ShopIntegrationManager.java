@@ -3,7 +3,7 @@ package github.nighter.smartspawner.hooks.economy.shops;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.economy.shops.providers.ShopProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.EconomyShopGUIProvider;
-import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.PluginCompatibilityHandler;
+import github.nighter.smartspawner.hooks.economy.shops.providers.economyshopgui.ESGUICompatibilityHandler;
 import github.nighter.smartspawner.hooks.economy.shops.providers.excellentshop.ExcellentShopProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.ShopGuiPlusProvider;
 import github.nighter.smartspawner.hooks.economy.shops.providers.shopguiplus.SpawnerHook;
@@ -22,6 +22,7 @@ public class ShopIntegrationManager {
     private ShopProvider activeProvider;
     private final List<ShopProvider> availableProviders = new ArrayList<>();
     private SpawnerHook spawnerHook = null;
+    private ESGUICompatibilityHandler esguiCompatibilityHandler = null;
 
     public void initialize() {
         availableProviders.clear();
@@ -46,8 +47,22 @@ public class ShopIntegrationManager {
             }
         }
 
-        // Auto-detect available providers (only if no specific provider was successfully loaded)
-        registerProviderIfAvailable("EconomyShopGUI", () -> new EconomyShopGUIProvider(plugin));
+        registerProviderIfAvailable("EconomyShopGUI", () -> {
+            EconomyShopGUIProvider provider = new EconomyShopGUIProvider(plugin);
+
+            // Initialize PluginCompatibilityHandler after creating the provider and only if it's null
+            if (provider.isAvailable() && esguiCompatibilityHandler == null) {
+                try {
+                    esguiCompatibilityHandler = new ESGUICompatibilityHandler(plugin);
+                    plugin.getServer().getPluginManager().registerEvents(esguiCompatibilityHandler, plugin);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to register ESGUICompatibilityHandler: " + e.getMessage());
+                }
+            }
+
+            return provider;
+        });
+
 
         // Only try ShopGUIPlus if the plugin is actually present and enabled
         if (isPluginAvailable("ShopGUIPlus")) {
@@ -57,7 +72,6 @@ public class ShopIntegrationManager {
                     try {
                         spawnerHook = new SpawnerHook(plugin);
                         plugin.getServer().getPluginManager().registerEvents(spawnerHook, plugin);
-                        plugin.debug("Auto detect: Registered SpawnerHook event listener for ShopGUIPlus");
                     } catch (Exception e) {
                         plugin.debug("Failed to register SpawnerHook: " + e.getMessage());
                         throw e; // Re-throw to prevent provider registration
@@ -65,8 +79,6 @@ public class ShopIntegrationManager {
                 }
                 return new ShopGuiPlusProvider(plugin);
             });
-        } else {
-            plugin.debug("ShopGUIPlus plugin not found or not enabled, skipping registration");
         }
 
         registerProviderIfAvailable("ZShop", () -> new ZShopProvider(plugin));
@@ -78,7 +90,21 @@ public class ShopIntegrationManager {
             switch (providerName.toLowerCase()) {
                 case "economyshopgui":
                     if (isPluginAvailable("EconomyShopGUI")) {
-                        registerProviderIfAvailable("EconomyShopGUI", () -> new EconomyShopGUIProvider(plugin));
+                        registerProviderIfAvailable("EconomyShopGUI", () -> {
+                            EconomyShopGUIProvider provider = new EconomyShopGUIProvider(plugin);
+
+                            // Initialize PluginCompatibilityHandler after creating the provider and only if it's null
+                            if (provider.isAvailable() && esguiCompatibilityHandler == null) {
+                                try {
+                                    esguiCompatibilityHandler = new ESGUICompatibilityHandler(plugin);
+                                    plugin.getServer().getPluginManager().registerEvents(esguiCompatibilityHandler, plugin);
+                                } catch (Exception e) {
+                                    plugin.getLogger().warning("Failed to register ESGUICompatibilityHandler: " + e.getMessage());
+                                }
+                            }
+
+                            return provider;
+                        });
                         return !availableProviders.isEmpty();
                     }
                     break;
@@ -177,6 +203,9 @@ public class ShopIntegrationManager {
         if (spawnerHook != null) {
             spawnerHook.unregister();
             spawnerHook = null;
+        }
+        if (esguiCompatibilityHandler != null) {
+            esguiCompatibilityHandler = null;
         }
     }
 }

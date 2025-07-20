@@ -14,7 +14,6 @@ import org.bukkit.plugin.Plugin;
 public class EconomyShopGUIProvider implements ShopProvider {
     private final SmartSpawner plugin;
     private static final String[] PLUGIN_NAMES = {"EconomyShopGUI", "EconomyShopGUI-Premium"};
-    private PluginCompatibilityHandler pluginCompatibilityHandler = null;
 
     @Override
     public String getPluginName() {
@@ -37,11 +36,6 @@ public class EconomyShopGUIProvider implements ShopProvider {
             }
 
             if (economyShopGUI != null) {
-                if (pluginCompatibilityHandler == null) {
-                    pluginCompatibilityHandler = new PluginCompatibilityHandler(plugin);
-                    plugin.getServer().getPluginManager().registerEvents(pluginCompatibilityHandler, plugin);
-                    plugin.getLogger().info("Waiting for EconomyShopGUI to load...");
-                }
                 return true;
             }
         } catch (Exception e) {
