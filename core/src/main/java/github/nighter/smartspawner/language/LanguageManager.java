@@ -112,8 +112,8 @@ public class LanguageManager {
         Map<String, Set<LanguageFileType>> localeFileMap = new HashMap<>();
         localeFileMap.put("vi_VN", EnumSet.allOf(LanguageFileType.class));
         localeFileMap.put("DonutSMP", EnumSet.allOf(LanguageFileType.class));
-        localeFileMap.put("it_IT", EnumSet.allOf(LanguageFileType.class));
-        localeFileMap.put("tr_TR", EnumSet.allOf(LanguageFileType.class));
+        // localeFileMap.put("it_IT", EnumSet.allOf(LanguageFileType.class));
+        // localeFileMap.put("tr_TR", EnumSet.allOf(LanguageFileType.class));
 
         localeFileMap.forEach((locale, fileTypes) -> {
             fileTypes.forEach(fileType -> {

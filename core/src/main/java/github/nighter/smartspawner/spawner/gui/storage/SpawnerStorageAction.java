@@ -254,7 +254,9 @@ public class SpawnerStorageAction implements Listener {
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
         if (holder != null) {
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
-            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+            if (!spawner.isInteracted()) {
+                spawner.markInteracted();
+            }
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
                 spawner.setIsAtCapacity(false);
             }
@@ -306,7 +308,9 @@ public class SpawnerStorageAction implements Listener {
         if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
             spawner.setIsAtCapacity(false);
         }
-        spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+        if (!spawner.isInteracted()) {
+            spawner.markInteracted();
+        }
 
         updatePageContent(player, spawner, holder.getCurrentPage(), inventory, false);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.8f, 0.8f);
@@ -449,6 +453,10 @@ public class SpawnerStorageAction implements Listener {
 
     private void openMainMenu(Player player, SpawnerData spawner) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+        if (spawner.isInteracted()){
+            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+            spawner.clearInteracted();
+        }
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
     }
 
@@ -485,7 +493,7 @@ public class SpawnerStorageAction implements Listener {
         virtualInv.removeItems(itemsToRemove);
 
         StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
-        int oldTotalPages = calculateTotalPages(spawner);
+        // int oldTotalPages = calculateTotalPages(spawner);
 
         spawner.updateHologramData();
         if (spawner.getIsAtCapacity()) {
@@ -504,7 +512,9 @@ public class SpawnerStorageAction implements Listener {
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("amount", languageManager.formatNumber(totalItems));
         messageService.sendMessage(player, "discard_all_success", placeholders);
-        spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+        if (!spawner.isInteracted()) {
+            spawner.markInteracted();
+        }
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
@@ -575,7 +585,9 @@ public class SpawnerStorageAction implements Listener {
             if (spawner.getMaxSpawnerLootSlots() > holder.getOldUsedSlots() && spawner.getIsAtCapacity()) {
                 spawner.setIsAtCapacity(false);
             }
-            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+            if (!spawner.isInteracted()) {
+                spawner.markInteracted();
+            }
         }
     }
 
@@ -661,13 +673,19 @@ public class SpawnerStorageAction implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder(false) instanceof StoragePageHolder)) {
+        if (!(event.getInventory().getHolder(false) instanceof StoragePageHolder holder)) {
             return;
         }
 
         if (event.getPlayer() instanceof Player player) {
             UUID playerId = player.getUniqueId();
             openStorageInventories.remove(playerId);
+        }
+
+        SpawnerData spawner = holder.getSpawnerData();
+        if (spawner.isInteracted()){
+            spawnerManager.markSpawnerModified(spawner.getSpawnerId());
+            spawner.clearInteracted();
         }
     }
 

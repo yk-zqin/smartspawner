@@ -118,7 +118,11 @@ spawner_stack_full:
   sound: block.note_block.pling
 
 spawner_stack_success:
-  action_bar: "&#37eb9aɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#f8f8ff%amount% &#37eb9aʟồɴɢ sᴘᴀᴡɴ"
+  action_bar: '[&#37eb9a&l✓&f] ɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fʟồɴɢ sᴘᴀᴡɴ'
+  sound: entity.player.levelup
+
+spawner_stack_placed:
+  message: '[&#37eb9a&l✓&f] ᴅặᴛ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fʟồɴɢ sᴘᴀᴡɴ'
   sound: entity.player.levelup
 
 # ------------------------------------------------------

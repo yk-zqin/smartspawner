@@ -11,10 +11,10 @@ import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -80,6 +80,8 @@ public class SpawnerData {
     private VirtualInventory virtualInventory;
     @Getter
     private final Set<Material> filteredItems = new HashSet<>();
+    // Interaction tracking for GUI and data saving
+    private final AtomicBoolean interacted = new AtomicBoolean(false);
 
     // Sales management
     @Getter
@@ -342,5 +344,17 @@ public class SpawnerData {
 
     public void markLastSellAsProcessed() {
         this.lastSellProcessed = true;
+    }
+
+    public boolean isInteracted() {
+        return interacted.get();
+    }
+
+    public void markInteracted() {
+        interacted.compareAndSet(false, true);
+    }
+
+    public void clearInteracted() {
+        interacted.compareAndSet(true, false);
     }
 }

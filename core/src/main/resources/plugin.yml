@@ -41,7 +41,6 @@ commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
     aliases: [ ss, spawner ]
-    permission: smartspawner.reload
 
 permissions:
   smartspawner.reload:

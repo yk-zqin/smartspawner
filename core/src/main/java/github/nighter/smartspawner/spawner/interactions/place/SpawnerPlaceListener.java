@@ -12,6 +12,7 @@ import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.utils.SpawnerTypeChecker;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -74,9 +75,13 @@ public class SpawnerPlaceListener implements Listener {
         // Check if this is a vanilla or smart spawner using our utility class
         boolean isVanillaSpawner = SpawnerTypeChecker.isVanillaSpawner(item);
 
-        // For smart spawners, check chunk limits
+        // Determine stack size based on shift-click and item amount
+        int stackSize = calculateStackSize(player, item, isVanillaSpawner);
+
+        // For smart spawners, check chunk limits with the calculated stack size
         if (!isVanillaSpawner) {
-            if (!chunkSpawnerLimiter.canPlaceSpawner(player, block.getLocation())) {
+            if (!chunkSpawnerLimiter.canPlaceSpawner(player, block.getLocation()) ||
+                    !chunkSpawnerLimiter.canStackSpawner(player, block.getLocation(), stackSize - 1)) {
                 Map<String, String> placeholders = new HashMap<>();
                 placeholders.put("limit", String.valueOf(chunkSpawnerLimiter.getMaxSpawnersPerChunk()));
                 messageService.sendMessage(player, "spawner_chunk_limit_reached", placeholders);
@@ -91,8 +96,9 @@ public class SpawnerPlaceListener implements Listener {
             storedEntityType = ((CreatureSpawner) blockMeta.getBlockState()).getSpawnedType();
         }
 
+        // Call custom event with the actual stack size
         if(SpawnerPlaceEvent.getHandlerList().getRegisteredListeners().length != 0) {
-            SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), 1);
+            SpawnerPlaceEvent e = new SpawnerPlaceEvent(player, block.getLocation(), stackSize);
             Bukkit.getPluginManager().callEvent(e);
             if (e.isCancelled()) {
                 event.setCancelled(true);
@@ -100,10 +106,25 @@ public class SpawnerPlaceListener implements Listener {
             }
         }
 
-        handleSpawnerSetup(block, player, storedEntityType, isVanillaSpawner);
+        handleSpawnerSetup(block, player, storedEntityType, isVanillaSpawner, item, stackSize);
     }
 
-    private void handleSpawnerSetup(Block block, Player player, EntityType entityType, boolean isVanillaSpawner) {
+    private int calculateStackSize(Player player, ItemStack item, boolean isVanillaSpawner) {
+        // Vanilla spawners always have stack size of 1
+        if (isVanillaSpawner) {
+            return 1;
+        }
+
+        // For smart spawners, check if player is sneaking
+        if (player.isSneaking()) {
+            return item.getAmount(); // Use the full stack amount
+        } else {
+            return 1; // Single spawner
+        }
+    }
+
+    private void handleSpawnerSetup(Block block, Player player, EntityType entityType,
+                                    boolean isVanillaSpawner, ItemStack item, int stackSize) {
         // Validate entity type
         if (entityType == null || entityType == EntityType.UNKNOWN) {
             return;
@@ -131,7 +152,10 @@ public class SpawnerPlaceListener implements Listener {
 
             delayedSpawner.setSpawnedType(finalEntityType);
             delayedSpawner.update(true, false);
-            createSmartSpawner(block, player, finalEntityType);
+            createSmartSpawner(block, player, finalEntityType, stackSize);
+
+            // Update player inventory based on the stack size used
+            updatePlayerInventory(player, item, stackSize);
 
             // Set up hopper integration if enabled
             setupHopperIntegration(block);
@@ -153,7 +177,7 @@ public class SpawnerPlaceListener implements Listener {
         return entityType;
     }
 
-    private void createSmartSpawner(Block block, Player player, EntityType entityType) {
+    private void createSmartSpawner(Block block, Player player, EntityType entityType, int stackSize) {
         String spawnerId = UUID.randomUUID().toString().substring(0, 8);
 
         // Ensure the block state is properly updated
@@ -164,9 +188,10 @@ public class SpawnerPlaceListener implements Listener {
             spawner.update(true, false);
         }
 
-        // Create and configure new spawner
+        // Create and configure new spawner with the specified stack size
         SpawnerData spawner = new SpawnerData(spawnerId, block.getLocation(), entityType, plugin);
         spawner.setSpawnerActive(true);
+        spawner.setStackSize(stackSize); // Set the stack size based on placement
 
         // Register with manager
         spawnerManager.addSpawner(spawnerId, spawner);
@@ -180,7 +205,29 @@ public class SpawnerPlaceListener implements Listener {
             showCreationParticles(block);
         }
 
-        messageService.sendMessage(player, "spawner_activated");
+        // Send appropriate message based on stack size
+        if (stackSize > 1) {
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("amount", String.valueOf(stackSize));
+            messageService.sendMessage(player, "spawner_stack_placed", placeholders);
+        } else {
+            messageService.sendMessage(player, "spawner_activated");
+        }
+    }
+
+    private void updatePlayerInventory(Player player, ItemStack item, int stackSize) {
+        // Don't consume items in creative mode
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+
+        int remainingAmount = item.getAmount() - stackSize;
+
+        if (remainingAmount <= 0) {
+            player.getInventory().setItemInMainHand(null);
+        } else {
+            item.setAmount(remainingAmount);
+        }
     }
 
     private void showCreationParticles(Block block) {
