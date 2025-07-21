@@ -15,21 +15,18 @@
 [![Spigot](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/spigot_vector.svg)](https://www.spigotmc.org/resources/120743/)
 [![Hangar](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/hangar_vector.svg)](https://hangar.papermc.io/Nighter/SmartSpawner)
 
+[![Documentation](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/documentation/ghpages_vector.svg)](https://github.com/ptthanh02/SmartSpawner/wiki)
+[![discord-plural](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/social/discord-plural_46h.png)](http://discord.com/invite/FJN7hJKPyb)
+
 </div>
 
 <br>
 
 ## Requirements
 
-- **Minecraft Version:** 1.20 - 1.21.7
+- **Minecraft Version:** 1.20 - 1.21.8
 - **Server Software:** Paper, Folia or compatible forks
 - **Java Version:** 21+
-
-### Optional Dependencies
-
-- **Economy Plugins** - For shop integration and item selling
-- **Protection Plugins** - WorldGuard, GriefPrevention, Lands, Towny, and more
-- **World Management** - Multiverse, SuperiorSkyblock2, BentoBox compatibility
 
 ## Installation
 
@@ -76,7 +73,7 @@
 
 ## API
 
-For developers interested in integrating with SmartSpawner, visit our [API Documentation](https://github.com/ptthanh02/SmartSpawner/wiki/SmartSpawner-API-Documentation) for installation instructions and documentation.
+For developers interested in integrating with SmartSpawner, visit our [Developer API Documentation](https://github.com/ptthanh02/SmartSpawner/wiki/Developer-API-Documentation) for installation instructions and documentation.
 
 ## Building
 
