@@ -12,7 +12,7 @@
 #---------------------------------------------------
 #               Language Settings
 #---------------------------------------------------
-# Language setting (available: en_US, vi_VN, it_IT, tr_TR, DonutSMP)
+# Language setting (available: en_US, vi_VN, DonutSMP)
 language: en_US
 
 # Spawner GUI layout configuration (available: default, DonutSMP)
