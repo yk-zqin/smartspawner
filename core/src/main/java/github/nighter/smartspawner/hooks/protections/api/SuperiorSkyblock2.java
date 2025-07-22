@@ -7,9 +7,7 @@ import com.bgsoftware.superiorskyblock.api.island.IslandPrivilege;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -72,12 +70,16 @@ public class SuperiorSkyblock2 implements Listener {
     public void onIslandDisband(IslandDisbandEvent event) {
         if(event.isCancelled() || event.getIsland() == null) return;
         Island island = event.getIsland();
-        for(Chunk chunk : island.getAllChunks()) {
-            for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.SPAWNER, false)) {
-                SpawnerData spawner = SmartSpawner.getInstance().getSpawnerManager().getSpawnerByLocation(state.getBlock().getLocation());
-                if(spawner == null) continue;
-                SmartSpawner.getInstance().getSpawnerManager().removeGhostSpawner(spawner.getSpawnerId());
-            }
+        for(World.Environment environment : World.Environment.values()) {
+            try {
+                island.getAllChunksAsync(environment, true, true, chunk -> {
+                    for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.SPAWNER, false)) {
+                        SpawnerData spawner = SmartSpawner.getInstance().getSpawnerManager().getSpawnerByLocation(state.getBlock().getLocation());
+                        if (spawner == null) continue;
+                        SmartSpawner.getInstance().getSpawnerManager().removeGhostSpawner(spawner.getSpawnerId());
+                    }
+                });
+            } catch(NullPointerException ignored) {}
         }
     }
 }
