@@ -221,12 +221,18 @@ public class SpawnerPlaceListener implements Listener {
             return;
         }
 
-        int remainingAmount = item.getAmount() - stackSize;
+        // Bukkit already consumed 1 item during BlockPlaceEvent,
+        int additionalItemsToConsume = stackSize - 1;
 
-        if (remainingAmount <= 0) {
-            player.getInventory().setItemInMainHand(null);
-        } else {
-            item.setAmount(remainingAmount);
+        if (additionalItemsToConsume > 0) {
+            int currentAmount = item.getAmount();
+            int remainingAmount = currentAmount - additionalItemsToConsume;
+
+            if (remainingAmount <= 0) {
+                player.getInventory().setItemInMainHand(null);
+            } else {
+                item.setAmount(remainingAmount);
+            }
         }
     }
 
