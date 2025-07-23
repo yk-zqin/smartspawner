@@ -1,6 +1,7 @@
 package github.nighter.smartspawner.spawner.sell;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.api.events.SpawnerSellEvent;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -8,6 +9,7 @@ import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.Scheduler;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -88,8 +90,15 @@ public class SpawnerSellManager {
             }
 
             // Perform the actual sale
+            double amount = sellResult.getTotalValue();
+            if(SpawnerSellEvent.getHandlerList().getRegisteredListeners().length != 0) {
+                SpawnerSellEvent event = new SpawnerSellEvent(player, spawner.getSpawnerLocation(), sellResult.getItemsToRemove(), amount);
+                Bukkit.getPluginManager().callEvent(event);
+                if(event.isCancelled()) return;
+                if(event.getMoneyAmount() >= 0) amount = event.getMoneyAmount();
+            }
             boolean depositSuccess = plugin.getItemPriceManager()
-                    .deposit(sellResult.getTotalValue(), player);
+                    .deposit(amount, player);
 
             if (!depositSuccess) {
                 messageService.sendMessage(player, "sell_failed");
@@ -115,7 +124,7 @@ public class SpawnerSellManager {
             // Send success message
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("amount", plugin.getLanguageManager().formatNumber(sellResult.getItemsSold()));
-            placeholders.put("price", plugin.getLanguageManager().formatNumber(sellResult.getTotalValue()));
+            placeholders.put("price", plugin.getLanguageManager().formatNumber(amount));
             messageService.sendMessage(player, "sell_success", placeholders);
 
             // Mark spawner as modified for saving
