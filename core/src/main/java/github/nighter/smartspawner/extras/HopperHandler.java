@@ -74,19 +74,24 @@ public class HopperHandler implements Listener {
     }
 
     private void processChunkHoppers(Chunk chunk) {
-        try {
-            for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.HOPPER, false)) {
-                Block hopperBlock = state.getBlock();
-                Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+        Location chunkLoc = new Location(chunk.getWorld(),
+                chunk.getX() * 16 + 8, 64, chunk.getZ() * 16 + 8);
 
-                if (aboveBlock.getType() == Material.SPAWNER) {
-                    startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+        Scheduler.runLocationTask(chunkLoc, () -> {
+            try {
+                for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.HOPPER, false)) {
+                    Block hopperBlock = state.getBlock();
+                    Block aboveBlock = hopperBlock.getRelative(BlockFace.UP);
+
+                    if (aboveBlock.getType() == Material.SPAWNER) {
+                        startHopperTask(hopperBlock.getLocation(), aboveBlock.getLocation());
+                    }
                 }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Error processing hoppers in chunk at " +
+                        chunk.getX() + "," + chunk.getZ(), e);
             }
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error processing hoppers in chunk at " +
-                    chunk.getX() + "," + chunk.getZ(), e);
-        }
+        });
     }
 
     @EventHandler
@@ -94,17 +99,7 @@ public class HopperHandler implements Listener {
         if (!plugin.getConfig().getBoolean("hopper.enabled", false)) return;
 
         Chunk chunk = event.getChunk();
-        // Use a location in this chunk to schedule a region task
-        try {
-            Location chunkLoc = new Location(chunk.getWorld(),
-                    chunk.getX() * 16 + 8, 64, chunk.getZ() * 16 + 8);
-
-            Scheduler.runLocationTask(chunkLoc, () -> {
-                processChunkHoppers(chunk);
-            });
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error scheduling hopper task for loaded chunk", e);
-        }
+        processChunkHoppers(chunk);
     }
 
     @EventHandler
