@@ -169,15 +169,15 @@ public class SpawnerPlaceListener implements Listener {
             return true;
         }
 
-        int additionalItemsToConsume = stackSize - 1;
-
-        if (additionalItemsToConsume <= 0) {
+        // For stack size 1, Bukkit will automatically consume the item, so we don't need to do anything
+        if (stackSize <= 1) {
             return true;
         }
 
         ItemStack[] contents = player.getInventory().getContents();
-        int remainingToConsume = additionalItemsToConsume;
+        int remainingToConsume = stackSize;
 
+        // Find and consume the additional items needed
         for (int i = 0; i < contents.length && remainingToConsume > 0; i++) {
             ItemStack slot = contents[i];
             if (slot != null && slot.isSimilar(item)) {
@@ -196,11 +196,13 @@ public class SpawnerPlaceListener implements Listener {
 
         if (remainingToConsume > 0) {
             plugin.debug("Could not consume enough items for player " + player.getName() +
-                    ". Remaining: " + remainingToConsume);
+                    ". Remaining: " + remainingToConsume + ", Stack size requested: " + stackSize);
             return false;
         }
 
         player.getInventory().setContents(contents);
+        player.updateInventory();
+
         return true;
     }
 

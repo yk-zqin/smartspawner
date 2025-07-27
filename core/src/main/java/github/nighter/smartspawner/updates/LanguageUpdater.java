@@ -5,7 +5,6 @@ import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +16,7 @@ public class LanguageUpdater {
     private final String currentVersion;
     private final SmartSpawner plugin;
     private static final String LANGUAGE_VERSION_KEY = "language_version";
-    private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en_US", "vi_VN", "it_IT", "tr_TR");
+    private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("en_US", "vi_VN");
 
     // Track which file types to update
     private final Set<LanguageFileType> activeFileTypes = new HashSet<>();
