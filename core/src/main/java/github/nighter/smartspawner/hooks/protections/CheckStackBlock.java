@@ -23,6 +23,7 @@ public class CheckStackBlock {
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerStackClaimBlock(player, location))
             return false;
         if (integrationManager.isHasMinePlots() && !MinePlots.canPlayerStackBlock(player, location)) return false;
+        if (integrationManager.isHasIridiumSkyblock() && !IridiumSkyblock.canPlayerStackBlock(player, location)) return false;
         return !integrationManager.isHasRedProtect() || RedProtectAPI.canPlayerStackClaimBlock(player, location);
     }
 }

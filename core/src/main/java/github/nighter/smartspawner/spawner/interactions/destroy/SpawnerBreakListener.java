@@ -50,7 +50,7 @@ public class SpawnerBreakListener implements Listener {
         this.chunkSpawnerLimiter = plugin.getChunkSpawnerLimiter();
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onSpawnerBreak(BlockBreakEvent event) {
         final Player player = event.getPlayer();
         final Block block = event.getBlock();

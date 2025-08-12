@@ -23,6 +23,7 @@ public class CheckOpenMenu {
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerOpenMenuOnClaim(player, location))
             return false;
         if (integrationManager.isHasMinePlots() && !MinePlots.canPlayerOpenMenu(player, location)) return false;
+        if (integrationManager.isHasIridiumSkyblock() && !IridiumSkyblock.canPlayerOpenMenu(player, location)) return false;
         return !integrationManager.isHasRedProtect() || RedProtectAPI.canPlayerOpenMenuOnClaim(player, location);
     }
 }
