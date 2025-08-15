@@ -11,7 +11,6 @@ import world.bentobox.bentobox.lists.Flags;
 import java.util.UUID;
 
 public class BentoBoxAPI {
-
     public static boolean canPlayerStackBlock(@NotNull Player player, @NotNull Location location) {
 
         return BentoBox.getInstance().getIslandsManager().getIslandAt(location).

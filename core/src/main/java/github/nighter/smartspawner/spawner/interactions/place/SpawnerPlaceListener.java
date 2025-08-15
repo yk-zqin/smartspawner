@@ -3,6 +3,7 @@ package github.nighter.smartspawner.spawner.interactions.place;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerPlaceEvent;
 import github.nighter.smartspawner.extras.HopperHandler;
+import github.nighter.smartspawner.hooks.protections.CheckStackBlock;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.limits.ChunkSpawnerLimiter;
@@ -78,12 +79,15 @@ public class SpawnerPlaceListener implements Listener {
             return;
         }
 
-        if (!(meta instanceof BlockStateMeta)) {
+        if (!(meta instanceof BlockStateMeta blockMeta)) {
             event.setCancelled(true);
             return;
         }
 
-        BlockStateMeta blockMeta = (BlockStateMeta) meta;
+        if (!CheckStackBlock.CanPlayerPlaceBlock(player, block.getLocation())) {
+            event.setCancelled(true);
+            return;
+        }
 
         boolean isVanillaSpawner = SpawnerTypeChecker.isVanillaSpawner(item);
 
@@ -269,8 +273,7 @@ public class SpawnerPlaceListener implements Listener {
         String spawnerId = UUID.randomUUID().toString().substring(0, 8);
 
         BlockState state = block.getState();
-        if (state instanceof CreatureSpawner) {
-            CreatureSpawner spawner = (CreatureSpawner) state;
+        if (state instanceof CreatureSpawner spawner) {
             spawner.setSpawnedType(entityType);
             spawner.update(true, false);
         }
