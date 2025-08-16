@@ -23,6 +23,7 @@ dependencies {
     compileOnly 'dev.aurelium:auraskills-api-bukkit:2.3.6'
     compileOnly 'pl.minecodes.plots:plugin-api:4.6.2'
     compileOnly("io.lumine:Mythic-Dist:5.10.0-SNAPSHOT")
+    compileOnly("com.iridium:IridiumSkyblock:4.1.0")
     // Lombok
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")

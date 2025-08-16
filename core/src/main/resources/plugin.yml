@@ -30,6 +30,7 @@ softdepend:
   - MultiWorld
   - Worlds
   - SuperiorSkyblock2
+  - IridiumSkyblock
 
   # RPG/Skill Plugins
   - AuraSkills
