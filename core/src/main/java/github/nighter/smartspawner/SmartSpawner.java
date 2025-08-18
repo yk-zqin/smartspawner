@@ -8,6 +8,7 @@ import github.nighter.smartspawner.commands.BrigadierCommandManager;
 import github.nighter.smartspawner.commands.list.ListSubCommand;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
+import github.nighter.smartspawner.commands.prices.PricesGUI;
 import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
 import github.nighter.smartspawner.utils.TimeFormatter;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
@@ -119,6 +120,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private ListSubCommand listSubCommand;
     private UserPreferenceCache userPreferenceCache;
     private SpawnerListGUI spawnerListGUI;
+    private PricesGUI pricesGUI;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -276,6 +278,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerStackerHandler, this);
         pm.registerEvents(worldEventHandler, this);
         pm.registerEvents(spawnerListGUI, this);
+        pm.registerEvents(pricesGUI, this);
     }
 
     private void setupCommand() {
@@ -284,6 +287,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.userPreferenceCache = new UserPreferenceCache(this);
         this.listSubCommand = new ListSubCommand(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
+        this.pricesGUI = new PricesGUI(this);
     }
 
     private void setupBtatsMetrics() {

@@ -352,3 +352,22 @@ navigation:
   previous_page: '&#37eb9aᴘʀᴇᴠɪᴏᴜꜱ ᴘᴀɢᴇ'
   next_page: '&#37eb9aɴᴇxᴛ ᴘᴀɢᴇ'
   back: '&#ff5252ʙᴀᴄᴋ ᴛᴏ ᴡᴏʀʟᴅ ꜱᴇʟᴇᴄᴛɪᴏɴ'
+  close: '&#ff5252ᴄʟᴏꜱᴇ'
+  page_indicator: '&#fce96aᴘᴀɢᴇ %current_page%/%total_pages%'
+
+# ---------------------------------------------------
+#                  Prices GUI
+# ---------------------------------------------------
+prices_gui_title: '&#7b68eeɪᴛᴇᴍ ꜱᴇʟʟ ᴘʀɪᴄᴇꜱ &#8a6eff(ᴘᴀɢᴇ %current_page%/%total_pages%)'
+
+price_item:
+  name: '&#fce96a%item_name%'
+  lore:
+    - ''
+    - '&#d9b50c◈ &#fce96aᴘʀɪᴄᴇ ɪɴꜰᴏ:'
+    - '  &#f8f8ff•  ꜰɪɴᴀʟ ᴘʀɪᴄᴇ: &#37eb9a$%price%'
+    - '  &#f8f8ff•  ꜱᴏᴜʀᴄᴇ: &#c2a8fc%price_source%'
+    - ''
+    - '&#d9b50c◈ &#fce96aᴅᴇᴛᴀɪʟᴇᴅ ᴘʀɪᴄᴇꜱ:'
+    - '  &#f8f8ff•  ᴄᴜꜱᴛᴏᴍ: &#37eb9a$%custom_price%'
+    - '  &#f8f8ff•  ꜱʜᴏᴘ: &#37eb9a$%shop_price%'

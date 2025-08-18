@@ -6,6 +6,7 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.commands.give.GiveSubCommand;
 import github.nighter.smartspawner.commands.hologram.HologramSubCommand;
 import github.nighter.smartspawner.commands.list.ListSubCommand;
+import github.nighter.smartspawner.commands.prices.PricesSubCommand;
 import github.nighter.smartspawner.commands.reload.ReloadSubCommand;
 import github.nighter.smartspawner.language.MessageService;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -33,7 +34,8 @@ public class MainCommand {
                 new ReloadSubCommand(plugin),
                 new GiveSubCommand(plugin),
                 new ListSubCommand(plugin),
-                new HologramSubCommand(plugin)
+                new HologramSubCommand(plugin),
+                new PricesSubCommand(plugin)
         );
     }
 
