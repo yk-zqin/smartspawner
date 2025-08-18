@@ -274,3 +274,12 @@ command_hologram_enabled:
 command_hologram_disabled:
   message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ʟồɴɢ sᴘᴀᴡɴ"
   sound: block.note_block.bass
+
+# Prices command messages
+prices_not_available:
+  message: "&#ff5252ᴛíɴʜ ɴăɴɢ ʙáɴ ʜàɴɢ ᴋʜôɴɢ ᴄó sẵɴ. ᴠᴜɪ ʟòɴɢ ᴄấᴜ ʜìɴʜ ᴄàɪ đặᴛ ᴋɪɴʜ ᴛế."
+  sound: block.note_block.pling
+
+no_priceable_items:
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ɢɪá ᴄả."
+  sound: block.note_block.pling
