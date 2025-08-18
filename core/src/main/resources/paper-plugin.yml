@@ -1,0 +1,170 @@
+name: SmartSpawner
+version: '${version}'
+main: github.nighter.smartspawner.SmartSpawner
+api-version: '1.21'
+description: "Advanced spawner management plugin with stacking, upgrades, and storage"
+authors:
+  - "SmartSpawner Contributors"
+website: "https://github.com/ptthanh02/Smart-Spawner"
+folia-supported: true
+
+# Load order - POSTWORLD means after all worlds are loaded
+load: POSTWORLD
+
+# Prefix for logging messages
+prefix: "SmartSpawner"
+
+# Bootstrap configuration
+# bootstrapper: github.nighter.smartspawner.SmartSpawnerBootstrap
+
+# Dependencies
+dependencies:
+  server:
+    # Shop Plugins
+    EconomyShopGUI:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    EconomyShopGUI-Premium:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    ShopGUIPlus:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    zShop:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    ExcellentShop:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+    # Economy Plugins
+    CoinEngine:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    Vault:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+    # Protection/Region Plugins
+    WorldGuard:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    GriefPrevention:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    Lands:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    Towny:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    SimpleClaimSystem:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    RedProtect:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    MinePlots:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+    # World Management Plugins
+    Multiverse-Core:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    MultiWorld:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    Worlds:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    SuperiorSkyblock2:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    IridiumSkyblock:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+    # RPG/Skill Plugins
+    AuraSkills:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+    # Drops Plugins
+    MythicMobs:
+      load: BEFORE
+      required: false
+      join-classpath: false
+
+# Permissions
+permissions:
+  # Admin permissions
+  smartspawner.admin:
+    description: "Full access to all SmartSpawner features"
+    default: op
+    children:
+      - smartspawner.reload
+      - smartspawner.give
+      - smartspawner.list
+      - smartspawner.hologram
+      - smartspawner.changetype
+      - smartspawner.sellall
+      - smartspawner.limits.bypass
+
+  # Subcommand permissions
+  smartspawner.reload:
+    description: "Permission to reload SmartSpawner plugin"
+    default: op
+
+  smartspawner.give:
+    description: "Allow giving spawners to yourself"
+    default: op
+
+  smartspawner.list:
+    description: "Allow viewing list of spawners and teleporting to them"
+    default: op
+
+  smartspawner.hologram:
+    description: "Allow toggling hologram for spawners"
+    default: op
+
+  # Feature permissions
+  smartspawner.changetype:
+    description: "Allow changing spawner type with spawn egg"
+    default: op
+
+  smartspawner.stack:
+    description: "Allow stacking spawners"
+    default: true
+
+  smartspawner.break:
+    description: "Allow breaking spawners"
+    default: true
+
+  smartspawner.sellall:
+    description: "Allow selling items in spawner storage GUI"
+    default: true
+
+  smartspawner.limits.bypass:
+    description: "Bypass spawner limits per chunk"
+    default: false

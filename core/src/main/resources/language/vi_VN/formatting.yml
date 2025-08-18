@@ -38,7 +38,6 @@ mob_names:
   IRON_GOLEM: "Người Sắt"
   LLAMA: "Lạc Đà Không Bướu"
   MOOSHROOM: "Bò Nấm"
-  MUSHROOM_COW: "Bò Nấm" # Fallback for 1.20 version compatibility
   MULE: "La"
   OCELOT: "Báo Đốm"
   PANDA: "Gấu Trúc"
@@ -51,7 +50,6 @@ mob_names:
   SHEEP: "Cừu"
   SNIFFER: "Kẻ Đánh Hơi"
   SNOW_GOLEM: "Người Tuyết"
-  SNOWMAN: "Người Tuyết" # Fallback for 1.20 version compatibility
   SQUID: "Mực"
   STRIDER: "Kẻ Sải Bước"
   TADPOLE: "Nòng Nọc"

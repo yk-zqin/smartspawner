@@ -1,6 +1,10 @@
 package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.commands.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.enums.SortOption;
+import github.nighter.smartspawner.commands.list.holders.SpawnerListHolder;
+import github.nighter.smartspawner.commands.list.holders.WorldSelectionHolder;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -22,7 +26,7 @@ public class SpawnerListGUI implements Listener {
     private final LanguageManager languageManager;
     private final MessageService messageService;
     private final SpawnerManager spawnerManager;
-    private final ListCommand listCommand;
+    private final ListSubCommand listSubCommand;
     private static final Set<Material> SPAWNER_MATERIALS = EnumSet.of(
             Material.PLAYER_HEAD, Material.SPAWNER, Material.ZOMBIE_HEAD,
             Material.SKELETON_SKULL, Material.WITHER_SKELETON_SKULL,
@@ -34,7 +38,7 @@ public class SpawnerListGUI implements Listener {
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
-        this.listCommand = plugin.getListCommand();
+        this.listSubCommand = plugin.getListSubCommand();
     }
 
     @EventHandler
@@ -55,23 +59,23 @@ public class SpawnerListGUI implements Listener {
 
         // Check for original layout slots first (for backward compatibility)
         if (event.getSlot() == 11 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.overworld.name")))) {
-            listCommand.openSpawnerListGUI(player, "world", 1);
+            listSubCommand.openSpawnerListGUI(player, "world", 1);
             return;
         } else if (event.getSlot() == 13 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.nether.name")))) {
-            listCommand.openSpawnerListGUI(player, "world_nether", 1);
+            listSubCommand.openSpawnerListGUI(player, "world_nether", 1);
             return;
         } else if (event.getSlot() == 15 && displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
-            listCommand.openSpawnerListGUI(player, "world_the_end", 1);
+            listSubCommand.openSpawnerListGUI(player, "world_the_end", 1);
             return;
         }
 
         // For custom layout or any other slots, determine world by name
         if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.overworld.name")))) {
-            listCommand.openSpawnerListGUI(player, "world", 1);
+            listSubCommand.openSpawnerListGUI(player, "world", 1);
         } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.nether.name")))) {
-            listCommand.openSpawnerListGUI(player, "world_nether", 1);
+            listSubCommand.openSpawnerListGUI(player, "world_nether", 1);
         } else if (displayName.equals(ChatColor.stripColor(languageManager.getGuiTitle("world_buttons.end.name")))) {
-            listCommand.openSpawnerListGUI(player, "world_the_end", 1);
+            listSubCommand.openSpawnerListGUI(player, "world_the_end", 1);
         } else {
             // For custom worlds, find the matching world
             for (World world : Bukkit.getWorlds()) {
@@ -79,14 +83,14 @@ public class SpawnerListGUI implements Listener {
 
                 if (spawnerManager.countSpawnersInWorld(world.getName()) > 0 &&
                         displayName.contains(worldDisplayName)) {
-                    listCommand.openSpawnerListGUI(player, world.getName(), 1);
+                    listSubCommand.openSpawnerListGUI(player, world.getName(), 1);
                     break;
                 }
             }
         }
     }
 
-    // Helper method to format world name (same as in ListCommand)
+    // Helper method to format world name (same as in listSubCommand)
     private String formatWorldName(String worldName) {
         // Convert something like "my_custom_world" to "My Custom World"
         return Arrays.stream(worldName.replace('_', ' ').split(" "))
@@ -110,52 +114,52 @@ public class SpawnerListGUI implements Listener {
         String worldName = holder.getWorldName();
         int currentPage = holder.getCurrentPage();
         int totalPages = holder.getTotalPages();
-        ListCommand.FilterOption currentFilter = holder.getFilterOption();
-        ListCommand.SortOption currentSort = holder.getSortType();
+        FilterOption currentFilter = holder.getFilterOption();
+        SortOption currentSort = holder.getSortType();
 
         // Handle filter button click
         if (event.getSlot() == 48) {
             // Cycle to next filter option
-            ListCommand.FilterOption nextFilter = currentFilter.getNextOption();
+            FilterOption nextFilter = currentFilter.getNextOption();
 
             // Save user preference when they change filter
-            listCommand.saveUserPreference(player, worldName, nextFilter, currentSort);
+            listSubCommand.saveUserPreference(player, worldName, nextFilter, currentSort);
 
-            listCommand.openSpawnerListGUI(player, worldName, 1, nextFilter, currentSort);
+            listSubCommand.openSpawnerListGUI(player, worldName, 1, nextFilter, currentSort);
             return;
         }
 
         // Handle sort button click
         if (event.getSlot() == 50) {
             // Cycle to next sort option
-            ListCommand.SortOption nextSort = currentSort.getNextOption();
+            SortOption nextSort = currentSort.getNextOption();
 
             // Save user preference when they change sort
-            listCommand.saveUserPreference(player, worldName, currentFilter, nextSort);
+            listSubCommand.saveUserPreference(player, worldName, currentFilter, nextSort);
 
-            listCommand.openSpawnerListGUI(player, worldName, 1, currentFilter, nextSort);
+            listSubCommand.openSpawnerListGUI(player, worldName, 1, currentFilter, nextSort);
             return;
         }
 
         // Handle navigation
         if (event.getSlot() == 45 && currentPage > 1) {
             // Previous page
-            listCommand.openSpawnerListGUI(player, worldName, currentPage - 1, currentFilter, currentSort);
+            listSubCommand.openSpawnerListGUI(player, worldName, currentPage - 1, currentFilter, currentSort);
             return;
         }
 
         if (event.getSlot() == 49) {
             // Save preference before going back to world selection
-            listCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
+            listSubCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
 
             // Back to world selection
-            listCommand.openWorldSelectionGUI(player);
+            listSubCommand.openWorldSelectionGUI(player);
             return;
         }
 
         if (event.getSlot() == 53 && currentPage < totalPages) {
             // Next page
-            listCommand.openSpawnerListGUI(player, worldName, currentPage + 1, currentFilter, currentSort);
+            listSubCommand.openSpawnerListGUI(player, worldName, currentPage + 1, currentFilter, currentSort);
             return;
         }
 
@@ -173,11 +177,11 @@ public class SpawnerListGUI implements Listener {
 
         // Save user preferences when closing the inventory
         String worldName = holder.getWorldName();
-        ListCommand.FilterOption currentFilter = holder.getFilterOption();
-        ListCommand.SortOption currentSort = holder.getSortType();
+        FilterOption currentFilter = holder.getFilterOption();
+        SortOption currentSort = holder.getSortType();
 
         // Save preference when they close the GUI
-        listCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
+        listSubCommand.saveUserPreference(player, worldName, currentFilter, currentSort);
     }
 
     private boolean isSpawnerItemSlot(int slot) {

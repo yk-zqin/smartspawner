@@ -1,7 +1,7 @@
 name: SmartSpawner
 version: '${version}'
 main: github.nighter.smartspawner.SmartSpawner
-api-version: '1.20'
+api-version: '1.21'
 authors: [ https://github.com/ptthanh02/Smart-Spawner/graphs/contributors ]
 folia-supported: true
 softdepend:
@@ -41,33 +41,59 @@ softdepend:
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
+    usage: /smartspawner [reload|give|list|hologram] [args...]
     aliases: [ ss, spawner ]
+    permission: smartspawner.admin
+    permission-message: "You don't have permission to use SmartSpawner commands!"
 
 permissions:
+  # Admin permissions
+  smartspawner.admin:
+    description: Full access to all SmartSpawner features
+    default: op
+    children:
+      smartspawner.reload: true
+      smartspawner.give: true
+      smartspawner.list: true
+      smartspawner.hologram: true
+      smartspawner.changetype: true
+      smartspawner.sellall: true
+      smartspawner.limits.bypass: true
+
+  # Subcommand permissions
   smartspawner.reload:
     description: Permission to reload SmartSpawner plugin
     default: op
+
   smartspawner.give:
-    description: Allow giving spawners to yourself or other players
+    description: Allow giving spawners to yourself
     default: op
+
   smartspawner.list:
     description: Allow viewing list of spawners and teleporting to them
     default: op
+
   smartspawner.hologram:
     description: Allow toggling hologram for spawners
     default: op
+
+  # Feature permissions
   smartspawner.changetype:
     description: Allow changing spawner type with spawn egg
     default: op
+
   smartspawner.stack:
     description: Allow stacking spawners
     default: true
+
   smartspawner.break:
     description: Allow breaking spawners
     default: true
+
   smartspawner.sellall:
     description: Allow selling items in spawner storage GUI
     default: true
+
   smartspawner.limits.bypass:
     description: Bypass spawner limits per chunk
     default: false

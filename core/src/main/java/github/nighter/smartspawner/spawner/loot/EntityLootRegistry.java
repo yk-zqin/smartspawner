@@ -94,37 +94,24 @@ public class EntityLootRegistry {
                         }
 
                         PotionType potionType = null;
-                        boolean isExtended = false;
-                        boolean isUpgraded = false;
 
-                        if (material == Material.TIPPED_ARROW && itemSection.contains("potion_effect")) {
-                            ConfigurationSection potionSection = itemSection.getConfigurationSection("potion_effect");
-                            if (potionSection != null) {
-                                String potionTypeName = potionSection.getString("type");
-                                if (potionTypeName != null) {
-                                    try {
-                                        potionType = PotionType.valueOf(potionTypeName.toUpperCase());
-                                    } catch (IllegalArgumentException e) {
-                                        plugin.getLogger().warning("Invalid potion type '" + potionTypeName +
-                                                "' for entity " + entityName + ". Available types: " +
-                                                java.util.Arrays.toString(PotionType.values()));
-                                        continue;
-                                    }
-                                }
-                                isExtended = potionSection.getBoolean("extended", false);
-                                isUpgraded = potionSection.getBoolean("upgraded", false);
-
-                                // Warning if both extended and upgraded are true
-                                if (isExtended && isUpgraded) {
-                                    plugin.getLogger().warning("Entity " + entityName + " has tipped arrow with both 'extended' and 'upgraded' set to true. " +
-                                            "This may not work as expected in Minecraft. Consider using only one enhancement type.");
+                        // Modern potion handling - only for tipped arrows
+                        if (material == Material.TIPPED_ARROW && itemSection.contains("potion_type")) {
+                            String potionTypeName = itemSection.getString("potion_type");
+                            if (potionTypeName != null) {
+                                try {
+                                    potionType = PotionType.valueOf(potionTypeName.toUpperCase());
+                                } catch (IllegalArgumentException e) {
+                                    plugin.getLogger().warning("Invalid potion type '" + potionTypeName +
+                                            "' for entity " + entityName + ". Available types: " +
+                                            java.util.Arrays.toString(PotionType.values()));
+                                    continue;
                                 }
                             }
                         }
 
                         items.add(new LootItem(material, minAmount, maxAmount, chance,
-                                minDurability, maxDurability, potionType,
-                                isExtended, isUpgraded, sellPrice));
+                                minDurability, maxDurability, potionType, sellPrice));
 
                     } catch (Exception e) {
                         plugin.getLogger().warning("Error processing material '" + itemKey + "' for entity " + entityName + ": " + e.getMessage());

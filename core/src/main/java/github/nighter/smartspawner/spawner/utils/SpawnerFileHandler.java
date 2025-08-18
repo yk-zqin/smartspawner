@@ -235,8 +235,7 @@ public class SpawnerFileHandler {
                     loadedCount++;
                 }
             } catch (Exception e) {
-                logger.severe("Error loading spawner " + spawnerId);
-                e.printStackTrace();
+                logger.warning("Error loading spawner " + spawnerId + ": " + e.getMessage());
                 errorCount++;
             }
         }
@@ -245,24 +244,82 @@ public class SpawnerFileHandler {
         return loadedSpawners;
     }
 
+    /**
+     * Load all spawners from config, returning null for spawners whose worlds aren't loaded yet
+     * This method is used by WorldEventHandler for delayed loading
+     */
+    public Map<String, SpawnerData> loadAllSpawnersRaw() {
+        Map<String, SpawnerData> loadedSpawners = new HashMap<>();
+
+        ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
+        if (spawnersSection == null) return loadedSpawners;
+
+        for (String spawnerId : spawnersSection.getKeys(false)) {
+            try {
+                // Use non-logging version to suppress "World not found" errors during startup
+                SpawnerData spawner = loadSpawnerFromConfig(spawnerId, false);
+                // Add to map even if null (world not loaded)
+                loadedSpawners.put(spawnerId, spawner);
+            } catch (Exception e) {
+                plugin.debug("Error loading spawner " + spawnerId + ": " + e.getMessage());
+                // Add null entry to indicate error
+                loadedSpawners.put(spawnerId, null);
+            }
+        }
+
+        return loadedSpawners;
+    }
+
+    /**
+     * Load a specific spawner by ID
+     */
+    public SpawnerData loadSpecificSpawner(String spawnerId) {
+        try {
+            return loadSpawnerFromConfig(spawnerId, false);
+        } catch (Exception e) {
+            plugin.debug("Error loading spawner " + spawnerId + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get the raw location string for a spawner (used by WorldEventHandler)
+     */
+    public String getRawLocationString(String spawnerId) {
+        String path = "spawners." + spawnerId + ".location";
+        return spawnerData.getString(path);
+    }
+
     private SpawnerData loadSpawnerFromConfig(String spawnerId) {
+        return loadSpawnerFromConfig(spawnerId, true);
+    }
+
+    private SpawnerData loadSpawnerFromConfig(String spawnerId, boolean logErrors) {
         String path = "spawners." + spawnerId;
 
         String locationString = spawnerData.getString(path + ".location");
         if (locationString == null) {
-            logger.warning("Invalid location for spawner " + spawnerId);
+            if (logErrors) {
+                logger.severe("Invalid location for spawner " + spawnerId);
+            }
             return null;
         }
 
         String[] locParts = locationString.split(",");
         if (locParts.length != 4) {
-            logger.warning("Invalid location format for spawner " + spawnerId);
+            if (logErrors) {
+                logger.severe("Invalid location format for spawner " + spawnerId);
+            }
             return null;
         }
 
         org.bukkit.World world = Bukkit.getWorld(locParts[0]);
         if (world == null) {
-            logger.warning("World not found for spawner " + spawnerId + ": " + locParts[0]);
+            if (logErrors) {
+                logger.severe("World not found for spawner " + spawnerId + ": " + locParts[0]);
+            } else {
+                plugin.debug("World not yet loaded for spawner " + spawnerId + ": " + locParts[0]);
+            }
             return null;
         }
 
@@ -273,7 +330,9 @@ public class SpawnerFileHandler {
 
         String entityTypeString = spawnerData.getString(path + ".entityType");
         if (entityTypeString == null) {
-            logger.warning("Missing entity type for spawner " + spawnerId);
+            if (logErrors) {
+                logger.severe("Missing entity type for spawner " + spawnerId);
+            }
             return null;
         }
 
@@ -281,7 +340,9 @@ public class SpawnerFileHandler {
         try {
             entityType = EntityType.valueOf(entityTypeString);
         } catch (IllegalArgumentException e) {
-            logger.warning("Invalid entity type for spawner " + spawnerId + ": " + entityTypeString);
+            if (logErrors) {
+                logger.severe("Invalid entity type for spawner " + spawnerId + ": " + entityTypeString);
+            }
             return null;
         }
 
@@ -325,8 +386,8 @@ public class SpawnerFileHandler {
                     spawner.setIsAtCapacity(false);
                 }
             } catch (NumberFormatException e) {
-                logger.warning("Invalid settings format for spawner " + spawnerId);
-                logger.warning("Settings: " + settingsString);
+                logger.severe("Invalid settings format for spawner " + spawnerId);
+                logger.severe("Settings: " + settingsString);
                 e.printStackTrace();
                 return null;
             }
@@ -427,3 +488,4 @@ public class SpawnerFileHandler {
         }
     }
 }
+

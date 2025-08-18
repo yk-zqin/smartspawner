@@ -38,7 +38,6 @@ mob_names:
   IRON_GOLEM: "Iron Golem"
   LLAMA: "Llama"
   MOOSHROOM: "Mooshroom"
-  MUSHROOM_COW: "Mooshroom" # Fallback for 1.20 version compatibility
   MULE: "Mule"
   OCELOT: "Ocelot"
   PANDA: "Panda"
@@ -51,7 +50,6 @@ mob_names:
   SHEEP: "Sheep"
   SNIFFER: "Sniffer"
   SNOW_GOLEM: "Snow Golem"
-  SNOWMAN: "Snow Golem" # Fallback for 1.20 version compatibility
   SQUID: "Squid"
   STRIDER: "Strider"
   TADPOLE: "Tadpole"

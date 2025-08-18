@@ -27,8 +27,8 @@ public class SpawnerManager {
         // Initialize file handler
         this.spawnerFileHandler = plugin.getSpawnerFileHandler();
 
-        // Load spawners from file
-        loadSpawnerData();
+        // Initialize without loading spawners - let WorldEventHandler manage loading
+        initializeWithoutLoading();
     }
 
     /**
@@ -198,6 +198,38 @@ public class SpawnerManager {
             // Run after 5 seconds to allow server to stabilize
             Scheduler.runTaskLater(this::removeGhostSpawners, 20L * 5);
         }
+    }
+
+    /**
+     * Add a spawner to the indexes without saving to file (used by WorldEventHandler)
+     */
+    public void addSpawnerToIndexes(String spawnerId, SpawnerData spawner) {
+        spawners.put(spawnerId, spawner);
+        locationIndex.put(new LocationKey(spawner.getSpawnerLocation()), spawner);
+
+        // Add to world index
+        String worldName = spawner.getSpawnerLocation().getWorld().getName();
+        worldIndex.computeIfAbsent(worldName, k -> new HashSet<>()).add(spawner);
+    }
+
+    /**
+     * Get all spawners in a specific world
+     */
+    public Set<SpawnerData> getSpawnersInWorld(String worldName) {
+        return worldIndex.get(worldName);
+    }
+
+    /**
+     * Initialize without loading spawners (used when WorldEventHandler manages loading)
+     */
+    public void initializeWithoutLoading() {
+        // Clear existing data
+        spawners.clear();
+        locationIndex.clear();
+        worldIndex.clear();
+        confirmedGhostSpawners.clear();
+
+        // Don't load spawners - let WorldEventHandler handle it
     }
 
     /**

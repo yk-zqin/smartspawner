@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -35,16 +37,17 @@ public class UpdateChecker implements Listener {
     private String latestVersion = "";
     private String downloadUrl = "";
     private String directLink = "";
+    private boolean serverVersionSupported = true;
+    private JsonArray latestSupportedVersions = null;
 
-    // Console colors
     private static final String CONSOLE_RESET = "\u001B[0m";
     private static final String CONSOLE_BRIGHT_GREEN = "\u001B[92m";
     private static final String CONSOLE_YELLOW = "\u001B[33m";
     private static final String CONSOLE_INDIGO = "\u001B[38;5;93m";
     private static final String CONSOLE_LAVENDER = "\u001B[38;5;183m";
     private static final String CONSOLE_BRIGHT_PURPLE = "\u001B[95m";
+    private static final String CONSOLE_RED = "\u001B[91m";
 
-    // Track players who have received an update notification today
     private final Map<UUID, LocalDate> notifiedPlayers = new HashMap<>();
 
     public UpdateChecker(JavaPlugin plugin) {
@@ -52,10 +55,11 @@ public class UpdateChecker implements Listener {
         this.currentVersion = plugin.getDescription().getVersion();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
-        // Check for updates asynchronously on plugin startup
         checkForUpdates().thenAccept(hasUpdate -> {
-            if (hasUpdate) {
+            if (hasUpdate && serverVersionSupported) {
                 displayConsoleUpdateMessage();
+            } else if (!serverVersionSupported) {
+                displayUnsupportedVersionMessage();
             }
         }).exceptionally(ex -> {
             plugin.getLogger().warning("Failed to check for updates: " + ex.getMessage());
@@ -63,9 +67,6 @@ public class UpdateChecker implements Listener {
         });
     }
 
-    /**
-     * Displays a fancy update message in the console
-     */
     private void displayConsoleUpdateMessage() {
         String modrinthLink = "https://modrinth.com/plugin/" + projectId + "/version/" + latestVersion;
         String frameColor = CONSOLE_INDIGO;
@@ -91,9 +92,43 @@ public class UpdateChecker implements Listener {
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + CONSOLE_RESET);
     }
 
-    /**
-     * Format text to fit within console box with padding
-     */
+    private void displayUnsupportedVersionMessage() {
+        String frameColor = CONSOLE_RED;
+        String serverVersion = Bukkit.getVersion();
+
+        plugin.getLogger().warning(frameColor +
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + CONSOLE_RESET);
+        plugin.getLogger().warning(frameColor + CONSOLE_YELLOW +
+                "      ⚠️  ꜱᴇʀᴠᴇʀ ᴠᴇʀꜱɪᴏɴ ɴᴏ ʟᴏɴɢᴇʀ ꜱᴜᴘᴘᴏʀᴛᴇᴅ  ⚠️" + CONSOLE_RESET);
+        plugin.getLogger().warning(frameColor +
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + CONSOLE_RESET);
+        plugin.getLogger().warning("");
+        plugin.getLogger().warning(frameColor +
+                CONSOLE_RESET + "🖥️ ʏᴏᴜʀ ꜱᴇʀᴠᴇʀ ᴠᴇʀꜱɪᴏɴ: " + CONSOLE_YELLOW + serverVersion + CONSOLE_RESET);
+        plugin.getLogger().warning(frameColor +
+                CONSOLE_RESET + "📦 ʟᴀᴛᴇꜱᴛ ᴘʟᴜɢɪɴ ᴠᴇʀꜱɪᴏɴ: " + CONSOLE_BRIGHT_GREEN + latestVersion + CONSOLE_RESET);
+        plugin.getLogger().warning(frameColor +
+                CONSOLE_RESET + "🎯 ꜱᴜᴘᴘᴏʀᴛᴇᴅ ꜱᴇʀᴠᴇʀ ᴠᴇʀꜱɪᴏɴꜱ: " + CONSOLE_LAVENDER + getSupportedVersionsString() + CONSOLE_RESET);
+        plugin.getLogger().warning("");
+        plugin.getLogger().warning(frameColor +
+                CONSOLE_RESET + "⚠️  ᴛʜɪꜱ ꜱᴇʀᴠᴇʀ ᴠᴇʀꜱɪᴏɴ ɪꜱ ɴᴏ ʟᴏɴɢᴇʀ ꜱᴜᴘᴘᴏʀᴛᴇᴅ" + CONSOLE_RESET);
+        plugin.getLogger().warning(frameColor +
+                CONSOLE_RESET + "📋 ᴜᴘᴅᴀᴛᴇ ɴᴏᴛɪꜰɪᴄᴀᴛɪᴏɴꜱ ᴅɪꜱᴀʙʟᴇᴅ" + CONSOLE_RESET);
+        plugin.getLogger().warning("");
+        plugin.getLogger().warning(frameColor +
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" + CONSOLE_RESET);
+    }
+
+    private String getSupportedVersionsString() {
+        if (latestSupportedVersions == null || latestSupportedVersions.isEmpty()) {
+            return "N/A";
+        }
+
+        return latestSupportedVersions.asList().stream()
+                .map(JsonElement::getAsString)
+                .collect(Collectors.joining(", "));
+    }
+
     private String formatConsoleText(String text, int maxLength) {
         if (text.length() > maxLength) {
             return text.substring(0, maxLength - 3) + "...";
@@ -101,14 +136,79 @@ public class UpdateChecker implements Listener {
         return text + " ".repeat(maxLength - text.length());
     }
 
-    /**
-     * Checks for updates from Modrinth
-     * @return CompletableFuture that resolves to true if an update is available
-     */
+    private boolean isServerVersionSupported(JsonObject latestVersionObj) {
+        try {
+            String serverVersion = Bukkit.getVersion();
+
+            JsonArray gameVersions = latestVersionObj.getAsJsonArray("game_versions");
+            if (gameVersions == null || gameVersions.isEmpty()) {
+                return true;
+            }
+
+            String cleanServerVersion = extractMinecraftVersion(serverVersion);
+
+            for (JsonElement versionElement : gameVersions) {
+                String supportedVersion = versionElement.getAsString();
+                if (isVersionCompatible(cleanServerVersion, supportedVersion)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error checking server version compatibility: " + e.getMessage());
+            return true;
+        }
+    }
+
+    private String extractMinecraftVersion(String serverVersion) {
+        if (serverVersion.contains("MC: ")) {
+            String mcPart = serverVersion.substring(serverVersion.indexOf("MC: ") + 4);
+            if (mcPart.contains(")")) {
+                mcPart = mcPart.substring(0, mcPart.indexOf(")"));
+            }
+            return mcPart.trim();
+        }
+
+        if (serverVersion.matches(".*\\d+\\.\\d+(\\.\\d+)?.*")) {
+            String[] parts = serverVersion.split("\\s+");
+            for (String part : parts) {
+                if (part.matches("\\d+\\.\\d+(\\.\\d+)?")) {
+                    return part;
+                }
+            }
+        }
+
+        return serverVersion;
+    }
+
+    private boolean isVersionCompatible(String serverVersion, String supportedVersion) {
+        try {
+            if (serverVersion.equals(supportedVersion)) {
+                return true;
+            }
+
+            String[] serverParts = serverVersion.split("\\.");
+            String[] supportedParts = supportedVersion.split("\\.");
+
+            if (serverParts.length >= 2 && supportedParts.length >= 2) {
+                int serverMajor = Integer.parseInt(serverParts[0]);
+                int serverMinor = Integer.parseInt(serverParts[1]);
+                int supportedMajor = Integer.parseInt(supportedParts[0]);
+                int supportedMinor = Integer.parseInt(supportedParts[1]);
+
+                return serverMajor == supportedMajor && serverMinor == supportedMinor;
+            }
+
+            return false;
+        } catch (NumberFormatException e) {
+            return serverVersion.equals(supportedVersion);
+        }
+    }
+
     public CompletableFuture<Boolean> checkForUpdates() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // String currentVersion = "0.0.0";
                 URL url = new URL("https://api.modrinth.com/v2/project/" + projectId + "/version");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
@@ -128,17 +228,14 @@ public class UpdateChecker implements Listener {
                     return false;
                 }
 
-                // Find the latest version
                 JsonObject latestVersionObj = null;
                 for (JsonElement element : versions) {
                     JsonObject version = element.getAsJsonObject();
-                    // Skip pre-releases by checking if version_type is "release"
                     String versionType = version.get("version_type").getAsString();
                     if (versionType.equals("release")) {
                         if (latestVersionObj == null) {
                             latestVersionObj = version;
                         } else {
-                            // Compare date_published to find the newest
                             String currentDate = latestVersionObj.get("date_published").getAsString();
                             String newDate = version.get("date_published").getAsString();
                             if (newDate.compareTo(currentDate) > 0) {
@@ -155,21 +252,20 @@ public class UpdateChecker implements Listener {
                 latestVersion = latestVersionObj.get("version_number").getAsString();
                 String versionId = latestVersionObj.get("id").getAsString();
 
-                // Create proper Modrinth page link (instead of direct download)
                 downloadUrl = "https://modrinth.com/plugin/" + projectId + "/version/" + latestVersion;
 
-                // Also save direct link (but don't display it)
                 JsonArray files = latestVersionObj.getAsJsonArray("files");
                 if (!files.isEmpty()) {
                     JsonObject primaryFile = files.get(0).getAsJsonObject();
                     directLink = primaryFile.get("url").getAsString();
                 }
 
-                // Compare versions using the Version class
+                serverVersionSupported = isServerVersionSupported(latestVersionObj);
+                latestSupportedVersions = latestVersionObj.getAsJsonArray("game_versions");
+
                 Version latest = new Version(latestVersion);
                 Version current = new Version(currentVersion);
 
-                // If latest version is greater than current version, an update is available
                 updateAvailable = latest.compareTo(current) > 0;
                 return updateAvailable;
 
@@ -181,23 +277,17 @@ public class UpdateChecker implements Listener {
         });
     }
 
-    /**
-     * Sends a beautiful update notification to a player
-     *
-     * @param player The player to notify
-     */
     private void sendUpdateNotification(Player player) {
-        if (!updateAvailable || !player.hasPermission("smartspawner.update.notify")) {
+        if (!updateAvailable || !serverVersionSupported || !player.hasPermission("smartspawner.admin")) {
             return;
         }
 
-        // Use colors from the config file style
-        TextColor primaryPurple = TextColor.fromHexString("#ab7afd"); // Match config purple
-        TextColor deepPurple = TextColor.fromHexString("#7b68ee"); // Match config deep purple
-        TextColor indigo = TextColor.fromHexString("#5B2C6F"); // Dark indigo
-        TextColor brightGreen = TextColor.fromHexString("#37eb9a"); // Match config green
-        TextColor yellow = TextColor.fromHexString("#f0c857"); // Match config yellow
-        TextColor white = TextColor.fromHexString("#e6e6fa"); // Match config lavender-white
+        TextColor primaryPurple = TextColor.fromHexString("#ab7afd");
+        TextColor deepPurple = TextColor.fromHexString("#7b68ee");
+        TextColor indigo = TextColor.fromHexString("#5B2C6F");
+        TextColor brightGreen = TextColor.fromHexString("#37eb9a");
+        TextColor yellow = TextColor.fromHexString("#f0c857");
+        TextColor white = TextColor.fromHexString("#e6e6fa");
 
         Component borderTop = Component.text("━━━━━━━━ ꜱᴍᴀʀᴛꜱᴘᴀᴡɴᴇʀ ᴜᴘᴅᴀᴛᴇ ━━━━━━━━").color(deepPurple);
         Component borderBottom = Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━").color(deepPurple);
@@ -228,7 +318,6 @@ public class UpdateChecker implements Listener {
         player.sendMessage(" ");
         player.sendMessage(borderBottom);
 
-        // Use the levelup sound as it's used for other success messages in the config
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
     }
 
@@ -236,37 +325,32 @@ public class UpdateChecker implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // Check if player has permission and if there's an update
-        if (player.hasPermission("smartspawner.update.notify")) {
-
+        if (player.hasPermission("smartspawner.admin")) {
             UUID playerId = player.getUniqueId();
             LocalDate today = LocalDate.now();
 
-            // Clean up old notifications
             notifiedPlayers.entrySet().removeIf(entry -> entry.getValue().isBefore(today));
 
-            // Check if the player has already been notified today
             if (notifiedPlayers.containsKey(playerId) && notifiedPlayers.get(playerId).isEqual(today)) {
-                return; // Already notified today
+                return;
             }
 
-            if (updateAvailable) {
-                // Wait a bit before sending the notification
+            if (updateAvailable && serverVersionSupported) {
                 Scheduler.runTaskLater(() -> {
                     sendUpdateNotification(player);
-                    notifiedPlayers.put(playerId, today); // Mark as notified after sending
+                    notifiedPlayers.put(playerId, today);
                 }, 40L);
+            } else if (!serverVersionSupported) {
+                return;
             } else {
-                // Re-check for updates when an operator joins, but only if we haven't found an update yet
                 checkForUpdates().thenAccept(hasUpdate -> {
-                    if (hasUpdate) {
+                    if (hasUpdate && serverVersionSupported) {
                         Scheduler.runTask(() -> {
                             sendUpdateNotification(player);
-                            notifiedPlayers.put(playerId, today); // Mark as notified after sending
+                            notifiedPlayers.put(playerId, today);
                         });
                     }
                 });
-                // Do NOT mark as notified here if no update is found yet
             }
         }
     }

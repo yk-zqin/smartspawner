@@ -4,8 +4,8 @@ import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 import java.util.*;
@@ -19,29 +19,22 @@ public class ItemStackSerializer {
     @Getter
     public static class ItemGroup {
         private final Material material;
-        private final Map<Short, Integer> durabilityCount;
-        private final Map<String, Integer> potionDataCount; // For TIPPED_ARROW
+        private final Map<Integer, Integer> damageCount; // Changed from durability to damage
+        private final Map<String, Integer> potionTypeCount; // Changed from potionDataCount
 
         public ItemGroup(Material material) {
             this.material = material;
-            this.durabilityCount = new HashMap<>();
-            this.potionDataCount = new HashMap<>();
+            this.damageCount = new HashMap<>();
+            this.potionTypeCount = new HashMap<>();
         }
 
-        public void addItem(short durability, int count) {
-            durabilityCount.merge(durability, count, Integer::sum);
+        public void addItem(int damage, int count) {
+            damageCount.merge(damage, count, Integer::sum);
         }
 
-        public void addPotionArrow(PotionData potionData, int count) {
-            String potionKey = serializePotionData(potionData);
-            potionDataCount.merge(potionKey, count, Integer::sum);
-        }
-
-        private String serializePotionData(PotionData potionData) {
-            return String.format("%s;%s;%s",
-                    potionData.getType().name(),
-                    potionData.isExtended(),
-                    potionData.isUpgraded());
+        public void addPotionArrow(PotionType potionType, int count) {
+            String potionKey = potionType.name();
+            potionTypeCount.merge(potionKey, count, Integer::sum);
         }
     }
 
@@ -55,29 +48,29 @@ public class ItemStackSerializer {
 
             if (material == Material.TIPPED_ARROW) {
                 PotionMeta meta = (PotionMeta) template.getItemMeta();
-                if (meta != null && meta.getBasePotionData() != null) {
-                    group.addPotionArrow(meta.getBasePotionData(), entry.getValue().intValue());
+                if (meta != null && meta.getBasePotionType() != null) {
+                    group.addPotionArrow(meta.getBasePotionType(), entry.getValue().intValue());
                 } else {
                     // Handle case where tipped arrow has no potion data (default to WATER)
-                    PotionData defaultData = new PotionData(PotionType.WATER, false, false);
-                    group.addPotionArrow(defaultData, entry.getValue().intValue());
+                    group.addPotionArrow(PotionType.WATER, entry.getValue().intValue());
                 }
             } else if (isDestructibleItem(material)) {
-                // Only add durability for items that can be damaged
-                group.addItem(template.getDurability(), entry.getValue().intValue());
+                // Use modern damage system instead of durability
+                int damage = getDamageValue(template);
+                group.addItem(damage, entry.getValue().intValue());
             } else {
-                // For non-destructible items, always use durability 0
-                group.addItem((short) 0, entry.getValue().intValue());
+                // For non-destructible items, always use damage 0
+                group.addItem(0, entry.getValue().intValue());
             }
         }
 
         List<String> serializedItems = new ArrayList<>();
         for (ItemGroup group : groupedItems.values()) {
             if (group.getMaterial() == Material.TIPPED_ARROW) {
-                // Format: TIPPED_ARROW#potion_type;extended;upgraded:count,...
+                // Format: TIPPED_ARROW#potion_type:count,...
                 StringBuilder sb = new StringBuilder("TIPPED_ARROW#");
                 boolean first = true;
-                for (Map.Entry<String, Integer> entry : group.getPotionDataCount().entrySet()) {
+                for (Map.Entry<String, Integer> entry : group.getPotionTypeCount().entrySet()) {
                     if (!first) {
                         sb.append(',');
                     }
@@ -86,11 +79,11 @@ public class ItemStackSerializer {
                 }
                 serializedItems.add(sb.toString());
             } else if (isDestructibleItem(group.getMaterial())) {
-                // Format for destructible items with durability
+                // Format for destructible items with damage
                 StringBuilder sb = new StringBuilder(group.getMaterial().name());
                 sb.append(';');
                 boolean first = true;
-                for (Map.Entry<Short, Integer> entry : group.getDurabilityCount().entrySet()) {
+                for (Map.Entry<Integer, Integer> entry : group.getDamageCount().entrySet()) {
                     if (!first) {
                         sb.append(',');
                     }
@@ -99,8 +92,8 @@ public class ItemStackSerializer {
                 }
                 serializedItems.add(sb.toString());
             } else {
-                // Format for normal items without durability
-                int totalCount = group.getDurabilityCount().values().stream()
+                // Format for normal items without damage
+                int totalCount = group.getDamageCount().values().stream()
                         .mapToInt(Integer::intValue).sum();
                 serializedItems.add(group.getMaterial().name() + ":" + totalCount);
             }
@@ -113,45 +106,40 @@ public class ItemStackSerializer {
 
         for (String entry : data) {
             if (entry.startsWith("TIPPED_ARROW#")) {
-                // Handle TIPPED_ARROW with potion data
+                // Handle TIPPED_ARROW with modern potion types
                 String[] potionEntries = entry.substring("TIPPED_ARROW#".length()).split(",");
                 for (String potionEntry : potionEntries) {
                     String[] parts = potionEntry.split(":");
-                    String[] potionData = parts[0].split(";");
+                    String potionTypeName = parts[0];
                     int count = Integer.parseInt(parts[1]);
 
                     ItemStack arrow = new ItemStack(Material.TIPPED_ARROW);
                     PotionMeta meta = (PotionMeta) arrow.getItemMeta();
                     if (meta != null) {
                         try {
-                            PotionType potionType = PotionType.valueOf(potionData[0]);
-                            boolean isExtended = Boolean.parseBoolean(potionData[1]);
-                            boolean isUpgraded = Boolean.parseBoolean(potionData[2]);
-
-                            PotionData potionDataMeta = new PotionData(potionType, isExtended, isUpgraded);
-                            meta.setBasePotionData(potionDataMeta);
+                            PotionType potionType = PotionType.valueOf(potionTypeName);
+                            meta.setBasePotionType(potionType);
                             arrow.setItemMeta(meta);
                         } catch (IllegalArgumentException e) {
                             // Handle case where potion type is not valid, default to WATER
-                            PotionData defaultData = new PotionData(PotionType.WATER, false, false);
-                            meta.setBasePotionData(defaultData);
+                            meta.setBasePotionType(PotionType.WATER);
                             arrow.setItemMeta(meta);
                         }
                     }
                     result.put(arrow, count);
                 }
             } else if (entry.contains(";")) {
-                // Logic for destructible items
+                // Logic for destructible items with damage
                 String[] parts = entry.split(";");
                 Material material = Material.valueOf(parts[0]);
 
-                for (String durabilityCount : parts[1].split(",")) {
-                    String[] dc = durabilityCount.split(":");
-                    short durability = Short.parseShort(dc[0]);
+                for (String damageCount : parts[1].split(",")) {
+                    String[] dc = damageCount.split(":");
+                    int damage = Integer.parseInt(dc[0]);
                     int count = Integer.parseInt(dc[1]);
 
                     ItemStack item = new ItemStack(material);
-                    item.setDurability(durability);
+                    setDamageValue(item, damage);
                     result.put(item, count);
                 }
             } else {
@@ -161,11 +149,32 @@ public class ItemStackSerializer {
                 int count = Integer.parseInt(parts[1]);
 
                 ItemStack item = new ItemStack(material);
-                // No need to set durability for non-destructible items
+                // No need to set damage for non-destructible items
                 result.put(item, count);
             }
         }
         return result;
+    }
+
+    /**
+     * Get damage value from ItemStack using modern API
+     */
+    private static int getDamageValue(ItemStack item) {
+        if (item.getItemMeta() instanceof Damageable) {
+            return ((Damageable) item.getItemMeta()).getDamage();
+        }
+        return 0;
+    }
+
+    /**
+     * Set damage value to ItemStack using modern API
+     */
+    private static void setDamageValue(ItemStack item, int damage) {
+        if (item.getItemMeta() instanceof Damageable) {
+            Damageable meta = (Damageable) item.getItemMeta();
+            meta.setDamage(damage);
+            item.setItemMeta((org.bukkit.inventory.meta.ItemMeta) meta);
+        }
     }
 
     public static boolean isDestructibleItem(Material material) {
@@ -197,6 +206,7 @@ public class ItemStackSerializer {
                 || name.equals("TRIDENT")
                 || name.equals("CROSSBOW")
                 || name.equals("CARROT_ON_A_STICK")
-                || name.equals("WARPED_FUNGUS_ON_A_STICK");
+                || name.equals("WARPED_FUNGUS_ON_A_STICK")
+                || name.equals("MACE");
     }
 }
