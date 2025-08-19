@@ -22,99 +22,99 @@ dependencies:
   server:
     # Shop Plugins
     EconomyShopGUI:
-      load: BEFORE
+      load: AFTER
       required: false
-      join-classpath: false
+      join-classpath: true
     EconomyShopGUI-Premium:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     ShopGUIPlus:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     zShop:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     ExcellentShop:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
     # Economy Plugins
     CoinEngine:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     Vault:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
     # Protection/Region Plugins
     WorldGuard:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     GriefPrevention:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     Lands:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     Towny:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     SimpleClaimSystem:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     RedProtect:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     MinePlots:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
     # World Management Plugins
     Multiverse-Core:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     MultiWorld:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     Worlds:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     SuperiorSkyblock2:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
     IridiumSkyblock:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
     # RPG/Skill Plugins
     AuraSkills:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
     # Drops Plugins
     MythicMobs:
       load: BEFORE
       required: false
-      join-classpath: false
+      join-classpath: true
 
 # Permissions
 permissions:
