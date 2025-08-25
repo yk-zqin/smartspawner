@@ -1,11 +1,18 @@
 package github.nighter.smartspawner.commands.list;
 
+import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.commands.BaseSubCommand;
+import github.nighter.smartspawner.commands.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.enums.SortOption;
+import github.nighter.smartspawner.commands.list.holders.SpawnerListHolder;
+import github.nighter.smartspawner.commands.list.holders.WorldSelectionHolder;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
-import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
-import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.Getter;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
@@ -18,20 +25,50 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ListCommand {
-    private final SmartSpawner plugin;
+public class ListSubCommand extends BaseSubCommand {
     private final SpawnerManager spawnerManager;
     private final LanguageManager languageManager;
     private final MessageService messageService;
     private final UserPreferenceCache userPreferenceCache;
     private static final int SPAWNERS_PER_PAGE = 45;
 
-    public ListCommand(SmartSpawner plugin) {
-        this.plugin = plugin;
+    public ListSubCommand(SmartSpawner plugin) {
+        super(plugin);
         this.spawnerManager = plugin.getSpawnerManager();
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.userPreferenceCache = plugin.getUserPreferenceCache();
+    }
+
+    @Override
+    public String getName() {
+        return "list";
+    }
+
+    @Override
+    public String getPermission() {
+        return "smartspawner.list";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Open the spawner list GUI";
+    }
+
+    @Override
+    public int execute(CommandContext<CommandSourceStack> context) {
+        if (!isPlayer(context.getSource().getSender())) {
+            sendPlayerOnly(context.getSource().getSender());
+            return 0;
+        }
+
+        Player player = getPlayer(context.getSource().getSender());
+        if (player == null) {
+            return 0;
+        }
+
+        openWorldSelectionGUI(player);
+        return 1;
     }
 
     // World selection GUI logic (unchanged)
@@ -458,61 +495,7 @@ public class ListCommand {
         return spawnerItem;
     }
 
-    @Getter
-    public enum FilterOption {
-        ALL("filter.all"),
-        ACTIVE("filter.active"),
-        INACTIVE("filter.inactive");
 
-        private final String langPath;
 
-        FilterOption(String langPath) {
-            this.langPath = langPath;
-        }
 
-        public FilterOption getNextOption() {
-            return switch (this) {
-                case ALL -> ACTIVE;
-                case ACTIVE -> INACTIVE;
-                case INACTIVE -> ALL;
-            };
-        }
-
-        public String getColorPath() {
-            return langPath + ".color";
-        }
-
-        public String getName() {
-            return name().toLowerCase();
-        }
-    }
-
-    @Getter
-    public enum SortOption {
-        DEFAULT("sort.default"),
-        STACK_SIZE_ASC("sort.stack_size_asc"),
-        STACK_SIZE_DESC("sort.stack_size_desc");
-
-        private final String langPath;
-
-        SortOption(String langPath) {
-            this.langPath = langPath;
-        }
-
-        public SortOption getNextOption() {
-            return switch (this) {
-                case DEFAULT -> STACK_SIZE_ASC;
-                case STACK_SIZE_ASC -> STACK_SIZE_DESC;
-                case STACK_SIZE_DESC -> DEFAULT;
-            };
-        }
-
-        public String getColorPath() {
-            return langPath + ".color";
-        }
-
-        public String getName() {
-            return name().toLowerCase();
-        }
-    }
 }

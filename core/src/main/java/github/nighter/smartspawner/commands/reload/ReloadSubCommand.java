@@ -1,41 +1,45 @@
 package github.nighter.smartspawner.commands.reload;
 
+import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.commands.BaseSubCommand;
 import github.nighter.smartspawner.spawner.gui.synchronization.ItemUpdater;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.jspecify.annotations.NullMarked;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class ReloadCommand implements CommandExecutor, TabCompleter {
-    private final SmartSpawner plugin;
+@NullMarked
+public class ReloadSubCommand extends BaseSubCommand {
 
-    public ReloadCommand(SmartSpawner plugin) {
-        this.plugin = plugin;
+    public ReloadSubCommand(SmartSpawner plugin) {
+        super(plugin);
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("smartspawner.reload")) {
-            plugin.getMessageService().sendMessage(sender,"no_permission");
-            return true;
-        }
+    public String getName() {
+        return "reload";
+    }
 
-        if (args[0].equalsIgnoreCase("reload")) {
-            if (args.length == 1) {
-                reloadAll(sender);
-            } else {
-                plugin.getMessageService().sendMessage(sender, "reload_command_usage");
-            }
-            return true;
-        }
+    @Override
+    public String getPermission() {
+        return "smartspawner.reload";
+    }
 
-        return false;
+    @Override
+    public String getDescription() {
+        return "Reload the plugin configuration and data";
+    }
+
+    @Override
+    public int execute(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        reloadAll(sender);
+        return 1; // Success
     }
 
     private void reloadAll(CommandSender sender) {
@@ -75,11 +79,10 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
             }
 
             plugin.getMessageService().sendMessage(sender, "reload_command_success");
-            plugin.getLogger().info("Plugin reloaded successfully by " + sender.getName());
         } catch (Exception e) {
-            plugin.getMessageService().sendMessage(sender, "reload_command_error");
-            plugin.getLogger().severe("Error reloading plugin: " + e.getMessage());
+            plugin.getLogger().severe("Error during reload: " + e.getMessage());
             e.printStackTrace();
+            plugin.getMessageService().sendMessage(sender, "reload_command_error");
         }
     }
 
@@ -103,16 +106,4 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("smartspawner.reload")) {
-            return Collections.emptyList();
-        }
-
-        if (args.length == 1) {
-            return Collections.singletonList("reload");
-        }
-
-        return Collections.emptyList();
-    }
 }

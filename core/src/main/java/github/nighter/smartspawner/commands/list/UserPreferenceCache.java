@@ -1,6 +1,8 @@
 package github.nighter.smartspawner.commands.list;
 
 import github.nighter.smartspawner.Scheduler;
+import github.nighter.smartspawner.commands.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.enums.SortOption;
 import lombok.Data;
 import org.bukkit.plugin.Plugin;
 
@@ -19,11 +21,11 @@ public class UserPreferenceCache {
 
     @Data
     public static class UserPreference {
-        private final ListCommand.FilterOption filterOption;
-        private final ListCommand.SortOption sortOption;
+        private final FilterOption filterOption;
+        private final SortOption sortOption;
         private final long timestamp;
 
-        public UserPreference(ListCommand.FilterOption filterOption, ListCommand.SortOption sortOption) {
+        public UserPreference(FilterOption filterOption, SortOption sortOption) {
             this.filterOption = filterOption;
             this.sortOption = sortOption;
             this.timestamp = System.currentTimeMillis();
@@ -43,8 +45,8 @@ public class UserPreferenceCache {
      * Saves user preferences for a specific world
      */
     public void savePreference(UUID playerUuid, String worldName,
-                               ListCommand.FilterOption filterOption,
-                               ListCommand.SortOption sortOption) {
+                               FilterOption filterOption,
+                               SortOption sortOption) {
         userPreferences.computeIfAbsent(playerUuid, k -> new ConcurrentHashMap<>())
                 .put(worldName, new UserPreference(filterOption, sortOption));
     }

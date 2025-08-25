@@ -7,7 +7,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 import java.util.Random;
@@ -21,13 +20,11 @@ public class LootItem {
     private final Integer minDurability;
     private final Integer maxDurability;
     private final PotionType potionType;
-    private final boolean isExtended;
-    private final boolean isUpgraded;
     private final double sellPrice;
 
     public LootItem(Material material, int minAmount, int maxAmount, double chance,
                     Integer minDurability, Integer maxDurability, PotionType potionType,
-                    boolean isExtended, boolean isUpgraded, double sellPrice) {
+                    double sellPrice) {
         this.material = material;
         this.minAmount = minAmount;
         this.maxAmount = maxAmount;
@@ -35,8 +32,6 @@ public class LootItem {
         this.minDurability = minDurability;
         this.maxDurability = maxDurability;
         this.potionType = potionType;
-        this.isExtended = isExtended;
-        this.isUpgraded = isUpgraded;
         this.sellPrice = sellPrice;
     }
 
@@ -47,7 +42,7 @@ public class LootItem {
 
         ItemStack item = new ItemStack(material, 1);
 
-        // Apply durability only if needed
+        // Apply durability if needed
         if (minDurability != null && maxDurability != null) {
             ItemMeta meta = item.getItemMeta();
             if (meta instanceof Damageable) {
@@ -57,12 +52,11 @@ public class LootItem {
             }
         }
 
-        // Handle potion effects for tipped arrows
-        if (isTippedArrow() && potionType != null) {
+        // Handle potion effects for tipped arrows using modern API
+        if (material == Material.TIPPED_ARROW && potionType != null) {
             PotionMeta meta = (PotionMeta) item.getItemMeta();
             if (meta != null) {
-                PotionData potionData = new PotionData(potionType, isExtended, isUpgraded);
-                meta.setBasePotionData(potionData);
+                meta.setBasePotionType(potionType);
                 item.setItemMeta(meta);
             }
         }
@@ -76,13 +70,5 @@ public class LootItem {
 
     public boolean isAvailable() {
         return material != null;
-    }
-
-    private boolean isTippedArrow() {
-        if (material == null) return false;
-
-        // Check if TIPPED_ARROW is available in current version
-        Material tippedArrow = MaterialWrapper.getMaterial("TIPPED_ARROW");
-        return tippedArrow != null && material == tippedArrow;
     }
 }

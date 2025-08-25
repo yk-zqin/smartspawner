@@ -159,10 +159,7 @@ BOGGED:
     TIPPED_ARROW:
       amount: 0-2
       chance: 50.0
-      potion_effect:
-        type: POISON
-        extended: false
-        upgraded: false
+      potion_type: POISON
 
 # Reference: https://minecraft.wiki/w/Breeze#Drops
 BREEZE:
@@ -590,10 +587,7 @@ STRAY:
     TIPPED_ARROW:
       amount: 0-2
       chance: 50.0
-      potion_effect:
-        type: SLOWNESS
-        extended: false
-        upgraded: false
+      potion_type: SLOWNESS
 
 # Reference: https://minecraft.wiki/w/Strider#Drops
 STRIDER:

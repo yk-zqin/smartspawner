@@ -4,13 +4,11 @@ import github.nighter.smartspawner.api.SmartSpawnerAPI;
 import github.nighter.smartspawner.api.SmartSpawnerPlugin;
 import github.nighter.smartspawner.api.SmartSpawnerAPIImpl;
 import github.nighter.smartspawner.bstats.Metrics;
-import github.nighter.smartspawner.commands.CommandHandler;
-import github.nighter.smartspawner.commands.give.GiveCommand;
-import github.nighter.smartspawner.commands.hologram.HologramCommand;
-import github.nighter.smartspawner.commands.list.ListCommand;
-import github.nighter.smartspawner.commands.list.SpawnerListGUI;
+import github.nighter.smartspawner.commands.BrigadierCommandManager;
+import github.nighter.smartspawner.commands.list.ListSubCommand;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
-import github.nighter.smartspawner.commands.reload.ReloadCommand;
+import github.nighter.smartspawner.commands.list.SpawnerListGUI;
+import github.nighter.smartspawner.commands.prices.PricesGUI;
 import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
 import github.nighter.smartspawner.utils.TimeFormatter;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
@@ -44,6 +42,7 @@ import github.nighter.smartspawner.spawner.sell.SpawnerSellManager;
 import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.lootgen.SpawnerLootGenerator;
+import github.nighter.smartspawner.spawner.events.WorldEventHandler;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.updates.ConfigUpdater;
 import github.nighter.smartspawner.nms.VersionInitializer;
@@ -57,7 +56,6 @@ import lombok.experimental.Accessors;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Objects;
 import java.util.logging.Level;
 
 @Getter
@@ -108,24 +106,21 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     // Event handlers and utilities
     private NaturalSpawnerListener naturalSpawnerListener;
     private SpawnerLootGenerator spawnerLootGenerator;
-    private SpawnerListGUI spawnerListGUI;
     private SpawnerRangeChecker rangeChecker;
     private ChunkSpawnerLimiter chunkSpawnerLimiter;
     private SpawnerGuiViewManager spawnerGuiViewManager;
     private SpawnerExplosionListener spawnerExplosionListener;
     private SpawnerBreakListener spawnerBreakListener;
     private SpawnerPlaceListener spawnerPlaceListener;
+    private WorldEventHandler worldEventHandler;
     private ItemPriceManager itemPriceManager;
     private EntityLootRegistry entityLootRegistry;
     private UpdateChecker updateChecker;
-
-    // Set up commands
-    private CommandHandler commandHandler;
-    private ReloadCommand reloadCommand;
-    private GiveCommand giveCommand;
+    private BrigadierCommandManager brigadierCommandManager;
+    private ListSubCommand listSubCommand;
     private UserPreferenceCache userPreferenceCache;
-    private ListCommand listCommand;
-    private HologramCommand hologramCommand;
+    private SpawnerListGUI spawnerListGUI;
+    private PricesGUI pricesGUI;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -152,6 +147,12 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         setupCommand();
         setupBtatsMetrics();
         registerListeners();
+
+        // Trigger world event handler to attempt initial spawner loading
+        // This is done after all components are initialized
+        if (worldEventHandler != null) {
+            worldEventHandler.attemptInitialSpawnerLoad();
+        }
 
         long loadTime = System.currentTimeMillis() - startTime;
         getLogger().info("SmartSpawner has been enabled! (Loaded in " + loadTime + "ms)");
@@ -255,6 +256,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerExplosionListener = new SpawnerExplosionListener(this);
         this.spawnerBreakListener = new SpawnerBreakListener(this);
         this.spawnerPlaceListener = new SpawnerPlaceListener(this);
+        this.worldEventHandler = new WorldEventHandler(this);
     }
 
     public void setUpHopperHandler() {
@@ -266,7 +268,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         // Register core listeners
         pm.registerEvents(naturalSpawnerListener, this);
-        pm.registerEvents(spawnerListGUI, this);
         pm.registerEvents(spawnerBreakListener, this);
         pm.registerEvents(spawnerPlaceListener, this);
         pm.registerEvents(spawnerStorageAction, this);
@@ -275,18 +276,18 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerClickManager, this);
         pm.registerEvents(spawnerMenuAction, this);
         pm.registerEvents(spawnerStackerHandler, this);
+        pm.registerEvents(worldEventHandler, this);
+        pm.registerEvents(spawnerListGUI, this);
+        pm.registerEvents(pricesGUI, this);
     }
 
     private void setupCommand() {
-        this.reloadCommand = new ReloadCommand(this);
-        this.giveCommand = new GiveCommand(this);
+        this.brigadierCommandManager = new BrigadierCommandManager(this);
+        brigadierCommandManager.registerCommands();
         this.userPreferenceCache = new UserPreferenceCache(this);
-        this.listCommand = new ListCommand(this);
+        this.listSubCommand = new ListSubCommand(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
-        this.hologramCommand = new HologramCommand(this);
-        this.commandHandler = new CommandHandler(this);
-        Objects.requireNonNull(getCommand("smartspawner")).setExecutor(commandHandler);
-        Objects.requireNonNull(getCommand("smartspawner")).setTabCompleter(commandHandler);
+        this.pricesGUI = new PricesGUI(this);
     }
 
     private void setupBtatsMetrics() {

@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.holders;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
