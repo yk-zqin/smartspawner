@@ -45,9 +45,7 @@ public class IridiumSkyblock {
         User user = IridiumSkyblockAPI.getInstance().getUser(player);
         Optional<Island> island = IridiumSkyblockAPI.getInstance().getIslandViaLocation(location);
         Optional<Permission> permission = IridiumSkyblockAPI.getInstance().getPermissions(permissionKey);
-        Bukkit.broadcastMessage("c");
         if(user == null || island.isEmpty() || permission.isEmpty()) return true;
-        Bukkit.broadcastMessage("d");
         return IridiumSkyblockAPI.getInstance().getIslandPermission(island.get(), user, permission.get(), permissionKey);
     }
 }
