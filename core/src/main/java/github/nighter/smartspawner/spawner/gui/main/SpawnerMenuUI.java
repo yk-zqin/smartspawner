@@ -69,9 +69,11 @@ public class SpawnerMenuUI {
             player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
         }
 
-        // Force an immediate timer update for the newly opened GUI
+        // Force an immediate timer update for the newly opened GUI (only if timer placeholders are enabled)
         // This ensures the timer displays correctly from the start
-        plugin.getSpawnerGuiViewManager().forceTimerUpdate(player, spawner);
+        if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled()) {
+            plugin.getSpawnerGuiViewManager().forceTimerUpdate(player, spawner);
+        }
     }
 
     private Inventory createMenu(SpawnerData spawner) {
@@ -298,8 +300,14 @@ public class SpawnerMenuUI {
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
 
-        // Timer placeholder - calculate actual timer value immediately to prevent placeholder flash
-        String timerValue = calculateInitialTimerValue(spawner);
+        // Timer placeholder - only calculate if timer placeholders are enabled
+        String timerValue;
+        if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled()) {
+            timerValue = calculateInitialTimerValue(spawner);
+        } else {
+            // Use empty string if timer placeholders are disabled
+            timerValue = "";
+        }
         placeholders.put("time", timerValue);
 
         // Set display name with the specified placeholders
@@ -325,8 +333,12 @@ public class SpawnerMenuUI {
             if (cacheLore != null) {
                 List<String> newCacheLore = new ArrayList<>();
                 for (String line : cacheLore) {
-                    // Replace timer value back to placeholder for cache
-                    newCacheLore.add(line.replace(timerValue, "%time%"));
+                    // Replace timer value back to placeholder for cache (only if timer placeholders are enabled)
+                    if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled() && !timerValue.isEmpty()) {
+                        newCacheLore.add(line.replace(timerValue, "%time%"));
+                    } else {
+                        newCacheLore.add(line);
+                    }
                 }
                 cacheMeta.setLore(newCacheLore);
                 cacheItem.setItemMeta(cacheMeta);

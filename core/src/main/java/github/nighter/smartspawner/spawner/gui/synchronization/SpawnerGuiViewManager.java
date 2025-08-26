@@ -79,6 +79,9 @@ public class SpawnerGuiViewManager implements Listener {
     // For timer optimizations - these avoid constant string lookups
     private String cachedInactiveText;
     private String cachedFullText;
+    
+    // Timer placeholder detection - cache whether GUI uses timer placeholders
+    private volatile Boolean hasTimerPlaceholders = null;
 
     // Static class to hold viewer info more efficiently
     private static class SpawnerViewerInfo {
@@ -120,6 +123,62 @@ public class SpawnerGuiViewManager implements Listener {
         // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
+        
+        // Detect if timer placeholders are used in GUI configuration
+        checkTimerPlaceholderUsage();
+    }
+    
+    /**
+     * Check if the GUI configuration uses %time% placeholders.
+     * This optimization allows us to skip timer processing entirely for servers
+     * that don't use timer displays in their spawner GUIs.
+     */
+    private void checkTimerPlaceholderUsage() {
+        try {
+            // Check both regular and no-shop lore configurations
+            String[] loreLines = languageManager.getGuiItemLore("spawner_info_item.lore");
+            String[] loreNoShopLines = languageManager.getGuiItemLore("spawner_info_item.lore_no_shop");
+            
+            // Check if any lore line contains %time% placeholder
+            boolean hasTimers = false;
+            
+            if (loreLines != null) {
+                for (String line : loreLines) {
+                    if (line != null && line.contains("%time%")) {
+                        hasTimers = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!hasTimers && loreNoShopLines != null) {
+                for (String line : loreNoShopLines) {
+                    if (line != null && line.contains("%time%")) {
+                        hasTimers = true;
+                        break;
+                    }
+                }
+            }
+            
+            this.hasTimerPlaceholders = hasTimers;
+            
+            if (!hasTimers) {
+                plugin.debug("Timer placeholders not detected in GUI configuration - timer updates disabled for performance optimization");
+            }
+            
+        } catch (Exception e) {
+            // Fallback to enabled if we can't determine
+            this.hasTimerPlaceholders = true;
+            plugin.debug("Could not determine timer placeholder usage, defaulting to enabled: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check if timer placeholders are enabled in the GUI configuration.
+     * This allows other components to skip timer-related processing when not needed.
+     */
+    public boolean isTimerPlaceholdersEnabled() {
+        return hasTimerPlaceholders == null || hasTimerPlaceholders;
     }
 
     // ===============================================================
@@ -133,6 +192,12 @@ public class SpawnerGuiViewManager implements Listener {
 
         // Only start task if we have main menu viewers that need timer updates
         if (mainMenuViewers.isEmpty()) {
+            return;
+        }
+        
+        // Performance optimization: Skip timer updates entirely if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            plugin.debug("Skipping timer update task - no timer placeholders detected in GUI configuration");
             return;
         }
 
@@ -590,6 +655,11 @@ public class SpawnerGuiViewManager implements Listener {
      * @param spawner The spawner data for the timer calculation
      */
     public void forceTimerUpdate(Player player, SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
         if (!isValidGuiSession(player)) return;
         
         Location playerLocation = player.getLocation();
