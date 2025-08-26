@@ -68,6 +68,10 @@ public class SpawnerMenuUI {
         if (!refresh) {
             player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
         }
+
+        // Force an immediate timer update for the newly opened GUI
+        // This ensures the timer displays correctly from the start
+        plugin.getSpawnerGuiViewManager().forceTimerUpdate(player, spawner);
     }
 
     private Inventory createMenu(SpawnerData spawner) {
@@ -294,8 +298,8 @@ public class SpawnerMenuUI {
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
 
-        // Timer placeholder - will be updated dynamically by SpawnerGuiViewManager
-        placeholders.put("time", "");
+        // Timer placeholder - left as %time% for dynamic updates by SpawnerGuiViewManager
+        // Do not include "time" in placeholders to preserve %time% placeholder for later replacement
 
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));

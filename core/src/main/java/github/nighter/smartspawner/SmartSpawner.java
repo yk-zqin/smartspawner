@@ -346,6 +346,22 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         cleanupResources();
     }
 
+    public SpawnerGuiViewManager getSpawnerGuiViewManager() {
+        return spawnerGuiViewManager;
+    }
+
+    public SpawnerMenuUI getSpawnerMenuUI() {
+        return spawnerMenuUI;
+    }
+
+    public SpawnerStorageUI getSpawnerStorageUI() {
+        return spawnerStorageUI;
+    }
+
+    public SpawnerRangeChecker getRangeChecker() {
+        return rangeChecker;
+    }
+
     private void cleanupResources() {
         if (rangeChecker != null) rangeChecker.cleanup();
         if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();

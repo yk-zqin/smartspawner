@@ -356,6 +356,37 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     // ===============================================================
+    //                      Public Timer Update Method
+    // ===============================================================
+
+    /**
+     * Forces an immediate timer update for a specific player's spawner GUI.
+     * This is used when opening a new GUI to ensure the timer displays immediately.
+     * 
+     * @param player The player whose GUI should be updated
+     * @param spawner The spawner data for the timer calculation
+     */
+    public void forceTimerUpdate(Player player, SpawnerData spawner) {
+        if (!isValidGuiSession(player)) return;
+        
+        Location playerLocation = player.getLocation();
+        if (playerLocation == null) return;
+        
+        // Schedule the timer update on the appropriate thread
+        Scheduler.runLocationTask(playerLocation, () -> {
+            if (!player.isOnline()) return;
+            
+            Inventory openInventory = player.getOpenInventory().getTopInventory();
+            if (openInventory == null) return;
+            
+            InventoryHolder holder = openInventory.getHolder(false);
+            if (holder instanceof SpawnerMenuHolder) {
+                updateSpawnerInfoItemTimer(openInventory, spawner);
+            }
+        });
+    }
+
+    // ===============================================================
     //                      Main GUI Update
     // ===============================================================
 
