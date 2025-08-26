@@ -116,6 +116,8 @@ public class SpawnerData {
         this.maxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
         this.maxSpawnerLootSlots = 45;
         this.lootConfig = lootRegistry.getLootConfig(entityType);
+        // Initialize lastSpawnTime to current time to prevent timer display issues
+        this.lastSpawnTime = System.currentTimeMillis();
     }
 
     private void loadConfigurationValues() {
