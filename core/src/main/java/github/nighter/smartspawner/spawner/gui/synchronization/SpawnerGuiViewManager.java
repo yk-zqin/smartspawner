@@ -267,15 +267,18 @@ public class SpawnerGuiViewManager implements Listener {
         processPendingUpdates();
 
         long currentTime = System.currentTimeMillis();
-        int processedCount = 0;
         
-        // Process players in batches to improve performance
+        // Group viewers by spawner to optimize timer calculations for multiple players viewing same spawner
+        Map<String, List<UUID>> spawnerViewers = new HashMap<>();
+        Map<String, String> spawnerTimerValues = new HashMap<>();
+        
         for (Map.Entry<UUID, SpawnerViewerInfo> entry : playerToSpawnerMap.entrySet()) {
             UUID playerId = entry.getKey();
             SpawnerViewerInfo viewerInfo = entry.getValue();
             SpawnerData spawner = viewerInfo.spawnerData;
+            String spawnerId = spawner.getSpawnerId();
+            
             Player player = Bukkit.getPlayer(playerId);
-
             if (!isValidGuiSession(player)) {
                 untrackViewer(playerId);
                 continue;
@@ -287,7 +290,26 @@ public class SpawnerGuiViewManager implements Listener {
                 continue;
             }
 
-            // Calculate timer value first to check if update is needed
+            spawnerViewers.computeIfAbsent(spawnerId, k -> new ArrayList<>()).add(playerId);
+        }
+        
+        int processedPlayers = 0;
+        
+        // Process spawners in batches - calculate timer once per spawner, apply to all viewers
+        for (Map.Entry<String, List<UUID>> spawnerGroup : spawnerViewers.entrySet()) {
+            String spawnerId = spawnerGroup.getKey();
+            List<UUID> viewers = spawnerGroup.getValue();
+            
+            if (viewers.isEmpty()) continue;
+            
+            // Get spawner data from first viewer
+            UUID firstViewer = viewers.get(0);
+            SpawnerViewerInfo viewerInfo = playerToSpawnerMap.get(firstViewer);
+            if (viewerInfo == null) continue;
+            
+            SpawnerData spawner = viewerInfo.spawnerData;
+            
+            // Calculate timer value once for this spawner
             long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
             String newTimerValue;
             
@@ -298,46 +320,61 @@ public class SpawnerGuiViewManager implements Listener {
             } else {
                 newTimerValue = formatTime(timeUntilNextSpawn);
             }
-
-            // Check if timer value actually changed
-            String lastValue = lastTimerValue.get(playerId);
-            if (lastValue != null && lastValue.equals(newTimerValue)) {
-                continue; // Skip if timer hasn't changed
-            }
-
-            // Update tracking
-            lastTimerUpdate.put(playerId, currentTime);
-            lastTimerValue.put(playerId, newTimerValue);
-
-            // Batch limit for performance
-            if (processedCount >= MAX_PLAYERS_PER_BATCH) {
-                break;
-            }
-            processedCount++;
-
-            // Using location to make sure we're on the correct region thread
-            Location playerLocation = player.getLocation();
-            if (playerLocation != null) {
-                final String finalTimerValue = newTimerValue;
+            
+            // Apply to all viewers of this spawner
+            for (UUID playerId : viewers) {
+                // Batch limit for performance
+                if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
+                    break;
+                }
                 
-                // This is the key fix: use location-based scheduling to ensure we're on the right thread
-                Scheduler.runLocationTask(playerLocation, () -> {
-                    if (!player.isOnline()) return;
+                Player player = Bukkit.getPlayer(playerId);
+                if (!isValidGuiSession(player)) {
+                    untrackViewer(playerId);
+                    continue;
+                }
+                
+                // Check if timer value actually changed for this player
+                String lastValue = lastTimerValue.get(playerId);
+                if (lastValue != null && lastValue.equals(newTimerValue)) {
+                    continue; // Skip if timer hasn't changed
+                }
 
-                    Inventory openInventory = player.getOpenInventory().getTopInventory();
-                    if (openInventory == null) return;
+                // Update tracking
+                lastTimerUpdate.put(playerId, currentTime);
+                lastTimerValue.put(playerId, newTimerValue);
+                
+                processedPlayers++;
 
-                    InventoryHolder holder = openInventory.getHolder(false);
+                // Using location to make sure we're on the correct region thread
+                Location playerLocation = player.getLocation();
+                if (playerLocation != null) {
+                    final String finalTimerValue = newTimerValue;
+                    
+                    // This is the key fix: use location-based scheduling to ensure we're on the right thread
+                    Scheduler.runLocationTask(playerLocation, () -> {
+                        if (!player.isOnline()) return;
 
-                    if (holder instanceof SpawnerMenuHolder) {
-                        updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
-                        // Force inventory update to ensure changes are visible to the player
-                        player.updateInventory();
-                    } else if (!(holder instanceof StoragePageHolder)) {
-                        // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
-                        untrackViewer(playerId);
-                    }
-                });
+                        Inventory openInventory = player.getOpenInventory().getTopInventory();
+                        if (openInventory == null) return;
+
+                        InventoryHolder holder = openInventory.getHolder(false);
+
+                        if (holder instanceof SpawnerMenuHolder) {
+                            updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
+                            // Force inventory update to ensure changes are visible to the player
+                            player.updateInventory();
+                        } else if (!(holder instanceof StoragePageHolder)) {
+                            // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
+                            untrackViewer(playerId);
+                        }
+                    });
+                }
+            }
+            
+            // Break early if we've processed enough players
+            if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
+                break;
             }
         }
     }
@@ -409,6 +446,26 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
     //                      Public Timer Update Method
     // ===============================================================
+
+    /**
+     * Forces an immediate timer update when spawner state changes.
+     * This is called when spawner transitions from inactive to active or vice versa.
+     * 
+     * @param spawner The spawner whose state has changed
+     */
+    public void forceStateChangeUpdate(SpawnerData spawner) {
+        Set<UUID> viewers = spawnerToPlayersMap.get(spawner.getSpawnerId());
+        if (viewers == null || viewers.isEmpty()) return;
+        
+        // Clear previous timer values to force refresh
+        for (UUID viewerId : viewers) {
+            lastTimerUpdate.remove(viewerId);
+            lastTimerValue.remove(viewerId);
+        }
+        
+        // Update immediately
+        updateSpawnerMenuViewers(spawner);
+    }
 
     /**
      * Forces an immediate timer update for a specific player's spawner GUI.
@@ -843,31 +900,27 @@ public class SpawnerGuiViewManager implements Listener {
 
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
-        long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+        long timeElapsed = currentTime - lastSpawnTime;
+        long timeUntilNextSpawn = cachedDelay - timeElapsed;
         
-        // Add 1 second (1000ms) to ensure countdown starts at full delay
-        // This compensates for the timing difference between spawn occurrence and timer display
-        timeUntilNextSpawn = Math.max(0, timeUntilNextSpawn + 1000);
-        
-        // Handle timer overflow - if time exceeds the delay, reset to maximum
-        if (timeUntilNextSpawn > cachedDelay) {
-            timeUntilNextSpawn = cachedDelay;
-        }
+        // Ensure we don't go below 0 or above the delay
+        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
 
-        // If time is negative, handle it carefully with proper locking
-        if (timeUntilNextSpawn < 0) {
+        // If the timer has expired, handle spawn timing
+        if (timeUntilNextSpawn <= 0) {
             try {
                 // Try to acquire lock with timeout to prevent deadlock
                 if (spawner.getLock().tryLock(100, TimeUnit.MILLISECONDS)) {
                     try {
-                        // Re-check conditions after acquiring lock
+                        // Re-check timing after acquiring lock
                         currentTime = System.currentTimeMillis();
                         lastSpawnTime = spawner.getLastSpawnTime();
-                        timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
-
-                        if (timeUntilNextSpawn < 0) {
-                            spawner.setLastSpawnTime(currentTime - cachedDelay);
-
+                        timeElapsed = currentTime - lastSpawnTime;
+                        
+                        if (timeElapsed >= cachedDelay) {
+                            // Update last spawn time to current time for next cycle
+                            spawner.setLastSpawnTime(currentTime);
+                            
                             // Get the spawner location to schedule on the right region
                             Location spawnerLocation = spawner.getSpawnerLocation();
                             if (spawnerLocation != null) {
@@ -876,19 +929,21 @@ public class SpawnerGuiViewManager implements Listener {
                                     plugin.getRangeChecker().activateSpawner(spawner);
                                 });
                             }
-                            return 0;
+                            return cachedDelay; // Start new cycle with full delay
                         }
+                        
+                        return cachedDelay - timeElapsed;
                     } finally {
                         spawner.getLock().unlock();
                     }
                 } else {
-                    // If can't acquire lock, just return current calculation without modifying state
-                    return Math.max(0, timeUntilNextSpawn);
+                    // If can't acquire lock, return minimal time to try again soon
+                    return 1000; // 1 second
                 }
             } catch (InterruptedException e) {
                 // Handle interruption
                 Thread.currentThread().interrupt();
-                return Math.max(0, timeUntilNextSpawn);
+                return 1000; // 1 second
             }
         }
 

@@ -103,6 +103,11 @@ public class SpawnerRangeChecker {
         } else {
             deactivateSpawner(spawner);
         }
+        
+        // Force GUI update when spawner state changes
+        if (plugin.getSpawnerGuiViewManager().hasViewers(spawner)) {
+            plugin.getSpawnerGuiViewManager().forceStateChangeUpdate(spawner);
+        }
     }
 
     public void activateSpawner(SpawnerData spawner) {
@@ -118,14 +123,23 @@ public class SpawnerRangeChecker {
     private void startSpawnerTask(SpawnerData spawner) {
         stopSpawnerTask(spawner);
 
-        spawner.setLastSpawnTime(System.currentTimeMillis() + spawner.getSpawnDelay());
+        // Set lastSpawnTime to current time to start countdown immediately
+        // This ensures timer shows full delay countdown when spawner activates
+        long currentTime = System.currentTimeMillis();
+        spawner.setLastSpawnTime(currentTime);
+        
         Scheduler.Task task = Scheduler.runTaskTimer(() -> {
             if (!spawner.getSpawnerStop()) {
                 spawnerLootGenerator.spawnLootToSpawner(spawner);
             }
-        }, 0L, spawner.getSpawnDelay());
+        }, spawner.getSpawnDelay(), spawner.getSpawnDelay()); // Start after one delay period
 
         spawnerTasks.put(spawner.getSpawnerId(), task);
+        
+        // Immediately update any open GUIs to show the countdown
+        if (plugin.getSpawnerGuiViewManager().hasViewers(spawner)) {
+            plugin.getSpawnerGuiViewManager().updateSpawnerMenuViewers(spawner);
+        }
     }
 
     public void stopSpawnerTask(SpawnerData spawner) {

@@ -350,7 +350,7 @@ public class SpawnerMenuUI {
             return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         }
 
-        // Calculate time until next spawn (simplified version of SpawnerGuiViewManager logic)
+        // Calculate time until next spawn (matching SpawnerGuiViewManager logic)
         long cachedDelay = spawner.getCachedSpawnDelay();
         if (cachedDelay == 0) {
             cachedDelay = spawner.getSpawnDelay() * 50L;
@@ -359,15 +359,11 @@ public class SpawnerMenuUI {
 
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
-        long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+        long timeElapsed = currentTime - lastSpawnTime;
+        long timeUntilNextSpawn = cachedDelay - timeElapsed;
         
-        // Add 1 second to match the timer behavior in SpawnerGuiViewManager
-        timeUntilNextSpawn = Math.max(0, timeUntilNextSpawn + 1000);
-        
-        // Handle timer overflow
-        if (timeUntilNextSpawn > cachedDelay) {
-            timeUntilNextSpawn = cachedDelay;
-        }
+        // Ensure we don't go below 0 or above the delay
+        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
 
         return formatTime(timeUntilNextSpawn);
     }
