@@ -61,6 +61,10 @@ public class SpawnerGuiViewManager implements Listener {
     private final Map<String, Set<UUID>> spawnerToPlayersMap;
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
 
+    // NEW: Separate tracking for main menu viewers only (for timer updates)
+    private final Map<UUID, SpawnerViewerInfo> mainMenuViewers = new ConcurrentHashMap<>();
+    private final Map<String, Set<UUID>> spawnerToMainMenuViewers = new ConcurrentHashMap<>();
+
     // Batched update tracking to reduce inventory updates
     private final Set<UUID> pendingUpdates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> updateFlags = new ConcurrentHashMap<>();
@@ -80,11 +84,19 @@ public class SpawnerGuiViewManager implements Listener {
     private static class SpawnerViewerInfo {
         final SpawnerData spawnerData;
         final long lastUpdateTime;
+        final ViewerType viewerType;
 
-        SpawnerViewerInfo(SpawnerData spawnerData) {
+        SpawnerViewerInfo(SpawnerData spawnerData, ViewerType viewerType) {
             this.spawnerData = spawnerData;
             this.lastUpdateTime = System.currentTimeMillis();
+            this.viewerType = viewerType;
         }
+    }
+
+    // Enum to track different viewer types
+    private enum ViewerType {
+        MAIN_MENU,    // SpawnerMenuHolder - needs timer updates
+        STORAGE       // StoragePageHolder - no timer updates needed
     }
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
@@ -119,6 +131,11 @@ public class SpawnerGuiViewManager implements Listener {
             return;
         }
 
+        // Only start task if we have main menu viewers that need timer updates
+        if (mainMenuViewers.isEmpty()) {
+            return;
+        }
+
         updateTask = Scheduler.runTaskTimer(this::updateGuiForSpawnerInfo,
                 INITIAL_DELAY_TICKS, UPDATE_INTERVAL_TICKS);
         isTaskRunning = true;
@@ -149,14 +166,29 @@ public class SpawnerGuiViewManager implements Listener {
     //                      Viewer Tracking
     // ===============================================================
 
-    public void trackViewer(UUID playerId, SpawnerData spawner) {
-        playerToSpawnerMap.put(playerId, new SpawnerViewerInfo(spawner));
+    public void trackViewer(UUID playerId, SpawnerData spawner, ViewerType viewerType) {
+        // Track all viewers for general operations  
+        playerToSpawnerMap.put(playerId, new SpawnerViewerInfo(spawner, viewerType));
         spawnerToPlayersMap.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
 
-        if (!isTaskRunning) {
+        // Separately track main menu viewers for timer updates
+        if (viewerType == ViewerType.MAIN_MENU) {
+            mainMenuViewers.put(playerId, new SpawnerViewerInfo(spawner, viewerType));
+            spawnerToMainMenuViewers.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
+        }
+
+        // Only start update task if we have main menu viewers that need timer updates
+        if (!isTaskRunning && !mainMenuViewers.isEmpty()) {
             startUpdateTask();
         }
+    }
+
+    // Backward compatibility method
+    public void trackViewer(UUID playerId, SpawnerData spawner) {
+        // Default to main menu for backward compatibility
+        trackViewer(playerId, spawner, ViewerType.MAIN_MENU);
     }
 
     public void untrackViewer(UUID playerId) {
@@ -172,14 +204,27 @@ public class SpawnerGuiViewManager implements Listener {
             }
         }
 
+        // Also remove from main menu tracking if present
+        SpawnerViewerInfo mainMenuInfo = mainMenuViewers.remove(playerId);
+        if (mainMenuInfo != null) {
+            SpawnerData spawner = mainMenuInfo.spawnerData;
+            Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+            if (mainMenuViewerSet != null) {
+                mainMenuViewerSet.remove(playerId);
+                if (mainMenuViewerSet.isEmpty()) {
+                    spawnerToMainMenuViewers.remove(spawner.getSpawnerId());
+                }
+            }
+        }
+
         // Also remove from pending updates and performance tracking
         pendingUpdates.remove(playerId);
         updateFlags.remove(playerId);
         lastTimerUpdate.remove(playerId);
         lastTimerValue.remove(playerId);
 
-        // Check if we need to stop the update task
-        if (playerToSpawnerMap.isEmpty()) {
+        // Stop update task only when no main menu viewers remain (not all viewers)
+        if (mainMenuViewers.isEmpty() && isTaskRunning) {
             stopUpdateTask();
         }
     }
@@ -209,6 +254,8 @@ public class SpawnerGuiViewManager implements Listener {
     public void clearAllTrackedGuis() {
         playerToSpawnerMap.clear();
         spawnerToPlayersMap.clear();
+        mainMenuViewers.clear();
+        spawnerToMainMenuViewers.clear();
         pendingUpdates.clear();
         updateFlags.clear();
         lastTimerUpdate.clear();
@@ -228,15 +275,18 @@ public class SpawnerGuiViewManager implements Listener {
 
         UUID playerId = player.getUniqueId();
         SpawnerData spawnerData = null;
+        ViewerType viewerType = null;
 
         if (holder instanceof SpawnerMenuHolder spawnerHolder) {
             spawnerData = spawnerHolder.getSpawnerData();
+            viewerType = ViewerType.MAIN_MENU;
         } else if (holder instanceof StoragePageHolder storageHolder) {
             spawnerData = storageHolder.getSpawnerData();
+            viewerType = ViewerType.STORAGE;
         }
 
-        if (spawnerData != null) {
-            trackViewer(playerId, spawnerData);
+        if (spawnerData != null && viewerType != null) {
+            trackViewer(playerId, spawnerData, viewerType);
         }
     }
 
@@ -258,7 +308,8 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
 
     private void updateGuiForSpawnerInfo() {
-        if (playerToSpawnerMap.isEmpty()) {
+        // Only process main menu viewers (those that need timer updates)
+        if (mainMenuViewers.isEmpty()) {
             stopUpdateTask();
             return;
         }
@@ -268,11 +319,10 @@ public class SpawnerGuiViewManager implements Listener {
 
         long currentTime = System.currentTimeMillis();
         
-        // Group viewers by spawner to optimize timer calculations for multiple players viewing same spawner
+        // Group main menu viewers by spawner to optimize timer calculations for multiple players viewing same spawner
         Map<String, List<UUID>> spawnerViewers = new HashMap<>();
-        Map<String, String> spawnerTimerValues = new HashMap<>();
         
-        for (Map.Entry<UUID, SpawnerViewerInfo> entry : playerToSpawnerMap.entrySet()) {
+        for (Map.Entry<UUID, SpawnerViewerInfo> entry : mainMenuViewers.entrySet()) {
             UUID playerId = entry.getKey();
             SpawnerViewerInfo viewerInfo = entry.getValue();
             SpawnerData spawner = viewerInfo.spawnerData;
@@ -280,6 +330,14 @@ public class SpawnerGuiViewManager implements Listener {
             
             Player player = Bukkit.getPlayer(playerId);
             if (!isValidGuiSession(player)) {
+                untrackViewer(playerId);
+                continue;
+            }
+
+            // Additional check: ensure player actually has main menu open
+            Inventory openInventory = player.getOpenInventory().getTopInventory();
+            if (openInventory == null || !(openInventory.getHolder(false) instanceof SpawnerMenuHolder)) {
+                // Player switched to different inventory type or closed, untrack from main menu
                 untrackViewer(playerId);
                 continue;
             }
@@ -304,7 +362,7 @@ public class SpawnerGuiViewManager implements Listener {
             
             // Get spawner data from first viewer
             UUID firstViewer = viewers.get(0);
-            SpawnerViewerInfo viewerInfo = playerToSpawnerMap.get(firstViewer);
+            SpawnerViewerInfo viewerInfo = mainMenuViewers.get(firstViewer);
             if (viewerInfo == null) continue;
             
             SpawnerData spawner = viewerInfo.spawnerData;
@@ -328,6 +386,11 @@ public class SpawnerGuiViewManager implements Listener {
                     break;
                 }
                 
+                // Race condition prevention: double-check that player is still in main menu viewers
+                if (!mainMenuViewers.containsKey(playerId)) {
+                    continue; // Player was removed by another thread
+                }
+                
                 Player player = Bukkit.getPlayer(playerId);
                 if (!isValidGuiSession(player)) {
                     untrackViewer(playerId);
@@ -340,7 +403,7 @@ public class SpawnerGuiViewManager implements Listener {
                     continue; // Skip if timer hasn't changed
                 }
 
-                // Update tracking
+                // Update tracking atomically to prevent race conditions
                 lastTimerUpdate.put(playerId, currentTime);
                 lastTimerValue.put(playerId, newTimerValue);
                 
@@ -350,10 +413,12 @@ public class SpawnerGuiViewManager implements Listener {
                 Location playerLocation = player.getLocation();
                 if (playerLocation != null) {
                     final String finalTimerValue = newTimerValue;
+                    final UUID finalPlayerId = playerId; // Capture for thread safety
                     
                     // This is the key fix: use location-based scheduling to ensure we're on the right thread
                     Scheduler.runLocationTask(playerLocation, () -> {
-                        if (!player.isOnline()) return;
+                        // Final validation that player is still online and tracked
+                        if (!player.isOnline() || !mainMenuViewers.containsKey(finalPlayerId)) return;
 
                         Inventory openInventory = player.getOpenInventory().getTopInventory();
                         if (openInventory == null) return;
@@ -364,9 +429,9 @@ public class SpawnerGuiViewManager implements Listener {
                             updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
                             // Force inventory update to ensure changes are visible to the player
                             player.updateInventory();
-                        } else if (!(holder instanceof StoragePageHolder)) {
-                            // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
-                            untrackViewer(playerId);
+                        } else {
+                            // Player no longer has main menu open, remove from main menu tracking
+                            untrackViewer(finalPlayerId);
                         }
                     });
                 }
@@ -450,21 +515,71 @@ public class SpawnerGuiViewManager implements Listener {
     /**
      * Forces an immediate timer update when spawner state changes.
      * This is called when spawner transitions from inactive to active or vice versa.
+     * Only updates main menu viewers since they're the ones that need timer updates.
      * 
      * @param spawner The spawner whose state has changed
      */
     public void forceStateChangeUpdate(SpawnerData spawner) {
-        Set<UUID> viewers = spawnerToPlayersMap.get(spawner.getSpawnerId());
-        if (viewers == null || viewers.isEmpty()) return;
+        Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+        if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
         
-        // Clear previous timer values to force refresh
-        for (UUID viewerId : viewers) {
+        // Clear previous timer values to force refresh for main menu viewers only
+        for (UUID viewerId : mainMenuViewerSet) {
             lastTimerUpdate.remove(viewerId);
             lastTimerValue.remove(viewerId);
         }
         
-        // Update immediately
-        updateSpawnerMenuViewers(spawner);
+        // Update immediately - but only for main menu viewers
+        updateMainMenuViewers(spawner);
+    }
+
+    /**
+     * Updates only main menu viewers for immediate timer refresh.
+     * This is a lightweight version that only processes viewers who need timer updates.
+     */
+    private void updateMainMenuViewers(SpawnerData spawner) {
+        Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+        if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
+
+        // Calculate timer value once for all main menu viewers
+        long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
+        String timerValue;
+        
+        if (spawner.getIsAtCapacity()) {
+            timerValue = cachedFullText;
+        } else if (timeUntilNextSpawn == -1) {
+            timerValue = cachedInactiveText;
+        } else {
+            timerValue = formatTime(timeUntilNextSpawn);
+        }
+
+        // Apply to all main menu viewers
+        for (UUID viewerId : new HashSet<>(mainMenuViewerSet)) { // Copy to avoid concurrent modification
+            Player viewer = Bukkit.getPlayer(viewerId);
+            if (!isValidGuiSession(viewer)) {
+                untrackViewer(viewerId);
+                continue;
+            }
+
+            Location loc = viewer.getLocation();
+            if (loc != null) {
+                final String finalTimerValue = timerValue;
+                final UUID finalViewerId = viewerId;
+                
+                Scheduler.runLocationTask(loc, () -> {
+                    if (!viewer.isOnline() || !mainMenuViewers.containsKey(finalViewerId)) return;
+                    
+                    Inventory openInv = viewer.getOpenInventory().getTopInventory();
+                    if (openInv == null || !(openInv.getHolder(false) instanceof SpawnerMenuHolder)) {
+                        untrackViewer(finalViewerId);
+                        return;
+                    }
+
+                    updateSpawnerInfoItemTimerOptimized(openInv, spawner, finalTimerValue);
+                    viewer.updateInventory();
+                });
+            }
+        }
     }
 
     /**
