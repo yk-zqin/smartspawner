@@ -570,28 +570,54 @@ public class SpawnerGuiViewManager implements Listener {
 
         if (currentLore == null || newLore == null) return;
 
-        // Find the current timer value by looking for a line that was processed with %time% placeholder
+        // Find the current timer value by looking for lines that don't have the %time% placeholder
+        // but were previously processed (meaning they had %time% before)
         String currentTimerValue = null;
-        for (String line : currentLore) {
-            // Check if this line contains timer information by looking for the pattern
-            // We'll look for the pattern that matches our timer line structure
-            if (line.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
-                // Extract the part after the color code that follows "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
-                int colonIndex = line.indexOf("ɴᴇxᴛ ꜱᴘᴀᴡɴ:");
-                if (colonIndex >= 0) {
-                    String afterColon = line.substring(colonIndex + "ɴᴇxᴛ ꜱᴘᴀᴡɴ:".length());
-                    // Remove color codes and extract the timer value
-                    String cleaned = ChatColor.stripColor(afterColon).trim();
-                    if (!cleaned.isEmpty()) {
-                        currentTimerValue = cleaned;
-                        break;
+        int currentTimerLineIndex = -1;
+        
+        // First, find the line in new lore that has %time% placeholder
+        int newTimerLineIndex = -1;
+        for (int i = 0; i < newLore.size(); i++) {
+            if (newLore.get(i).contains("%time%")) {
+                newTimerLineIndex = i;
+                break;
+            }
+        }
+        
+        // If there's no %time% placeholder in new lore, nothing to preserve
+        if (newTimerLineIndex == -1) return;
+        
+        // Check if the corresponding line in current lore has been processed (no %time% but same structure)
+        if (newTimerLineIndex < currentLore.size()) {
+            String currentLine = currentLore.get(newTimerLineIndex);
+            String newLine = newLore.get(newTimerLineIndex);
+            
+            // If current line doesn't have %time% but new line does, extract the timer value
+            if (!currentLine.contains("%time%") && newLine.contains("%time%")) {
+                // Find the timer value by comparing the structure
+                String newLineTemplate = newLine.replace("%time%", "TIMER_PLACEHOLDER");
+                String cleanNewTemplate = ChatColor.stripColor(newLineTemplate);
+                String cleanCurrentLine = ChatColor.stripColor(currentLine);
+                
+                // Extract timer value by finding what replaced the placeholder
+                int placeholderIndex = cleanNewTemplate.indexOf("TIMER_PLACEHOLDER");
+                if (placeholderIndex >= 0 && cleanCurrentLine.length() >= placeholderIndex) {
+                    String beforePlaceholder = cleanNewTemplate.substring(0, placeholderIndex);
+                    String afterPlaceholder = cleanNewTemplate.substring(placeholderIndex + "TIMER_PLACEHOLDER".length());
+                    
+                    if (cleanCurrentLine.startsWith(beforePlaceholder) && cleanCurrentLine.endsWith(afterPlaceholder)) {
+                        int startIndex = beforePlaceholder.length();
+                        int endIndex = cleanCurrentLine.length() - afterPlaceholder.length();
+                        if (endIndex > startIndex) {
+                            currentTimerValue = cleanCurrentLine.substring(startIndex, endIndex).trim();
+                        }
                     }
                 }
             }
         }
 
         // If we found a timer value, apply it to the new item
-        if (currentTimerValue != null) {
+        if (currentTimerValue != null && !currentTimerValue.isEmpty()) {
             Map<String, String> timerPlaceholder = Collections.singletonMap("time", currentTimerValue);
             List<String> updatedLore = new ArrayList<>(newLore.size());
             
@@ -632,28 +658,14 @@ public class SpawnerGuiViewManager implements Listener {
         List<String> updatedLore = new ArrayList<>(lore.size());
         
         for (String line : lore) {
-            // Check if this line contains either the %time% placeholder or the "ɴᴇxᴛ ꜱᴘᴀᴡɴ:" text
+            // Only look for and replace the %time% placeholder
             if (line.contains("%time%")) {
-                // This line still has the placeholder - replace it
+                // This line has the placeholder - replace it with timer display
                 String newLine = line.replace("%time%", timeDisplay);
                 updatedLore.add(newLine);
                 needsUpdate = true;
-            } else if (line.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
-                // This line was already processed but we need to update the timer value
-                // Find where the timer value starts and replace everything after "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
-                int timerKeyIndex = line.indexOf("ɴᴇxᴛ ꜱᴘᴀᴡɴ:");
-                if (timerKeyIndex >= 0) {
-                    // Get everything up to and including "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
-                    String prefix = line.substring(0, timerKeyIndex + "ɴᴇxᴛ ꜱᴘᴀᴡɴ:".length());
-                    // Build the new line with the timer value and color formatting
-                    String newLine = prefix + " &#c2a8fc" + timeDisplay;
-                    updatedLore.add(newLine);
-                    needsUpdate = true;
-                } else {
-                    updatedLore.add(line);
-                }
             } else {
-                // This line doesn't contain timer info, keep it as is
+                // This line doesn't contain the timer placeholder, keep it as is
                 updatedLore.add(line);
             }
         }
