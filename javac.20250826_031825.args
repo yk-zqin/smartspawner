@@ -1,3 +1,0 @@
--cp
-.:core/src/main/java:api/src/main/java
-core/src/main/java/github/nighter/smartspawner/spawner/gui/synchronization/SpawnerGuiViewManager.java
