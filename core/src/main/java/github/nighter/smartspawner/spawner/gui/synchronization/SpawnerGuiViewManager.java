@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit;
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces with improved performance.
  */
 public class SpawnerGuiViewManager implements Listener {
-    private static final long UPDATE_INTERVAL_TICKS = 10L;
-    private static final long INITIAL_DELAY_TICKS = 10L;
+    private static final long UPDATE_INTERVAL_TICKS = 20L; // Changed to 20 ticks (1 second) as requested
+    private static final long INITIAL_DELAY_TICKS = 20L;   // Match the update interval
     private static final int ITEMS_PER_PAGE = 45;
 
     // GUI slot constants
@@ -627,22 +627,23 @@ public class SpawnerGuiViewManager implements Listener {
         // Create a map with only the time placeholder for efficient replacement
         Map<String, String> timerPlaceholder = Collections.singletonMap("time", timeDisplay);
         
-        // Apply placeholder replacement to all lore lines and check if any changed
-        boolean hasChanges = false;
+        // Apply placeholder replacement to all lore lines
+        // Always update to ensure timer stays current, even if display text looks same
+        boolean foundTimerLine = false;
         List<String> updatedLore = new ArrayList<>(lore.size());
         
         for (String line : lore) {
             String updatedLine = languageManager.applyOnlyPlaceholders(line, timerPlaceholder);
             updatedLore.add(updatedLine);
             
-            // Check if this line was modified (contains the %time% placeholder)
-            if (!line.equals(updatedLine)) {
-                hasChanges = true;
+            // Check if this line contains the timer placeholder
+            if (line.contains("%time%") || updatedLine.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
+                foundTimerLine = true;
             }
         }
 
-        // Only update if there were actual changes to avoid unnecessary inventory updates
-        if (hasChanges) {
+        // Update if we found a timer line to ensure consistent updates
+        if (foundTimerLine) {
             meta.setLore(updatedLore);
             spawnerItem.setItemMeta(meta);
         }
@@ -707,12 +708,23 @@ public class SpawnerGuiViewManager implements Listener {
 
     private String formatTime(long milliseconds) {
         if (milliseconds <= 0) {
-            return "00:00";
+            return "0s";
         }
-        long seconds = milliseconds / 1000;
-        long minutes = seconds / 60;
-        seconds = seconds % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        
+        long totalSeconds = milliseconds / 1000;
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+        
+        // Format as requested: "14s" or "1m 30s"
+        if (minutes > 0) {
+            if (seconds > 0) {
+                return minutes + "m " + seconds + "s";
+            } else {
+                return minutes + "m";
+            }
+        } else {
+            return seconds + "s";
+        }
     }
 
     private void updateChestItem(Inventory inventory, SpawnerData spawner) {
