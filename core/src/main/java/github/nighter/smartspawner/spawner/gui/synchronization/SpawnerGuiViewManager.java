@@ -653,20 +653,26 @@ public class SpawnerGuiViewManager implements Listener {
             timeDisplay = formatTime(timeUntilNextSpawn);
         }
 
-        // Update only the timer line in the lore for optimal performance
+        // Find and update the timer line - handle both placeholder and already processed lines
         boolean needsUpdate = false;
         List<String> updatedLore = new ArrayList<>(lore.size());
         
         for (String line : lore) {
-            // Only look for and replace the %time% placeholder
             if (line.contains("%time%")) {
                 // This line has the placeholder - replace it with timer display
                 String newLine = line.replace("%time%", timeDisplay);
                 updatedLore.add(newLine);
                 needsUpdate = true;
             } else {
-                // This line doesn't contain the timer placeholder, keep it as is
-                updatedLore.add(line);
+                // Check if this line was previously processed and contains timer info
+                // Look for lines that match the timer pattern (contains time format like "01:30", "00:45", etc.)
+                String updatedLine = updateExistingTimerLine(line, timeDisplay);
+                if (!updatedLine.equals(line)) {
+                    updatedLore.add(updatedLine);
+                    needsUpdate = true;
+                } else {
+                    updatedLore.add(line);
+                }
             }
         }
 
@@ -677,6 +683,46 @@ public class SpawnerGuiViewManager implements Listener {
             // Update the inventory directly to ensure changes are applied
             inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
         }
+    }
+
+    /**
+     * Updates an existing timer line by replacing the old timer value with the new one.
+     * This handles lines that were previously processed and no longer contain %time% placeholder.
+     */
+    private String updateExistingTimerLine(String line, String newTimeDisplay) {
+        // Pattern to match timer formats: "01:30", "00:45", etc. or status messages
+        // Check if line contains what looks like a timer or status message
+        String strippedLine = org.bukkit.ChatColor.stripColor(line);
+        
+        // Look for time patterns (mm:ss format) or our cached status messages
+        if (strippedLine.matches(".*\\d{2}:\\d{2}.*") || 
+            strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
+            strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedFullText))) {
+            
+            // This looks like a timer line - we need to replace the timer portion
+            // Find the timer part and replace it with the new display
+            
+            // For time format (mm:ss), replace it
+            String updatedLine = line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
+            if (!updatedLine.equals(line)) {
+                return updatedLine;
+            }
+            
+            // For status messages, replace the entire status portion
+            String strippedCachedInactive = org.bukkit.ChatColor.stripColor(cachedInactiveText);
+            String strippedCachedFull = org.bukkit.ChatColor.stripColor(cachedFullText);
+            
+            if (strippedLine.contains(strippedCachedInactive)) {
+                // Replace the inactive status with new time display
+                return line.replace(cachedInactiveText, newTimeDisplay);
+            } else if (strippedLine.contains(strippedCachedFull)) {
+                // Replace the full status with new time display  
+                return line.replace(cachedFullText, newTimeDisplay);
+            }
+        }
+        
+        // No timer pattern found, return line unchanged
+        return line;
     }
 
     private long calculateTimeUntilNextSpawn(SpawnerData spawner) {
