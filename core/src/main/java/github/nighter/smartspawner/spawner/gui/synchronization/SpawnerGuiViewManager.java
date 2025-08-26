@@ -281,6 +281,8 @@ public class SpawnerGuiViewManager implements Listener {
                     if (holder instanceof SpawnerMenuHolder) {
                         if (!spawner.getIsAtCapacity()) {
                             updateSpawnerInfoItemTimer(openInventory, spawner);
+                            // Force inventory update to ensure changes are visible to the player
+                            player.updateInventory();
                         }
                     } else if (!(holder instanceof StoragePageHolder)) {
                         // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
@@ -382,6 +384,8 @@ public class SpawnerGuiViewManager implements Listener {
             InventoryHolder holder = openInventory.getHolder(false);
             if (holder instanceof SpawnerMenuHolder) {
                 updateSpawnerInfoItemTimer(openInventory, spawner);
+                // Force inventory update to ensure changes are visible immediately
+                player.updateInventory();
             }
         });
     }
@@ -604,6 +608,12 @@ public class SpawnerGuiViewManager implements Listener {
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
+        ItemMeta meta = spawnerItem.getItemMeta();
+        if (meta == null || !meta.hasLore()) return;
+
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
+
         // Calculate time until next spawn
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
         String timeDisplay;
@@ -617,35 +627,43 @@ public class SpawnerGuiViewManager implements Listener {
             timeDisplay = formatTime(timeUntilNextSpawn);
         }
 
-        // Update the timer using placeholder replacement
-        ItemMeta meta = spawnerItem.getItemMeta();
-        if (meta == null || !meta.hasLore()) return;
-
-        List<String> lore = meta.getLore();
-        if (lore == null) return;
-
-        // Create a map with only the time placeholder for efficient replacement
-        Map<String, String> timerPlaceholder = Collections.singletonMap("time", timeDisplay);
-        
-        // Apply placeholder replacement to all lore lines
-        // Always update to ensure timer stays current, even if display text looks same
-        boolean foundTimerLine = false;
+        // Update only the timer line in the lore for optimal performance
+        boolean needsUpdate = false;
         List<String> updatedLore = new ArrayList<>(lore.size());
         
         for (String line : lore) {
-            String updatedLine = languageManager.applyOnlyPlaceholders(line, timerPlaceholder);
-            updatedLore.add(updatedLine);
-            
-            // Check if this line contains the timer placeholder
-            if (line.contains("%time%") || updatedLine.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
-                foundTimerLine = true;
+            // Check if this line contains either the %time% placeholder or the "ɴᴇxᴛ ꜱᴘᴀᴡɴ:" text
+            if (line.contains("%time%")) {
+                // This line still has the placeholder - replace it
+                String newLine = line.replace("%time%", timeDisplay);
+                updatedLore.add(newLine);
+                needsUpdate = true;
+            } else if (line.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
+                // This line was already processed but we need to update the timer value
+                // Find where the timer value starts and replace everything after "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
+                int timerKeyIndex = line.indexOf("ɴᴇxᴛ ꜱᴘᴀᴡɴ:");
+                if (timerKeyIndex >= 0) {
+                    // Get everything up to and including "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
+                    String prefix = line.substring(0, timerKeyIndex + "ɴᴇxᴛ ꜱᴘᴀᴡɴ:".length());
+                    // Build the new line with the timer value and color formatting
+                    String newLine = prefix + " &#c2a8fc" + timeDisplay;
+                    updatedLore.add(newLine);
+                    needsUpdate = true;
+                } else {
+                    updatedLore.add(line);
+                }
+            } else {
+                // This line doesn't contain timer info, keep it as is
+                updatedLore.add(line);
             }
         }
 
-        // Update if we found a timer line to ensure consistent updates
-        if (foundTimerLine) {
+        // Only update the inventory item if we actually changed the timer line
+        if (needsUpdate) {
             meta.setLore(updatedLore);
             spawnerItem.setItemMeta(meta);
+            // Update the inventory directly to ensure changes are applied
+            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
         }
     }
 
@@ -708,23 +726,12 @@ public class SpawnerGuiViewManager implements Listener {
 
     private String formatTime(long milliseconds) {
         if (milliseconds <= 0) {
-            return "0s";
+            return "00:00";
         }
-        
-        long totalSeconds = milliseconds / 1000;
-        long minutes = totalSeconds / 60;
-        long seconds = totalSeconds % 60;
-        
-        // Format as requested: "14s" or "1m 30s"
-        if (minutes > 0) {
-            if (seconds > 0) {
-                return minutes + "m " + seconds + "s";
-            } else {
-                return minutes + "m";
-            }
-        } else {
-            return seconds + "s";
-        }
+        long seconds = milliseconds / 1000;
+        long minutes = seconds / 60;
+        seconds = seconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     private void updateChestItem(Inventory inventory, SpawnerData spawner) {
