@@ -65,7 +65,6 @@ public class SpawnerGuiViewManager implements Listener {
     private volatile boolean isTaskRunning;
 
     // For timer optimizations - these avoid constant string lookups
-    private String cachedTimerPrefix;
     private String cachedInactiveText;
     private String cachedFullText;
 
@@ -98,7 +97,7 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void initCachedStrings() {
-        this.cachedTimerPrefix = languageManager.getGuiItemName("spawner_info_item.lore_change");
+        // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
     }
@@ -524,60 +523,55 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void preserveTimerInfo(ItemStack currentItem, ItemStack newItem) {
-        // Exit early if prefix isn't available
-        if (cachedTimerPrefix == null || cachedTimerPrefix.isEmpty()) return;
-
         ItemMeta currentMeta = currentItem.getItemMeta();
         ItemMeta newMeta = newItem.getItemMeta();
 
-        if (currentMeta != null && currentMeta.hasLore() && newMeta != null && newMeta.hasLore()) {
-            List<String> currentLore = currentMeta.getLore();
-            List<String> newLore = newMeta.getLore();
+        if (currentMeta == null || !currentMeta.hasLore() || newMeta == null || !newMeta.hasLore()) {
+            return;
+        }
 
-            if (currentLore == null || newLore == null) return;
+        List<String> currentLore = currentMeta.getLore();
+        List<String> newLore = newMeta.getLore();
 
-            String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
+        if (currentLore == null || newLore == null) return;
 
-            // Search for timer line in current lore
-            String timerLine = null;
-            for (String line : currentLore) {
-                String strippedLine = ChatColor.stripColor(line);
-                if (strippedLine.startsWith(strippedPrefix)) {
-                    timerLine = line;
-                    break;
-                }
-            }
-
-            // If we found a timer line, preserve it in the new lore
-            if (timerLine != null) {
-                // Search for where to insert the timer line in new lore
-                int insertIndex = -1;
-                for (int i = 0; i < newLore.size(); i++) {
-                    String strippedLine = ChatColor.stripColor(newLore.get(i));
-                    if (strippedLine.startsWith(strippedPrefix)) {
-                        insertIndex = i;
+        // Find the current timer value by looking for a line that was processed with %time% placeholder
+        String currentTimerValue = null;
+        for (String line : currentLore) {
+            // Check if this line contains timer information by looking for the pattern
+            // We'll look for the pattern that matches our timer line structure
+            if (line.contains("ɴᴇxᴛ ꜱᴘᴀᴡɴ:")) {
+                // Extract the part after the color code that follows "ɴᴇxᴛ ꜱᴘᴀᴡɴ:"
+                int colonIndex = line.indexOf("ɴᴇxᴛ ꜱᴘᴀᴡɴ:");
+                if (colonIndex >= 0) {
+                    String afterColon = line.substring(colonIndex + "ɴᴇxᴛ ꜱᴘᴀᴡɴ:".length());
+                    // Remove color codes and extract the timer value
+                    String cleaned = ChatColor.stripColor(afterColon).trim();
+                    if (!cleaned.isEmpty()) {
+                        currentTimerValue = cleaned;
                         break;
                     }
                 }
-
-                // If we found the matching position, update that line
-                if (insertIndex >= 0) {
-                    newLore.set(insertIndex, timerLine);
-                    newMeta.setLore(newLore);
-                    newItem.setItemMeta(newMeta);
-                }
             }
+        }
+
+        // If we found a timer value, apply it to the new item
+        if (currentTimerValue != null) {
+            Map<String, String> timerPlaceholder = Collections.singletonMap("time", currentTimerValue);
+            List<String> updatedLore = new ArrayList<>(newLore.size());
+            
+            for (String line : newLore) {
+                updatedLore.add(languageManager.applyOnlyPlaceholders(line, timerPlaceholder));
+            }
+            
+            newMeta.setLore(updatedLore);
+            newItem.setItemMeta(newMeta);
         }
     }
 
     private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
-
-        // If template is empty or just whitespace, skip countdown update entirely
-        if (cachedTimerPrefix == null || cachedTimerPrefix.trim().isEmpty()) {
-            return;
-        }
 
         // Calculate time until next spawn
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
@@ -592,37 +586,34 @@ public class SpawnerGuiViewManager implements Listener {
             timeDisplay = formatTime(timeUntilNextSpawn);
         }
 
-        // Create the new line with template and time
-        String newLine = cachedTimerPrefix + timeDisplay;
-
-        // Find existing line in lore if it exists
+        // Update the timer using placeholder replacement
         ItemMeta meta = spawnerItem.getItemMeta();
         if (meta == null || !meta.hasLore()) return;
 
         List<String> lore = meta.getLore();
         if (lore == null) return;
 
-        String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
-        int lineIndex = -1;
-
-        for (int i = 0; i < lore.size(); i++) {
-            String strippedLine = ChatColor.stripColor(lore.get(i));
-            if (strippedLine.startsWith(strippedPrefix)) {
-                lineIndex = i;
-                break;
+        // Create a map with only the time placeholder for efficient replacement
+        Map<String, String> timerPlaceholder = Collections.singletonMap("time", timeDisplay);
+        
+        // Apply placeholder replacement to all lore lines and check if any changed
+        boolean hasChanges = false;
+        List<String> updatedLore = new ArrayList<>(lore.size());
+        
+        for (String line : lore) {
+            String updatedLine = languageManager.applyOnlyPlaceholders(line, timerPlaceholder);
+            updatedLore.add(updatedLine);
+            
+            // Check if this line was modified (contains the %time% placeholder)
+            if (!line.equals(updatedLine)) {
+                hasChanges = true;
             }
         }
 
-        // Update or add the line
-        if (lineIndex >= 0) {
-            // Only update if the line has changed to avoid unnecessary inventory updates
-            if (!lore.get(lineIndex).equals(newLine)) {
-                ItemUpdater.updateLoreLine(spawnerItem, lineIndex, newLine);
-            }
-        } else {
-            // If line doesn't exist yet, add it
-            lore.add(newLine);
-            ItemUpdater.updateLore(spawnerItem, lore);
+        // Only update if there were actual changes to avoid unnecessary inventory updates
+        if (hasChanges) {
+            meta.setLore(updatedLore);
+            spawnerItem.setItemMeta(meta);
         }
     }
 
