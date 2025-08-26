@@ -34,11 +34,12 @@ spawner_info_item:
     - '&#FCE300● &fClick to sell items and collect xp'
     - '&#FCE300Storage:&f %formatted_storage%% &#FCE300Filled.'
     - '&#FCE300Exp:&f %formatted_exp%% &#FCE300Stored.'
+    - '&#FCE300Timer:&f %time%'
   lore_no_shop:
     - '&#FCE300● &fClick to collect xp'
     - '&#FCE300Storage:&f %formatted_storage%% &#FCE300Filled.'
     - '&#FCE300Exp:&f %formatted_exp%% &#FCE300Stored.'
-  lore_change: ''
+    - '&#FCE300Timer:&f %time%'
   lore_full: ''
   lore_inactive: ''
 
