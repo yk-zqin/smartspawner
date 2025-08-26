@@ -65,6 +65,9 @@ public class ReloadSubCommand extends BaseSubCommand {
             plugin.getEntityLootRegistry().reload();
             reloadSpawnerLootConfigs();
             plugin.getLanguageManager().reloadLanguages();
+            
+            // Recheck timer placeholders after language reload to detect GUI configuration changes
+            plugin.getSpawnerGuiViewManager().recheckTimerPlaceholders();
 
             // Reload factory AFTER its dependencies (loot registry, language manager)
             plugin.getSpawnerItemFactory().reload();

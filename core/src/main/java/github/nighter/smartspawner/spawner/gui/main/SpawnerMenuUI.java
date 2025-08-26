@@ -68,6 +68,12 @@ public class SpawnerMenuUI {
         if (!refresh) {
             player.playSound(player.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
         }
+
+        // Force an immediate timer update for the newly opened GUI (only if timer placeholders are enabled)
+        // This ensures the timer displays correctly from the start
+        if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled()) {
+            plugin.getSpawnerGuiViewManager().forceTimerUpdate(player, spawner);
+        }
     }
 
     private Inventory createMenu(SpawnerData spawner) {
@@ -294,6 +300,16 @@ public class SpawnerMenuUI {
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
 
+        // Timer placeholder - only calculate if timer placeholders are enabled
+        String timerValue;
+        if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled()) {
+            timerValue = calculateInitialTimerValue(spawner);
+        } else {
+            // Use empty string if timer placeholders are disabled
+            timerValue = "";
+        }
+        placeholders.put("time", timerValue);
+
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
 
@@ -308,10 +324,73 @@ public class SpawnerMenuUI {
 
         spawnerItem.setItemMeta(spawnerMeta);
 
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, spawnerItem.clone());
+        // Cache the result for future use (but without timer value to allow updates)
+        // Create a cache entry without timer for future use
+        ItemStack cacheItem = spawnerItem.clone();
+        ItemMeta cacheMeta = cacheItem.getItemMeta();
+        if (cacheMeta != null && cacheMeta.hasLore()) {
+            List<String> cacheLore = cacheMeta.getLore();
+            if (cacheLore != null) {
+                List<String> newCacheLore = new ArrayList<>();
+                for (String line : cacheLore) {
+                    // Replace timer value back to placeholder for cache (only if timer placeholders are enabled)
+                    if (plugin.getSpawnerGuiViewManager().isTimerPlaceholdersEnabled() && !timerValue.isEmpty()) {
+                        newCacheLore.add(line.replace(timerValue, "%time%"));
+                    } else {
+                        newCacheLore.add(line);
+                    }
+                }
+                cacheMeta.setLore(newCacheLore);
+                cacheItem.setItemMeta(cacheMeta);
+            }
+        }
+        plugin.getItemCache().put(cacheKey, cacheItem);
 
         return spawnerItem;
+    }
+
+    /**
+     * Calculate the initial timer value for immediate display, preventing %time% placeholder flash
+     */
+    private String calculateInitialTimerValue(SpawnerData spawner) {
+        // Check spawner state first
+        if (spawner.getIsAtCapacity()) {
+            return languageManager.getGuiItemName("spawner_info_item.lore_full");
+        }
+        
+        if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
+            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
+        }
+
+        // Calculate time until next spawn (matching SpawnerGuiViewManager logic)
+        long cachedDelay = spawner.getCachedSpawnDelay();
+        if (cachedDelay == 0) {
+            cachedDelay = spawner.getSpawnDelay() * 50L;
+            spawner.setCachedSpawnDelay(cachedDelay);
+        }
+
+        long currentTime = System.currentTimeMillis();
+        long lastSpawnTime = spawner.getLastSpawnTime();
+        long timeElapsed = currentTime - lastSpawnTime;
+        long timeUntilNextSpawn = cachedDelay - timeElapsed;
+        
+        // Ensure we don't go below 0 or above the delay
+        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
+
+        return formatTime(timeUntilNextSpawn);
+    }
+
+    /**
+     * Format time in mm:ss format to match SpawnerGuiViewManager formatting
+     */
+    private String formatTime(long milliseconds) {
+        if (milliseconds <= 0) {
+            return "00:00";
+        }
+        long seconds = milliseconds / 1000;
+        long minutes = seconds / 60;
+        seconds = seconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     public ItemStack createExpItem(SpawnerData spawner) {

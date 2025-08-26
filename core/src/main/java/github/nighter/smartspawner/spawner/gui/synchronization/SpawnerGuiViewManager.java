@@ -32,9 +32,13 @@ import java.util.concurrent.TimeUnit;
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces with improved performance.
  */
 public class SpawnerGuiViewManager implements Listener {
-    private static final long UPDATE_INTERVAL_TICKS = 10L;
-    private static final long INITIAL_DELAY_TICKS = 10L;
+    private static final long UPDATE_INTERVAL_TICKS = 20L; // 1 second updates
+    private static final long INITIAL_DELAY_TICKS = 20L;   // Match the update interval
     private static final int ITEMS_PER_PAGE = 45;
+    
+    // Performance optimization: batch processing interval
+    private static final long BATCH_PROCESS_INTERVAL = 5L; // Process batches every 250ms
+    private static final int MAX_PLAYERS_PER_BATCH = 10;   // Limit players processed per batch
 
     // GUI slot constants
     private static final int CHEST_SLOT = 11;
@@ -57,27 +61,45 @@ public class SpawnerGuiViewManager implements Listener {
     private final Map<String, Set<UUID>> spawnerToPlayersMap;
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
 
+    // NEW: Separate tracking for main menu viewers only (for timer updates)
+    private final Map<UUID, SpawnerViewerInfo> mainMenuViewers = new ConcurrentHashMap<>();
+    private final Map<String, Set<UUID>> spawnerToMainMenuViewers = new ConcurrentHashMap<>();
+
     // Batched update tracking to reduce inventory updates
     private final Set<UUID> pendingUpdates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> updateFlags = new ConcurrentHashMap<>();
+    
+    // Performance optimization: track last update times to avoid unnecessary updates
+    private final Map<UUID, Long> lastTimerUpdate = new ConcurrentHashMap<>();
+    private final Map<UUID, String> lastTimerValue = new ConcurrentHashMap<>();
 
     private Scheduler.Task updateTask;
     private volatile boolean isTaskRunning;
 
     // For timer optimizations - these avoid constant string lookups
-    private String cachedTimerPrefix;
     private String cachedInactiveText;
     private String cachedFullText;
+    
+    // Timer placeholder detection - cache whether GUI uses timer placeholders
+    private volatile Boolean hasTimerPlaceholders = null;
 
     // Static class to hold viewer info more efficiently
     private static class SpawnerViewerInfo {
         final SpawnerData spawnerData;
         final long lastUpdateTime;
+        final ViewerType viewerType;
 
-        SpawnerViewerInfo(SpawnerData spawnerData) {
+        SpawnerViewerInfo(SpawnerData spawnerData, ViewerType viewerType) {
             this.spawnerData = spawnerData;
             this.lastUpdateTime = System.currentTimeMillis();
+            this.viewerType = viewerType;
         }
+    }
+
+    // Enum to track different viewer types
+    private enum ViewerType {
+        MAIN_MENU,    // SpawnerMenuHolder - needs timer updates
+        STORAGE       // StoragePageHolder - no timer updates needed
     }
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
@@ -98,9 +120,88 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void initCachedStrings() {
-        this.cachedTimerPrefix = languageManager.getGuiItemName("spawner_info_item.lore_change");
+        // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
+        
+        // Detect if timer placeholders are used in GUI configuration
+        checkTimerPlaceholderUsage();
+    }
+    
+    /**
+     * Check if the GUI configuration uses %time% placeholders.
+     * This optimization allows us to skip timer processing entirely for servers
+     * that don't use timer displays in their spawner GUIs.
+     */
+    private void checkTimerPlaceholderUsage() {
+        try {
+            // Check both regular and no-shop lore configurations
+            String[] loreLines = languageManager.getGuiItemLore("spawner_info_item.lore");
+            String[] loreNoShopLines = languageManager.getGuiItemLore("spawner_info_item.lore_no_shop");
+            
+            // Check if any lore line contains %time% placeholder
+            boolean hasTimers = false;
+            
+            if (loreLines != null) {
+                for (String line : loreLines) {
+                    if (line != null && line.contains("%time%")) {
+                        hasTimers = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!hasTimers && loreNoShopLines != null) {
+                for (String line : loreNoShopLines) {
+                    if (line != null && line.contains("%time%")) {
+                        hasTimers = true;
+                        break;
+                    }
+                }
+            }
+            
+            this.hasTimerPlaceholders = hasTimers;
+            
+            if (!hasTimers) {
+                plugin.debug("Timer placeholders not detected in GUI configuration - timer updates disabled for performance optimization");
+            }
+            
+        } catch (Exception e) {
+            // Fallback to enabled if we can't determine
+            this.hasTimerPlaceholders = true;
+            plugin.debug("Could not determine timer placeholder usage, defaulting to enabled: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check if timer placeholders are enabled in the GUI configuration.
+     * This allows other components to skip timer-related processing when not needed.
+     */
+    public boolean isTimerPlaceholdersEnabled() {
+        return hasTimerPlaceholders == null || hasTimerPlaceholders;
+    }
+
+    /**
+     * Re-check timer placeholder usage after configuration reload.
+     * This should be called after the language manager reloads to detect
+     * changes in GUI configuration that add or remove timer displays.
+     */
+    public void recheckTimerPlaceholders() {
+        // Reset cached strings with new language data
+        initCachedStrings();
+        
+        // If timer placeholders were disabled but are now enabled, 
+        // start timer updates for current main menu viewers
+        if (hasTimerPlaceholders != null && hasTimerPlaceholders && !mainMenuViewers.isEmpty() && !isTaskRunning) {
+            startUpdateTask();
+        }
+        // If timer placeholders were enabled but are now disabled,
+        // stop timer updates to save performance
+        else if (hasTimerPlaceholders != null && !hasTimerPlaceholders && isTaskRunning) {
+            stopUpdateTask();
+        }
+        
+        plugin.debug("Timer placeholders rechecked after reload - enabled: " + isTimerPlaceholdersEnabled());
     }
 
     // ===============================================================
@@ -109,6 +210,17 @@ public class SpawnerGuiViewManager implements Listener {
 
     private synchronized void startUpdateTask() {
         if (isTaskRunning) {
+            return;
+        }
+
+        // Only start task if we have main menu viewers that need timer updates
+        if (mainMenuViewers.isEmpty()) {
+            return;
+        }
+        
+        // Performance optimization: Skip timer updates entirely if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            plugin.debug("Skipping timer update task - no timer placeholders detected in GUI configuration");
             return;
         }
 
@@ -142,14 +254,29 @@ public class SpawnerGuiViewManager implements Listener {
     //                      Viewer Tracking
     // ===============================================================
 
-    public void trackViewer(UUID playerId, SpawnerData spawner) {
-        playerToSpawnerMap.put(playerId, new SpawnerViewerInfo(spawner));
+    public void trackViewer(UUID playerId, SpawnerData spawner, ViewerType viewerType) {
+        // Track all viewers for general operations  
+        playerToSpawnerMap.put(playerId, new SpawnerViewerInfo(spawner, viewerType));
         spawnerToPlayersMap.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
 
-        if (!isTaskRunning) {
+        // Separately track main menu viewers for timer updates
+        if (viewerType == ViewerType.MAIN_MENU) {
+            mainMenuViewers.put(playerId, new SpawnerViewerInfo(spawner, viewerType));
+            spawnerToMainMenuViewers.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
+        }
+
+        // Only start update task if we have main menu viewers that need timer updates
+        if (!isTaskRunning && !mainMenuViewers.isEmpty()) {
             startUpdateTask();
         }
+    }
+
+    // Backward compatibility method
+    public void trackViewer(UUID playerId, SpawnerData spawner) {
+        // Default to main menu for backward compatibility
+        trackViewer(playerId, spawner, ViewerType.MAIN_MENU);
     }
 
     public void untrackViewer(UUID playerId) {
@@ -165,12 +292,27 @@ public class SpawnerGuiViewManager implements Listener {
             }
         }
 
-        // Also remove from pending updates
+        // Also remove from main menu tracking if present
+        SpawnerViewerInfo mainMenuInfo = mainMenuViewers.remove(playerId);
+        if (mainMenuInfo != null) {
+            SpawnerData spawner = mainMenuInfo.spawnerData;
+            Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+            if (mainMenuViewerSet != null) {
+                mainMenuViewerSet.remove(playerId);
+                if (mainMenuViewerSet.isEmpty()) {
+                    spawnerToMainMenuViewers.remove(spawner.getSpawnerId());
+                }
+            }
+        }
+
+        // Also remove from pending updates and performance tracking
         pendingUpdates.remove(playerId);
         updateFlags.remove(playerId);
+        lastTimerUpdate.remove(playerId);
+        lastTimerValue.remove(playerId);
 
-        // Check if we need to stop the update task
-        if (playerToSpawnerMap.isEmpty()) {
+        // Stop update task only when no main menu viewers remain (not all viewers)
+        if (mainMenuViewers.isEmpty() && isTaskRunning) {
             stopUpdateTask();
         }
     }
@@ -200,8 +342,12 @@ public class SpawnerGuiViewManager implements Listener {
     public void clearAllTrackedGuis() {
         playerToSpawnerMap.clear();
         spawnerToPlayersMap.clear();
+        mainMenuViewers.clear();
+        spawnerToMainMenuViewers.clear();
         pendingUpdates.clear();
         updateFlags.clear();
+        lastTimerUpdate.clear();
+        lastTimerValue.clear();
     }
 
     // ===============================================================
@@ -217,15 +363,18 @@ public class SpawnerGuiViewManager implements Listener {
 
         UUID playerId = player.getUniqueId();
         SpawnerData spawnerData = null;
+        ViewerType viewerType = null;
 
         if (holder instanceof SpawnerMenuHolder spawnerHolder) {
             spawnerData = spawnerHolder.getSpawnerData();
+            viewerType = ViewerType.MAIN_MENU;
         } else if (holder instanceof StoragePageHolder storageHolder) {
             spawnerData = storageHolder.getSpawnerData();
+            viewerType = ViewerType.STORAGE;
         }
 
-        if (spawnerData != null) {
-            trackViewer(playerId, spawnerData);
+        if (spawnerData != null && viewerType != null) {
+            trackViewer(playerId, spawnerData, viewerType);
         }
     }
 
@@ -247,7 +396,8 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
 
     private void updateGuiForSpawnerInfo() {
-        if (playerToSpawnerMap.isEmpty()) {
+        // Only process main menu viewers (those that need timer updates)
+        if (mainMenuViewers.isEmpty()) {
             stopUpdateTask();
             return;
         }
@@ -255,39 +405,129 @@ public class SpawnerGuiViewManager implements Listener {
         // Process batched updates first
         processPendingUpdates();
 
-        // Then handle regular timer updates
-        for (Map.Entry<UUID, SpawnerViewerInfo> entry : playerToSpawnerMap.entrySet()) {
+        long currentTime = System.currentTimeMillis();
+        
+        // Group main menu viewers by spawner to optimize timer calculations for multiple players viewing same spawner
+        Map<String, List<UUID>> spawnerViewers = new HashMap<>();
+        
+        for (Map.Entry<UUID, SpawnerViewerInfo> entry : mainMenuViewers.entrySet()) {
             UUID playerId = entry.getKey();
             SpawnerViewerInfo viewerInfo = entry.getValue();
             SpawnerData spawner = viewerInfo.spawnerData;
+            String spawnerId = spawner.getSpawnerId();
+            
             Player player = Bukkit.getPlayer(playerId);
-
             if (!isValidGuiSession(player)) {
                 untrackViewer(playerId);
                 continue;
             }
 
-            // Using location to make sure we're on the correct region thread
-            Location playerLocation = player.getLocation();
-            if (playerLocation != null) {
-                // This is the key fix: use location-based scheduling to ensure we're on the right thread
-                Scheduler.runLocationTask(playerLocation, () -> {
-                    if (!player.isOnline()) return;
+            // Additional check: ensure player actually has main menu open
+            Inventory openInventory = player.getOpenInventory().getTopInventory();
+            if (openInventory == null || !(openInventory.getHolder(false) instanceof SpawnerMenuHolder)) {
+                // Player switched to different inventory type or closed, untrack from main menu
+                untrackViewer(playerId);
+                continue;
+            }
 
-                    Inventory openInventory = player.getOpenInventory().getTopInventory();
-                    if (openInventory == null) return;
+            // Performance optimization: skip update if we updated recently
+            Long lastUpdate = lastTimerUpdate.get(playerId);
+            if (lastUpdate != null && (currentTime - lastUpdate) < 800) { // 800ms minimum between updates
+                continue;
+            }
 
-                    InventoryHolder holder = openInventory.getHolder(false);
+            spawnerViewers.computeIfAbsent(spawnerId, k -> new ArrayList<>()).add(playerId);
+        }
+        
+        int processedPlayers = 0;
+        
+        // Process spawners in batches - calculate timer once per spawner, apply to all viewers
+        for (Map.Entry<String, List<UUID>> spawnerGroup : spawnerViewers.entrySet()) {
+            String spawnerId = spawnerGroup.getKey();
+            List<UUID> viewers = spawnerGroup.getValue();
+            
+            if (viewers.isEmpty()) continue;
+            
+            // Get spawner data from first viewer
+            UUID firstViewer = viewers.get(0);
+            SpawnerViewerInfo viewerInfo = mainMenuViewers.get(firstViewer);
+            if (viewerInfo == null) continue;
+            
+            SpawnerData spawner = viewerInfo.spawnerData;
+            
+            // Calculate timer value once for this spawner
+            long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
+            String newTimerValue;
+            
+            if (spawner.getIsAtCapacity()) {
+                newTimerValue = cachedFullText;
+            } else if (timeUntilNextSpawn == -1) {
+                newTimerValue = cachedInactiveText;
+            } else {
+                newTimerValue = formatTime(timeUntilNextSpawn);
+            }
+            
+            // Apply to all viewers of this spawner
+            for (UUID playerId : viewers) {
+                // Batch limit for performance
+                if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
+                    break;
+                }
+                
+                // Race condition prevention: double-check that player is still in main menu viewers
+                if (!mainMenuViewers.containsKey(playerId)) {
+                    continue; // Player was removed by another thread
+                }
+                
+                Player player = Bukkit.getPlayer(playerId);
+                if (!isValidGuiSession(player)) {
+                    untrackViewer(playerId);
+                    continue;
+                }
+                
+                // Check if timer value actually changed for this player
+                String lastValue = lastTimerValue.get(playerId);
+                if (lastValue != null && lastValue.equals(newTimerValue)) {
+                    continue; // Skip if timer hasn't changed
+                }
 
-                    if (holder instanceof SpawnerMenuHolder) {
-                        if (!spawner.getIsAtCapacity()) {
-                            updateSpawnerInfoItemTimer(openInventory, spawner);
+                // Update tracking atomically to prevent race conditions
+                lastTimerUpdate.put(playerId, currentTime);
+                lastTimerValue.put(playerId, newTimerValue);
+                
+                processedPlayers++;
+
+                // Using location to make sure we're on the correct region thread
+                Location playerLocation = player.getLocation();
+                if (playerLocation != null) {
+                    final String finalTimerValue = newTimerValue;
+                    final UUID finalPlayerId = playerId; // Capture for thread safety
+                    
+                    // This is the key fix: use location-based scheduling to ensure we're on the right thread
+                    Scheduler.runLocationTask(playerLocation, () -> {
+                        // Final validation that player is still online and tracked
+                        if (!player.isOnline() || !mainMenuViewers.containsKey(finalPlayerId)) return;
+
+                        Inventory openInventory = player.getOpenInventory().getTopInventory();
+                        if (openInventory == null) return;
+
+                        InventoryHolder holder = openInventory.getHolder(false);
+
+                        if (holder instanceof SpawnerMenuHolder) {
+                            updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
+                            // Force inventory update to ensure changes are visible to the player
+                            player.updateInventory();
+                        } else {
+                            // Player no longer has main menu open, remove from main menu tracking
+                            untrackViewer(finalPlayerId);
                         }
-                    } else if (!(holder instanceof StoragePageHolder)) {
-                        // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
-                        untrackViewer(playerId);
-                    }
-                });
+                    });
+                }
+            }
+            
+            // Break early if we've processed enough players
+            if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
+                break;
             }
         }
     }
@@ -354,6 +594,114 @@ public class SpawnerGuiViewManager implements Listener {
         if (needsUpdate) {
             player.updateInventory();
         }
+    }
+
+    // ===============================================================
+    //                      Public Timer Update Method
+    // ===============================================================
+
+    /**
+     * Forces an immediate timer update when spawner state changes.
+     * This is called when spawner transitions from inactive to active or vice versa.
+     * Only updates main menu viewers since they're the ones that need timer updates.
+     * 
+     * @param spawner The spawner whose state has changed
+     */
+    public void forceStateChangeUpdate(SpawnerData spawner) {
+        Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+        if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
+        
+        // Clear previous timer values to force refresh for main menu viewers only
+        for (UUID viewerId : mainMenuViewerSet) {
+            lastTimerUpdate.remove(viewerId);
+            lastTimerValue.remove(viewerId);
+        }
+        
+        // Update immediately - but only for main menu viewers
+        updateMainMenuViewers(spawner);
+    }
+
+    /**
+     * Updates only main menu viewers for immediate timer refresh.
+     * This is a lightweight version that only processes viewers who need timer updates.
+     */
+    private void updateMainMenuViewers(SpawnerData spawner) {
+        Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
+        if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
+
+        // Calculate timer value once for all main menu viewers
+        long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
+        String timerValue;
+        
+        if (spawner.getIsAtCapacity()) {
+            timerValue = cachedFullText;
+        } else if (timeUntilNextSpawn == -1) {
+            timerValue = cachedInactiveText;
+        } else {
+            timerValue = formatTime(timeUntilNextSpawn);
+        }
+
+        // Apply to all main menu viewers
+        for (UUID viewerId : new HashSet<>(mainMenuViewerSet)) { // Copy to avoid concurrent modification
+            Player viewer = Bukkit.getPlayer(viewerId);
+            if (!isValidGuiSession(viewer)) {
+                untrackViewer(viewerId);
+                continue;
+            }
+
+            Location loc = viewer.getLocation();
+            if (loc != null) {
+                final String finalTimerValue = timerValue;
+                final UUID finalViewerId = viewerId;
+                
+                Scheduler.runLocationTask(loc, () -> {
+                    if (!viewer.isOnline() || !mainMenuViewers.containsKey(finalViewerId)) return;
+                    
+                    Inventory openInv = viewer.getOpenInventory().getTopInventory();
+                    if (openInv == null || !(openInv.getHolder(false) instanceof SpawnerMenuHolder)) {
+                        untrackViewer(finalViewerId);
+                        return;
+                    }
+
+                    updateSpawnerInfoItemTimerOptimized(openInv, spawner, finalTimerValue);
+                    viewer.updateInventory();
+                });
+            }
+        }
+    }
+
+    /**
+     * Forces an immediate timer update for a specific player's spawner GUI.
+     * This is used when opening a new GUI to ensure the timer displays immediately.
+     * 
+     * @param player The player whose GUI should be updated
+     * @param spawner The spawner data for the timer calculation
+     */
+    public void forceTimerUpdate(Player player, SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
+        if (!isValidGuiSession(player)) return;
+        
+        Location playerLocation = player.getLocation();
+        if (playerLocation == null) return;
+        
+        // Schedule the timer update on the appropriate thread
+        Scheduler.runLocationTask(playerLocation, () -> {
+            if (!player.isOnline()) return;
+            
+            Inventory openInventory = player.getOpenInventory().getTopInventory();
+            if (openInventory == null) return;
+            
+            InventoryHolder holder = openInventory.getHolder(false);
+            if (holder instanceof SpawnerMenuHolder) {
+                updateSpawnerInfoItemTimer(openInventory, spawner);
+                // Force inventory update to ensure changes are visible immediately
+                player.updateInventory();
+            }
+        });
     }
 
     // ===============================================================
@@ -524,49 +872,120 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void preserveTimerInfo(ItemStack currentItem, ItemStack newItem) {
-        // Exit early if prefix isn't available
-        if (cachedTimerPrefix == null || cachedTimerPrefix.isEmpty()) return;
-
         ItemMeta currentMeta = currentItem.getItemMeta();
         ItemMeta newMeta = newItem.getItemMeta();
 
-        if (currentMeta != null && currentMeta.hasLore() && newMeta != null && newMeta.hasLore()) {
-            List<String> currentLore = currentMeta.getLore();
-            List<String> newLore = newMeta.getLore();
+        if (currentMeta == null || !currentMeta.hasLore() || newMeta == null || !newMeta.hasLore()) {
+            return;
+        }
 
-            if (currentLore == null || newLore == null) return;
+        List<String> currentLore = currentMeta.getLore();
+        List<String> newLore = newMeta.getLore();
 
-            String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
+        if (currentLore == null || newLore == null) return;
 
-            // Search for timer line in current lore
-            String timerLine = null;
-            for (String line : currentLore) {
-                String strippedLine = ChatColor.stripColor(line);
-                if (strippedLine.startsWith(strippedPrefix)) {
-                    timerLine = line;
-                    break;
-                }
+        // Find the current timer value by looking for lines that don't have the %time% placeholder
+        // but were previously processed (meaning they had %time% before)
+        String currentTimerValue = null;
+        int currentTimerLineIndex = -1;
+        
+        // First, find the line in new lore that has %time% placeholder
+        int newTimerLineIndex = -1;
+        for (int i = 0; i < newLore.size(); i++) {
+            if (newLore.get(i).contains("%time%")) {
+                newTimerLineIndex = i;
+                break;
             }
-
-            // If we found a timer line, preserve it in the new lore
-            if (timerLine != null) {
-                // Search for where to insert the timer line in new lore
-                int insertIndex = -1;
-                for (int i = 0; i < newLore.size(); i++) {
-                    String strippedLine = ChatColor.stripColor(newLore.get(i));
-                    if (strippedLine.startsWith(strippedPrefix)) {
-                        insertIndex = i;
-                        break;
+        }
+        
+        // If there's no %time% placeholder in new lore, nothing to preserve
+        if (newTimerLineIndex == -1) return;
+        
+        // Check if the corresponding line in current lore has been processed (no %time% but same structure)
+        if (newTimerLineIndex < currentLore.size()) {
+            String currentLine = currentLore.get(newTimerLineIndex);
+            String newLine = newLore.get(newTimerLineIndex);
+            
+            // If current line doesn't have %time% but new line does, extract the timer value
+            if (!currentLine.contains("%time%") && newLine.contains("%time%")) {
+                // Find the timer value by comparing the structure
+                String newLineTemplate = newLine.replace("%time%", "TIMER_PLACEHOLDER");
+                String cleanNewTemplate = ChatColor.stripColor(newLineTemplate);
+                String cleanCurrentLine = ChatColor.stripColor(currentLine);
+                
+                // Extract timer value by finding what replaced the placeholder
+                int placeholderIndex = cleanNewTemplate.indexOf("TIMER_PLACEHOLDER");
+                if (placeholderIndex >= 0 && cleanCurrentLine.length() >= placeholderIndex) {
+                    String beforePlaceholder = cleanNewTemplate.substring(0, placeholderIndex);
+                    String afterPlaceholder = cleanNewTemplate.substring(placeholderIndex + "TIMER_PLACEHOLDER".length());
+                    
+                    if (cleanCurrentLine.startsWith(beforePlaceholder) && cleanCurrentLine.endsWith(afterPlaceholder)) {
+                        int startIndex = beforePlaceholder.length();
+                        int endIndex = cleanCurrentLine.length() - afterPlaceholder.length();
+                        if (endIndex > startIndex) {
+                            currentTimerValue = cleanCurrentLine.substring(startIndex, endIndex).trim();
+                        }
                     }
                 }
+            }
+        }
 
-                // If we found the matching position, update that line
-                if (insertIndex >= 0) {
-                    newLore.set(insertIndex, timerLine);
-                    newMeta.setLore(newLore);
-                    newItem.setItemMeta(newMeta);
+        // If we found a timer value, apply it to the new item
+        if (currentTimerValue != null && !currentTimerValue.isEmpty()) {
+            Map<String, String> timerPlaceholder = Collections.singletonMap("time", currentTimerValue);
+            List<String> updatedLore = new ArrayList<>(newLore.size());
+            
+            for (String line : newLore) {
+                updatedLore.add(languageManager.applyOnlyPlaceholders(line, timerPlaceholder));
+            }
+            
+            newMeta.setLore(updatedLore);
+            newItem.setItemMeta(newMeta);
+        }
+    }
+
+    /**
+     * Optimized version of updateSpawnerInfoItemTimer that accepts pre-calculated timer value
+     * to avoid redundant calculations and improve performance.
+     */
+    private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
+        ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
+
+        ItemMeta meta = spawnerItem.getItemMeta();
+        if (meta == null || !meta.hasLore()) return;
+
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
+
+        // Find and update the timer line - handle both placeholder and already processed lines
+        boolean needsUpdate = false;
+        List<String> updatedLore = new ArrayList<>(lore.size());
+        
+        for (String line : lore) {
+            if (line.contains("%time%")) {
+                // This line has the placeholder - replace it with timer display
+                String newLine = line.replace("%time%", timeDisplay);
+                updatedLore.add(newLine);
+                needsUpdate = true;
+            } else {
+                // Check if this line was previously processed and contains timer info
+                String updatedLine = updateExistingTimerLine(line, timeDisplay);
+                if (!updatedLine.equals(line)) {
+                    updatedLore.add(updatedLine);
+                    needsUpdate = true;
+                } else {
+                    updatedLore.add(line);
                 }
             }
+        }
+
+        // Only update the inventory item if we actually changed the timer line
+        if (needsUpdate) {
+            meta.setLore(updatedLore);
+            spawnerItem.setItemMeta(meta);
+            // Update the inventory directly to ensure changes are applied
+            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
         }
     }
 
@@ -574,10 +993,11 @@ public class SpawnerGuiViewManager implements Listener {
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
-        // If template is empty or just whitespace, skip countdown update entirely
-        if (cachedTimerPrefix == null || cachedTimerPrefix.trim().isEmpty()) {
-            return;
-        }
+        ItemMeta meta = spawnerItem.getItemMeta();
+        if (meta == null || !meta.hasLore()) return;
+
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
 
         // Calculate time until next spawn
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
@@ -592,38 +1012,86 @@ public class SpawnerGuiViewManager implements Listener {
             timeDisplay = formatTime(timeUntilNextSpawn);
         }
 
-        // Create the new line with template and time
-        String newLine = cachedTimerPrefix + timeDisplay;
-
-        // Find existing line in lore if it exists
-        ItemMeta meta = spawnerItem.getItemMeta();
-        if (meta == null || !meta.hasLore()) return;
-
-        List<String> lore = meta.getLore();
-        if (lore == null) return;
-
-        String strippedPrefix = ChatColor.stripColor(cachedTimerPrefix);
-        int lineIndex = -1;
-
-        for (int i = 0; i < lore.size(); i++) {
-            String strippedLine = ChatColor.stripColor(lore.get(i));
-            if (strippedLine.startsWith(strippedPrefix)) {
-                lineIndex = i;
-                break;
+        // Find and update the timer line - handle both placeholder and already processed lines
+        boolean needsUpdate = false;
+        List<String> updatedLore = new ArrayList<>(lore.size());
+        
+        for (String line : lore) {
+            if (line.contains("%time%")) {
+                // This line has the placeholder - replace it with timer display
+                String newLine = line.replace("%time%", timeDisplay);
+                updatedLore.add(newLine);
+                needsUpdate = true;
+            } else {
+                // Check if this line was previously processed and contains timer info
+                // Look for lines that match the timer pattern (contains time format like "01:30", "00:45", etc.)
+                String updatedLine = updateExistingTimerLine(line, timeDisplay);
+                if (!updatedLine.equals(line)) {
+                    updatedLore.add(updatedLine);
+                    needsUpdate = true;
+                } else {
+                    updatedLore.add(line);
+                }
             }
         }
 
-        // Update or add the line
-        if (lineIndex >= 0) {
-            // Only update if the line has changed to avoid unnecessary inventory updates
-            if (!lore.get(lineIndex).equals(newLine)) {
-                ItemUpdater.updateLoreLine(spawnerItem, lineIndex, newLine);
-            }
-        } else {
-            // If line doesn't exist yet, add it
-            lore.add(newLine);
-            ItemUpdater.updateLore(spawnerItem, lore);
+        // Only update the inventory item if we actually changed the timer line
+        if (needsUpdate) {
+            meta.setLore(updatedLore);
+            spawnerItem.setItemMeta(meta);
+            // Update the inventory directly to ensure changes are applied
+            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
         }
+    }
+
+    /**
+     * Updates an existing timer line by replacing the old timer value with the new one.
+     * This handles lines that were previously processed and no longer contain %time% placeholder.
+     * Enhanced to handle all state transitions including inactive/active changes.
+     */
+    private String updateExistingTimerLine(String line, String newTimeDisplay) {
+        // Pattern to match timer formats: "01:30", "00:45", etc. or status messages
+        String strippedLine = org.bukkit.ChatColor.stripColor(line);
+        String strippedNewDisplay = org.bukkit.ChatColor.stripColor(newTimeDisplay);
+        
+        // Look for time patterns (mm:ss format) or our cached status messages
+        if (strippedLine.matches(".*\\d{2}:\\d{2}.*") || 
+            strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
+            strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedFullText))) {
+            
+            // This looks like a timer line - we need to replace the timer portion
+            
+            // For time format (mm:ss), replace it
+            String updatedLine = line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
+            if (!updatedLine.equals(line)) {
+                return updatedLine;
+            }
+            
+            // For status messages, replace the entire status portion
+            String strippedCachedInactive = org.bukkit.ChatColor.stripColor(cachedInactiveText);
+            String strippedCachedFull = org.bukkit.ChatColor.stripColor(cachedFullText);
+            
+            if (strippedLine.contains(strippedCachedInactive)) {
+                // Replace the inactive status with new time display
+                return line.replace(cachedInactiveText, newTimeDisplay);
+            } else if (strippedLine.contains(strippedCachedFull)) {
+                // Replace the full status with new time display  
+                return line.replace(cachedFullText, newTimeDisplay);
+            }
+        }
+        
+        // Additional check: if the new display is a status message, see if we need to replace timer format
+        if (strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
+            strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedFullText))) {
+            
+            // If line contains timer format, replace it with status message
+            if (strippedLine.matches(".*\\d{2}:\\d{2}.*")) {
+                return line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
+            }
+        }
+        
+        // No timer pattern found, return line unchanged
+        return line;
     }
 
     private long calculateTimeUntilNextSpawn(SpawnerData spawner) {
@@ -640,22 +1108,27 @@ public class SpawnerGuiViewManager implements Listener {
 
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
-        long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+        long timeElapsed = currentTime - lastSpawnTime;
+        long timeUntilNextSpawn = cachedDelay - timeElapsed;
+        
+        // Ensure we don't go below 0 or above the delay
+        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
 
-        // If time is negative, handle it carefully with proper locking
-        if (timeUntilNextSpawn < 0) {
+        // If the timer has expired, handle spawn timing
+        if (timeUntilNextSpawn <= 0) {
             try {
                 // Try to acquire lock with timeout to prevent deadlock
                 if (spawner.getLock().tryLock(100, TimeUnit.MILLISECONDS)) {
                     try {
-                        // Re-check conditions after acquiring lock
+                        // Re-check timing after acquiring lock
                         currentTime = System.currentTimeMillis();
                         lastSpawnTime = spawner.getLastSpawnTime();
-                        timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
-
-                        if (timeUntilNextSpawn < 0) {
-                            spawner.setLastSpawnTime(currentTime - cachedDelay);
-
+                        timeElapsed = currentTime - lastSpawnTime;
+                        
+                        if (timeElapsed >= cachedDelay) {
+                            // Update last spawn time to current time for next cycle
+                            spawner.setLastSpawnTime(currentTime);
+                            
                             // Get the spawner location to schedule on the right region
                             Location spawnerLocation = spawner.getSpawnerLocation();
                             if (spawnerLocation != null) {
@@ -664,19 +1137,21 @@ public class SpawnerGuiViewManager implements Listener {
                                     plugin.getRangeChecker().activateSpawner(spawner);
                                 });
                             }
-                            return 0;
+                            return cachedDelay; // Start new cycle with full delay
                         }
+                        
+                        return cachedDelay - timeElapsed;
                     } finally {
                         spawner.getLock().unlock();
                     }
                 } else {
-                    // If can't acquire lock, just return current calculation without modifying state
-                    return Math.max(0, timeUntilNextSpawn);
+                    // If can't acquire lock, return minimal time to try again soon
+                    return 1000; // 1 second
                 }
             } catch (InterruptedException e) {
                 // Handle interruption
                 Thread.currentThread().interrupt();
-                return Math.max(0, timeUntilNextSpawn);
+                return 1000; // 1 second
             }
         }
 
