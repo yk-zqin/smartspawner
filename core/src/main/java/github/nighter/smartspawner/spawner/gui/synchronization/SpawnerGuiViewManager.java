@@ -32,9 +32,13 @@ import java.util.concurrent.TimeUnit;
  * Handles the tracking, updating, and synchronization of open spawner GUI interfaces with improved performance.
  */
 public class SpawnerGuiViewManager implements Listener {
-    private static final long UPDATE_INTERVAL_TICKS = 20L; // Changed to 20 ticks (1 second) as requested
+    private static final long UPDATE_INTERVAL_TICKS = 20L; // 1 second updates
     private static final long INITIAL_DELAY_TICKS = 20L;   // Match the update interval
     private static final int ITEMS_PER_PAGE = 45;
+    
+    // Performance optimization: batch processing interval
+    private static final long BATCH_PROCESS_INTERVAL = 5L; // Process batches every 250ms
+    private static final int MAX_PLAYERS_PER_BATCH = 10;   // Limit players processed per batch
 
     // GUI slot constants
     private static final int CHEST_SLOT = 11;
@@ -60,6 +64,10 @@ public class SpawnerGuiViewManager implements Listener {
     // Batched update tracking to reduce inventory updates
     private final Set<UUID> pendingUpdates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> updateFlags = new ConcurrentHashMap<>();
+    
+    // Performance optimization: track last update times to avoid unnecessary updates
+    private final Map<UUID, Long> lastTimerUpdate = new ConcurrentHashMap<>();
+    private final Map<UUID, String> lastTimerValue = new ConcurrentHashMap<>();
 
     private Scheduler.Task updateTask;
     private volatile boolean isTaskRunning;
@@ -164,9 +172,11 @@ public class SpawnerGuiViewManager implements Listener {
             }
         }
 
-        // Also remove from pending updates
+        // Also remove from pending updates and performance tracking
         pendingUpdates.remove(playerId);
         updateFlags.remove(playerId);
+        lastTimerUpdate.remove(playerId);
+        lastTimerValue.remove(playerId);
 
         // Check if we need to stop the update task
         if (playerToSpawnerMap.isEmpty()) {
@@ -201,6 +211,8 @@ public class SpawnerGuiViewManager implements Listener {
         spawnerToPlayersMap.clear();
         pendingUpdates.clear();
         updateFlags.clear();
+        lastTimerUpdate.clear();
+        lastTimerValue.clear();
     }
 
     // ===============================================================
@@ -254,7 +266,10 @@ public class SpawnerGuiViewManager implements Listener {
         // Process batched updates first
         processPendingUpdates();
 
-        // Then handle regular timer updates
+        long currentTime = System.currentTimeMillis();
+        int processedCount = 0;
+        
+        // Process players in batches to improve performance
         for (Map.Entry<UUID, SpawnerViewerInfo> entry : playerToSpawnerMap.entrySet()) {
             UUID playerId = entry.getKey();
             SpawnerViewerInfo viewerInfo = entry.getValue();
@@ -266,9 +281,45 @@ public class SpawnerGuiViewManager implements Listener {
                 continue;
             }
 
+            // Performance optimization: skip update if we updated recently
+            Long lastUpdate = lastTimerUpdate.get(playerId);
+            if (lastUpdate != null && (currentTime - lastUpdate) < 800) { // 800ms minimum between updates
+                continue;
+            }
+
+            // Calculate timer value first to check if update is needed
+            long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
+            String newTimerValue;
+            
+            if (spawner.getIsAtCapacity()) {
+                newTimerValue = cachedFullText;
+            } else if (timeUntilNextSpawn == -1) {
+                newTimerValue = cachedInactiveText;
+            } else {
+                newTimerValue = formatTime(timeUntilNextSpawn);
+            }
+
+            // Check if timer value actually changed
+            String lastValue = lastTimerValue.get(playerId);
+            if (lastValue != null && lastValue.equals(newTimerValue)) {
+                continue; // Skip if timer hasn't changed
+            }
+
+            // Update tracking
+            lastTimerUpdate.put(playerId, currentTime);
+            lastTimerValue.put(playerId, newTimerValue);
+
+            // Batch limit for performance
+            if (processedCount >= MAX_PLAYERS_PER_BATCH) {
+                break;
+            }
+            processedCount++;
+
             // Using location to make sure we're on the correct region thread
             Location playerLocation = player.getLocation();
             if (playerLocation != null) {
+                final String finalTimerValue = newTimerValue;
+                
                 // This is the key fix: use location-based scheduling to ensure we're on the right thread
                 Scheduler.runLocationTask(playerLocation, () -> {
                     if (!player.isOnline()) return;
@@ -279,11 +330,9 @@ public class SpawnerGuiViewManager implements Listener {
                     InventoryHolder holder = openInventory.getHolder(false);
 
                     if (holder instanceof SpawnerMenuHolder) {
-                        if (!spawner.getIsAtCapacity()) {
-                            updateSpawnerInfoItemTimer(openInventory, spawner);
-                            // Force inventory update to ensure changes are visible to the player
-                            player.updateInventory();
-                        }
+                        updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
+                        // Force inventory update to ensure changes are visible to the player
+                        player.updateInventory();
                     } else if (!(holder instanceof StoragePageHolder)) {
                         // If inventory is neither SpawnerMenuHolder nor StoragePageHolder, untrack
                         untrackViewer(playerId);
@@ -630,6 +679,51 @@ public class SpawnerGuiViewManager implements Listener {
         }
     }
 
+    /**
+     * Optimized version of updateSpawnerInfoItemTimer that accepts pre-calculated timer value
+     * to avoid redundant calculations and improve performance.
+     */
+    private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
+        ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
+
+        ItemMeta meta = spawnerItem.getItemMeta();
+        if (meta == null || !meta.hasLore()) return;
+
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
+
+        // Find and update the timer line - handle both placeholder and already processed lines
+        boolean needsUpdate = false;
+        List<String> updatedLore = new ArrayList<>(lore.size());
+        
+        for (String line : lore) {
+            if (line.contains("%time%")) {
+                // This line has the placeholder - replace it with timer display
+                String newLine = line.replace("%time%", timeDisplay);
+                updatedLore.add(newLine);
+                needsUpdate = true;
+            } else {
+                // Check if this line was previously processed and contains timer info
+                String updatedLine = updateExistingTimerLine(line, timeDisplay);
+                if (!updatedLine.equals(line)) {
+                    updatedLore.add(updatedLine);
+                    needsUpdate = true;
+                } else {
+                    updatedLore.add(line);
+                }
+            }
+        }
+
+        // Only update the inventory item if we actually changed the timer line
+        if (needsUpdate) {
+            meta.setLore(updatedLore);
+            spawnerItem.setItemMeta(meta);
+            // Update the inventory directly to ensure changes are applied
+            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
+        }
+    }
+
     private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
@@ -688,11 +782,12 @@ public class SpawnerGuiViewManager implements Listener {
     /**
      * Updates an existing timer line by replacing the old timer value with the new one.
      * This handles lines that were previously processed and no longer contain %time% placeholder.
+     * Enhanced to handle all state transitions including inactive/active changes.
      */
     private String updateExistingTimerLine(String line, String newTimeDisplay) {
         // Pattern to match timer formats: "01:30", "00:45", etc. or status messages
-        // Check if line contains what looks like a timer or status message
         String strippedLine = org.bukkit.ChatColor.stripColor(line);
+        String strippedNewDisplay = org.bukkit.ChatColor.stripColor(newTimeDisplay);
         
         // Look for time patterns (mm:ss format) or our cached status messages
         if (strippedLine.matches(".*\\d{2}:\\d{2}.*") || 
@@ -700,7 +795,6 @@ public class SpawnerGuiViewManager implements Listener {
             strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedFullText))) {
             
             // This looks like a timer line - we need to replace the timer portion
-            // Find the timer part and replace it with the new display
             
             // For time format (mm:ss), replace it
             String updatedLine = line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
@@ -718,6 +812,16 @@ public class SpawnerGuiViewManager implements Listener {
             } else if (strippedLine.contains(strippedCachedFull)) {
                 // Replace the full status with new time display  
                 return line.replace(cachedFullText, newTimeDisplay);
+            }
+        }
+        
+        // Additional check: if the new display is a status message, see if we need to replace timer format
+        if (strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
+            strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedFullText))) {
+            
+            // If line contains timer format, replace it with status message
+            if (strippedLine.matches(".*\\d{2}:\\d{2}.*")) {
+                return line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
             }
         }
         
@@ -740,6 +844,15 @@ public class SpawnerGuiViewManager implements Listener {
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
         long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+        
+        // Add 1 second (1000ms) to ensure countdown starts at full delay
+        // This compensates for the timing difference between spawn occurrence and timer display
+        timeUntilNextSpawn = Math.max(0, timeUntilNextSpawn + 1000);
+        
+        // Handle timer overflow - if time exceeds the delay, reset to maximum
+        if (timeUntilNextSpawn > cachedDelay) {
+            timeUntilNextSpawn = cachedDelay;
+        }
 
         // If time is negative, handle it carefully with proper locking
         if (timeUntilNextSpawn < 0) {

@@ -298,8 +298,9 @@ public class SpawnerMenuUI {
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
 
-        // Timer placeholder - left as %time% for dynamic updates by SpawnerGuiViewManager
-        // Do not include "time" in placeholders to preserve %time% placeholder for later replacement
+        // Timer placeholder - calculate actual timer value immediately to prevent placeholder flash
+        String timerValue = calculateInitialTimerValue(spawner);
+        placeholders.put("time", timerValue);
 
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
@@ -315,10 +316,73 @@ public class SpawnerMenuUI {
 
         spawnerItem.setItemMeta(spawnerMeta);
 
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, spawnerItem.clone());
+        // Cache the result for future use (but without timer value to allow updates)
+        // Create a cache entry without timer for future use
+        ItemStack cacheItem = spawnerItem.clone();
+        ItemMeta cacheMeta = cacheItem.getItemMeta();
+        if (cacheMeta != null && cacheMeta.hasLore()) {
+            List<String> cacheLore = cacheMeta.getLore();
+            if (cacheLore != null) {
+                List<String> newCacheLore = new ArrayList<>();
+                for (String line : cacheLore) {
+                    // Replace timer value back to placeholder for cache
+                    newCacheLore.add(line.replace(timerValue, "%time%"));
+                }
+                cacheMeta.setLore(newCacheLore);
+                cacheItem.setItemMeta(cacheMeta);
+            }
+        }
+        plugin.getItemCache().put(cacheKey, cacheItem);
 
         return spawnerItem;
+    }
+
+    /**
+     * Calculate the initial timer value for immediate display, preventing %time% placeholder flash
+     */
+    private String calculateInitialTimerValue(SpawnerData spawner) {
+        // Check spawner state first
+        if (spawner.getIsAtCapacity()) {
+            return languageManager.getGuiItemName("spawner_info_item.lore_full");
+        }
+        
+        if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
+            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
+        }
+
+        // Calculate time until next spawn (simplified version of SpawnerGuiViewManager logic)
+        long cachedDelay = spawner.getCachedSpawnDelay();
+        if (cachedDelay == 0) {
+            cachedDelay = spawner.getSpawnDelay() * 50L;
+            spawner.setCachedSpawnDelay(cachedDelay);
+        }
+
+        long currentTime = System.currentTimeMillis();
+        long lastSpawnTime = spawner.getLastSpawnTime();
+        long timeUntilNextSpawn = lastSpawnTime + cachedDelay - currentTime;
+        
+        // Add 1 second to match the timer behavior in SpawnerGuiViewManager
+        timeUntilNextSpawn = Math.max(0, timeUntilNextSpawn + 1000);
+        
+        // Handle timer overflow
+        if (timeUntilNextSpawn > cachedDelay) {
+            timeUntilNextSpawn = cachedDelay;
+        }
+
+        return formatTime(timeUntilNextSpawn);
+    }
+
+    /**
+     * Format time in mm:ss format to match SpawnerGuiViewManager formatting
+     */
+    private String formatTime(long milliseconds) {
+        if (milliseconds <= 0) {
+            return "00:00";
+        }
+        long seconds = milliseconds / 1000;
+        long minutes = seconds / 60;
+        seconds = seconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     public ItemStack createExpItem(SpawnerData spawner) {
