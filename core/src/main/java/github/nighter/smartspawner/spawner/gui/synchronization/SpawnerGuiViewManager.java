@@ -181,6 +181,29 @@ public class SpawnerGuiViewManager implements Listener {
         return hasTimerPlaceholders == null || hasTimerPlaceholders;
     }
 
+    /**
+     * Re-check timer placeholder usage after configuration reload.
+     * This should be called after the language manager reloads to detect
+     * changes in GUI configuration that add or remove timer displays.
+     */
+    public void recheckTimerPlaceholders() {
+        // Reset cached strings with new language data
+        initCachedStrings();
+        
+        // If timer placeholders were disabled but are now enabled, 
+        // start timer updates for current main menu viewers
+        if (hasTimerPlaceholders != null && hasTimerPlaceholders && !mainMenuViewers.isEmpty() && !isTaskRunning) {
+            startUpdateTask();
+        }
+        // If timer placeholders were enabled but are now disabled,
+        // stop timer updates to save performance
+        else if (hasTimerPlaceholders != null && !hasTimerPlaceholders && isTaskRunning) {
+            stopUpdateTask();
+        }
+        
+        plugin.debug("Timer placeholders rechecked after reload - enabled: " + isTimerPlaceholdersEnabled());
+    }
+
     // ===============================================================
     //                      Task Management
     // ===============================================================
