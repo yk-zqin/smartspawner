@@ -352,6 +352,7 @@ public class SpawnerMenuUI {
     /**
      * Calculate the initial timer value for immediate display, preventing %time% placeholder flash
      * This method mirrors the logic from SpawnerGuiViewManager.calculateTimeUntilNextSpawn()
+     * but ensures newly initialized spawners show timers even if in stopped state initially
      */
     private String calculateInitialTimerValue(SpawnerData spawner) {
         // Check spawner state first
@@ -359,7 +360,7 @@ public class SpawnerMenuUI {
             return languageManager.getGuiItemName("spawner_info_item.lore_full");
         }
         
-        // Calculate time until next spawn first, then check if we should show inactive
+        // Calculate time until next spawn
         long cachedDelay = spawner.getCachedSpawnDelay();
         if (cachedDelay == 0) {
             cachedDelay = spawner.getSpawnDelay() * 50L;
@@ -371,14 +372,21 @@ public class SpawnerMenuUI {
         long timeElapsed = currentTime - lastSpawnTime;
         long timeUntilNextSpawn = cachedDelay - timeElapsed;
         
-        // Ensure we don't go below 0 or above the delay
-        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
-
-        // Only show inactive if spawner is truly inactive AND timing doesn't indicate it should spawn soon
-        if ((!spawner.getSpawnerActive() || spawner.getSpawnerStop()) && timeElapsed < cachedDelay) {
+        // Check if spawner is truly inactive (not just in initial stopped state)
+        boolean isSpawnerInactive = !spawner.getSpawnerActive() || 
+            (spawner.getSpawnerStop() && timeElapsed > cachedDelay * 2); // Only inactive if stopped for more than 2 cycles
+        
+        if (isSpawnerInactive) {
             return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         }
 
+        // If timer has expired, show ready to spawn (full delay countdown)
+        if (timeElapsed >= cachedDelay) {
+            return formatTime(cachedDelay);
+        }
+
+        // Ensure we don't go below 0 or above the delay
+        timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
         return formatTime(timeUntilNextSpawn);
     }
 
