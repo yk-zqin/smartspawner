@@ -1095,10 +1095,6 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private long calculateTimeUntilNextSpawn(SpawnerData spawner) {
-        if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
-            return -1;
-        }
-
         // Cache spawn delay calculation outside of lock
         long cachedDelay = spawner.getCachedSpawnDelay();
         if (cachedDelay == 0) {
@@ -1109,6 +1105,17 @@ public class SpawnerGuiViewManager implements Listener {
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
         long timeElapsed = currentTime - lastSpawnTime;
+        
+        // Check if spawner is truly inactive (not just in initial stopped state)
+        // This mirrors the logic from SpawnerMenuUI.calculateInitialTimerValue() to ensure consistency
+        // between initial display and ongoing timer updates
+        boolean isSpawnerInactive = !spawner.getSpawnerActive() || 
+            (spawner.getSpawnerStop() && timeElapsed > cachedDelay * 2); // Only inactive if stopped for more than 2 cycles
+        
+        if (isSpawnerInactive) {
+            return -1;
+        }
+
         long timeUntilNextSpawn = cachedDelay - timeElapsed;
         
         // Ensure we don't go below 0 or above the delay
