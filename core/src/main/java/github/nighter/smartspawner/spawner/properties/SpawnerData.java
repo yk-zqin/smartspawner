@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class SpawnerData {
+public class    SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
 
     // Core dependencies
@@ -211,7 +211,7 @@ public class SpawnerData {
         this.stackSize = newStackSize;
         loadConfigurationValues();
         this.spawnerExp = Math.min(this.spawnerExp, this.maxStoredExp);
-        this.lastSpawnTime = System.currentTimeMillis() + this.spawnDelay;
+        this.lastSpawnTime = System.currentTimeMillis();
         this.virtualInventory = newInventory;
 
         updateHologramData();

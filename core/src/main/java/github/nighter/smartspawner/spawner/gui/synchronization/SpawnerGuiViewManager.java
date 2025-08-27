@@ -162,14 +162,9 @@ public class SpawnerGuiViewManager implements Listener {
             
             this.hasTimerPlaceholders = hasTimers;
             
-            if (!hasTimers) {
-                plugin.debug("Timer placeholders not detected in GUI configuration - timer updates disabled for performance optimization");
-            }
-            
         } catch (Exception e) {
             // Fallback to enabled if we can't determine
             this.hasTimerPlaceholders = true;
-            plugin.debug("Could not determine timer placeholder usage, defaulting to enabled: " + e.getMessage());
         }
     }
 
@@ -200,8 +195,6 @@ public class SpawnerGuiViewManager implements Listener {
         else if (hasTimerPlaceholders != null && !hasTimerPlaceholders && isTaskRunning) {
             stopUpdateTask();
         }
-        
-        plugin.debug("Timer placeholders rechecked after reload - enabled: " + isTimerPlaceholdersEnabled());
     }
 
     // ===============================================================
@@ -220,7 +213,6 @@ public class SpawnerGuiViewManager implements Listener {
         
         // Performance optimization: Skip timer updates entirely if GUI doesn't use timer placeholders
         if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
-            plugin.debug("Skipping timer update task - no timer placeholders detected in GUI configuration");
             return;
         }
 

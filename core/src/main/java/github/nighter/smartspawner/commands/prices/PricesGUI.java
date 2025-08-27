@@ -202,19 +202,6 @@ public class PricesGUI implements Listener {
             }
             inventory.setItem(53, nextButton);
         }
-
-        // Page indicator (slot 47)
-        ItemStack pageIndicator = new ItemStack(Material.PAPER);
-        ItemMeta pageMeta = pageIndicator.getItemMeta();
-        if (pageMeta != null) {
-            Map<String, String> placeholders = Map.of(
-                    "current_page", String.valueOf(currentPage),
-                    "total_pages", String.valueOf(totalPages)
-            );
-            pageMeta.setDisplayName(languageManager.getGuiItemName("navigation.page_indicator", placeholders));
-            pageIndicator.setItemMeta(pageMeta);
-        }
-        inventory.setItem(47, pageIndicator);
     }
 
     @EventHandler

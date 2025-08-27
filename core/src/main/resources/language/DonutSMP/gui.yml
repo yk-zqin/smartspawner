@@ -274,7 +274,7 @@ navigation:
 # ---------------------------------------------------
 #                  Prices GUI
 # ---------------------------------------------------
-prices_gui_title: '&#7b68eeɪᴛᴇᴍ ꜱᴇʟʟ ᴘʀɪᴄᴇꜱ &#8a6eff(ᴘᴀɢᴇ %current_page%/%total_pages%)'
+prices_gui_title: 'ɪᴛᴇᴍ ꜱᴇʟʟ ᴘʀɪᴄᴇꜱ (ᴘᴀɢᴇ %current_page%/%total_pages%)'
 
 price_item:
   name: '&#fce96a%item_name%'
