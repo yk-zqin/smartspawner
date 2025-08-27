@@ -351,6 +351,7 @@ public class SpawnerMenuUI {
 
     /**
      * Calculate the initial timer value for immediate display, preventing %time% placeholder flash
+     * This method mirrors the logic from SpawnerGuiViewManager.calculateTimeUntilNextSpawn()
      */
     private String calculateInitialTimerValue(SpawnerData spawner) {
         // Check spawner state first
@@ -358,11 +359,7 @@ public class SpawnerMenuUI {
             return languageManager.getGuiItemName("spawner_info_item.lore_full");
         }
         
-        if (!spawner.getSpawnerActive() || spawner.getSpawnerStop()) {
-            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
-        }
-
-        // Calculate time until next spawn (matching SpawnerGuiViewManager logic)
+        // Calculate time until next spawn first, then check if we should show inactive
         long cachedDelay = spawner.getCachedSpawnDelay();
         if (cachedDelay == 0) {
             cachedDelay = spawner.getSpawnDelay() * 50L;
@@ -376,6 +373,11 @@ public class SpawnerMenuUI {
         
         // Ensure we don't go below 0 or above the delay
         timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
+
+        // Only show inactive if spawner is truly inactive AND timing doesn't indicate it should spawn soon
+        if ((!spawner.getSpawnerActive() || spawner.getSpawnerStop()) && timeElapsed < cachedDelay) {
+            return languageManager.getGuiItemName("spawner_info_item.lore_inactive");
+        }
 
         return formatTime(timeUntilNextSpawn);
     }
