@@ -389,7 +389,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void updateGuiForSpawnerInfo() {
         // Skip timer updates if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        if (!isTimerPlaceholdersEnabled()) {
             stopUpdateTask();
             return;
         }
@@ -607,7 +607,7 @@ public class SpawnerGuiViewManager implements Listener {
      */
     public void forceStateChangeUpdate(SpawnerData spawner) {
         // Skip timer updates if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
@@ -630,7 +630,7 @@ public class SpawnerGuiViewManager implements Listener {
      */
     private void updateMainMenuViewers(SpawnerData spawner) {
         // Skip timer updates if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
@@ -958,7 +958,7 @@ public class SpawnerGuiViewManager implements Listener {
      */
     private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
         // Skip timer updates if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
@@ -1004,7 +1004,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
         // Skip timer updates if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
