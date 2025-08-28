@@ -186,15 +186,13 @@ public class SpawnerGuiViewManager implements Listener {
         initCachedStrings();
         
         // If timer placeholders were disabled but are now enabled, 
-        // start timer updates for current main menu viewers
-        if (hasTimerPlaceholders != null && hasTimerPlaceholders && !mainMenuViewers.isEmpty() && !isTaskRunning) {
+        // start timer updates for current viewers (if not already running)
+        if (hasTimerPlaceholders != null && hasTimerPlaceholders && !playerToSpawnerMap.isEmpty() && !isTaskRunning) {
             startUpdateTask();
         }
         // If timer placeholders were enabled but are now disabled,
-        // stop timer updates to save performance
-        else if (hasTimerPlaceholders != null && !hasTimerPlaceholders && isTaskRunning) {
-            stopUpdateTask();
-        }
+        // the update task should continue running for pending updates processing
+        // (no need to stop the task, timer processing will be skipped in updateGuiForSpawnerInfo)
     }
 
     // ===============================================================
@@ -206,13 +204,8 @@ public class SpawnerGuiViewManager implements Listener {
             return;
         }
 
-        // Only start task if we have main menu viewers that need timer updates
-        if (mainMenuViewers.isEmpty()) {
-            return;
-        }
-        
-        // Performance optimization: Skip timer updates entirely if GUI doesn't use timer placeholders
-        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+        // Start task if we have any viewers (for pending updates) or main menu viewers (for timer updates)
+        if (playerToSpawnerMap.isEmpty()) {
             return;
         }
 
@@ -259,8 +252,8 @@ public class SpawnerGuiViewManager implements Listener {
                     .add(playerId);
         }
 
-        // Only start update task if we have main menu viewers that need timer updates
-        if (!isTaskRunning && !mainMenuViewers.isEmpty()) {
+        // Start update task if we have any viewers (for pending updates processing)
+        if (!isTaskRunning && !playerToSpawnerMap.isEmpty()) {
             startUpdateTask();
         }
     }
@@ -303,8 +296,8 @@ public class SpawnerGuiViewManager implements Listener {
         lastTimerUpdate.remove(playerId);
         lastTimerValue.remove(playerId);
 
-        // Stop update task only when no main menu viewers remain (not all viewers)
-        if (mainMenuViewers.isEmpty() && isTaskRunning) {
+        // Stop update task only when no viewers remain at all (for any GUI type)
+        if (playerToSpawnerMap.isEmpty() && isTaskRunning) {
             stopUpdateTask();
         }
     }
@@ -388,14 +381,26 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
 
     private void updateGuiForSpawnerInfo() {
-        // Only process main menu viewers (those that need timer updates)
-        if (mainMenuViewers.isEmpty()) {
-            stopUpdateTask();
+        // Always process batched updates first (storage, exp, etc.) regardless of timer placeholders
+        processPendingUpdates();
+        
+        // Skip timer-specific processing if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            // Check if we should stop the task (only if no viewers at all)
+            if (playerToSpawnerMap.isEmpty()) {
+                stopUpdateTask();
+            }
             return;
         }
-
-        // Process batched updates first
-        processPendingUpdates();
+        
+        // Only process main menu viewers for timer updates
+        if (mainMenuViewers.isEmpty()) {
+            // Check if we should stop the task (only if no viewers at all)
+            if (playerToSpawnerMap.isEmpty()) {
+                stopUpdateTask();
+            }
+            return;
+        }
 
         long currentTime = System.currentTimeMillis();
         
@@ -600,6 +605,11 @@ public class SpawnerGuiViewManager implements Listener {
      * @param spawner The spawner whose state has changed
      */
     public void forceStateChangeUpdate(SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            return;
+        }
+        
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
         
@@ -618,6 +628,11 @@ public class SpawnerGuiViewManager implements Listener {
      * This is a lightweight version that only processes viewers who need timer updates.
      */
     private void updateMainMenuViewers(SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            return;
+        }
+        
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
 
@@ -941,6 +956,11 @@ public class SpawnerGuiViewManager implements Listener {
      * to avoid redundant calculations and improve performance.
      */
     private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            return;
+        }
+        
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
@@ -982,6 +1002,11 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            return;
+        }
+        
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
