@@ -367,6 +367,13 @@ public class SpawnerGuiViewManager implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
 
+        // Get the spawner data before untracking to add interaction tracking
+        SpawnerViewerInfo info = playerToSpawnerMap.get(player.getUniqueId());
+        if (info != null && info.spawnerData != null) {
+            // Track player interaction for last interaction field when closing spawner GUI
+            info.spawnerData.updateLastInteractedPlayer(player.getName());
+        }
+
         // Simply untrack - no need for complex location-based logic here
         untrackViewer(player.getUniqueId());
     }

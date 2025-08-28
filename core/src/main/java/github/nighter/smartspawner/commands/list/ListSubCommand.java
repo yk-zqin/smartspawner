@@ -30,6 +30,7 @@ public class ListSubCommand extends BaseSubCommand {
     private final LanguageManager languageManager;
     private final MessageService messageService;
     private final UserPreferenceCache userPreferenceCache;
+    private final SpawnerManagementGUI spawnerManagementGUI;
     private static final int SPAWNERS_PER_PAGE = 45;
 
     public ListSubCommand(SmartSpawner plugin) {
@@ -38,6 +39,7 @@ public class ListSubCommand extends BaseSubCommand {
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
         this.userPreferenceCache = plugin.getUserPreferenceCache();
+        this.spawnerManagementGUI = new SpawnerManagementGUI(plugin);
     }
 
     @Override
@@ -485,6 +487,10 @@ public class ListSubCommand extends BaseSubCommand {
         placeholders.put("x", String.valueOf(loc.getBlockX()));
         placeholders.put("y", String.valueOf(loc.getBlockY()));
         placeholders.put("z", String.valueOf(loc.getBlockZ()));
+        
+        // Add last interacted player
+        String lastPlayer = spawner.getLastInteractedPlayer();
+        placeholders.put("last_player", lastPlayer != null ? lastPlayer : "None");
 
         // Get the lore with placeholders replaced
         List<String> lore = Arrays.asList(languageManager.getGuiItemLore("spawner_item_list.lore", placeholders));
@@ -495,7 +501,24 @@ public class ListSubCommand extends BaseSubCommand {
         return spawnerItem;
     }
 
+    /**
+     * Opens the spawner management GUI for a specific spawner
+     */
+    public void openSpawnerManagementGUI(Player player, String spawnerId, String worldName, int listPage) {
+        spawnerManagementGUI.openManagementMenu(player, spawnerId, worldName, listPage);
+    }
 
+    /**
+     * Gets the user's current filter preference for a world
+     */
+    public FilterOption getUserFilter(Player player, String worldName) {
+        return userPreferenceCache.getUserFilter(player, worldName);
+    }
 
-
+    /**
+     * Gets the user's current sort preference for a world
+     */
+    public SortOption getUserSort(Player player, String worldName) {
+        return userPreferenceCache.getUserSort(player, worldName);
+    }
 }

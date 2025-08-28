@@ -164,9 +164,9 @@ public class SpawnerListGUI implements Listener {
         }
 
 
-        // Handle spawner item click (teleport functionality)
+        // Handle spawner item click (management menu)
         if (isSpawnerItemSlot(event.getSlot()) && isSpawnerItem(event.getCurrentItem())) {
-            handleSpawnerItemClick(player, event.getCurrentItem());
+            handleSpawnerItemClick(player, event.getCurrentItem(), holder);
         }
     }
 
@@ -195,7 +195,7 @@ public class SpawnerListGUI implements Listener {
                 item.hasItemMeta() && item.getItemMeta().hasDisplayName();
     }
 
-    private void handleSpawnerItemClick(Player player, ItemStack item) {
+    private void handleSpawnerItemClick(Player player, ItemStack item, SpawnerListHolder holder) {
         // Extract spawner ID from the item name
         String displayName = item.getItemMeta().getDisplayName();
         Pattern pattern = Pattern.compile(patternString);
@@ -206,16 +206,9 @@ public class SpawnerListGUI implements Listener {
             SpawnerData spawner = spawnerManager.getSpawnerById(spawnerId);
 
             if (spawner != null) {
-                // Check if player has teleport permission
-                if (player.hasPermission("smartspawner.list.teleport")) {
-                    // Teleport player to spawner location
-                    Location loc = spawner.getSpawnerLocation().clone().add(0.5, 1, 0.5);
-                    player.teleportAsync(loc);
-                    messageService.sendMessage(player, "teleported_to_spawner");
-                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
-                } else {
-                    messageService.sendMessage(player, "no_permission_teleport");
-                }
+                // Open the management GUI instead of directly teleporting
+                listSubCommand.openSpawnerManagementGUI(player, spawnerId, 
+                    holder.getWorldName(), holder.getCurrentPage());
             } else {
                 messageService.sendMessage(player, "spawner_not_found");
             }

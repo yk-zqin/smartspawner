@@ -198,6 +198,9 @@ public class SpawnerStackHandler {
         if (targetSpawner.getIsAtCapacity()) {
             targetSpawner.setIsAtCapacity(false);
         }
+        
+        // Track player interaction for last interaction field
+        targetSpawner.updateLastInteractedPlayer(player.getName());
 
         // Register the stack increase with the chunk limiter
         chunkSpawnerLimiter.registerSpawnerStack(location, amountToStack);

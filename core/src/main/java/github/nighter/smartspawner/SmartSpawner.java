@@ -8,6 +8,9 @@ import github.nighter.smartspawner.commands.BrigadierCommandManager;
 import github.nighter.smartspawner.commands.list.ListSubCommand;
 import github.nighter.smartspawner.commands.list.UserPreferenceCache;
 import github.nighter.smartspawner.commands.list.SpawnerListGUI;
+import github.nighter.smartspawner.commands.list.SpawnerManagementHandler;
+import github.nighter.smartspawner.commands.list.SpawnerManagementGUI;
+import github.nighter.smartspawner.commands.list.AdminStackerHandler;
 import github.nighter.smartspawner.commands.prices.PricesGUI;
 import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
 import github.nighter.smartspawner.utils.TimeFormatter;
@@ -120,6 +123,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private ListSubCommand listSubCommand;
     private UserPreferenceCache userPreferenceCache;
     private SpawnerListGUI spawnerListGUI;
+    private SpawnerManagementHandler spawnerManagementHandler;
+    private AdminStackerHandler adminStackerHandler;
     private PricesGUI pricesGUI;
 
     // API implementation
@@ -278,6 +283,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerStackerHandler, this);
         pm.registerEvents(worldEventHandler, this);
         pm.registerEvents(spawnerListGUI, this);
+        pm.registerEvents(spawnerManagementHandler, this);
+        pm.registerEvents(adminStackerHandler, this);
         pm.registerEvents(pricesGUI, this);
     }
 
@@ -287,6 +294,8 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.userPreferenceCache = new UserPreferenceCache(this);
         this.listSubCommand = new ListSubCommand(this);
         this.spawnerListGUI = new SpawnerListGUI(this);
+        this.spawnerManagementHandler = new SpawnerManagementHandler(this, listSubCommand);
+        this.adminStackerHandler = new AdminStackerHandler(this, new SpawnerManagementGUI(this));
         this.pricesGUI = new PricesGUI(this);
     }
 
