@@ -284,4 +284,16 @@ prices_not_available:
 
 no_priceable_items:
   message: "&#ff5252ɴᴏ ɪᴛᴇᴍꜱ ᴡɪᴛʜ ᴘʀɪᴄᴇꜱ ꜰᴏᴜɴᴅ."
+
+# ------------------------------------------------------
+#             Spawner Management Messages
+# ------------------------------------------------------
+spawner_management:
+  removed:
+    message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ #&#ab7afd%id% &#ff5252ʀᴇᴍᴏᴠᴇᴅ &#e6e6faꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!"
+    sound: entity.item.break
+  
+  change_entity_todo:
+    message: "&#fce96aᴇɴᴛɪᴛʏ ᴄʜᴀɴɢᴇ ꜰᴇᴀᴛᴜʀᴇ ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ!"
+    sound: block.note_block.pling
   sound: block.note_block.pling

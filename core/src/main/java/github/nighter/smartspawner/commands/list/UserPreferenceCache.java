@@ -91,6 +91,22 @@ public class UserPreferenceCache {
     }
 
     /**
+     * Gets user's filter preference for a specific world
+     */
+    public FilterOption getUserFilter(org.bukkit.entity.Player player, String worldName) {
+        UserPreference preference = getPreference(player.getUniqueId(), worldName);
+        return preference != null ? preference.getFilterOption() : FilterOption.ALL;
+    }
+
+    /**
+     * Gets user's sort preference for a specific world
+     */
+    public SortOption getUserSort(org.bukkit.entity.Player player, String worldName) {
+        UserPreference preference = getPreference(player.getUniqueId(), worldName);
+        return preference != null ? preference.getSortOption() : SortOption.DEFAULT;
+    }
+
+    /**
      * Cancels the cleanup task when no longer needed
      */
     public void shutdown() {

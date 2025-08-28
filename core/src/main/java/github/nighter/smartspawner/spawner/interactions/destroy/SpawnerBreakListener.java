@@ -111,6 +111,9 @@ public class SpawnerBreakListener implements Listener {
             return;
         }
 
+        // Track player interaction for last interaction field
+        spawner.updateLastInteractedPlayer(player.getName());
+
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
 
         SpawnerBreakResult result = processDrops(player, location, spawner, player.isSneaking(), block);

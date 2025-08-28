@@ -17,9 +17,9 @@ public enum SortOption {
 
     public SortOption getNextOption() {
         return switch (this) {
-            case STACK_SIZE_DESC -> DEFAULT;
-            case STACK_SIZE_ASC -> STACK_SIZE_DESC;
-            case DEFAULT -> STACK_SIZE_ASC;
+            case STACK_SIZE_DESC -> STACK_SIZE_ASC;
+            case STACK_SIZE_ASC -> DEFAULT;
+            case DEFAULT -> STACK_SIZE_DESC;
         };
     }
 

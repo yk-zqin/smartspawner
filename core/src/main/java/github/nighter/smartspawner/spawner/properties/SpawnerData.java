@@ -82,6 +82,8 @@ public class    SpawnerData {
     private final Set<Material> filteredItems = new HashSet<>();
     // Interaction tracking for GUI and data saving
     private final AtomicBoolean interacted = new AtomicBoolean(false);
+    @Getter @Setter
+    private String lastInteractedPlayer;
 
     // Sales management
     @Getter
@@ -358,5 +360,14 @@ public class    SpawnerData {
 
     public void clearInteracted() {
         interacted.compareAndSet(true, false);
+    }
+    
+    /**
+     * Updates the last interacted player and marks the spawner as modified for saving
+     * @param playerName The name of the player who interacted with the spawner
+     */
+    public void updateLastInteractedPlayer(String playerName) {
+        this.lastInteractedPlayer = playerName;
+        markInteracted();
     }
 }

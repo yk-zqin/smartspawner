@@ -190,6 +190,9 @@ public class SpawnerFileHandler {
                         spawner.getIsAtCapacity());
 
                 spawnerData.set(path + ".settings", settings);
+                
+                // Save last interacted player separately
+                spawnerData.set(path + ".lastInteractedPlayer", spawner.getLastInteractedPlayer());
 
                 Set<Material> filteredItems = spawner.getFilteredItems();
                 if (filteredItems != null && !filteredItems.isEmpty()) {
@@ -433,6 +436,11 @@ public class SpawnerFileHandler {
         }
 
         spawner.setVirtualInventory(virtualInv);
+        
+        // Load last interacted player
+        String lastInteractedPlayer = spawnerData.getString(path + ".lastInteractedPlayer");
+        spawner.setLastInteractedPlayer(lastInteractedPlayer);
+        
         return spawner;
     }
 

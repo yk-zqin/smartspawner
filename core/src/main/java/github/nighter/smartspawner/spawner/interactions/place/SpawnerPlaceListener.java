@@ -281,6 +281,9 @@ public class SpawnerPlaceListener implements Listener {
         SpawnerData spawner = new SpawnerData(spawnerId, block.getLocation(), entityType, plugin);
         spawner.setSpawnerActive(true);
         spawner.setStackSize(stackSize);
+        
+        // Track player interaction for last interaction field
+        spawner.updateLastInteractedPlayer(player.getName());
 
         spawnerManager.addSpawner(spawnerId, spawner);
         chunkSpawnerLimiter.registerSpawnerPlacement(block.getLocation(), spawner.getStackSize());
