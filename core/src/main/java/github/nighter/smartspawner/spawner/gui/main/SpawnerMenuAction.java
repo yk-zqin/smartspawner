@@ -217,6 +217,7 @@ public class SpawnerMenuAction implements Listener {
 
         // Reset spawner exp and update menu
         spawner.setSpawnerExp(0);
+        plugin.getSpawnerManager().markSpawnerModified(spawner.getSpawnerId());
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
 
         // Update all viewers instead of just current player
