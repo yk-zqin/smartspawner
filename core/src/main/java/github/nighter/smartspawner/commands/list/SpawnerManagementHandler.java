@@ -6,13 +6,11 @@ import github.nighter.smartspawner.commands.list.enums.SortOption;
 import github.nighter.smartspawner.commands.list.holders.SpawnerManagementHolder;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
-import github.nighter.smartspawner.spawner.gui.stacker.SpawnerStackerUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,7 +26,7 @@ public class SpawnerManagementHandler implements Listener {
     private final SpawnerManager spawnerManager;
     private final ListSubCommand listSubCommand;
     private final SpawnerMenuUI spawnerMenuUI;
-    private final SpawnerStackerUI spawnerStackerUI;
+    private final AdminStackerUI adminStackerUI;
 
     public SpawnerManagementHandler(SmartSpawner plugin, ListSubCommand listSubCommand) {
         this.plugin = plugin;
@@ -36,7 +34,7 @@ public class SpawnerManagementHandler implements Listener {
         this.spawnerManager = plugin.getSpawnerManager();
         this.listSubCommand = listSubCommand;
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
-        this.spawnerStackerUI = plugin.getSpawnerStackerUI();
+        this.adminStackerUI = new AdminStackerUI(plugin);
     }
 
     @EventHandler
@@ -61,12 +59,11 @@ public class SpawnerManagementHandler implements Listener {
         ItemStack clickedItem = event.getCurrentItem();
 
         switch (slot) {
-            case 10 -> handleTeleport(player, spawner);
-            case 12 -> handleOpenSpawner(player, spawner);
-            case 14 -> handleChangeEntity(player, spawner);
-            case 16 -> handleRemoveSpawner(player, spawner, worldName, listPage);
-            case 19, 20 -> handleStackManagement(player, spawner);
-            case 22 -> handleBack(player, worldName, listPage);
+            case 20 -> handleTeleport(player, spawner);
+            case 22 -> handleOpenSpawner(player, spawner);
+            case 24 -> handleStackManagement(player, spawner, worldName, listPage);
+            case 29 -> handleRemoveSpawner(player, spawner, worldName, listPage);
+            case 40 -> handleBack(player, worldName, listPage);
         }
     }
 
@@ -93,53 +90,14 @@ public class SpawnerManagementHandler implements Listener {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
     }
 
-    private void handleChangeEntity(Player player, SpawnerData spawner) {
-        if (!player.hasPermission("smartspawner.changetype")) {
+    private void handleStackManagement(Player player, SpawnerData spawner, String worldName, int listPage) {
+        if (!player.hasPermission("smartspawner.stack")) {
             messageService.sendMessage(player, "no_permission");
             return;
         }
 
-        // Simple entity cycling through common mob types
-        EntityType currentType = spawner.getEntityType();
-        EntityType nextType = getNextEntityType(currentType);
-        
-        // Update the spawner entity type directly
-        spawner.setEntityType(nextType);
-        
-        // Update the physical spawner block
-        Location loc = spawner.getSpawnerLocation();
-        if (loc.getBlock().getState() instanceof org.bukkit.block.CreatureSpawner creatureSpawner) {
-            creatureSpawner.setSpawnedType(nextType);
-            creatureSpawner.update();
-        }
-        
-        // Track interaction
-        spawner.updateLastInteractedPlayer(player.getName());
-        
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("entity", nextType.name().toLowerCase().replace("_", " "));
-        messageService.sendMessage(player, "spawner_management.entity_changed", placeholders);
-        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-    }
-    
-    /**
-     * Cycles through common entity types
-     */
-    private EntityType getNextEntityType(EntityType current) {
-        EntityType[] commonTypes = {
-            EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.CREEPER,
-            EntityType.ENDERMAN, EntityType.BLAZE, EntityType.COW, EntityType.PIG,
-            EntityType.CHICKEN, EntityType.SHEEP, EntityType.IRON_GOLEM, EntityType.VILLAGER
-        };
-        
-        for (int i = 0; i < commonTypes.length; i++) {
-            if (commonTypes[i] == current) {
-                return commonTypes[(i + 1) % commonTypes.length];
-            }
-        }
-        
-        // If current type is not in the list, return the first one
-        return commonTypes[0];
+        adminStackerUI.openAdminStackerGui(player, spawner, worldName, listPage);
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
     }
 
     private void handleRemoveSpawner(Player player, SpawnerData spawner, String worldName, int listPage) {
@@ -164,16 +122,6 @@ public class SpawnerManagementHandler implements Listener {
 
         // Return to spawner list
         handleBack(player, worldName, listPage);
-    }
-
-    private void handleStackManagement(Player player, SpawnerData spawner) {
-        if (!player.hasPermission("smartspawner.stack")) {
-            messageService.sendMessage(player, "no_permission");
-            return;
-        }
-
-        spawnerStackerUI.openStackerGui(player, spawner);
-        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
     }
 
     private void handleBack(Player player, String worldName, int listPage) {

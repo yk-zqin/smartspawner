@@ -19,16 +19,14 @@ import java.util.List;
 import java.util.Map;
 
 public class SpawnerManagementGUI {
-    private static final int INVENTORY_SIZE = 27;
+    private static final int INVENTORY_SIZE = 54;
     
-    // Action slot positions
-    private static final int TELEPORT_SLOT = 10;
-    private static final int OPEN_SPAWNER_SLOT = 12;
-    private static final int CHANGE_ENTITY_SLOT = 14;
-    private static final int REMOVE_SLOT = 16;
-    private static final int STACK_SLOT = 19;
-    private static final int DESTACK_SLOT = 20;
-    private static final int BACK_SLOT = 22;
+    // Action slot positions - arranged in a beautiful 6x9 layout
+    private static final int TELEPORT_SLOT = 20;
+    private static final int OPEN_SPAWNER_SLOT = 22;
+    private static final int STACK_SLOT = 24;
+    private static final int REMOVE_SLOT = 29;
+    private static final int BACK_SLOT = 40;
     
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
@@ -58,13 +56,11 @@ public class SpawnerManagementGUI {
             INVENTORY_SIZE, title
         );
 
-        // Create action items
+        // Create action items with better materials and positioning
         createActionItem(inv, TELEPORT_SLOT, "spawner_management.teleport", Material.ENDER_PEARL);
         createActionItem(inv, OPEN_SPAWNER_SLOT, "spawner_management.open_spawner", Material.SPAWNER);
-        createActionItem(inv, CHANGE_ENTITY_SLOT, "spawner_management.change_entity", Material.PIG_SPAWN_EGG);
+        createActionItem(inv, STACK_SLOT, "spawner_management.stack", Material.EMERALD);
         createActionItem(inv, REMOVE_SLOT, "spawner_management.remove", Material.BARRIER);
-        createActionItem(inv, STACK_SLOT, "spawner_management.stack", Material.ARROW);
-        createActionItem(inv, DESTACK_SLOT, "spawner_management.destack", Material.ARROW);
         createActionItem(inv, BACK_SLOT, "spawner_management.back", Material.RED_STAINED_GLASS_PANE);
 
         // Fill empty slots with glass panes
