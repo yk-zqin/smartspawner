@@ -388,6 +388,12 @@ public class SpawnerGuiViewManager implements Listener {
     // ===============================================================
 
     private void updateGuiForSpawnerInfo() {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            stopUpdateTask();
+            return;
+        }
+        
         // Only process main menu viewers (those that need timer updates)
         if (mainMenuViewers.isEmpty()) {
             stopUpdateTask();
@@ -600,6 +606,11 @@ public class SpawnerGuiViewManager implements Listener {
      * @param spawner The spawner whose state has changed
      */
     public void forceStateChangeUpdate(SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
         
@@ -618,6 +629,11 @@ public class SpawnerGuiViewManager implements Listener {
      * This is a lightweight version that only processes viewers who need timer updates.
      */
     private void updateMainMenuViewers(SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
 
@@ -941,6 +957,11 @@ public class SpawnerGuiViewManager implements Listener {
      * to avoid redundant calculations and improve performance.
      */
     private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
@@ -982,6 +1003,11 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
+        // Skip timer updates if GUI doesn't use timer placeholders
+        if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
+            return;
+        }
+        
         ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
