@@ -293,6 +293,10 @@ spawner_management:
     message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ #&#ab7afd%id% &#ff5252ʀᴇᴍᴏᴠᴇᴅ &#e6e6faꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!"
     sound: entity.item.break
   
+  entity_changed:
+    message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ ᴇɴᴛɪᴛʏ ᴄʜᴀɴɢᴇᴅ ᴛᴏ &#fce96a%entity%&#e6e6fa!"
+    sound: entity.experience_orb.pickup
+  
   change_entity_todo:
     message: "&#fce96aᴇɴᴛɪᴛʏ ᴄʜᴀɴɢᴇ ꜰᴇᴀᴛᴜʀᴇ ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ!"
     sound: block.note_block.pling
