@@ -1,10 +1,10 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.list;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.commands.list.enums.FilterOption;
-import github.nighter.smartspawner.commands.list.enums.SortOption;
-import github.nighter.smartspawner.commands.list.holders.SpawnerListHolder;
-import github.nighter.smartspawner.commands.list.holders.WorldSelectionHolder;
+import github.nighter.smartspawner.commands.list.ListSubCommand;
+import github.nighter.smartspawner.commands.list.gui.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.SortOption;
+import github.nighter.smartspawner.commands.list.gui.worldselection.WorldSelectionHolder;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;

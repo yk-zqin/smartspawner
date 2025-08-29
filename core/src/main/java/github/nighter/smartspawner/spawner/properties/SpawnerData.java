@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class    SpawnerData {
+public class SpawnerData {
     private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
 
     // Core dependencies

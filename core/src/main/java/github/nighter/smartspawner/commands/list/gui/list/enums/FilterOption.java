@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.commands.list.enums;
+package github.nighter.smartspawner.commands.list.gui.list.enums;
 
 import lombok.Getter;
 

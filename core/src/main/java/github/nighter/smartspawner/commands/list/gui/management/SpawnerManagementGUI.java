@@ -1,15 +1,16 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.management;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.commands.list.holders.SpawnerManagementHolder;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -19,14 +20,12 @@ import java.util.List;
 import java.util.Map;
 
 public class SpawnerManagementGUI {
-    private static final int INVENTORY_SIZE = 54;
-    
-    // Action slot positions - arranged in a beautiful 6x9 layout
-    private static final int TELEPORT_SLOT = 20;
-    private static final int OPEN_SPAWNER_SLOT = 22;
-    private static final int STACK_SLOT = 24;
-    private static final int REMOVE_SLOT = 29;
-    private static final int BACK_SLOT = 40;
+    private static final int INVENTORY_SIZE = 27;
+    private static final int TELEPORT_SLOT = 10;
+    private static final int OPEN_SPAWNER_SLOT = 12;
+    private static final int STACK_SLOT = 14;
+    private static final int REMOVE_SLOT = 16;
+    private static final int BACK_SLOT = 26;
     
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
@@ -47,14 +46,14 @@ public class SpawnerManagementGUI {
             return;
         }
 
-        Map<String, String> titlePlaceholders = new HashMap<>();
-        titlePlaceholders.put("id", spawnerId);
-        String title = languageManager.getGuiTitle("spawner_management.title", titlePlaceholders);
+        String title = languageManager.getGuiTitle("spawner_management.title");
 
         Inventory inv = Bukkit.createInventory(
             new SpawnerManagementHolder(spawnerId, worldName, listPage),
             INVENTORY_SIZE, title
         );
+
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
         // Create action items with better materials and positioning
         createActionItem(inv, TELEPORT_SLOT, "spawner_management.teleport", Material.ENDER_PEARL);
@@ -64,7 +63,7 @@ public class SpawnerManagementGUI {
         createActionItem(inv, BACK_SLOT, "spawner_management.back", Material.RED_STAINED_GLASS_PANE);
 
         // Fill empty slots with glass panes
-        fillEmptySlots(inv);
+        // fillEmptySlots(inv);
 
         player.openInventory(inv);
     }
@@ -76,23 +75,25 @@ public class SpawnerManagementGUI {
             meta.setDisplayName(languageManager.getGuiItemName(langKey + ".name"));
             List<String> lore = Arrays.asList(languageManager.getGuiItemLore(langKey + ".lore"));
             meta.setLore(lore);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
             item.setItemMeta(meta);
         }
         inv.setItem(slot, item);
     }
 
-    private void fillEmptySlots(Inventory inv) {
-        ItemStack glass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = glass.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(" ");
-            glass.setItemMeta(meta);
-        }
-        
-        for (int i = 0; i < inv.getSize(); i++) {
-            if (inv.getItem(i) == null) {
-                inv.setItem(i, glass);
-            }
-        }
-    }
+//    private void fillEmptySlots(Inventory inv) {
+//        ItemStack glass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+//        ItemMeta meta = glass.getItemMeta();
+//        if (meta != null) {
+//            meta.setDisplayName(" ");
+//            glass.setItemMeta(meta);
+//        }
+//
+//        for (int i = 0; i < inv.getSize(); i++) {
+//            if (inv.getItem(i) == null) {
+//                inv.setItem(i, glass);
+//            }
+//        }
+//    }
 }

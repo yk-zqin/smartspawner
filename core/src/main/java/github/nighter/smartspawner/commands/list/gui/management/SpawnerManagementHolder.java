@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.commands.list.holders;
+package github.nighter.smartspawner.commands.list.gui.management;
 
 import lombok.Getter;
 import org.bukkit.inventory.Inventory;

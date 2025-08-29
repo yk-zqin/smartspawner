@@ -1,8 +1,8 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.list;
 
 import github.nighter.smartspawner.Scheduler;
-import github.nighter.smartspawner.commands.list.enums.FilterOption;
-import github.nighter.smartspawner.commands.list.enums.SortOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.SortOption;
 import lombok.Data;
 import org.bukkit.plugin.Plugin;
 

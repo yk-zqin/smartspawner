@@ -1,12 +1,14 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.adminstacker;
 
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
+import lombok.Getter;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 /**
  * Inventory holder for the admin stacker GUI
  */
+@Getter
 public class AdminStackerHolder implements InventoryHolder {
     private final SpawnerData spawnerData;
     private final String worldName;
@@ -16,18 +18,6 @@ public class AdminStackerHolder implements InventoryHolder {
         this.spawnerData = spawnerData;
         this.worldName = worldName;
         this.listPage = listPage;
-    }
-
-    public SpawnerData getSpawnerData() {
-        return spawnerData;
-    }
-
-    public String getWorldName() {
-        return worldName;
-    }
-
-    public int getListPage() {
-        return listPage;
     }
 
     @Override

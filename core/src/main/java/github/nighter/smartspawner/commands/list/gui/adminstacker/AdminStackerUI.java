@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.adminstacker;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;

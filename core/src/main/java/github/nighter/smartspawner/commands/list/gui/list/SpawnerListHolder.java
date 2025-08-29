@@ -1,8 +1,7 @@
-package github.nighter.smartspawner.commands.list.holders;
+package github.nighter.smartspawner.commands.list.gui.list;
 
-import github.nighter.smartspawner.commands.list.ListSubCommand;
-import github.nighter.smartspawner.commands.list.enums.FilterOption;
-import github.nighter.smartspawner.commands.list.enums.SortOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.SortOption;
 import lombok.Getter;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

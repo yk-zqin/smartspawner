@@ -1,9 +1,10 @@
-package github.nighter.smartspawner.commands.list;
+package github.nighter.smartspawner.commands.list.gui.management;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.commands.list.enums.FilterOption;
-import github.nighter.smartspawner.commands.list.enums.SortOption;
-import github.nighter.smartspawner.commands.list.holders.SpawnerManagementHolder;
+import github.nighter.smartspawner.commands.list.gui.adminstacker.AdminStackerUI;
+import github.nighter.smartspawner.commands.list.ListSubCommand;
+import github.nighter.smartspawner.commands.list.gui.list.enums.FilterOption;
+import github.nighter.smartspawner.commands.list.gui.list.enums.SortOption;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -59,11 +60,11 @@ public class SpawnerManagementHandler implements Listener {
         ItemStack clickedItem = event.getCurrentItem();
 
         switch (slot) {
-            case 20 -> handleTeleport(player, spawner);
-            case 22 -> handleOpenSpawner(player, spawner);
-            case 24 -> handleStackManagement(player, spawner, worldName, listPage);
-            case 29 -> handleRemoveSpawner(player, spawner, worldName, listPage);
-            case 40 -> handleBack(player, worldName, listPage);
+            case 10 -> handleTeleport(player, spawner);
+            case 12 -> handleOpenSpawner(player, spawner);
+            case 14 -> handleStackManagement(player, spawner, worldName, listPage);
+            case 16 -> handleRemoveSpawner(player, spawner, worldName, listPage);
+            case 26 -> handleBack(player, worldName, listPage);
         }
     }
 

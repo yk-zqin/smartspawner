@@ -326,8 +326,9 @@ sort:
     name: '&#37eb9aꜱᴏʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ'
     lore:
       - '%default_color% • ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
-      - '%stack_size_asc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
       - '%stack_size_desc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
+      - '%stack_size_asc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
+
   default:
     color: '&#37eb9a'
   stack_size_asc:
@@ -352,7 +353,7 @@ spawner_item_list:
 #              Spawner Management GUI
 # ---------------------------------------------------
 spawner_management:
-  title: '&#ab7afdꜱᴘᴀᴡɴᴇʀ #%id% ᴍᴀɴᴀɢᴇᴍᴇɴᴛ'
+  title: 'ᴍᴀɴᴀɢᴇ ꜱᴘᴀᴡɴᴇʀ'
   
   teleport:
     name: '&#00E689➤ &#f8f8ffᴛᴇʟᴇᴘᴏʀᴛ'
