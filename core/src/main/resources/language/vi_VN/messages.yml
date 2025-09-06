@@ -284,7 +284,7 @@ no_priceable_items:
   message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ɢɪá ᴄả."
   sound: block.note_block.pling
 
-# Spawner management command messages (Vietnamese translation)
+# Spawner management command messages
 spawner_management:
   removed:
     message: "&#e6e6faLồɴɢ sᴘᴀᴡɴ #&#ab7afd%id% &#ff5252đã xóᴀ &#e6e6faᴛʜàɴʜ ᴄôɴɢ!"
