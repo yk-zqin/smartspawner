@@ -20,7 +20,7 @@ dependencies {
     implementation 'com.github.GriefPrevention:GriefPrevention:17.0.0'
     implementation 'com.github.IncrediblePlugins:LandsAPI:7.10.13'
     implementation 'com.github.Xyness:SimpleClaimSystem:1.12.3.2'
-    compileOnly 'dev.aurelium:auraskills-api-bukkit:2.3.6'
+    compileOnly 'dev.aurelium:auraskills-api-bukkit:2.3.7'
     compileOnly 'pl.minecodes.plots:plugin-api:4.6.2'
     compileOnly("io.lumine:Mythic-Dist:5.10.0-SNAPSHOT")
     compileOnly("com.iridium:IridiumSkyblock:4.1.0")
