@@ -101,6 +101,7 @@ public class ReloadSubCommand extends BaseSubCommand {
         List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
         for (SpawnerData spawner : allSpawners) {
             try {
+                spawner.loadConfigurationValues();
                 spawner.reloadLootConfig();
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to reload loot config for spawner " +

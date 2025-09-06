@@ -122,7 +122,7 @@ public class SpawnerData {
         this.lastSpawnTime = System.currentTimeMillis();
     }
 
-    private void loadConfigurationValues() {
+    public void loadConfigurationValues() {
         int baseMaxStoredExp = plugin.getConfig().getInt("spawner_properties.default.max_stored_exp", 1000);
         int baseMinMobs = plugin.getConfig().getInt("spawner_properties.default.min_mobs", 1);
         int baseMaxMobs = plugin.getConfig().getInt("spawner_properties.default.max_mobs", 4);

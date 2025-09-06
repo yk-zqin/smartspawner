@@ -44,7 +44,7 @@ jar {
     from { project(':NMS:v1_21_4').sourceSets.main.output }
     from { project(':NMS:v1_21_6').sourceSets.main.output }
 
-    // destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Paper\\plugins\\')
+    // destinationDirectory = file('C:\\Users\\ADMIN\\OneDrive\\Desktop\\Paper1_21_6\\plugins\\')
     from sourceSets.main.output
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
