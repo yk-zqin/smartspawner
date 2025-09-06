@@ -283,3 +283,18 @@ prices_not_available:
 no_priceable_items:
   message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ᴠậᴛ ᴘʜẩᴍ ɴàᴏ ᴄó ɢɪá ᴄả."
   sound: block.note_block.pling
+
+# Spawner management command messages (Vietnamese translation)
+spawner_management:
+  removed:
+    message: "&#e6e6faLồɴɢ sᴘᴀᴡɴ #&#ab7afd%id% &#ff5252đã xóᴀ &#e6e6faᴛʜàɴʜ ᴄôɴɢ!"
+    sound: entity.item.break
+  
+  stack_increased:
+    message: "&#e6e6faXếᴘ ᴄʜồɴɢ &#37eb9atăɴɢ &#e6e6fa&#fce96a%amount% &#e6e6fa- ᴋíᴄʜ ᴛʜướᴄ ᴍớɪ: &#37eb9a%new_size%"
+    sound: entity.experience_orb.pickup
+  
+  stack_decreased:
+    message: "&#e6e6faXếᴘ ᴄʜồɴɢ &#ff6b6bɢɪảᴍ &#e6e6fa&#fce96a%amount% &#e6e6fa- ᴋíᴄʜ ᴛʜướᴄ ᴍớɪ: &#37eb9a%new_size%"
+    sound: entity.experience_orb.pickup
+  sound: block.note_block.pling

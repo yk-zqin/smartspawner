@@ -31,6 +31,9 @@ spawner_storage_item:
     - ''
     - '&#d9b50c⊳ &#f8f8ffɴʜấᴘ để ᴍở ᴋʜᴏ'
 
+  loot_items: '  &#f8f8ff• &#f9cf51%raw_amount% &#f8f8ff%ɪᴛᴇᴍ_ɴᴀᴍᴇ%'
+  loot_items_empty: '&#e6e6faᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ ʀơɪ'
+
 spawner_info_item:
   name: '&#ab7afdʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%'
   lore:
@@ -310,3 +313,44 @@ price_item:
     - '&#d9b50c◈ &#fce96aɢɪá ᴄʜɪ ᴛɪếᴛ:'
     - '  &#f8f8ff•  ᴛùʏ ᴄʜỉɴʜ: &#37eb9a$%custom_price%'
     - '  &#f8f8ff•  ᴄửᴀ ʜàɴɢ: &#37eb9a$%shop_price%'
+
+# Spawner Management GUI (Vietnamese translation)
+spawner_management:
+  title: 'Qᴜảɴ ʟý ʟồɴɢ sᴘᴀᴡɴ'
+  
+  teleport:
+    name: '&#00E689➤ &#f8f8ffDịᴄʜ ᴄʜᴜʏểɴ'
+    lore:
+      - '&#7b68eeDịᴄʜ ᴄʜᴜʏểɴ đếɴ ʟồɴɢ sᴘᴀᴡɴ ɴàʏ'
+      - ''
+      - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để dịᴄʜ ᴄʜᴜʏểɴ'
+  
+  open_spawner:
+    name: '&#fce96a⚙ &#f8f8ffMở ᴍeɴᴜ ʟồɴɢ sᴘᴀᴡɴ'
+    lore:
+      - '&#7b68eeMở ɢɪᴀᴏ dɪệɴ ʟồɴɢ sᴘᴀᴡɴ tʀựᴄ ᴛɪếᴘ'
+      - ''
+      - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để ᴍở'
+  
+  stack:
+    name: '&#37eb9a⚡ &#f8f8ffQᴜảɴ ʟý xếᴘ ᴄʜồɴɢ'
+    lore:
+      - '&#7b68eeMở dɪềᴜ ᴋʜɪểɴ xếᴘ ᴄʜồɴɢ ᴀdᴍɪɴ'
+      - '&#7b68eeTăɴɢ ʜᴏặᴄ ɢɪảᴍ ᴋíᴄʜ ᴛʜướᴄ xếᴘ'
+      - ''
+      - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để ᴍở'
+  
+  remove:
+    name: '&#ff5252✗ &#f8f8ffXóᴀ ʟồɴɢ sᴘᴀᴡɴ'
+    lore:
+      - '&#ff5252⚠ Xóᴀ ʜoàɴ toàɴ ʟồɴɢ sᴘᴀᴡɴ ɴàʏ'
+      - '&#ff5252Sẽ xóᴀ ʙʟᴏᴄᴋ ᴠà tất ᴄả dữ ʟɪệᴜ'
+      - ''
+      - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để xóᴀ'
+  
+  back:
+    name: '&#ff5252◄ &#f8f8ffQuay ʟạɪ'
+    lore:
+      - '&#7b68eeQuay ʟạɪ dᴀɴʜ sáᴄʜ ʟồɴɢ sᴘᴀᴡɴ'
+      - ''
+      - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để ǫᴜay ʟạɪ'
