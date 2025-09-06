@@ -75,8 +75,7 @@ public class SpawnerManagementGUI {
             meta.setDisplayName(languageManager.getGuiItemName(langKey + ".name"));
             List<String> lore = Arrays.asList(languageManager.getGuiItemLore(langKey + ".lore"));
             meta.setLore(lore);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
             item.setItemMeta(meta);
         }
         inv.setItem(slot, item);

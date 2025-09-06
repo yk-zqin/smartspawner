@@ -102,7 +102,7 @@ public class SpawnerStackerUI {
                 meta.setLore(Arrays.asList(lore));
             }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+                    ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
             button.setItemMeta(meta);
         }
 

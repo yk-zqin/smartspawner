@@ -19,6 +19,8 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP;
+
 /**
  * Factory class for creating spawner items with optimized caching
  */
@@ -198,7 +200,7 @@ public class SpawnerItemFactory {
 
             // Hide enchants and attributes
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                    ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+                    HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
 
             // Add hidden tag to identify as smart spawner
 //            meta.getPersistentDataContainer().set(
@@ -283,7 +285,7 @@ public class SpawnerItemFactory {
 
                 // If we have custom lore, then also add the item flags to hide attributes
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                        ItemFlag.HIDE_ITEM_SPECIFICS, ItemFlag.HIDE_UNBREAKABLE);
+                        HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
             }
 
             // Add hidden tag to identify as vanilla spawner
