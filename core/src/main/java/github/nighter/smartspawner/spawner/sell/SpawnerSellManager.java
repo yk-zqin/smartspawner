@@ -89,6 +89,13 @@ public class SpawnerSellManager {
                 return;
             }
 
+            // Validate that all items from the sell result still exist in the virtual inventory
+            // This prevents packet delay exploits where players can receive money while keeping items
+            if (!validateItemsStillExist(virtualInv, sellResult)) {
+                messageService.sendMessage(player, "sale_failed");
+                return;
+            }
+
             // Perform the actual sale
             double amount = sellResult.getTotalValue();
             if(SpawnerSellEvent.getHandlerList().getRegisteredListeners().length != 0) {
@@ -106,7 +113,14 @@ public class SpawnerSellManager {
             }
 
             // Remove sold items from virtual inventory
-            virtualInv.removeItems(sellResult.getItemsToRemove());
+            boolean itemsRemoved = virtualInv.removeItems(sellResult.getItemsToRemove());
+            if (!itemsRemoved) {
+                // If items couldn't be removed (race condition), this indicates a critical issue
+                // The money has already been deposited, so we need to log this for investigation
+                plugin.getLogger().warning("Critical: Could not remove all items after depositing money for player " + 
+                    player.getName() + " at spawner " + spawner.getSpawnerId() + ". Possible exploit detected.");
+                // Note: Money has already been deposited, so we can't easily roll back without complex transaction handling
+            }
 
             // Update spawner state
             spawner.updateHologramData();
@@ -275,5 +289,34 @@ public class SpawnerSellManager {
         }
 
         return key.toString();
+    }
+
+    /**
+     * Validates that all items in the sell result still exist in the virtual inventory
+     * This prevents packet delay exploits where items are removed between calculation and sale
+     */
+    private boolean validateItemsStillExist(VirtualInventory virtualInv, SellResult sellResult) {
+        Map<VirtualInventory.ItemSignature, Long> consolidatedItems = virtualInv.getConsolidatedItems();
+        
+        // Group items to remove by signature to efficiently check quantities
+        Map<VirtualInventory.ItemSignature, Long> itemsToValidate = new HashMap<>();
+        for (ItemStack item : sellResult.getItemsToRemove()) {
+            if (item == null || item.getAmount() <= 0) continue;
+            VirtualInventory.ItemSignature sig = new VirtualInventory.ItemSignature(item);
+            itemsToValidate.merge(sig, (long) item.getAmount(), Long::sum);
+        }
+        
+        // Verify each item type has sufficient quantity
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : itemsToValidate.entrySet()) {
+            VirtualInventory.ItemSignature signature = entry.getKey();
+            long requiredAmount = entry.getValue();
+            long availableAmount = consolidatedItems.getOrDefault(signature, 0L);
+            
+            if (availableAmount < requiredAmount) {
+                return false; // Not enough items available
+            }
+        }
+        
+        return true;
     }
 }
