@@ -92,6 +92,13 @@ public class FilterConfigUI implements Listener {
      * Opens the filter configuration GUI for a player and spawner
      */
     public void openFilterConfigGUI(Player player, SpawnerData spawner) {
+        // Validate that the spawner still exists before opening the GUI
+        if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
+            // Spawner no longer exists, do not open the GUI
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.5f);
+            return;
+        }
+
         // Create a new inventory with title from language manager
         String title = languageManager.getGuiTitle("gui_title_filter_config");
         Inventory filterInventory = Bukkit.createInventory(
@@ -222,6 +229,15 @@ public class FilterConfigUI implements Listener {
         }
 
         SpawnerData spawner = holder.getSpawnerData();
+        
+        // Validate that the spawner still exists before processing any actions
+        if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
+            // Spawner no longer exists, close the inventory
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.5f);
+            player.closeInventory();
+            return;
+        }
+        
         int slot = event.getRawSlot();
 
         // Handle divider clicks (return to storage)
@@ -248,6 +264,14 @@ public class FilterConfigUI implements Listener {
      * Returns to the spawner storage UI
      */
     private void returnToStorage(Player player, SpawnerData spawner) {
+        // Validate that the spawner still exists before allowing navigation
+        if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
+            // Spawner no longer exists, close the inventory and prevent navigation
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.5f);
+            player.closeInventory();
+            return;
+        }
+
         // Return to storage menu
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.0f);
         player.closeInventory();
