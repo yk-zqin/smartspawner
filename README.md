@@ -1,8 +1,8 @@
 <div align="center">
-
+  
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/59e1cee2-dcd7-4161-a271-40717c3fe03d" alt="GUI Spawner Plugin for Minecraft Servers" />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/3ea1f61b-d3fe-41b5-977f-d596a13f3ea9" alt="GUI Spawner Plugin for Minecraft Servers" />
 
 <br>
 
