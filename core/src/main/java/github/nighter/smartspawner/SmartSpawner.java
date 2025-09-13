@@ -367,6 +367,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         return spawnerStorageUI;
     }
 
+    public SpawnerManager getSpawnerManager() {
+        return spawnerManager;
+    }
+
     public SpawnerRangeChecker getRangeChecker() {
         return rangeChecker;
     }
