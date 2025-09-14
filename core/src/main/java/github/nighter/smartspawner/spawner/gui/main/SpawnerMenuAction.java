@@ -152,7 +152,12 @@ public class SpawnerMenuAction implements Listener {
                 if (isClickTooFrequent(player)) {
                     return true;
                 }
-                // Collect EXP and sell items if shop integration is available
+                // Check permissions for selling (same logic as handleSpawnerInfoClick)
+                if (!plugin.hasSellIntegration() || !player.hasPermission("smartspawner.sellall")) {
+                    messageService.sendMessage(player, "no_permission");
+                    return true;
+                }
+                // Collect EXP and sell items in storage
                 handleExpBottleClick(player, spawner, true);
                 handleSellAllItems(player, spawner);
                 return true;
