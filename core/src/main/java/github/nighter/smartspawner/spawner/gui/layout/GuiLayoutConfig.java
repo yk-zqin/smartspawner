@@ -41,7 +41,7 @@ public class GuiLayoutConfig {
         initializeLayoutsDirectory();
         
         // Check and update layout files before loading
-        layoutUpdater.checkAndUpdateLayouts();
+        // layoutUpdater.checkAndUpdateLayouts();
         
         this.currentStorageLayout = loadCurrentStorageLayout();
         this.currentMainLayout = loadCurrentMainLayout();

@@ -170,14 +170,10 @@ public class ConfigUpdater {
             // Don't override config_version
             if (path.equals(CONFIG_VERSION_KEY)) continue;
 
-            // Check if path exists in new config before applying
-            boolean existsInNew = newConfig.contains(path);
-            
-            // Always apply user values to preserve their customizations
-            newConfig.set(path, value);
-            
-            if (!existsInNew) {
-                plugin.getLogger().fine("Preserving custom config path '" + path + "' from old config that doesn't exist in new default");
+            if (newConfig.contains(path)) {
+                newConfig.set(path, value);
+            } else {
+                plugin.getLogger().warning("Config path '" + path + "' from old config no longer exists in new config");
             }
         }
     }
