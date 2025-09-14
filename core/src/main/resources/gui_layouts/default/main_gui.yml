@@ -19,12 +19,14 @@ buttons:
   # Spawner information display
   # Material will be MOB_HEAD with texture based on spawner entity type
   # Players can change material if they want different button appearance
+  # Left click: Opens stacker GUI
+  # Right click: Collects XP + sells items (if shop available)
   spawner_info:
     slot: 13
     material: MOB_HEAD
     enabled: true
     actions:
-      left_click: "toggle_info"
+      left_click: "open_stacker"
       right_click: "sell_inventory"
 
   # Experience collection button

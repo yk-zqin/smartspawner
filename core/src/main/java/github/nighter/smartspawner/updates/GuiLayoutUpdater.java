@@ -1,7 +1,7 @@
 package github.nighter.smartspawner.updates;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.utils.Version;
+import github.nighter.smartspawner.updates.Version;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;

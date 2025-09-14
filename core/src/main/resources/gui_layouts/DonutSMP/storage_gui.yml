@@ -10,18 +10,12 @@ buttons:
     slot: 1
     material: BARRIER
     enabled: true
-    actions:
-      left_click: "return"
-      right_click: "return"
 
   # Previous page navigation button
   previous_page:
     slot: 4
     material: ARROW
     enabled: true
-    actions:
-      left_click: "previous_page"
-      right_click: "previous_page"
 
   # Conditional button: Sell button if shop integration available, Take all button otherwise
   sell:
@@ -29,9 +23,6 @@ buttons:
     material: GOLD_INGOT
     enabled: true
     condition: "shop_integration"
-    actions:
-      left_click: "sell_all"
-      right_click: "sell_all"
 
   # Take all items button (fallback for slot 5 when no shop integration)
   take_all:
@@ -39,24 +30,15 @@ buttons:
     material: SPECTRAL_ARROW
     enabled: true
     condition: "no_shop_integration"
-    actions:
-      left_click: "take_all"
-      right_click: "take_all"
 
   # Next page navigation button
   next_page:
     slot: 6
     material: ARROW
     enabled: true
-    actions:
-      left_click: "next_page"
-      right_click: "next_page"
 
   drop_page:
     slot: 8
     material: DROPPER
     enabled: true
-    actions:
-      left_click: "drop_page"
-      right_click: "drop_page"
 

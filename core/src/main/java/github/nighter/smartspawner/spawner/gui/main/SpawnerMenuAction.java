@@ -136,7 +136,7 @@ public class SpawnerMenuAction implements Listener {
             case "open_storage":
                 handleChestClick(player, spawner);
                 return true;
-            case "toggle_info":
+            case "open_stacker":
                 if (isClickTooFrequent(player)) {
                     return true;
                 }

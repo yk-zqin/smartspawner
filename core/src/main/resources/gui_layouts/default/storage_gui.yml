@@ -11,39 +11,25 @@ buttons:
     slot: 1
     material: SPECTRAL_ARROW
     enabled: true
-    actions:
-      left_click: "previous_page"
-      right_click: "previous_page"
 
   # Discard all items button
   discard_all:
     slot: 3
     material: CAULDRON
     enabled: true
-    actions:
-      left_click: "discard_all"
-      right_click: "discard_all"
 
   # Item filter configuration button
   item_filter:
     slot: 4
     material: HOPPER
     enabled: true
-    actions:
-      left_click: "item_filter"
-      right_click: "item_filter"
 
-  # Conditional button: Sell button if shop integration available, Return button otherwise
-  # This button will display as "sell" if shop integration is available,
-  # otherwise it will function as an additional return button
+  # Sell or Return button (handled by legacy button type logic)
   sell:
     slot: 5
     material: GOLD_INGOT
     enabled: true
     condition: "shop_integration"
-    actions:
-      left_click: "sell_all"
-      right_click: "sell_all"
   
   # Return to main menu button (fallback for slot 5 when no shop integration)
   return:
@@ -51,32 +37,20 @@ buttons:
     material: RED_STAINED_GLASS_PANE
     enabled: true
     condition: "no_shop_integration"
-    actions:
-      left_click: "return"
-      right_click: "return"
 
   # Take all items button
   take_all:
     slot: 6
     material: CHEST
     enabled: true
-    actions:
-      left_click: "take_all"
-      right_click: "take_all"
 
   drop_page:
     slot: 7
     material: DROPPER
     enabled: true
-    actions:
-      left_click: "drop_page"
-      right_click: "drop_page"
 
   # Next page navigation button
   next_page:
     slot: 9
     material: SPECTRAL_ARROW
     enabled: true
-    actions:
-      left_click: "next_page"
-      right_click: "next_page"
