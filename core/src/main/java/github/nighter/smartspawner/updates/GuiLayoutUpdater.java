@@ -52,8 +52,30 @@ public class GuiLayoutUpdater {
             String configVersionStr = currentConfig.getString(GUI_LAYOUT_VERSION_KEY, "0.0.0");
 
             if (configVersionStr.equals("0.0.0")) {
-                plugin.debug("No version found in " + layoutName + "/" + fileName + ", creating default layout file with header");
-                createDefaultLayoutFileWithHeader(layoutName, layoutFile, fileName);
+                plugin.debug("No version found in " + layoutName + "/" + fileName + ", backing up and adding version header");
+                
+                // Create backup of the user's file before overwriting
+                File backupFile = new File(layoutFile.getParent(), fileName.replace(".yml", "_backup_" + configVersionStr + ".yml"));
+                Files.copy(layoutFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                plugin.getLogger().info("Layout backup created at " + backupFile.getName());
+                
+                // Get user's current values
+                Map<String, Object> userValues = flattenConfig(currentConfig);
+                
+                // Create temp file with default layout
+                File tempFile = new File(layoutFile.getParent(), fileName.replace(".yml", "_new.yml"));
+                createDefaultLayoutFileWithHeader(layoutName, tempFile, fileName);
+                
+                // Load the default config and set version
+                FileConfiguration newConfig = YamlConfiguration.loadConfiguration(tempFile);
+                newConfig.set(GUI_LAYOUT_VERSION_KEY, currentVersion);
+                
+                // Apply user values to preserve their customizations
+                applyUserValues(newConfig, userValues);
+                
+                // Save final config to user's file
+                newConfig.save(layoutFile);
+                tempFile.delete();
                 return;
             }
 
@@ -161,10 +183,14 @@ public class GuiLayoutUpdater {
 
             if (path.equals(GUI_LAYOUT_VERSION_KEY)) continue;
 
-            if (newConfig.contains(path)) {
-                newConfig.set(path, value);
-            } else {
-                plugin.getLogger().fine("Layout path '" + path + "' from old config no longer exists in new config");
+            // Check if path exists in new config before applying
+            boolean existsInNew = newConfig.contains(path);
+            
+            // Always apply user values to preserve their customizations
+            newConfig.set(path, value);
+            
+            if (!existsInNew) {
+                plugin.getLogger().fine("Preserving custom layout path '" + path + "' from old config that doesn't exist in new default");
             }
         }
     }
