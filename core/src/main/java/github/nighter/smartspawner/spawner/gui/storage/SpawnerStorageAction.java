@@ -10,6 +10,7 @@ import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveResult;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.language.LanguageManager;
@@ -139,6 +140,70 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
+        Optional<GuiButton> buttonOpt = layout.getButtonAtSlot(slot);
+        if (buttonOpt.isEmpty()) {
+            return;
+        }
+
+        GuiButton button = buttonOpt.get();
+        
+        // For now, we'll use left_click as the default action since storage GUI
+        // currently doesn't differentiate between click types in most cases
+        String action = button.getAction("left_click");
+        if (action == null) {
+            // Fallback to legacy button type handling
+            handleLegacyButtonType(player, slot, holder, spawner, inventory, layout);
+            return;
+        }
+
+        switch (action) {
+            case "discard_all":
+                handleDiscardAllItems(player, spawner, inventory);
+                break;
+            case "item_filter":
+                openFilterConfig(player, spawner);
+                break;
+            case "previous_page":
+                if (holder.getCurrentPage() > 1) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, true);
+                }
+                break;
+            case "take_all":
+                handleTakeAllItems(player, inventory);
+                break;
+            case "next_page":
+                if (holder.getCurrentPage() < holder.getTotalPages()) {
+                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, true);
+                }
+                break;
+            case "drop_page":
+                handleDropPageItems(player, spawner, inventory);
+                break;
+            case "sell_all":
+                if (plugin.hasSellIntegration()) {
+                    if (!player.hasPermission("smartspawner.sellall")) {
+                        messageService.sendMessage(player, "no_permission");
+                        return;
+                    }
+                    if (isClickTooFrequent(player)) {
+                        return;
+                    }
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+                    spawnerSellManager.sellAllItems(player, spawner);
+                }
+                break;
+            case "return":
+                openMainMenu(player, spawner);
+                break;
+            default:
+                // Fallback to legacy handling for unknown actions
+                handleLegacyButtonType(player, slot, holder, spawner, inventory, layout);
+                break;
+        }
+    }
+
+    private void handleLegacyButtonType(Player player, int slot, StoragePageHolder holder,
+                                       SpawnerData spawner, Inventory inventory, GuiLayout layout) {
         Optional<String> buttonTypeOpt = layout.getButtonTypeAtSlot(slot);
         if (buttonTypeOpt.isEmpty()) {
             return;

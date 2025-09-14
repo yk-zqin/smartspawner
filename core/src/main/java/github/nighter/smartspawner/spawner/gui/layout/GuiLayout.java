@@ -28,6 +28,11 @@ public class GuiLayout {
         return Optional.ofNullable(slotToButtonType.get(slot));
     }
 
+    public Optional<GuiButton> getButtonAtSlot(int slot) {
+        String buttonType = slotToButtonType.get(slot);
+        return buttonType != null ? Optional.ofNullable(buttons.get(buttonType)) : Optional.empty();
+    }
+
     public boolean hasButton(String buttonType) {
         return buttons.containsKey(buttonType) && buttons.get(buttonType).isEnabled();
     }

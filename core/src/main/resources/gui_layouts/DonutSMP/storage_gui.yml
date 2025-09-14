@@ -2,6 +2,8 @@
 # Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
 # Valid materials can be found at: https://jd.papermc.io/paper/1.21.6/org/bukkit/Material.html
 
+gui_layout_version: "1.0.0"
+
 buttons:
   # Return to main menu button
   return:
@@ -15,11 +17,19 @@ buttons:
     material: ARROW
     enabled: true
 
-  # Take all items button
+  # Conditional button: Sell button if shop integration available, Take all button otherwise
+  sell:
+    slot: 5
+    material: GOLD_INGOT
+    enabled: true
+    condition: "shop_integration"
+
+  # Take all items button (fallback for slot 5 when no shop integration)
   take_all:
     slot: 5
     material: SPECTRAL_ARROW
     enabled: true
+    condition: "no_shop_integration"
 
   # Next page navigation button
   next_page:
@@ -30,11 +40,5 @@ buttons:
   drop_page:
     slot: 8
     material: DROPPER
-    enabled: true
-
-  # Shop/sell indicator button (requires sell integration)
-  shop_indicator:
-    slot: 9
-    material: GOLD_INGOT
     enabled: true
 

@@ -367,6 +367,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         return spawnerStorageUI;
     }
 
+    public GuiLayoutConfig getGuiLayoutConfig() {
+        return guiLayoutConfig;
+    }
+
     public SpawnerManager getSpawnerManager() {
         return spawnerManager;
     }

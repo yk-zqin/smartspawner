@@ -1,36 +1,50 @@
 package github.nighter.smartspawner.spawner.gui.layout;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.updates.GuiLayoutUpdater;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 public class GuiLayoutConfig {
     private static final String GUI_LAYOUTS_DIR = "gui_layouts";
     private static final String STORAGE_GUI_FILE = "storage_gui.yml";
+    private static final String MAIN_GUI_FILE = "main_gui.yml";
     private static final String DEFAULT_LAYOUT = "default";
     private static final int MIN_SLOT = 1;
     private static final int MAX_SLOT = 9;
     private static final int SLOT_OFFSET = 44;
+    private static final int MAIN_GUI_SIZE = 27;
 
     private final SmartSpawner plugin;
     private final File layoutsDir;
+    private final GuiLayoutUpdater layoutUpdater;
     private String currentLayout;
-    private GuiLayout currentGuiLayout;
+    private GuiLayout currentStorageLayout;
+    private GuiLayout currentMainLayout;
 
     public GuiLayoutConfig(SmartSpawner plugin) {
         this.plugin = plugin;
         this.layoutsDir = new File(plugin.getDataFolder(), GUI_LAYOUTS_DIR);
+        this.layoutUpdater = new GuiLayoutUpdater(plugin);
         loadLayout();
     }
 
     public void loadLayout() {
         this.currentLayout = plugin.getConfig().getString("gui_layout", DEFAULT_LAYOUT);
         initializeLayoutsDirectory();
-        this.currentGuiLayout = loadCurrentLayout();
+        
+        // Check and update layout files before loading
+        layoutUpdater.checkAndUpdateLayouts();
+        
+        this.currentStorageLayout = loadCurrentStorageLayout();
+        this.currentMainLayout = loadCurrentMainLayout();
     }
 
     private void initializeLayoutsDirectory() {
@@ -50,15 +64,29 @@ public class GuiLayoutConfig {
                     layoutDir.mkdirs();
                 }
 
+                // Save storage GUI layout
                 File storageFile = new File(layoutDir, STORAGE_GUI_FILE);
-                String resourcePath = GUI_LAYOUTS_DIR + "/" + layoutName + "/" + STORAGE_GUI_FILE;
+                String storageResourcePath = GUI_LAYOUTS_DIR + "/" + layoutName + "/" + STORAGE_GUI_FILE;
 
                 if (!storageFile.exists()) {
                     try {
-                        plugin.saveResource(resourcePath, false);
+                        plugin.saveResource(storageResourcePath, false);
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING,
-                                "Failed to auto-save layout resource for " + layoutName + ": " + e.getMessage(), e);
+                                "Failed to auto-save storage layout resource for " + layoutName + ": " + e.getMessage(), e);
+                    }
+                }
+
+                // Save main GUI layout
+                File mainFile = new File(layoutDir, MAIN_GUI_FILE);
+                String mainResourcePath = GUI_LAYOUTS_DIR + "/" + layoutName + "/" + MAIN_GUI_FILE;
+
+                if (!mainFile.exists()) {
+                    try {
+                        plugin.saveResource(mainResourcePath, false);
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.WARNING,
+                                "Failed to auto-save main layout resource for " + layoutName + ": " + e.getMessage(), e);
                     }
                 }
             }
@@ -67,14 +95,22 @@ public class GuiLayoutConfig {
         }
     }
 
-    private GuiLayout loadCurrentLayout() {
-        File layoutDir = new File(layoutsDir, currentLayout);
-        File storageFile = new File(layoutDir, STORAGE_GUI_FILE);
+    private GuiLayout loadCurrentStorageLayout() {
+        return loadLayoutFromFile(STORAGE_GUI_FILE, "storage");
+    }
 
-        if (storageFile.exists()) {
-            GuiLayout layout = loadStorageLayout(storageFile);
+    private GuiLayout loadCurrentMainLayout() {
+        return loadLayoutFromFile(MAIN_GUI_FILE, "main");
+    }
+
+    private GuiLayout loadLayoutFromFile(String fileName, String layoutType) {
+        File layoutDir = new File(layoutsDir, currentLayout);
+        File layoutFile = new File(layoutDir, fileName);
+
+        if (layoutFile.exists()) {
+            GuiLayout layout = loadLayout(layoutFile, layoutType);
             if (layout != null) {
-                plugin.getLogger().info("Loaded GUI layout: " + currentLayout);
+                plugin.getLogger().info("Loaded " + layoutType + " GUI layout: " + currentLayout);
                 return layout;
             }
         }
@@ -82,22 +118,22 @@ public class GuiLayoutConfig {
         if (!currentLayout.equals(DEFAULT_LAYOUT)) {
             plugin.getLogger().warning("Layout '" + currentLayout + "' not found. Attempting to use default layout.");
             File defaultLayoutDir = new File(layoutsDir, DEFAULT_LAYOUT);
-            File defaultStorageFile = new File(defaultLayoutDir, STORAGE_GUI_FILE);
+            File defaultLayoutFile = new File(defaultLayoutDir, fileName);
 
-            if (defaultStorageFile.exists()) {
-                GuiLayout defaultLayout = loadStorageLayout(defaultStorageFile);
+            if (defaultLayoutFile.exists()) {
+                GuiLayout defaultLayout = loadLayout(defaultLayoutFile, layoutType);
                 if (defaultLayout != null) {
-                    plugin.getLogger().info("Loaded default layout as fallback");
+                    plugin.getLogger().info("Loaded default " + layoutType + " layout as fallback");
                     return defaultLayout;
                 }
             }
         }
 
-        plugin.getLogger().severe("No valid layout found! Creating empty layout as fallback.");
+        plugin.getLogger().severe("No valid " + layoutType + " layout found! Creating empty layout as fallback.");
         return new GuiLayout();
     }
 
-    private GuiLayout loadStorageLayout(File file) {
+    private GuiLayout loadLayout(File file, String layoutType) {
         try {
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             GuiLayout layout = new GuiLayout();
@@ -108,7 +144,7 @@ public class GuiLayoutConfig {
             }
 
             for (String buttonKey : config.getConfigurationSection("buttons").getKeys(false)) {
-                if (!loadButton(config, layout, buttonKey)) {
+                if (!loadButton(config, layout, buttonKey, layoutType)) {
                     continue;
                 }
             }
@@ -116,12 +152,12 @@ public class GuiLayoutConfig {
             return layout;
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
-                    "Failed to load storage layout from " + file.getName() + ": " + e.getMessage(), e);
+                    "Failed to load " + layoutType + " layout from " + file.getName() + ": " + e.getMessage(), e);
             return null;
         }
     }
 
-    private boolean loadButton(FileConfiguration config, GuiLayout layout, String buttonKey) {
+    private boolean loadButton(FileConfiguration config, GuiLayout layout, String buttonKey, String layoutType) {
         String path = "buttons." + buttonKey;
 
         if (!config.getBoolean(path + ".enabled", true)) {
@@ -130,24 +166,68 @@ public class GuiLayoutConfig {
 
         int slot = config.getInt(path + ".slot", -1);
         String materialName = config.getString(path + ".material", "STONE");
+        String condition = config.getString(path + ".condition", null);
 
-        if (!isValidSlot(slot)) {
+        // Validate slot based on layout type
+        if (!isValidSlot(slot, layoutType)) {
             plugin.getLogger().warning(String.format(
-                    "Invalid slot %d for button %s. Must be between %d and %d.",
-                    slot, buttonKey, MIN_SLOT, MAX_SLOT));
+                    "Invalid slot %d for button %s in %s layout. Must be between %d and %d.",
+                    slot, buttonKey, layoutType, getMinSlot(layoutType), getMaxSlot(layoutType)));
+            return false;
+        }
+
+        // Check condition if present
+        if (condition != null && !evaluateCondition(condition)) {
             return false;
         }
 
         Material material = parseMaterial(materialName, buttonKey);
-        int actualSlot = SLOT_OFFSET + slot;
+        int actualSlot = calculateActualSlot(slot, layoutType);
 
-        GuiButton button = new GuiButton(buttonKey, actualSlot, material, true);
+        // Load actions
+        Map<String, String> actions = new HashMap<>();
+        ConfigurationSection actionsSection = config.getConfigurationSection(path + ".actions");
+        if (actionsSection != null) {
+            for (String actionKey : actionsSection.getKeys(false)) {
+                actions.put(actionKey, actionsSection.getString(actionKey));
+            }
+        }
+
+        GuiButton button = new GuiButton(buttonKey, actualSlot, material, true, condition, actions);
         layout.addButton(buttonKey, button);
         return true;
     }
 
-    private boolean isValidSlot(int slot) {
-        return slot >= MIN_SLOT && slot <= MAX_SLOT;
+    private boolean isValidSlot(int slot, String layoutType) {
+        return slot >= getMinSlot(layoutType) && slot <= getMaxSlot(layoutType);
+    }
+
+    private int getMinSlot(String layoutType) {
+        return "storage".equals(layoutType) ? MIN_SLOT : 1;
+    }
+
+    private int getMaxSlot(String layoutType) {
+        return "storage".equals(layoutType) ? MAX_SLOT : MAIN_GUI_SIZE;
+    }
+
+    private int calculateActualSlot(int slot, String layoutType) {
+        if ("storage".equals(layoutType)) {
+            return SLOT_OFFSET + slot;
+        } else {
+            return slot - 1; // Convert 1-based to 0-based indexing for main GUI
+        }
+    }
+
+    private boolean evaluateCondition(String condition) {
+        switch (condition) {
+            case "shop_integration":
+                return plugin.hasSellIntegration();
+            case "no_shop_integration":
+                return !plugin.hasSellIntegration();
+            default:
+                plugin.getLogger().warning("Unknown condition: " + condition);
+                return true;
+        }
     }
 
     private Material parseMaterial(String materialName, String buttonKey) {
@@ -162,7 +242,15 @@ public class GuiLayoutConfig {
     }
 
     public GuiLayout getCurrentLayout() {
-        return currentGuiLayout;
+        return getCurrentStorageLayout();
+    }
+
+    public GuiLayout getCurrentStorageLayout() {
+        return currentStorageLayout;
+    }
+
+    public GuiLayout getCurrentMainLayout() {
+        return currentMainLayout;
     }
 
     public void reloadLayouts() {

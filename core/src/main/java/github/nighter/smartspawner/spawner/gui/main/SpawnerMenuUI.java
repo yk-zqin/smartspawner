@@ -1,6 +1,8 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import github.nighter.smartspawner.spawner.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
@@ -20,9 +22,7 @@ import java.util.*;
 
 public class SpawnerMenuUI {
     private static final int INVENTORY_SIZE = 27;
-    private static final int CHEST_SLOT = 11;
-    private static final int SPAWNER_INFO_SLOT = 13;
-    private static final int EXP_SLOT = 15;
+    // Remove hardcoded slot constants - now using layout config
     private static final int TICKS_PER_SECOND = 20;
     private static final Map<String, String> EMPTY_PLACEHOLDERS = Collections.emptyMap();
 
@@ -48,12 +48,28 @@ public class SpawnerMenuUI {
 
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
         Inventory menu = createMenu(spawner);
+        GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
 
-        // Populate menu items - create all items before opening to avoid multiple inventory updates
+        // Populate menu items based on layout configuration
         ItemStack[] items = new ItemStack[INVENTORY_SIZE];
-        items[CHEST_SLOT] = createLootStorageItem(spawner);
-        items[SPAWNER_INFO_SLOT] = createSpawnerInfoItem(player, spawner);
-        items[EXP_SLOT] = createExpItem(spawner);
+        
+        // Add storage button if enabled in layout
+        GuiButton storageButton = layout.getButton("storage");
+        if (storageButton != null) {
+            items[storageButton.getSlot()] = createLootStorageItem(spawner);
+        }
+        
+        // Add spawner info button if enabled in layout
+        GuiButton spawnerInfoButton = layout.getButton("spawner_info");
+        if (spawnerInfoButton != null) {
+            items[spawnerInfoButton.getSlot()] = createSpawnerInfoItem(player, spawner);
+        }
+        
+        // Add exp button if enabled in layout
+        GuiButton expButton = layout.getButton("exp");
+        if (expButton != null) {
+            items[expButton.getSlot()] = createExpItem(spawner);
+        }
 
         // Set all items at once instead of one by one
         for (int i = 0; i < items.length; i++) {
@@ -228,6 +244,11 @@ public class SpawnerMenuUI {
     }
 
     public ItemStack createSpawnerInfoItem(Player player, SpawnerData spawner) {
+        // Get layout configuration first for cache key calculation
+        GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
+        GuiButton spawnerInfoButton = layout.getButton("spawner_info");
+        String materialType = spawnerInfoButton != null ? spawnerInfoButton.getMaterial().toString() : "MOB_HEAD";
+        
         // Get important data upfront
         EntityType entityType = spawner.getEntityType();
         int stackSize = spawner.getStackSize();
@@ -246,10 +267,11 @@ public class SpawnerMenuUI {
 
         // Create cache key including all relevant state
         boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
+        
         String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
                 + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
                 + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()
-                + "|" + hasShopPermission;
+                + "|" + hasShopPermission + "|" + materialType;
 
         // Check if we have a cached item
         ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
@@ -257,8 +279,19 @@ public class SpawnerMenuUI {
             return cachedItem.clone();
         }
 
-        // Not in cache, create the ItemStack
-        ItemStack spawnerItem = SpawnerMobHeadTexture.getCustomHead(entityType, player);
+        // Not in cache, create the ItemStack        
+        ItemStack spawnerItem;
+        if (spawnerInfoButton != null && spawnerInfoButton.getMaterial() == Material.PLAYER_HEAD) {
+            // Use custom head texture for MOB_HEAD material
+            spawnerItem = SpawnerMobHeadTexture.getCustomHead(entityType, player);
+        } else if (spawnerInfoButton != null) {
+            // Use the configured material
+            spawnerItem = new ItemStack(spawnerInfoButton.getMaterial());
+        } else {
+            // Fallback to default behavior
+            spawnerItem = SpawnerMobHeadTexture.getCustomHead(entityType, player);
+        }
+        
         ItemMeta spawnerMeta = spawnerItem.getItemMeta();
         if (spawnerMeta == null) return spawnerItem;
 
