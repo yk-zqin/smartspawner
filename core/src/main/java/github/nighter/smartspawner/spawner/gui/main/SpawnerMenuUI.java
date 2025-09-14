@@ -59,8 +59,8 @@ public class SpawnerMenuUI {
             items[storageButton.getSlot()] = createLootStorageItem(spawner);
         }
         
-        // Add spawner info button if enabled in layout
-        GuiButton spawnerInfoButton = layout.getButton("spawner_info");
+        // Add spawner info button if enabled in layout - handle conditional buttons
+        GuiButton spawnerInfoButton = getSpawnerInfoButton(layout, player);
         if (spawnerInfoButton != null) {
             items[spawnerInfoButton.getSlot()] = createSpawnerInfoItem(player, spawner);
         }
@@ -395,5 +395,26 @@ public class SpawnerMenuUI {
 
     private int calculatePercentage(long current, long maximum) {
         return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
+    }
+
+    private GuiButton getSpawnerInfoButton(GuiLayout layout, Player player) {
+        // Check for shop integration permission
+        boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
+
+        // Try to get the appropriate conditional button first
+        if (hasShopPermission) {
+            GuiButton shopButton = layout.getButton("spawner_info_with_shop");
+            if (shopButton != null) {
+                return shopButton;
+            }
+        } else {
+            GuiButton noShopButton = layout.getButton("spawner_info_no_shop");
+            if (noShopButton != null) {
+                return noShopButton;
+            }
+        }
+
+        // Fallback to the generic spawner_info button if conditional ones don't exist
+        return layout.getButton("spawner_info");
     }
 }

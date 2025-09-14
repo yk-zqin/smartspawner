@@ -14,10 +14,6 @@ public class GuiButton {
     private final String condition;
     private final Map<String, String> actions;
 
-    public GuiButton(String buttonType, int slot, Material material, boolean enabled) {
-        this(buttonType, slot, material, enabled, null, null);
-    }
-
     public GuiButton(String buttonType, int slot, Material material, boolean enabled, String condition, Map<String, String> actions) {
         this.buttonType = buttonType;
         this.slot = slot;
@@ -33,17 +29,5 @@ public class GuiButton {
 
     public boolean hasCondition() {
         return condition != null && !condition.isEmpty();
-    }
-
-    @Override
-    public String toString() {
-        return "GuiButton{" +
-                "buttonType='" + buttonType + '\'' +
-                ", slot=" + slot +
-                ", material=" + material +
-                ", enabled=" + enabled +
-                ", condition='" + condition + '\'' +
-                ", actions=" + actions +
-                '}';
     }
 }

@@ -2,8 +2,6 @@
 # Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
 # Valid materials can be found at: https://jd.papermc.io/paper/1.21.6/org/bukkit/Material.html
 
-gui_layout_version: "1.0.0"
-
 buttons:
   # Return to main menu button
   return:

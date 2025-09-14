@@ -3,13 +3,11 @@
 # Valid materials can be found at: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 # Note: For PLAYER_HEAD material, the texture will be automatically set based on the spawner entity type
 
-gui_layout_version: "1.0.0"
-
 buttons:
 
   # Storage access button
   storage:
-    slot: 11
+    slot: 12
     material: CHEST
     enabled: true
     actions:
@@ -19,7 +17,7 @@ buttons:
   # Spawner information display with shop integration
   # With shop integration: Left click for selling/XP, right click for stacker
   spawner_info_with_shop:
-    slot: 13
+    slot: 14
     material: PLAYER_HEAD
     enabled: true
     condition: "shop_integration"
@@ -30,7 +28,7 @@ buttons:
   # Spawner information display without shop integration
   # Without shop integration: Both clicks open stacker GUI
   spawner_info_no_shop:
-    slot: 13
+    slot: 14
     material: PLAYER_HEAD
     enabled: true
     condition: "no_shop_integration"
@@ -40,7 +38,7 @@ buttons:
 
   # Experience collection button
   exp:
-    slot: 15
+    slot: 16
     material: EXPERIENCE_BOTTLE
     enabled: true
     actions:

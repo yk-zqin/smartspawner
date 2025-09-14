@@ -3,8 +3,6 @@
 # Valid materials can be found at: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
 # Note: For PLAYER_HEAD material, the texture will be automatically set based on the spawner entity type
 
-gui_layout_version: "1.0.0"
-
 buttons:
 
   # Storage access button
