@@ -1,13 +1,11 @@
 package github.nighter.smartspawner.updates;
 
 import github.nighter.smartspawner.SmartSpawner;
-import github.nighter.smartspawner.updates.Version;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -66,11 +64,6 @@ public class GuiLayoutUpdater {
                 return;
             }
 
-            if (!configVersionStr.equals("0.0.0")) {
-                plugin.debug("Updating " + layoutName + " " + fileName +
-                        " from version " + configVersionStr + " to " + currentVersion);
-            }
-
             Map<String, Object> userValues = flattenConfig(currentConfig);
 
             File tempFile = new File(layoutFile.getParent(), fileName.replace(".yml", "_new.yml"));
@@ -104,18 +97,18 @@ public class GuiLayoutUpdater {
             plugin.saveResource(resourcePath, true);
 
             FileConfiguration config = YamlConfiguration.loadConfiguration(destinationFile);
-            
+
             // Create a new configuration with version at the top
             FileConfiguration newConfig = new YamlConfiguration();
             newConfig.set(GUI_LAYOUT_VERSION_KEY, currentVersion);
-            
+
             // Copy all existing keys to preserve order, with version first
             for (String key : config.getKeys(false)) {
                 if (!key.equals(GUI_LAYOUT_VERSION_KEY)) {
                     newConfig.set(key, config.get(key));
                 }
             }
-            
+
             newConfig.save(destinationFile);
 
         } catch (Exception e) {

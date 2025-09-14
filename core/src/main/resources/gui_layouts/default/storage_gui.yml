@@ -1,5 +1,3 @@
-gui_layout_version: 1.5.1
-
 # Default Storage GUI Layout Configuration
 # Slot positions: 1-9 corresponds to inventory slots 46-54 (bottom row)
 # Valid materials can be found at: https://jd.papermc.io/paper/1.21.8/org/bukkit/Material.html
@@ -25,7 +23,7 @@ buttons:
     enabled: true
 
   # Sell or Return button (handled by legacy button type logic)
-  sell:
+  sell_all:
     slot: 5
     material: GOLD_INGOT
     enabled: true

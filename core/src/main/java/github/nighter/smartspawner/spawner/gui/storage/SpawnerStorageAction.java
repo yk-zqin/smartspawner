@@ -118,6 +118,11 @@ public class SpawnerStorageAction implements Listener {
         }
 
         if (isControlSlot(slot)) {
+            plugin.debug("Control slot clicked: " + slot);
+            plugin.debug("Click type: " + event.getClick().name());
+            plugin.debug("Inventory action: " + event.getAction().name());
+            plugin.debug("Clicked item: " + (event.getCurrentItem() != null ? event.getCurrentItem().getType().name() : "null"));
+            plugin.debug(plugin.hasSellIntegration() ? "Sell integration enabled" : "Sell integration disabled");
             handleControlSlotClick(player, slot, holder, spawner, event.getInventory());
             return;
         }
@@ -234,7 +239,7 @@ public class SpawnerStorageAction implements Listener {
             case "drop_page":
                 handleDropPageItems(player, spawner, inventory);
                 break;
-            case "shop_indicator":
+            case "sell_all":
                 if (plugin.hasSellIntegration()) {
                     if (!player.hasPermission("smartspawner.sellall")) {
                         messageService.sendMessage(player, "no_permission");
