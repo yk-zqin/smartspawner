@@ -5,6 +5,8 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuHolder;
 import github.nighter.smartspawner.spawner.gui.storage.StoragePageHolder;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
@@ -42,8 +44,12 @@ public class SpawnerGuiViewManager implements Listener {
 
     // GUI slot constants
     private static final int CHEST_SLOT = 11;
-    private static final int SPAWNER_INFO_SLOT = 13;
     private static final int EXP_SLOT = 15;
+
+    // Cache for spawner info slot to avoid repeated layout lookups
+    private volatile Integer cachedSpawnerInfoSlot = null;
+    private volatile long lastSlotCacheTime = 0;
+    private static final long SLOT_CACHE_DURATION = 5000; // 5 seconds cache
 
     // Update flags - using bit flags for efficient state tracking
     private static final int UPDATE_CHEST = 1;
@@ -335,9 +341,60 @@ public class SpawnerGuiViewManager implements Listener {
         lastTimerValue.clear();
     }
 
-    // ===============================================================
-    //                      Event Handlers
-    // ===============================================================
+    /**
+     * Get the spawner info slot from the current GUI layout configuration.
+     * This method caches the result for performance optimization.
+     * 
+     * @return the slot number for the spawner info button, or -1 if not found
+     */
+    private int getSpawnerInfoSlot() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Return cached value if still valid
+        if (cachedSpawnerInfoSlot != null && (currentTime - lastSlotCacheTime) < SLOT_CACHE_DURATION) {
+            return cachedSpawnerInfoSlot;
+        }
+        
+        // Get the current layout
+        GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
+        if (layout == null) {
+            cachedSpawnerInfoSlot = -1;
+            lastSlotCacheTime = currentTime;
+            return -1;
+        }
+        
+        // Try to find the spawner_info button using the same logic as SpawnerMenuUI
+        GuiButton spawnerInfoButton = null;
+        
+        // Check for shop integration to determine which button to use
+        if (plugin.hasSellIntegration()) {
+            spawnerInfoButton = layout.getButton("spawner_info_with_shop");
+        }
+        
+        if (spawnerInfoButton == null) {
+            spawnerInfoButton = layout.getButton("spawner_info_no_shop");
+        }
+        
+        if (spawnerInfoButton == null) {
+            spawnerInfoButton = layout.getButton("spawner_info");
+        }
+        
+        int slot = spawnerInfoButton != null ? spawnerInfoButton.getSlot() : -1;
+        
+        // Cache the result
+        cachedSpawnerInfoSlot = slot;
+        lastSlotCacheTime = currentTime;
+        
+        return slot;
+    }
+
+    /**
+     * Clear the spawner info slot cache when GUI layout changes
+     */
+    public void clearSlotCache() {
+        cachedSpawnerInfoSlot = null;
+        lastSlotCacheTime = 0;
+    }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
@@ -518,9 +575,12 @@ public class SpawnerGuiViewManager implements Listener {
                         InventoryHolder holder = openInventory.getHolder(false);
 
                         if (holder instanceof SpawnerMenuHolder) {
-                            updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue);
-                            // Force inventory update to ensure changes are visible to the player
-                            player.updateInventory();
+                            int spawnerInfoSlot = getSpawnerInfoSlot();
+                            if (spawnerInfoSlot >= 0) {
+                                updateSpawnerInfoItemTimerOptimized(openInventory, spawner, finalTimerValue, spawnerInfoSlot);
+                                // Force inventory update to ensure changes are visible to the player
+                                player.updateInventory();
+                            }
                         } else {
                             // Player no longer has main menu open, remove from main menu tracking
                             untrackViewer(finalPlayerId);
@@ -586,8 +646,11 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         if ((flags & UPDATE_INFO) != 0) {
-            updateSpawnerInfoItem(inventory, spawner, player);
-            needsUpdate = true;
+            int spawnerInfoSlot = getSpawnerInfoSlot();
+            if (spawnerInfoSlot >= 0) {
+                updateSpawnerInfoItem(inventory, spawner, player, spawnerInfoSlot);
+                needsUpdate = true;
+            }
         }
 
         if ((flags & UPDATE_EXP) != 0) {
@@ -677,7 +740,7 @@ public class SpawnerGuiViewManager implements Listener {
                         return;
                     }
 
-                    updateSpawnerInfoItemTimerOptimized(openInv, spawner, finalTimerValue);
+                    updateSpawnerInfoItemTimerOptimized(openInv, spawner, finalTimerValue, getSpawnerInfoSlot());
                     viewer.updateInventory();
                 });
             }
@@ -711,9 +774,12 @@ public class SpawnerGuiViewManager implements Listener {
             
             InventoryHolder holder = openInventory.getHolder(false);
             if (holder instanceof SpawnerMenuHolder) {
-                updateSpawnerInfoItemTimer(openInventory, spawner);
-                // Force inventory update to ensure changes are visible immediately
-                player.updateInventory();
+                int spawnerInfoSlot = getSpawnerInfoSlot();
+                if (spawnerInfoSlot >= 0) {
+                    updateSpawnerInfoItemTimer(openInventory, spawner, spawnerInfoSlot);
+                    // Force inventory update to ensure changes are visible immediately
+                    player.updateInventory();
+                }
             }
         });
     }
@@ -867,9 +933,11 @@ public class SpawnerGuiViewManager implements Listener {
         updateFlags.put(player.getUniqueId(), UPDATE_ALL);
     }
 
-    private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner, Player player) {
+    private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner, Player player, int spawnerInfoSlot) {
+        if (spawnerInfoSlot < 0) return;
+        
         // Get the current spawner info item from the inventory
-        ItemStack currentSpawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        ItemStack currentSpawnerItem = inventory.getItem(spawnerInfoSlot);
         if (currentSpawnerItem == null || !currentSpawnerItem.hasItemMeta()) return;
 
         // Create a freshly generated spawner info item using the method from SpawnerMenuUI
@@ -881,7 +949,7 @@ public class SpawnerGuiViewManager implements Listener {
             preserveTimerInfo(currentSpawnerItem, newSpawnerItem);
 
             // Update the item in the inventory
-            inventory.setItem(SPAWNER_INFO_SLOT, newSpawnerItem);
+            inventory.setItem(spawnerInfoSlot, newSpawnerItem);
         }
     }
 
@@ -962,13 +1030,15 @@ public class SpawnerGuiViewManager implements Listener {
      * Optimized version of updateSpawnerInfoItemTimer that accepts pre-calculated timer value
      * to avoid redundant calculations and improve performance.
      */
-    private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay) {
+    private void updateSpawnerInfoItemTimerOptimized(Inventory inventory, SpawnerData spawner, String timeDisplay, int spawnerInfoSlot) {
         // Skip timer updates if GUI doesn't use timer placeholders
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
-        ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        if (spawnerInfoSlot < 0) return;
+        
+        ItemStack spawnerItem = inventory.getItem(spawnerInfoSlot);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
         ItemMeta meta = spawnerItem.getItemMeta();
@@ -1004,17 +1074,19 @@ public class SpawnerGuiViewManager implements Listener {
             meta.setLore(updatedLore);
             spawnerItem.setItemMeta(meta);
             // Update the inventory directly to ensure changes are applied
-            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
+            inventory.setItem(spawnerInfoSlot, spawnerItem);
         }
     }
 
-    private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner) {
+    private void updateSpawnerInfoItemTimer(Inventory inventory, SpawnerData spawner, int spawnerInfoSlot) {
         // Skip timer updates if GUI doesn't use timer placeholders
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
         
-        ItemStack spawnerItem = inventory.getItem(SPAWNER_INFO_SLOT);
+        if (spawnerInfoSlot < 0) return;
+        
+        ItemStack spawnerItem = inventory.getItem(spawnerInfoSlot);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
         ItemMeta meta = spawnerItem.getItemMeta();
@@ -1064,7 +1136,7 @@ public class SpawnerGuiViewManager implements Listener {
             meta.setLore(updatedLore);
             spawnerItem.setItemMeta(meta);
             // Update the inventory directly to ensure changes are applied
-            inventory.setItem(SPAWNER_INFO_SLOT, spawnerItem);
+            inventory.setItem(spawnerInfoSlot, spawnerItem);
         }
     }
 

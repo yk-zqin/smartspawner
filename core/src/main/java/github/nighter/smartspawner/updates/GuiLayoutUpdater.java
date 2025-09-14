@@ -104,8 +104,19 @@ public class GuiLayoutUpdater {
             plugin.saveResource(resourcePath, true);
 
             FileConfiguration config = YamlConfiguration.loadConfiguration(destinationFile);
-            config.set(GUI_LAYOUT_VERSION_KEY, currentVersion);
-            config.save(destinationFile);
+            
+            // Create a new configuration with version at the top
+            FileConfiguration newConfig = new YamlConfiguration();
+            newConfig.set(GUI_LAYOUT_VERSION_KEY, currentVersion);
+            
+            // Copy all existing keys to preserve order, with version first
+            for (String key : config.getKeys(false)) {
+                if (!key.equals(GUI_LAYOUT_VERSION_KEY)) {
+                    newConfig.set(key, config.get(key));
+                }
+            }
+            
+            newConfig.save(destinationFile);
 
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Failed to create default layout file with header for " + layoutName + "/" + fileName, e);
