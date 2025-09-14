@@ -281,7 +281,7 @@ public class SpawnerMenuUI {
 
         // Not in cache, create the ItemStack        
         ItemStack spawnerItem;
-        if (spawnerInfoButton != null && spawnerInfoButton.getMaterial() == Material.MOB_HEAD) {
+        if (spawnerInfoButton != null && spawnerInfoButton.getMaterial() == Material.PLAYER_HEAD) {
             // Use custom head texture for MOB_HEAD material
             spawnerItem = SpawnerMobHeadTexture.getCustomHead(entityType, player);
         } else if (spawnerInfoButton != null) {
