@@ -216,7 +216,7 @@ drop_page_button:
 # ---------------------------------------------------
 #             Filter Configuration GUI
 # ---------------------------------------------------
-gui_title_filter_config: ꜱᴘᴀᴡɴᴇʀ ɪᴛᴇᴍ ꜰɪʟᴛᴇʀ
+gui_title_filter_config: "    ᴀʟʟᴏᴡᴇᴅ           ʙʟᴏᴄᴋᴇᴅ"
 
 filter_divider:
   name: '&#7b68eeꜰɪʟᴛᴇʀ ɪᴛᴇᴍ ᴅʀᴏᴘꜱ'

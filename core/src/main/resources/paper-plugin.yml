@@ -99,6 +99,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    Bentobox:
+      load: BEFORE
+      required: false
+      join-classpath: true
     IridiumSkyblock:
       load: BEFORE
       required: false
