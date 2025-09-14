@@ -93,8 +93,16 @@ public class SpawnerMenuAction implements Listener {
             return;
         }
 
-        Material itemType = clickedItem.getType();
+        // Use layout-based action handling
+        int slot = event.getRawSlot();
+        String clickType = getClickTypeString(event.getClick());
+        
+        if (handleLayoutAction(player, spawner, slot, clickType)) {
+            return;
+        }
 
+        // Fallback to legacy material-based handling for backward compatibility
+        Material itemType = clickedItem.getType();
         if (itemType == Material.CHEST) {
             handleChestClick(player, spawner);
         } else if (SPAWNER_INFO_MATERIALS.contains(itemType)) {
@@ -102,6 +110,68 @@ public class SpawnerMenuAction implements Listener {
         } else if (itemType == Material.EXPERIENCE_BOTTLE) {
             handleExpBottleClick(player, spawner, false);
         }
+    }
+
+    private boolean handleLayoutAction(Player player, SpawnerData spawner, int slot, String clickType) {
+        var layoutConfig = plugin.getGuiLayoutConfig();
+        var layout = layoutConfig.getCurrentMainLayout();
+        
+        if (layout == null) {
+            return false;
+        }
+
+        var buttonOpt = layout.getButtonAtSlot(slot);
+        if (buttonOpt.isEmpty()) {
+            return false;
+        }
+
+        var button = buttonOpt.get();
+        String action = button.getAction(clickType);
+        
+        if (action == null) {
+            return false;
+        }
+
+        switch (action) {
+            case "open_storage":
+                handleChestClick(player, spawner);
+                return true;
+            case "toggle_info":
+                if (isClickTooFrequent(player)) {
+                    return true;
+                }
+                // Check stacker permission and open stacker GUI
+                if (!player.hasPermission("smartspawner.stack")) {
+                    messageService.sendMessage(player, "no_permission");
+                    return true;
+                }
+                spawnerStackerUI.openStackerGui(player, spawner);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+                return true;
+            case "sell_inventory":
+                if (isClickTooFrequent(player)) {
+                    return true;
+                }
+                // Collect EXP and sell items if shop integration is available
+                handleExpBottleClick(player, spawner, true);
+                handleSellAllItems(player, spawner);
+                return true;
+            case "collect_exp":
+                handleExpBottleClick(player, spawner, false);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private String getClickTypeString(ClickType clickType) {
+        return switch (clickType) {
+            case LEFT -> "left_click";
+            case RIGHT -> "right_click";
+            case SHIFT_LEFT -> "shift_left_click";
+            case SHIFT_RIGHT -> "shift_right_click";
+            default -> "left_click";
+        };
     }
 
     public void handleChestClick(Player player, SpawnerData spawner) {

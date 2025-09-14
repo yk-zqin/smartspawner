@@ -129,7 +129,6 @@ public class SpawnerStorageUI {
                     languageManager.getGuiItemLoreAsList("sell_button.lore")
             ));
         }
-        }
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
