@@ -7,6 +7,7 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
+import github.nighter.smartspawner.spawner.gui.synchronization.ItemUpdater;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
@@ -42,14 +43,10 @@ public class SpawnerGuiViewManager implements Listener {
     private static final long BATCH_PROCESS_INTERVAL = 5L; // Process batches every 250ms
     private static final int MAX_PLAYERS_PER_BATCH = 10;   // Limit players processed per batch
 
-    // GUI slot constants
-    private static final int CHEST_SLOT = 11;
-    private static final int EXP_SLOT = 15;
-
-    // Cache for spawner info slot to avoid repeated layout lookups
-    private volatile Integer cachedSpawnerInfoSlot = null;
-    private volatile long lastSlotCacheTime = 0;
-    private static final long SLOT_CACHE_DURATION = 5000; // 5 seconds cache
+    // Cached slot positions - initialized once when config loads, re-initialized on reload
+    private volatile int cachedStorageSlot = -1;
+    private volatile int cachedExpSlot = -1;
+    private volatile int cachedSpawnerInfoSlot = -1;
 
     // Update flags - using bit flags for efficient state tracking
     private static final int UPDATE_CHEST = 1;
@@ -123,6 +120,9 @@ public class SpawnerGuiViewManager implements Listener {
 
         // Preload commonly used strings to avoid repeated lookups
         initCachedStrings();
+        
+        // Initialize all slot positions from layout configuration
+        initializeSlotPositions();
     }
 
     private void initCachedStrings() {
@@ -342,28 +342,30 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     /**
-     * Get the spawner info slot from the current GUI layout configuration.
-     * This method caches the result for performance optimization.
-     * 
-     * @return the slot number for the spawner info button, or -1 if not found
+     * Initialize all GUI slot positions from the current layout configuration.
+     * This is called once during construction and again when layout is reloaded
+     * for optimal performance.
      */
-    private int getSpawnerInfoSlot() {
-        long currentTime = System.currentTimeMillis();
-        
-        // Return cached value if still valid
-        if (cachedSpawnerInfoSlot != null && (currentTime - lastSlotCacheTime) < SLOT_CACHE_DURATION) {
-            return cachedSpawnerInfoSlot;
-        }
-        
+    private void initializeSlotPositions() {
         // Get the current layout
         GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
         if (layout == null) {
+            // Set all slots to -1 if no layout is available
+            cachedStorageSlot = -1;
+            cachedExpSlot = -1;
             cachedSpawnerInfoSlot = -1;
-            lastSlotCacheTime = currentTime;
-            return -1;
+            return;
         }
         
-        // Try to find the spawner_info button using the same logic as SpawnerMenuUI
+        // Initialize storage slot
+        GuiButton storageButton = layout.getButton("storage");
+        cachedStorageSlot = storageButton != null ? storageButton.getSlot() : -1;
+        
+        // Initialize exp slot
+        GuiButton expButton = layout.getButton("exp");
+        cachedExpSlot = expButton != null ? expButton.getSlot() : -1;
+        
+        // Initialize spawner info slot using the same logic as SpawnerMenuUI
         GuiButton spawnerInfoButton = null;
         
         // Check for shop integration to determine which button to use
@@ -379,21 +381,43 @@ public class SpawnerGuiViewManager implements Listener {
             spawnerInfoButton = layout.getButton("spawner_info");
         }
         
-        int slot = spawnerInfoButton != null ? spawnerInfoButton.getSlot() : -1;
-        
-        // Cache the result
-        cachedSpawnerInfoSlot = slot;
-        lastSlotCacheTime = currentTime;
-        
-        return slot;
+        cachedSpawnerInfoSlot = spawnerInfoButton != null ? spawnerInfoButton.getSlot() : -1;
     }
 
     /**
-     * Clear the spawner info slot cache when GUI layout changes
+     * Get the storage slot from the cached layout configuration.
+     * 
+     * @return the slot number for the storage button, or -1 if not found
+     */
+    private int getStorageSlot() {
+        return cachedStorageSlot;
+    }
+
+    /**
+     * Get the exp slot from the cached layout configuration.
+     * 
+     * @return the slot number for the exp button, or -1 if not found
+     */
+    private int getExpSlot() {
+        return cachedExpSlot;
+    }
+
+    /**
+     * Get the spawner info slot from the cached layout configuration.
+     * 
+     * @return the slot number for the spawner info button, or -1 if not found
+     */
+    private int getSpawnerInfoSlot() {
+        return cachedSpawnerInfoSlot;
+    }
+
+    /**
+     * Clear all cached slot positions and re-initialize them when GUI layout changes.
+     * This method is called when layout configuration is reloaded.
      */
     public void clearSlotCache() {
-        cachedSpawnerInfoSlot = null;
-        lastSlotCacheTime = 0;
+        // Re-initialize all slot positions from the updated layout
+        initializeSlotPositions();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -641,8 +665,11 @@ public class SpawnerGuiViewManager implements Listener {
         boolean needsUpdate = false;
 
         if ((flags & UPDATE_CHEST) != 0) {
-            updateChestItem(inventory, spawner);
-            needsUpdate = true;
+            int storageSlot = getStorageSlot();
+            if (storageSlot >= 0) {
+                updateChestItem(inventory, spawner, storageSlot);
+                needsUpdate = true;
+            }
         }
 
         if ((flags & UPDATE_INFO) != 0) {
@@ -654,8 +681,11 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         if ((flags & UPDATE_EXP) != 0) {
-            updateExpItem(inventory, spawner);
-            needsUpdate = true;
+            int expSlot = getExpSlot();
+            if (expSlot >= 0) {
+                updateExpItem(inventory, spawner, expSlot);
+                needsUpdate = true;
+            }
         }
 
         if (needsUpdate) {
@@ -1271,9 +1301,11 @@ public class SpawnerGuiViewManager implements Listener {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    private void updateChestItem(Inventory inventory, SpawnerData spawner) {
+    private void updateChestItem(Inventory inventory, SpawnerData spawner, int storageSlot) {
+        if (storageSlot < 0) return;
+        
         // Get the chest item from the inventory
-        ItemStack currentChestItem = inventory.getItem(CHEST_SLOT);
+        ItemStack currentChestItem = inventory.getItem(storageSlot);
         if (currentChestItem == null || !currentChestItem.hasItemMeta()) return;
 
         // Create a freshly generated chest item using the optimized method from SpawnerMenuUI
@@ -1281,13 +1313,15 @@ public class SpawnerGuiViewManager implements Listener {
 
         // If the new item is different from current item, update it
         if (!ItemUpdater.areItemsEqual(currentChestItem, newChestItem)) {
-            inventory.setItem(CHEST_SLOT, newChestItem);
+            inventory.setItem(storageSlot, newChestItem);
         }
     }
 
-    private void updateExpItem(Inventory inventory, SpawnerData spawner) {
+    private void updateExpItem(Inventory inventory, SpawnerData spawner, int expSlot) {
+        if (expSlot < 0) return;
+        
         // Get the exp item from the inventory
-        ItemStack currentExpItem = inventory.getItem(EXP_SLOT);
+        ItemStack currentExpItem = inventory.getItem(expSlot);
         if (currentExpItem == null || !currentExpItem.hasItemMeta()) return;
 
         // Create a freshly generated exp item using the method from SpawnerMenuUI
@@ -1295,7 +1329,7 @@ public class SpawnerGuiViewManager implements Listener {
 
         // If the new item is different from current item, update it
         if (!ItemUpdater.areItemsEqual(currentExpItem, newExpItem)) {
-            inventory.setItem(EXP_SLOT, newExpItem);
+            inventory.setItem(expSlot, newExpItem);
         }
     }
 
