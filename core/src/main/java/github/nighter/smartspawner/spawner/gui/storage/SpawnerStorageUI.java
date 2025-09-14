@@ -119,6 +119,16 @@ public class SpawnerStorageUI {
                     languageManager.getGuiItemLoreAsList("item_filter_button.lore")
             ));
         }
+
+        // Create sell button
+        GuiButton sellButton = layout.getButton("sell_all");
+        if (sellButton != null) {
+            staticButtons.put("sell", createButton(
+                    sellButton.getMaterial(),
+                    languageManager.getGuiItemName("sell_button.name"),
+                    languageManager.getGuiItemLoreAsList("sell_button.lore")
+            ));
+        }
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
@@ -278,15 +288,15 @@ public class SpawnerStorageUI {
             updates.put(returnButton.getSlot(), staticButtons.get("return"));
         }
 
-        // Add shop page indicator only if shop integration is available and button is enabled
-        if (plugin.hasSellIntegration() && layout.hasButton("shop_indicator")) {
-            GuiButton shopButton = layout.getButton("shop_indicator");
+        // Add sell button if shop integration is available and button is enabled
+        if (layout.hasButton("sell_all")) {
+            GuiButton sellButton = layout.getButton("sell_all");
             String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
             int finalTotalPages = totalPages;
-            ItemStack shopIndicator = pageIndicatorCache.computeIfAbsent(
-                    indicatorKey, k -> createShopPageIndicator(page, finalTotalPages, spawner, shopButton.getMaterial())
+            ItemStack sellIndicator = pageIndicatorCache.computeIfAbsent(
+                    indicatorKey, k -> createSellButton(page, finalTotalPages, spawner, sellButton.getMaterial())
             );
-            updates.put(shopButton.getSlot(), shopIndicator);
+            updates.put(sellButton.getSlot(), sellIndicator);
         }
     }
 
@@ -334,7 +344,7 @@ public class SpawnerStorageUI {
         return createButton(material, buttonName, Arrays.asList(buttonLore));
     }
 
-    private ItemStack createShopPageIndicator(int currentPage, int totalPages, SpawnerData spawner, Material material) {
+    private ItemStack createSellButton(int currentPage, int totalPages, SpawnerData spawner, Material material) {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int usedSlots = virtualInv.getUsedSlots();
@@ -350,8 +360,8 @@ public class SpawnerStorageUI {
         placeholders.put("used_slots", formattedUsedSlots);
         placeholders.put("percent_storage", String.valueOf(percentStorage));
 
-        String name = languageManager.getGuiItemName("shop_page_indicator.name", placeholders);
-        List<String> lore = languageManager.getGuiItemLoreAsList("shop_page_indicator.lore", placeholders);
+        String name = languageManager.getGuiItemName("sell_button.name", placeholders);
+        List<String> lore = languageManager.getGuiItemLoreAsList("sell_button.lore", placeholders);
 
         return createButton(material, name, lore);
     }

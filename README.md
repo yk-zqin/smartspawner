@@ -1,12 +1,12 @@
 <div align="center">
+  
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/3ea1f61b-d3fe-41b5-977f-d596a13f3ea9" alt="GUI Spawner Plugin for Minecraft Servers" />
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/05e5f050-b661-40ed-a400-bcb7eea07430" alt="GUI Spawner Plugin for Minecraft Servers" />
-
-<br>
-
-[![Release](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?logo=github&logoColor=white&label=release&labelColor=%230D597F&color=%23116BBF)](https://github.com/ptthanh02/Smart-Spawner-Plugin/releases/latest)
+[![Release](https://img.shields.io/github/v/release/ptthanh02/Smart-Spawner-Plugin?logo=github&logoColor=white&label=release&labelColor=%230D597F&color=%23116BBF)](https://github.com/NighterDevelopment/smartspawner/releases/latest)
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/smart-spawner-plugin?logo=modrinth&logoColor=white&label=downloads&labelColor=%23139549&color=%2318c25f)](https://modrinth.com/plugin/smart-spawner-plugin)
 [![Spigot Downloads](https://img.shields.io/spiget/downloads/120743?logo=spigotmc&logoColor=white&label=spigot%20downloads&labelColor=%23ED8106&color=%23FF994C)](https://www.spigotmc.org/resources/smart-spawner-gui-spawner-plugin%E2%9C%A8-1-21-1-21-3-%EF%B8%8F.120743/)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-brightgreen.svg)](LICENSE)

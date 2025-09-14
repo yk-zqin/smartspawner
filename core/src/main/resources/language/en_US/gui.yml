@@ -178,7 +178,7 @@ navigation_button_next:
   lore:
     - '&#2cc483⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ɢᴏ ᴛᴏ ᴘᴀɢᴇ &#37eb9a%target_page%'
 
-shop_page_indicator:
+sell_button:
   name: '&#f0c857ꜱᴇʟʟ ᴀʟʟ ɪᴛᴇᴍꜱ'
   lore:
     - ''
@@ -190,9 +190,13 @@ shop_page_indicator:
 
 return_button:
   name: '&#ff5252ʀᴇᴛᴜʀɴ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ'
+  lore:
+    - '&#e63939⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ʀᴇᴛᴜʀɴ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ'
 
 take_all_button:
   name: '&#37eb9aᴛᴀᴋᴇ ᴀʟʟ ɪᴛᴇᴍꜱ'
+  lore:
+    - '&#2cc483⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴛᴀᴋᴇ ᴀʟʟ ɪᴛᴇᴍꜱ ɪɴ ᴛʜɪs ᴘᴀɢᴇ'
 
 item_filter_button:
   name: '&#7b68eeꜰɪʟᴛᴇʀ ᴅʀᴏᴘꜱ'

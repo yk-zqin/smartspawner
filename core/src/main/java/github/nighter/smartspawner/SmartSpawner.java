@@ -315,6 +315,10 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public void reload() {
         // reload gui components
         guiLayoutConfig.reloadLayouts();
+        
+        // Clear spawner info slot cache since layout may have changed
+        spawnerGuiViewManager.clearSlotCache();
+        
         spawnerStorageAction.reload();
         spawnerStorageUI.reload();
         filterConfigUI.reload();
@@ -365,6 +369,14 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
     public SpawnerStorageUI getSpawnerStorageUI() {
         return spawnerStorageUI;
+    }
+
+    public GuiLayoutConfig getGuiLayoutConfig() {
+        return guiLayoutConfig;
+    }
+
+    public SpawnerManager getSpawnerManager() {
+        return spawnerManager;
     }
 
     public SpawnerRangeChecker getRangeChecker() {

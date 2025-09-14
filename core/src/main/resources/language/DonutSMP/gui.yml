@@ -96,7 +96,7 @@ navigation_button_next:
   lore:
     - '&fClick to go forward a page'
 
-shop_page_indicator:
+sell_button:
   name: '&#00F986ꜱᴇʟʟ ᴀʟʟ'
   lore:
     - '&fClick to sell all mob drops'
