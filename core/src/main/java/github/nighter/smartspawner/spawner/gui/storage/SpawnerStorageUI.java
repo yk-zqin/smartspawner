@@ -121,7 +121,7 @@ public class SpawnerStorageUI {
         }
 
         // Create sell button
-        GuiButton sellButton = layout.getButton("sell");
+        GuiButton sellButton = layout.getButton("sell_all");
         if (sellButton != null) {
             staticButtons.put("sell", createButton(
                     sellButton.getMaterial(),
@@ -289,8 +289,8 @@ public class SpawnerStorageUI {
         }
 
         // Add sell button if shop integration is available and button is enabled
-        if (layout.hasButton("sell")) {
-            GuiButton sellButton = layout.getButton("sell");
+        if (layout.hasButton("sell_all")) {
+            GuiButton sellButton = layout.getButton("sell_all");
             String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
             int finalTotalPages = totalPages;
             ItemStack sellIndicator = pageIndicatorCache.computeIfAbsent(
