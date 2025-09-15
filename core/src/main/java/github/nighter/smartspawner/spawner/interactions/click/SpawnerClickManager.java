@@ -5,6 +5,7 @@ import github.nighter.smartspawner.hooks.protections.CheckOpenMenu;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
+import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuFormUI;
 import github.nighter.smartspawner.spawner.interactions.stack.SpawnerStackHandler;
 import github.nighter.smartspawner.spawner.interactions.type.SpawnEggHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
@@ -39,6 +40,7 @@ public class SpawnerClickManager implements Listener {
     private final SpawnEggHandler spawnEggHandler;
     private final SpawnerStackHandler spawnerStackHandler;
     private final SpawnerMenuUI spawnerMenuUI;
+    private final SpawnerMenuFormUI spawnerMenuFormUI;
 
     // Use ConcurrentHashMap for thread safety without explicit synchronization
     private final Map<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
@@ -50,6 +52,7 @@ public class SpawnerClickManager implements Listener {
         this.spawnEggHandler = plugin.getSpawnEggHandler();
         this.spawnerStackHandler = plugin.getSpawnerStackHandler();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
+        this.spawnerMenuFormUI = plugin.getSpawnerMenuFormUI();
         initCleanupTask();
     }
 
@@ -213,8 +216,13 @@ public class SpawnerClickManager implements Listener {
     }
 
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
-        // Open the menu as normal
-        spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        // Check if the player is a Bedrock player and use FormUI
+        if (isBedrockPlayer(player)) {
+            spawnerMenuFormUI.openSpawnerForm(player, spawner);
+        } else {
+            // Open the regular GUI menu for Java players
+            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        }
     }
 
     private boolean isSpawnEgg(Material material) {

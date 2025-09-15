@@ -50,16 +50,16 @@ public class SpawnerMenuFormUI {
             title = languageManager.getGuiTitle("gui_title_main.single_spawner", placeholders);
         }
 
-        // Directly set button text with Bedrock-compatible colors
-        String lootButtonText = "Open Storage";
-        String infoButtonText = "Open Stack Menu";
-        String expButtonText = "Collect Experience";
+        // Get button texts from language configuration  
+        String lootButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.storage", placeholders);
+        String infoButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.stack_info", placeholders);
+        String expButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.experience", placeholders);
 
         // Create a simple form with buttons for each action
         SimpleForm form = SimpleForm.builder()
                 .title(title)
                 .content(createInfoContent(player, spawner))
-                // Add buttons with hardcoded text
+                // Add buttons with configurable text from language files
                 .button(lootButtonText, FormImage.Type.URL, "https://img.icons8.com/?size=100&id=e78DnJp8bhmX&format=png&color=000000")
                 .button(infoButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048")
                 .button(expButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/10/Bottle_o%27_Enchanting.gif/revision/latest?cb=20200428012753")
@@ -97,50 +97,84 @@ public class SpawnerMenuFormUI {
     private String createInfoContent(Player player, SpawnerData spawner) {
         StringBuilder content = new StringBuilder();
 
-        // Spawner Info Section
+        // Get entity names with proper formatting
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        content.append("§l§b»»» Spawner Information «««§r\n\n");
-        content.append("§8▪ §b Entity: §f").append(entityName).append("\n");
-        content.append("§8▪ §b Stack Size: §f").append(spawner.getStackSize()).append("\n");
-        content.append("§8▪ §b Range: §f").append(spawner.getSpawnerRange()).append(" §7blocks\n");
-        content.append("§8▪ §b Delay: §f").append(spawner.getSpawnDelay() / 20).append(" §7seconds\n");
-        content.append("§8▪ §b Mob Rate: §f").append(spawner.getMinMobs()).append(" §7- §f").append(spawner.getMaxMobs()).append("\n\n");
+        String entityNameSmallCaps = languageManager.getSmallCaps(languageManager.getFormattedMobName(spawner.getEntityType()));
 
-        // Storage Info Section
+        // Prepare placeholders for consistent formatting
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", entityName);
+        placeholders.put("ᴇɴᴛɪᴛʏ", entityNameSmallCaps);
+        placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
+        placeholders.put("range", String.valueOf(spawner.getSpawnerRange()));
+        placeholders.put("min_mobs", String.valueOf(spawner.getMinMobs()));
+        placeholders.put("max_mobs", String.valueOf(spawner.getMaxMobs()));
+        placeholders.put("delay", String.valueOf(spawner.getSpawnDelay() / 20));
+
+        // Storage information
         int currentItems = spawner.getVirtualInventory().getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
-        content.append("§l§6»»» Storage «««§r\n\n");
-        content.append("§8▪ §6 Slots: §f").append(currentItems).append("§7/§f").append(maxSlots).append("\n");
-        content.append("§8▪ §6 Status: §f").append(getStorageStatus(currentItems, maxSlots)).append("\n\n");
+        double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
+        String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
+        
+        placeholders.put("current_items", String.valueOf(currentItems));
+        placeholders.put("max_items", languageManager.formatNumber(maxSlots));
+        placeholders.put("formatted_storage", formattedPercentStorage);
 
-        // XP Info Section
+        // Experience information
         long currentExp = spawner.getSpawnerExp();
         long maxExp = spawner.getMaxStoredExp();
-        String formattedExp = languageManager.formatNumber(currentExp);
+        double percentExpDecimal = maxExp > 0 ? ((double) currentExp / maxExp) * 100 : 0;
+        String formattedPercentExp = String.format("%.1f", percentExpDecimal);
+        String formattedCurrentExp = languageManager.formatNumber(currentExp);
         String formattedMaxExp = languageManager.formatNumber(maxExp);
-        content.append("§l§a»»» Experience «««§r\n\n");
-        content.append("§8▪ §a Current: §e").append(formattedExp).append("§7/§e").append(formattedMaxExp).append(" §7XP\n");
-        content.append("§8▪ §a Status: §e").append(getExpStatus(currentExp, maxExp)).append("\n\n");
+
+        placeholders.put("current_exp", formattedCurrentExp);
+        placeholders.put("max_exp", formattedMaxExp);
+        placeholders.put("formatted_exp", formattedPercentExp);
+
+        // Build content using the same style as the main GUI
+        
+        // Spawner Information Section - matching spawner_info_item style
+        content.append("&#7b68ee◈ &#8a2be2ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ:\n");
+        content.append("  &#e6e6fa•  ꜱᴛᴀᴄᴋ: &#c2a8fc").append(spawner.getStackSize()).append("\n");
+        content.append("  &#e6e6fa•  ʀᴀɴɢᴇ: &#c2a8fc").append(spawner.getSpawnerRange()).append("&#e6e6fa ʙʟᴏᴄᴋꜱ\n");
+        content.append("  &#e6e6fa•  ᴍᴏʙꜱ: &#c2a8fc").append(spawner.getMinMobs()).append("&#e6e6fa - &#c2a8fc").append(spawner.getMaxMobs()).append("\n");
+        content.append("  &#e6e6fa•  ᴅᴇʟᴀʏ: &#c2a8fc").append(spawner.getSpawnDelay() / 20).append("&#e6e6faꜱ\n\n");
+
+        // Storage Section - matching spawner_storage_item style
+        content.append("&#d9b50c◈ &#fce96aꜱᴛᴏʀᴀɢᴇ:\n");
+        content.append("  &#f8f8ff•  ꜱʟᴏᴛꜱ: &#f9cf51").append(currentItems).append("&#d9b50c/&#f9cf51").append(languageManager.formatNumber(maxSlots)).append("\n");
+        content.append("  &#f8f8ff•  ꜱᴛᴀᴛᴜꜱ: ").append(getStorageStatus(currentItems, maxSlots)).append("\n\n");
+
+        // Experience Section - matching exp_info_item style  
+        content.append("&#2cc483◈ &#48e89bᴇxᴘᴇʀɪᴇɴᴄᴇ:\n");
+        content.append("  &#f8f8ff•  ᴄᴜʀʀᴇɴᴛ: &#37eb9a").append(formattedCurrentExp).append("&#2cc483/&#37eb9a").append(formattedMaxExp).append(" &#2cc483xᴘ\n");
+        content.append("  &#f8f8ff•  ꜱᴛᴀᴛᴜꜱ: ").append(getExpStatus(currentExp, maxExp)).append("\n");
 
         return content.toString();
     }
 
     private String getStorageStatus(int current, int max) {
         double ratio = (double) current / max;
-        if (ratio >= 0.9) return "§cNearly Full";
-        if (ratio >= 0.7) return "§6Filling Up";
-        if (ratio >= 0.4) return "§eHalf Full";
-        if (ratio > 0) return "§aPlenty of Space";
-        return "§aEmpty";
+        Map<String, String> placeholders = new HashMap<>();
+        
+        if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.storage.nearly_full", placeholders);
+        if (ratio >= 0.7) return languageManager.getGuiItemName("bedrock_gui.status.storage.filling_up", placeholders);
+        if (ratio >= 0.4) return languageManager.getGuiItemName("bedrock_gui.status.storage.half_full", placeholders);
+        if (ratio > 0) return languageManager.getGuiItemName("bedrock_gui.status.storage.plenty_space", placeholders);
+        return languageManager.getGuiItemName("bedrock_gui.status.storage.empty", placeholders);
     }
 
     private String getExpStatus(long current, long max) {
         double ratio = (double) current / max;
-        if (ratio >= 0.9) return "§cAlmost Full";
-        if (ratio >= 0.7) return "§6Large Amount";
-        if (ratio >= 0.4) return "§eMedium Amount";
-        if (ratio > 0) return "§aSmall Amount";
-        return "§aEmpty";
+        Map<String, String> placeholders = new HashMap<>();
+        
+        if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.experience.almost_full", placeholders);
+        if (ratio >= 0.7) return languageManager.getGuiItemName("bedrock_gui.status.experience.large_amount", placeholders);
+        if (ratio >= 0.4) return languageManager.getGuiItemName("bedrock_gui.status.experience.medium_amount", placeholders);
+        if (ratio > 0) return languageManager.getGuiItemName("bedrock_gui.status.experience.small_amount", placeholders);
+        return languageManager.getGuiItemName("bedrock_gui.status.experience.empty", placeholders);
     }
 
     /**
