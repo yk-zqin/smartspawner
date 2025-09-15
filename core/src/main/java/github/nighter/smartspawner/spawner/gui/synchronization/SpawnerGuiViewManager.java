@@ -3,6 +3,7 @@ package github.nighter.smartspawner.spawner.gui.synchronization;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuHolder;
 import github.nighter.smartspawner.spawner.gui.storage.StoragePageHolder;
+import github.nighter.smartspawner.spawner.gui.storage.filter.FilterConfigHolder;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
@@ -63,6 +64,9 @@ public class SpawnerGuiViewManager implements Listener {
     private final Map<UUID, SpawnerViewerInfo> playerToSpawnerMap;
     private final Map<String, Set<UUID>> spawnerToPlayersMap;
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
+    
+    // Additional tracking for filter GUI viewers to prevent duplication exploits
+    private final Map<String, Set<UUID>> spawnerToFilterViewersMap;
 
     // NEW: Separate tracking for main menu viewers only (for timer updates)
     private final Map<UUID, SpawnerViewerInfo> mainMenuViewers = new ConcurrentHashMap<>();
@@ -102,7 +106,8 @@ public class SpawnerGuiViewManager implements Listener {
     // Enum to track different viewer types
     private enum ViewerType {
         MAIN_MENU,    // SpawnerMenuHolder - needs timer updates
-        STORAGE       // StoragePageHolder - no timer updates needed
+        STORAGE,      // StoragePageHolder - no timer updates needed
+        FILTER        // FilterConfigHolder - no timer updates needed
     }
 
     public SpawnerGuiViewManager(SmartSpawner plugin) {
@@ -112,10 +117,12 @@ public class SpawnerGuiViewManager implements Listener {
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.playerToSpawnerMap = new ConcurrentHashMap<>();
         this.spawnerToPlayersMap = new ConcurrentHashMap<>();
+        this.spawnerToFilterViewersMap = new ConcurrentHashMap<>();
         this.isTaskRunning = false;
         this.validHolderTypes = Set.of(
                 SpawnerMenuHolder.class,
-                StoragePageHolder.class
+                StoragePageHolder.class,
+                FilterConfigHolder.class
         );
 
         // Preload commonly used strings to avoid repeated lookups
@@ -257,6 +264,12 @@ public class SpawnerGuiViewManager implements Listener {
             spawnerToMainMenuViewers.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
                     .add(playerId);
         }
+        
+        // Separately track filter GUI viewers to prevent duplication exploits
+        if (viewerType == ViewerType.FILTER) {
+            spawnerToFilterViewersMap.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
+                    .add(playerId);
+        }
 
         // Start update task if we have any viewers (for pending updates processing)
         if (!isTaskRunning && !playerToSpawnerMap.isEmpty()) {
@@ -292,6 +305,18 @@ public class SpawnerGuiViewManager implements Listener {
                 mainMenuViewerSet.remove(playerId);
                 if (mainMenuViewerSet.isEmpty()) {
                     spawnerToMainMenuViewers.remove(spawner.getSpawnerId());
+                }
+            }
+        }
+        
+        // Also remove from filter viewer tracking if present
+        if (info != null) {
+            String spawnerId = info.spawnerData.getSpawnerId();
+            Set<UUID> filterViewers = spawnerToFilterViewersMap.get(spawnerId);
+            if (filterViewers != null) {
+                filterViewers.remove(playerId);
+                if (filterViewers.isEmpty()) {
+                    spawnerToFilterViewersMap.remove(spawnerId);
                 }
             }
         }
@@ -335,6 +360,7 @@ public class SpawnerGuiViewManager implements Listener {
         spawnerToPlayersMap.clear();
         mainMenuViewers.clear();
         spawnerToMainMenuViewers.clear();
+        spawnerToFilterViewersMap.clear();
         pendingUpdates.clear();
         updateFlags.clear();
         lastTimerUpdate.clear();
@@ -437,6 +463,9 @@ public class SpawnerGuiViewManager implements Listener {
         } else if (holder instanceof StoragePageHolder storageHolder) {
             spawnerData = storageHolder.getSpawnerData();
             viewerType = ViewerType.STORAGE;
+        } else if (holder instanceof FilterConfigHolder filterHolder) {
+            spawnerData = filterHolder.getSpawnerData();
+            viewerType = ViewerType.FILTER;
         }
 
         if (spawnerData != null && viewerType != null) {
@@ -1344,6 +1373,25 @@ public class SpawnerGuiViewManager implements Listener {
             for (Player viewer : viewers) {
                 if (viewer != null && viewer.isOnline()) {
                     viewer.closeInventory();
+                }
+            }
+        }
+        
+        // Force close filter GUI viewers to prevent duplication exploits
+        Set<UUID> filterViewers = spawnerToFilterViewersMap.get(spawnerId);
+        if (filterViewers != null && !filterViewers.isEmpty()) {
+            // Create a copy to avoid concurrent modification
+            Set<UUID> filterViewersCopy = new HashSet<>(filterViewers);
+            for (UUID viewerId : filterViewersCopy) {
+                Player viewer = Bukkit.getPlayer(viewerId);
+                if (viewer != null && viewer.isOnline()) {
+                    // Check if they actually have a filter GUI open for this spawner
+                    Inventory openInventory = viewer.getOpenInventory().getTopInventory();
+                    if (openInventory != null && openInventory.getHolder(false) instanceof FilterConfigHolder filterHolder) {
+                        if (filterHolder.getSpawnerData().getSpawnerId().equals(spawnerId)) {
+                            viewer.closeInventory();
+                        }
+                    }
                 }
             }
         }
