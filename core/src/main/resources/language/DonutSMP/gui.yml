@@ -21,6 +21,42 @@ gui_title_main:
   single_spawner: '&#545454%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
   stacked_spawner: '&#545454%amount% %ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
 
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#                                      BEDROCK/GEYSER GUI CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+#
+# This section contains configuration for Bedrock Edition players using Geyser/Floodgate.
+# Form-based UI elements for cross-platform compatibility with consistent styling.
+# Note: Bedrock forms support limited formatting compared to Java Edition GUIs.
+#
+bedrock_gui:
+  # Button text configuration for Bedrock forms
+  buttons:
+    # Storage button - opens spawner loot storage
+    storage: '&#F97603Open Storage'
+    
+    # Info/Stack button - opens spawner stacking menu  
+    stack_info: '&#FCE300Open Stack Menu'
+    
+    # Experience button - collects stored experience
+    experience: '&#FCE300Collect Experience'
+  
+  # Status text for storage and experience displays
+  status:
+    storage:
+      empty: '&#aEmpty'
+      plenty_space: '&#aPlenty of Space'
+      half_full: '&#eHalf Full'
+      filling_up: '&#F97603Filling Up'
+      nearly_full: '&#cNearly Full'
+    
+    experience:
+      empty: '&#aEmpty'
+      small_amount: '&#aSmall Amount'
+      medium_amount: '&#FCE300Medium Amount'
+      large_amount: '&#F97603Large Amount'
+      almost_full: '&#cAlmost Full'
+
 spawner_storage_item:
   name: '&#F97603sᴘᴀᴡɴᴇʀ sᴛᴏʀᴀɢᴇ'
   lore:
