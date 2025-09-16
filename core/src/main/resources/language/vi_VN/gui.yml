@@ -33,29 +33,55 @@ bedrock_gui:
   # Button text configuration for Bedrock forms
   buttons:
     # Storage button - opens spawner loot storage
-    storage: '&#fce96aᴍở ᴋʜᴏ ᴄʜứᴀ'
+    storage: 'Mở Kho Chứa'
     
     # Info/Stack button - opens spawner stacking menu  
-    stack_info: '&#ab7afdᴍở ᴍᴇɴᴜ xếᴘ ᴄʜồɴɢ'
+    stack_info: 'Mở Menu Xếp Chồng'
     
     # Experience button - collects stored experience
-    experience: '&#37eb9aThu thập ᴋɪɴʜ ɴɢʜɪệᴍ'
+    experience: 'Thu Thập Kinh Nghiệm'
+    
+    # Sell inventory button - collects XP and sells all items
+    sell_inventory: 'Nhận XP & Bán Tất Cả'
+    
+    # Sell all button - sells all items only
+    sell_all: 'Bán Tất Cả Vật Phẩm'
   
   # Status text for storage and experience displays
   status:
     storage:
-      empty: '&#aTrống'
-      plenty_space: '&#aCòn ɴʜɪềᴜ ᴄʜỗ'
-      half_full: '&#eNửᴀ đầʏ'
-      filling_up: '&#6Đang đầʏ dần'
-      nearly_full: '&#cGầɴ đầʏ'
+      empty: 'Trống'
+      plenty_space: 'Còn nhiều chỗ'
+      half_full: 'Nửa đầy'
+      filling_up: 'Đang đầy dần'
+      nearly_full: 'Gần đầy'
     
     experience:
-      empty: '&#aTrống'
-      small_amount: '&#aSố ʟượɴɢ ɪ́ᴛ'
-      medium_amount: '&#eSố ʟượɴɢ ᴛrung bình'
-      large_amount: '&#6Số ʟượɴɢ ʟớɴ'
-      almost_full: '&#cGầɴ đầʏ'
+      empty: 'Trống'
+      small_amount: 'Số lượng ít'
+      medium_amount: 'Số lượng trung bình'
+      large_amount: 'Số lượng lớn'
+      almost_full: 'Gần đầy'
+
+  # Configurable spawner info content for Bedrock forms (displayed at bottom)
+  info_content:
+    header: 'THÔNG TIN:'
+    sections:
+      spawner_info:
+        - 'Chồng: %stack_size%'
+        - 'Phạm vi: %range% khối'
+        - 'Quái vật: %min_mobs% - %max_mobs%'
+        - 'Độ trễ: %delay%s'
+        - ''
+      storage_info:
+        - 'KHO CHỨA:'
+        - 'Ô: %current_items%/%max_items%'
+        - 'Trạng thái: %storage_status%'
+        - ''
+      experience_info:
+        - 'KINH NGHIỆM:'
+        - 'Hiện tại: %current_exp%/%max_exp% XP'
+        - 'Trạng thái: %exp_status%'
 
 spawner_storage_item:
   name: '&#fce96aᴋʜᴏ ᴄʜứᴀ'

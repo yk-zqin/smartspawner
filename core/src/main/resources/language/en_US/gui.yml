@@ -74,13 +74,13 @@ bedrock_gui:
         - 'Range: %range% blocks'
         - 'Mobs: %min_mobs% - %max_mobs%'
         - 'Delay: %delay%s'
-      storage_info:
         - ''
+      storage_info:
         - 'STORAGE:'
         - 'Slots: %current_items%/%max_items%'
         - 'Status: %storage_status%'
-      experience_info:
         - ''
+      experience_info:
         - 'EXPERIENCE:'
         - 'Current: %current_exp%/%max_exp% XP'
         - 'Status: %exp_status%'

@@ -33,29 +33,55 @@ bedrock_gui:
   # Button text configuration for Bedrock forms
   buttons:
     # Storage button - opens spawner loot storage
-    storage: '&#F97603Open Storage'
+    storage: 'Open Storage'
     
     # Info/Stack button - opens spawner stacking menu  
-    stack_info: '&#FCE300Open Stack Menu'
+    stack_info: 'Open Stack Menu'
     
     # Experience button - collects stored experience
-    experience: '&#FCE300Collect Experience'
+    experience: 'Collect Experience'
+    
+    # Sell inventory button - collects XP and sells all items
+    sell_inventory: 'Claim XP & Sell All'
+    
+    # Sell all button - sells all items only
+    sell_all: 'Sell All Items'
   
   # Status text for storage and experience displays
   status:
     storage:
-      empty: '&#aEmpty'
-      plenty_space: '&#aPlenty of Space'
-      half_full: '&#eHalf Full'
-      filling_up: '&#F97603Filling Up'
-      nearly_full: '&#cNearly Full'
+      empty: 'Empty'
+      plenty_space: 'Plenty of Space'
+      half_full: 'Half Full'
+      filling_up: 'Filling Up'
+      nearly_full: 'Nearly Full'
     
     experience:
-      empty: '&#aEmpty'
-      small_amount: '&#aSmall Amount'
-      medium_amount: '&#FCE300Medium Amount'
-      large_amount: '&#F97603Large Amount'
-      almost_full: '&#cAlmost Full'
+      empty: 'Empty'
+      small_amount: 'Small Amount'
+      medium_amount: 'Medium Amount'
+      large_amount: 'Large Amount'
+      almost_full: 'Almost Full'
+
+  # Configurable spawner info content for Bedrock forms (displayed at bottom)
+  info_content:
+    header: 'INFORMATION:'
+    sections:
+      spawner_info:
+        - 'Stack: %stack_size%'
+        - 'Range: %range% blocks'
+        - 'Mobs: %min_mobs% - %max_mobs%'
+        - 'Delay: %delay%s'
+        - ''
+      storage_info:
+        - 'STORAGE:'
+        - 'Slots: %current_items%/%max_items%'
+        - 'Status: %storage_status%'
+        - ''
+      experience_info:
+        - 'EXPERIENCE:'
+        - 'Current: %current_exp%/%max_exp% XP'
+        - 'Status: %exp_status%'
 
 spawner_storage_item:
   name: '&#F97603sᴘᴀᴡɴᴇʀ sᴛᴏʀᴀɢᴇ'

@@ -154,9 +154,8 @@ public class SpawnerMenuFormUI {
     }
 
     private String createInfoContent(Player player, SpawnerData spawner) {
-        // Get configured info content from language file
-        List<String> headerList = languageManager.getConfig().getStringList("bedrock_gui.info_content.header");
-        String header = headerList.isEmpty() ? "INFORMATION:" : String.join(" ", headerList);
+        // Get configured info content from language file - use hardcoded header as fallback
+        String header = "INFORMATION:";
         
         StringBuilder content = new StringBuilder();
         content.append(header).append("\n\n");
@@ -218,10 +217,39 @@ public class SpawnerMenuFormUI {
     }
 
     private void addConfiguredSection(StringBuilder content, String sectionName, Map<String, String> placeholders) {
-        List<String> sectionLines = languageManager.getConfig().getStringList("bedrock_gui.info_content.sections." + sectionName);
+        // Use the GUI item lore method which can access configuration
+        List<String> sectionLines = languageManager.getGuiItemLoreList("bedrock_gui.info_content.sections." + sectionName, placeholders);
+        
+        // If the configuration key doesn't exist, add default content
+        if (sectionLines.isEmpty()) {
+            addDefaultSection(content, sectionName, placeholders);
+            return;
+        }
+        
         for (String line : sectionLines) {
-            String processedLine = languageManager.replacePlaceholders(line, placeholders);
-            content.append(processedLine).append("\n");
+            content.append(line).append("\n");
+        }
+    }
+
+    private void addDefaultSection(StringBuilder content, String sectionName, Map<String, String> placeholders) {
+        // Default fallback content if configuration is missing
+        switch (sectionName) {
+            case "spawner_info":
+                content.append("Stack: ").append(placeholders.get("stack_size")).append("\n");
+                content.append("Range: ").append(placeholders.get("range")).append(" blocks\n");
+                content.append("Mobs: ").append(placeholders.get("min_mobs")).append(" - ").append(placeholders.get("max_mobs")).append("\n");
+                content.append("Delay: ").append(placeholders.get("delay")).append("s\n\n");
+                break;
+            case "storage_info":
+                content.append("STORAGE:\n");
+                content.append("Slots: ").append(placeholders.get("current_items")).append("/").append(placeholders.get("max_items")).append("\n");
+                content.append("Status: ").append(placeholders.get("storage_status")).append("\n\n");
+                break;
+            case "experience_info":
+                content.append("EXPERIENCE:\n");
+                content.append("Current: ").append(placeholders.get("current_exp")).append("/").append(placeholders.get("max_exp")).append(" XP\n");
+                content.append("Status: ").append(placeholders.get("exp_status")).append("\n");
+                break;
         }
     }
 
