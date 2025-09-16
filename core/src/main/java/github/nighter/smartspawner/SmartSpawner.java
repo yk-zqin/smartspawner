@@ -433,4 +433,16 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     public SpawnerMenuFormUI getSpawnerMenuFormUI() {
         return spawnerMenuFormUI;
     }
+
+    public SpawnerMenuAction getSpawnerMenuAction() {
+        return spawnerMenuAction;
+    }
+
+    public SpawnerStackerUI getSpawnerStackerUI() {
+        return spawnerStackerUI;
+    }
+
+    public SpawnerSellManager getSpawnerSellManager() {
+        return spawnerSellManager;
+    }
 }

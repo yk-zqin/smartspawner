@@ -44,3 +44,13 @@ buttons:
     actions:
       left_click: "collect_exp"
       right_click: "collect_exp"
+
+  # Sell all items button (only items, no experience)
+  sell_all:
+    slot: 10
+    material: GOLD_INGOT
+    enabled: true
+    condition: "shop_integration"
+    actions:
+      left_click: "sell_all"
+      right_click: "sell_all"

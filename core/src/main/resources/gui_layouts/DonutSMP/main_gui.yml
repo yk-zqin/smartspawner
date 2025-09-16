@@ -23,7 +23,7 @@ buttons:
     condition: "shop_integration"
     actions:
       left_click: "sell_inventory"    # Collect EXP and sell items in storage
-      right_click: "sell_inventory"     # Open stacker GUI
+      right_click: "open_stacker"     # Open stacker GUI
 
   # Spawner information display without shop integration
   # Without shop integration: Both clicks open stacker GUI
@@ -32,6 +32,9 @@ buttons:
     material: PLAYER_HEAD
     enabled: true
     condition: "no_shop_integration"
+    actions:
+      left_click: "open_stacker"      # Open stacker GUI
+      right_click: "open_stacker"     # Open stacker GUI
 
   # Experience collection button
   exp:
@@ -41,3 +44,13 @@ buttons:
     actions:
       left_click: "collect_exp"
       right_click: "collect_exp"
+
+  # Sell all items button (only items, no experience)
+  sell_all:
+    slot: 10
+    material: GOLD_INGOT
+    enabled: true
+    condition: "shop_integration"
+    actions:
+      left_click: "sell_all"
+      right_click: "sell_all"
