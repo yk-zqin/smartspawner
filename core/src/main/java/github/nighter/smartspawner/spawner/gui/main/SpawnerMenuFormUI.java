@@ -218,7 +218,7 @@ public class SpawnerMenuFormUI {
 
     private void addConfiguredSection(StringBuilder content, String sectionName, Map<String, String> placeholders) {
         // Use the GUI item lore method which can access configuration
-        List<String> sectionLines = languageManager.getGuiItemLoreList("bedrock_gui.info_content.sections." + sectionName, placeholders);
+        List<String> sectionLines = languageManager.getGuiItemLoreAsList("bedrock_gui.info_content.sections." + sectionName, placeholders);
         
         // If the configuration key doesn't exist, add default content
         if (sectionLines.isEmpty()) {
