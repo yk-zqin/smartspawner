@@ -28,8 +28,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.bukkit.GameMode.CREATIVE;
-
 public class SpawnerClickManager implements Listener {
     private static final long COOLDOWN_MS = 250;
     private static final long CLEANUP_INTERVAL_TICKS = 6000L; // 5 minutes
@@ -40,7 +38,7 @@ public class SpawnerClickManager implements Listener {
     private final SpawnEggHandler spawnEggHandler;
     private final SpawnerStackHandler spawnerStackHandler;
     private final SpawnerMenuUI spawnerMenuUI;
-    private final SpawnerMenuFormUI spawnerMenuFormUI;
+    //private final SpawnerMenuFormUI spawnerMenuFormUI;
 
     // Use ConcurrentHashMap for thread safety without explicit synchronization
     private final Map<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
@@ -52,7 +50,7 @@ public class SpawnerClickManager implements Listener {
         this.spawnEggHandler = plugin.getSpawnEggHandler();
         this.spawnerStackHandler = plugin.getSpawnerStackHandler();
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
-        this.spawnerMenuFormUI = plugin.getSpawnerMenuFormUI();
+        // this.spawnerMenuFormUI = plugin.getSpawnerMenuFormUI();
         initCleanupTask();
     }
 
@@ -217,12 +215,13 @@ public class SpawnerClickManager implements Listener {
 
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         // Check if the player is a Bedrock player and use FormUI
-        if (isBedrockPlayer(player)) {
-            spawnerMenuFormUI.openSpawnerForm(player, spawner);
-        } else {
-            // Open the regular GUI menu for Java players
-            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
-        }
+//        if (isBedrockPlayer(player)) {
+//            spawnerMenuFormUI.openSpawnerForm(player, spawner);
+//        } else {
+//            // Open the regular GUI menu for Java players
+//            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+//        }
+        spawnerMenuUI.openSpawnerMenu(player, spawner, false);
     }
 
     private boolean isSpawnEgg(Material material) {

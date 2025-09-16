@@ -21,68 +21,6 @@ gui_title_main:
   single_spawner: "ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%"
   stacked_spawner: '%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%'
 
-# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
-#                                      BEDROCK/GEYSER GUI CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
-#
-# This section contains configuration for Bedrock Edition players using Geyser/Floodgate.
-# Form-based UI elements for cross-platform compatibility with consistent styling.
-# Note: Bedrock forms support limited formatting compared to Java Edition GUIs.
-#
-bedrock_gui:
-  # Button text configuration for Bedrock forms
-  buttons:
-    # Storage button - opens spawner loot storage
-    storage: 'Mở Kho Chứa'
-    
-    # Info/Stack button - opens spawner stacking menu  
-    stack_info: 'Mở Menu Xếp Chồng'
-    
-    # Experience button - collects stored experience
-    experience: 'Thu Thập Kinh Nghiệm'
-    
-    # Sell inventory button - collects XP and sells all items
-    sell_inventory: 'Nhận XP & Bán Tất Cả'
-    
-    # Sell all button - sells all items only
-    sell_all: 'Bán Tất Cả Vật Phẩm'
-  
-  # Status text for storage and experience displays
-  status:
-    storage:
-      empty: 'Trống'
-      plenty_space: 'Còn nhiều chỗ'
-      half_full: 'Nửa đầy'
-      filling_up: 'Đang đầy dần'
-      nearly_full: 'Gần đầy'
-    
-    experience:
-      empty: 'Trống'
-      small_amount: 'Số lượng ít'
-      medium_amount: 'Số lượng trung bình'
-      large_amount: 'Số lượng lớn'
-      almost_full: 'Gần đầy'
-
-  # Configurable spawner info content for Bedrock forms (displayed at bottom)
-  info_content:
-    header: 'THÔNG TIN:'
-    sections:
-      spawner_info:
-        - 'Chồng: %stack_size%'
-        - 'Phạm vi: %range% khối'
-        - 'Quái vật: %min_mobs% - %max_mobs%'
-        - 'Độ trễ: %delay%s'
-        - ''
-      storage_info:
-        - 'KHO CHỨA:'
-        - 'Ô: %current_items%/%max_items%'
-        - 'Trạng thái: %storage_status%'
-        - ''
-      experience_info:
-        - 'KINH NGHIỆM:'
-        - 'Hiện tại: %current_exp%/%max_exp% XP'
-        - 'Trạng thái: %exp_status%'
-
 spawner_storage_item:
   name: '&#fce96aᴋʜᴏ ᴄʜứᴀ'
   lore:
@@ -363,24 +301,7 @@ navigation:
   close: '&#ff5252đóɴɢ'
   page_indicator: '&#fce96aᴛʀᴀɴɢ %current_page%/%total_pages%'
 
-# ---------------------------------------------------
-#                  Prices GUI
-# ---------------------------------------------------
-prices_gui_title: '&#7b68eeɢɪá ʙáɴ ᴠậᴛ ᴘʜẩᴍ &#8a6eff(ᴛʀᴀɴɢ %current_page%/%total_pages%)'
-
-price_item:
-  name: '&#fce96a%item_name%'
-  lore:
-    - ''
-    - '&#d9b50c◈ &#fce96aᴛʜôɴɢ ᴛɪɴ ɢɪá:'
-    - '  &#f8f8ff•  ɢɪá ᴄᴜốɪ: &#37eb9a$%price%'
-    - '  &#f8f8ff•  ɴɢᴜồɴ: &#c2a8fc%price_source%'
-    - ''
-    - '&#d9b50c◈ &#fce96aɢɪá ᴄʜɪ ᴛɪếᴛ:'
-    - '  &#f8f8ff•  ᴛùʏ ᴄʜỉɴʜ: &#37eb9a$%custom_price%'
-    - '  &#f8f8ff•  ᴄửᴀ ʜàɴɢ: &#37eb9a$%shop_price%'
-
-# Spawner Management GUI (Vietnamese translation)
+# Spawner Management GUI
 spawner_management:
   title: 'Qᴜảɴ ʟý ʟồɴɢ sᴘᴀᴡɴ'
   
@@ -420,3 +341,20 @@ spawner_management:
       - '&#7b68eeQuay ʟạɪ dᴀɴʜ sáᴄʜ ʟồɴɢ sᴘᴀᴡɴ'
       - ''
       - '&#7b68ee⊳ &#f8f8ffNʜấᴘ để ǫᴜay ʟạɪ'
+
+# ---------------------------------------------------
+#                  Prices GUI
+# ---------------------------------------------------
+prices_gui_title: '&#7b68eeɢɪá ʙáɴ ᴠậᴛ ᴘʜẩᴍ &#8a6eff(ᴛʀᴀɴɢ %current_page%/%total_pages%)'
+
+price_item:
+  name: '&#fce96a%item_name%'
+  lore:
+    - ''
+    - '&#d9b50c◈ &#fce96aᴛʜôɴɢ ᴛɪɴ ɢɪá:'
+    - '  &#f8f8ff•  ɢɪá ᴄᴜốɪ: &#37eb9a$%price%'
+    - '  &#f8f8ff•  ɴɢᴜồɴ: &#c2a8fc%price_source%'
+    - ''
+    - '&#d9b50c◈ &#fce96aɢɪá ᴄʜɪ ᴛɪếᴛ:'
+    - '  &#f8f8ff•  ᴛùʏ ᴄʜỉɴʜ: &#37eb9a$%custom_price%'
+    - '  &#f8f8ff•  ᴄửᴀ ʜàɴɢ: &#37eb9a$%shop_price%'

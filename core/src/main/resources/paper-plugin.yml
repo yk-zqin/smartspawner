@@ -20,6 +20,10 @@ prefix: "SmartSpawner"
 # Dependencies
 dependencies:
   server:
+    Geyser-Spigot:
+      load: BEFORE
+      required: false
+      join-classpath: true
     # Shop Plugins
     EconomyShopGUI:
       load: AFTER

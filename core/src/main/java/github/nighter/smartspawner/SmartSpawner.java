@@ -87,7 +87,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private GuiLayoutConfig guiLayoutConfig;
     private final ItemCache itemCache = new ItemCache(500, 30);
     private SpawnerMenuUI spawnerMenuUI;
-    private SpawnerMenuFormUI spawnerMenuFormUI;
+    // private SpawnerMenuFormUI spawnerMenuFormUI;
     private SpawnerStorageUI spawnerStorageUI;
     private FilterConfigUI filterConfigUI;
     private SpawnerStackerUI spawnerStackerUI;
@@ -238,7 +238,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.filterConfigUI = new FilterConfigUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
-        this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
+        // this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.spawnerSellManager = new SpawnerSellManager(this);
@@ -362,34 +362,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         cleanupResources();
     }
 
-    public SpawnerGuiViewManager getSpawnerGuiViewManager() {
-        return spawnerGuiViewManager;
-    }
-
-    public SpawnerMenuUI getSpawnerMenuUI() {
-        return spawnerMenuUI;
-    }
-
-    public SpawnerStorageUI getSpawnerStorageUI() {
-        return spawnerStorageUI;
-    }
-
-    public FilterConfigUI getFilterConfigUI() {
-        return filterConfigUI;
-    }
-
-    public GuiLayoutConfig getGuiLayoutConfig() {
-        return guiLayoutConfig;
-    }
-
-    public SpawnerManager getSpawnerManager() {
-        return spawnerManager;
-    }
-
-    public SpawnerRangeChecker getRangeChecker() {
-        return rangeChecker;
-    }
-
     private void cleanupResources() {
         if (rangeChecker != null) rangeChecker.cleanup();
         if (spawnerGuiViewManager != null) spawnerGuiViewManager.cleanup();
@@ -428,21 +400,5 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         if (debugMode) {
             getLogger().info("[DEBUG] " + message);
         }
-    }
-
-    public SpawnerMenuFormUI getSpawnerMenuFormUI() {
-        return spawnerMenuFormUI;
-    }
-
-    public SpawnerMenuAction getSpawnerMenuAction() {
-        return spawnerMenuAction;
-    }
-
-    public SpawnerStackerUI getSpawnerStackerUI() {
-        return spawnerStackerUI;
-    }
-
-    public SpawnerSellManager getSpawnerSellManager() {
-        return spawnerSellManager;
     }
 }

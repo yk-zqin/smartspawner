@@ -30,6 +30,7 @@ public class SpawnerMenuFormUI {
     public void openSpawnerForm(Player player, SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("ᴇɴᴛɪᴛʏ", entityName);
         placeholders.put("entity", entityName);
         placeholders.put("amount", String.valueOf(spawner.getStackSize()));
 
@@ -50,7 +51,7 @@ public class SpawnerMenuFormUI {
 
         // Collect available buttons based on layout and permissions
         List<ButtonInfo> availableButtons = collectAvailableButtons(layout, player, spawner, placeholders);
-        
+
         if (availableButtons.isEmpty()) {
             messageService.sendMessage(player, "no_permission");
             return;
@@ -75,7 +76,7 @@ public class SpawnerMenuFormUI {
                     int buttonId = response.clickedButtonId();
                     if (buttonId >= 0 && buttonId < availableButtons.size()) {
                         ButtonInfo buttonInfo = availableButtons.get(buttonId);
-                        
+
                         // Schedule the action to run on the main server thread
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
                             handleButtonAction(player, spawner, buttonInfo.action);
@@ -90,18 +91,18 @@ public class SpawnerMenuFormUI {
 
     private List<ButtonInfo> collectAvailableButtons(GuiLayout layout, Player player, SpawnerData spawner, Map<String, String> placeholders) {
         List<ButtonInfo> buttons = new ArrayList<>();
-        
+
         // Check for storage button
         GuiButton storageButton = layout.getButton("storage");
         if (storageButton != null && storageButton.isEnabled()) {
             String text = languageManager.getGuiItemName("bedrock_gui.buttons.storage", placeholders);
-            buttons.add(new ButtonInfo("open_storage", text, "https://img.icons8.com/?size=100&id=e78DnJp8bhmX&format=png&color=000000"));
+            buttons.add(new ButtonInfo("open_storage", text, "https://art.pixilart.com/sr2f53a0222ccaws3.png"));
         }
 
         // Check for spawner info/stacker button
         boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
         GuiButton spawnerInfoButton = getSpawnerInfoButton(layout, hasShopPermission);
-        if (spawnerInfoButton != null && spawnerInfoButton.isEnabled() && 
+        if (spawnerInfoButton != null && spawnerInfoButton.isEnabled() &&
             player.hasPermission("smartspawner.stack")) {
             String text = languageManager.getGuiItemName("bedrock_gui.buttons.stack_info", placeholders);
             buttons.add(new ButtonInfo("open_stacker", text, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048"));
@@ -110,8 +111,8 @@ public class SpawnerMenuFormUI {
         // Check for sell_inventory button (Claim XP and Sell All)
         if (hasShopPermission) {
             GuiButton sellInventoryButton = layout.getButton("spawner_info_with_shop");
-            if (sellInventoryButton != null && sellInventoryButton.isEnabled() && 
-                sellInventoryButton.getAction("left_click") != null && 
+            if (sellInventoryButton != null && sellInventoryButton.isEnabled() &&
+                sellInventoryButton.getAction("left_click") != null &&
                 sellInventoryButton.getAction("left_click").equals("sell_inventory")) {
                 String text = languageManager.getGuiItemName("bedrock_gui.buttons.sell_inventory", placeholders);
                 buttons.add(new ButtonInfo("sell_inventory", text, "https://img.icons8.com/?size=100&id=12815&format=png&color=FFD700"));
@@ -156,7 +157,7 @@ public class SpawnerMenuFormUI {
     private String createInfoContent(Player player, SpawnerData spawner) {
         // Get configured info content from language file - use hardcoded header as fallback
         String header = "INFORMATION:";
-        
+
         StringBuilder content = new StringBuilder();
         content.append(header).append("\n\n");
 
@@ -165,10 +166,10 @@ public class SpawnerMenuFormUI {
 
         // Add spawner info section
         addConfiguredSection(content, "spawner_info", placeholders);
-        
+
         // Add storage info section
         addConfiguredSection(content, "storage_info", placeholders);
-        
+
         // Add experience info section
         addConfiguredSection(content, "experience_info", placeholders);
 
@@ -177,7 +178,7 @@ public class SpawnerMenuFormUI {
 
     private Map<String, String> createContentPlaceholders(Player player, SpawnerData spawner) {
         Map<String, String> placeholders = new HashMap<>();
-        
+
         // Entity information
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
@@ -194,11 +195,10 @@ public class SpawnerMenuFormUI {
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
         String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
-        
+
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("max_items", languageManager.formatNumber(maxSlots));
         placeholders.put("formatted_storage", formattedPercentStorage);
-        placeholders.put("storage_status", getStorageStatus(currentItems, maxSlots));
 
         // Experience information
         long currentExp = spawner.getSpawnerExp();
@@ -211,7 +211,6 @@ public class SpawnerMenuFormUI {
         placeholders.put("current_exp", formattedCurrentExp);
         placeholders.put("max_exp", formattedMaxExp);
         placeholders.put("formatted_exp", formattedPercentExp);
-        placeholders.put("exp_status", getExpStatus(currentExp, maxExp));
 
         return placeholders;
     }
@@ -219,13 +218,12 @@ public class SpawnerMenuFormUI {
     private void addConfiguredSection(StringBuilder content, String sectionName, Map<String, String> placeholders) {
         // Use the GUI item lore method which can access configuration
         List<String> sectionLines = languageManager.getGuiItemLoreAsList("bedrock_gui.info_content.sections." + sectionName, placeholders);
-        
         // If the configuration key doesn't exist, add default content
         if (sectionLines.isEmpty()) {
             addDefaultSection(content, sectionName, placeholders);
             return;
         }
-        
+
         for (String line : sectionLines) {
             content.append(line).append("\n");
         }
@@ -251,28 +249,6 @@ public class SpawnerMenuFormUI {
                 content.append("Status: ").append(placeholders.get("exp_status")).append("\n");
                 break;
         }
-    }
-
-    private String getStorageStatus(int current, int max) {
-        double ratio = max > 0 ? (double) current / max : 0;
-        Map<String, String> placeholders = new HashMap<>();
-        
-        if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.storage.nearly_full", placeholders);
-        if (ratio >= 0.7) return languageManager.getGuiItemName("bedrock_gui.status.storage.filling_up", placeholders);
-        if (ratio >= 0.4) return languageManager.getGuiItemName("bedrock_gui.status.storage.half_full", placeholders);
-        if (ratio > 0) return languageManager.getGuiItemName("bedrock_gui.status.storage.plenty_space", placeholders);
-        return languageManager.getGuiItemName("bedrock_gui.status.storage.empty", placeholders);
-    }
-
-    private String getExpStatus(long current, long max) {
-        double ratio = max > 0 ? (double) current / max : 0;
-        Map<String, String> placeholders = new HashMap<>();
-        
-        if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.experience.almost_full", placeholders);
-        if (ratio >= 0.7) return languageManager.getGuiItemName("bedrock_gui.status.experience.large_amount", placeholders);
-        if (ratio >= 0.4) return languageManager.getGuiItemName("bedrock_gui.status.experience.medium_amount", placeholders);
-        if (ratio > 0) return languageManager.getGuiItemName("bedrock_gui.status.experience.small_amount", placeholders);
-        return languageManager.getGuiItemName("bedrock_gui.status.experience.empty", placeholders);
     }
 
     private void handleButtonAction(Player player, SpawnerData spawner, String action) {

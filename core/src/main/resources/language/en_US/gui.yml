@@ -21,72 +21,7 @@ gui_title_main:
   single_spawner: '%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
   stacked_spawner: '%amount% %ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
 
-# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
-#                                      BEDROCK/GEYSER GUI CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
-#
-# This section contains configuration for Bedrock Edition players using Geyser/Floodgate.
-# Form-based UI elements for cross-platform compatibility with consistent styling.
-# Note: Bedrock forms support limited formatting compared to Java Edition GUIs.
-#
-bedrock_gui:
-  # Button text configuration for Bedrock forms
-  buttons:
-    # Storage button - opens spawner loot storage
-    storage: 'Open Storage'
-    
-    # Info/Stack button - opens spawner stacking menu  
-    stack_info: 'Open Stack Menu'
-    
-    # Experience button - collects stored experience
-    experience: 'Collect Experience'
-    
-    # Sell inventory button - collects XP and sells all items
-    sell_inventory: 'Claim XP & Sell All'
-    
-    # Sell all button - sells all items only
-    sell_all: 'Sell All Items'
-  
-  # Status text for storage and experience displays
-  status:
-    storage:
-      empty: 'Empty'
-      plenty_space: 'Plenty of Space'
-      half_full: 'Half Full'
-      filling_up: 'Filling Up'
-      nearly_full: 'Nearly Full'
-    
-    experience:
-      empty: 'Empty'
-      small_amount: 'Small Amount'
-      medium_amount: 'Medium Amount'
-      large_amount: 'Large Amount'
-      almost_full: 'Almost Full'
-
-  # Configurable spawner info content for Bedrock forms (displayed at bottom)
-  # Available placeholders: %entity%, %ᴇɴᴛɪᴛʏ%, %stack_size%, %range%, %min_mobs%, %max_mobs%, %delay%,
-  # %current_items%, %max_items%, %formatted_storage%, %current_exp%, %max_exp%, %formatted_exp%
-  info_content:
-    header: 'INFORMATION:'
-    sections:
-      spawner_info:
-        - 'Stack: %stack_size%'
-        - 'Range: %range% blocks'
-        - 'Mobs: %min_mobs% - %max_mobs%'
-        - 'Delay: %delay%s'
-        - ''
-      storage_info:
-        - 'STORAGE:'
-        - 'Slots: %current_items%/%max_items%'
-        - 'Status: %storage_status%'
-        - ''
-      experience_info:
-        - 'EXPERIENCE:'
-        - 'Current: %current_exp%/%max_exp% XP'
-        - 'Status: %exp_status%'
-
 # Spawner Storage Item Configuration
-
 spawner_storage_item:
   # Available placeholders for name:
   # %max_slots% - Maximum number of slots in the storage (formatted with commas)
