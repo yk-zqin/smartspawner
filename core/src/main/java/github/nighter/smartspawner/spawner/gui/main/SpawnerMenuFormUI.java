@@ -4,6 +4,8 @@ import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
+import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
@@ -11,32 +13,20 @@ import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Manages form-based UI for Bedrock players using Floodgate
- */
 public class SpawnerMenuFormUI {
     private final SmartSpawner plugin;
     private final LanguageManager languageManager;
     private final MessageService messageService;
 
-    /**
-     * Constructs the SpawnerMenuFormUI.
-     *
-     * @param plugin The main plugin instance
-     */
     public SpawnerMenuFormUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
         this.messageService = plugin.getMessageService();
     }
 
-    /**
-     * Opens the spawner form for a Bedrock player
-     *
-     * @param player The player to open the form for
-     * @param spawner The spawner data to display
-     */
     public void openSpawnerForm(Player player, SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         Map<String, String> placeholders = new HashMap<>();
@@ -50,43 +40,47 @@ public class SpawnerMenuFormUI {
             title = languageManager.getGuiTitle("gui_title_main.single_spawner", placeholders);
         }
 
-        // Get button texts from language configuration  
-        String lootButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.storage", placeholders);
-        String infoButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.stack_info", placeholders);
-        String expButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.experience", placeholders);
+        // Get layout configuration to determine which buttons to show
+        GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
+        if (layout == null) {
+            // Fallback to original behavior if no layout available
+            openFallbackForm(player, spawner, title);
+            return;
+        }
 
-        // Create a simple form with buttons for each action
-        SimpleForm form = SimpleForm.builder()
+        // Collect available buttons based on layout and permissions
+        List<ButtonInfo> availableButtons = collectAvailableButtons(layout, player, spawner, placeholders);
+        
+        if (availableButtons.isEmpty()) {
+            messageService.sendMessage(player, "no_permission");
+            return;
+        }
+
+        // Build the form with available buttons and info content at bottom
+        SimpleForm.Builder formBuilder = SimpleForm.builder()
                 .title(title)
-                .content(createInfoContent(player, spawner))
-                // Add buttons with configurable text from language files
-                .button(lootButtonText, FormImage.Type.URL, "https://img.icons8.com/?size=100&id=e78DnJp8bhmX&format=png&color=000000")
-                .button(infoButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048")
-                .button(expButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/10/Bottle_o%27_Enchanting.gif/revision/latest?cb=20200428012753")
-                // Add closed or invalid response handler
+                .content(createInfoContent(player, spawner));
+
+        // Add buttons to form
+        for (ButtonInfo buttonInfo : availableButtons) {
+            formBuilder.button(buttonInfo.text, FormImage.Type.URL, buttonInfo.imageUrl);
+        }
+
+        // Configure form response handlers
+        SimpleForm form = formBuilder
                 .closedOrInvalidResultHandler(() -> {
                     // Do nothing when form is closed without selecting
                 })
-                // Add valid response handler
                 .validResultHandler(response -> {
-                    // Get the index of the clicked button
                     int buttonId = response.clickedButtonId();
-
-                    // Schedule the action to run on the main server thread
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        // Handle the button click based on the button ID
-                        switch (buttonId) {
-                            case 0: // Loot Storage
-                                handleLootStorage(player, spawner);
-                                break;
-                            case 1: // Spawner Info
-                                handleSpawnerInfo(player, spawner);
-                                break;
-                            case 2: // Experience
-                                handleExpCollection(player, spawner);
-                                break;
-                        }
-                    });
+                    if (buttonId >= 0 && buttonId < availableButtons.size()) {
+                        ButtonInfo buttonInfo = availableButtons.get(buttonId);
+                        
+                        // Schedule the action to run on the main server thread
+                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            handleButtonAction(player, spawner, buttonInfo.action);
+                        });
+                    }
                 })
                 .build();
 
@@ -94,15 +88,100 @@ public class SpawnerMenuFormUI {
         FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(form);
     }
 
+    private List<ButtonInfo> collectAvailableButtons(GuiLayout layout, Player player, SpawnerData spawner, Map<String, String> placeholders) {
+        List<ButtonInfo> buttons = new ArrayList<>();
+        
+        // Check for storage button
+        GuiButton storageButton = layout.getButton("storage");
+        if (storageButton != null && storageButton.isEnabled()) {
+            String text = languageManager.getGuiItemName("bedrock_gui.buttons.storage", placeholders);
+            buttons.add(new ButtonInfo("open_storage", text, "https://img.icons8.com/?size=100&id=e78DnJp8bhmX&format=png&color=000000"));
+        }
+
+        // Check for spawner info/stacker button
+        boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
+        GuiButton spawnerInfoButton = getSpawnerInfoButton(layout, hasShopPermission);
+        if (spawnerInfoButton != null && spawnerInfoButton.isEnabled() && 
+            player.hasPermission("smartspawner.stack")) {
+            String text = languageManager.getGuiItemName("bedrock_gui.buttons.stack_info", placeholders);
+            buttons.add(new ButtonInfo("open_stacker", text, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048"));
+        }
+
+        // Check for sell_inventory button (Claim XP and Sell All)
+        if (hasShopPermission) {
+            GuiButton sellInventoryButton = layout.getButton("spawner_info_with_shop");
+            if (sellInventoryButton != null && sellInventoryButton.isEnabled() && 
+                sellInventoryButton.getAction("left_click") != null && 
+                sellInventoryButton.getAction("left_click").equals("sell_inventory")) {
+                String text = languageManager.getGuiItemName("bedrock_gui.buttons.sell_inventory", placeholders);
+                buttons.add(new ButtonInfo("sell_inventory", text, "https://img.icons8.com/?size=100&id=12815&format=png&color=FFD700"));
+            }
+
+            // Check for sell_all button (Sell items only)
+            GuiButton sellAllButton = layout.getButton("sell_all");
+            if (sellAllButton != null && sellAllButton.isEnabled()) {
+                String text = languageManager.getGuiItemName("bedrock_gui.buttons.sell_all", placeholders);
+                buttons.add(new ButtonInfo("sell_all", text, "https://img.icons8.com/?size=100&id=12815&format=png&color=FFA500"));
+            }
+        }
+
+        // Check for experience button
+        GuiButton expButton = layout.getButton("exp");
+        if (expButton != null && expButton.isEnabled()) {
+            String text = languageManager.getGuiItemName("bedrock_gui.buttons.experience", placeholders);
+            buttons.add(new ButtonInfo("collect_exp", text, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/10/Bottle_o%27_Enchanting.gif/revision/latest?cb=20200428012753"));
+        }
+
+        return buttons;
+    }
+
+    private GuiButton getSpawnerInfoButton(GuiLayout layout, boolean hasShopPermission) {
+        // Check for shop integration permission
+        if (hasShopPermission) {
+            GuiButton shopButton = layout.getButton("spawner_info_with_shop");
+            if (shopButton != null) {
+                return shopButton;
+            }
+        } else {
+            GuiButton noShopButton = layout.getButton("spawner_info_no_shop");
+            if (noShopButton != null) {
+                return noShopButton;
+            }
+        }
+
+        // Fallback to the generic spawner_info button if conditional ones don't exist
+        return layout.getButton("spawner_info");
+    }
+
     private String createInfoContent(Player player, SpawnerData spawner) {
+        // Get configured info content from language file
+        List<String> headerList = languageManager.getConfig().getStringList("bedrock_gui.info_content.header");
+        String header = headerList.isEmpty() ? "INFORMATION:" : String.join(" ", headerList);
+        
         StringBuilder content = new StringBuilder();
+        content.append(header).append("\n\n");
 
-        // Get entity names with proper formatting
-        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        String entityNameSmallCaps = languageManager.getSmallCaps(languageManager.getFormattedMobName(spawner.getEntityType()));
+        // Prepare placeholders for content replacement
+        Map<String, String> placeholders = createContentPlaceholders(player, spawner);
 
-        // Prepare placeholders for consistent formatting
+        // Add spawner info section
+        addConfiguredSection(content, "spawner_info", placeholders);
+        
+        // Add storage info section
+        addConfiguredSection(content, "storage_info", placeholders);
+        
+        // Add experience info section
+        addConfiguredSection(content, "experience_info", placeholders);
+
+        return content.toString();
+    }
+
+    private Map<String, String> createContentPlaceholders(Player player, SpawnerData spawner) {
         Map<String, String> placeholders = new HashMap<>();
+        
+        // Entity information
+        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
+        String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
         placeholders.put("entity", entityName);
         placeholders.put("ᴇɴᴛɪᴛʏ", entityNameSmallCaps);
         placeholders.put("stack_size", String.valueOf(spawner.getStackSize()));
@@ -120,6 +199,7 @@ public class SpawnerMenuFormUI {
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("max_items", languageManager.formatNumber(maxSlots));
         placeholders.put("formatted_storage", formattedPercentStorage);
+        placeholders.put("storage_status", getStorageStatus(currentItems, maxSlots));
 
         // Experience information
         long currentExp = spawner.getSpawnerExp();
@@ -132,31 +212,21 @@ public class SpawnerMenuFormUI {
         placeholders.put("current_exp", formattedCurrentExp);
         placeholders.put("max_exp", formattedMaxExp);
         placeholders.put("formatted_exp", formattedPercentExp);
+        placeholders.put("exp_status", getExpStatus(currentExp, maxExp));
 
-        // Build content using the same style as the main GUI
-        
-        // Spawner Information Section - matching spawner_info_item style
-        content.append("&#7b68ee◈ &#8a2be2ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ:\n");
-        content.append("  &#e6e6fa•  ꜱᴛᴀᴄᴋ: &#c2a8fc").append(spawner.getStackSize()).append("\n");
-        content.append("  &#e6e6fa•  ʀᴀɴɢᴇ: &#c2a8fc").append(spawner.getSpawnerRange()).append("&#e6e6fa ʙʟᴏᴄᴋꜱ\n");
-        content.append("  &#e6e6fa•  ᴍᴏʙꜱ: &#c2a8fc").append(spawner.getMinMobs()).append("&#e6e6fa - &#c2a8fc").append(spawner.getMaxMobs()).append("\n");
-        content.append("  &#e6e6fa•  ᴅᴇʟᴀʏ: &#c2a8fc").append(spawner.getSpawnDelay() / 20).append("&#e6e6faꜱ\n\n");
+        return placeholders;
+    }
 
-        // Storage Section - matching spawner_storage_item style
-        content.append("&#d9b50c◈ &#fce96aꜱᴛᴏʀᴀɢᴇ:\n");
-        content.append("  &#f8f8ff•  ꜱʟᴏᴛꜱ: &#f9cf51").append(currentItems).append("&#d9b50c/&#f9cf51").append(languageManager.formatNumber(maxSlots)).append("\n");
-        content.append("  &#f8f8ff•  ꜱᴛᴀᴛᴜꜱ: ").append(getStorageStatus(currentItems, maxSlots)).append("\n\n");
-
-        // Experience Section - matching exp_info_item style  
-        content.append("&#2cc483◈ &#48e89bᴇxᴘᴇʀɪᴇɴᴄᴇ:\n");
-        content.append("  &#f8f8ff•  ᴄᴜʀʀᴇɴᴛ: &#37eb9a").append(formattedCurrentExp).append("&#2cc483/&#37eb9a").append(formattedMaxExp).append(" &#2cc483xᴘ\n");
-        content.append("  &#f8f8ff•  ꜱᴛᴀᴛᴜꜱ: ").append(getExpStatus(currentExp, maxExp)).append("\n");
-
-        return content.toString();
+    private void addConfiguredSection(StringBuilder content, String sectionName, Map<String, String> placeholders) {
+        List<String> sectionLines = languageManager.getConfig().getStringList("bedrock_gui.info_content.sections." + sectionName);
+        for (String line : sectionLines) {
+            String processedLine = languageManager.replacePlaceholders(line, placeholders);
+            content.append(processedLine).append("\n");
+        }
     }
 
     private String getStorageStatus(int current, int max) {
-        double ratio = (double) current / max;
+        double ratio = max > 0 ? (double) current / max : 0;
         Map<String, String> placeholders = new HashMap<>();
         
         if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.storage.nearly_full", placeholders);
@@ -167,7 +237,7 @@ public class SpawnerMenuFormUI {
     }
 
     private String getExpStatus(long current, long max) {
-        double ratio = (double) current / max;
+        double ratio = max > 0 ? (double) current / max : 0;
         Map<String, String> placeholders = new HashMap<>();
         
         if (ratio >= 0.9) return languageManager.getGuiItemName("bedrock_gui.status.experience.almost_full", placeholders);
@@ -177,65 +247,110 @@ public class SpawnerMenuFormUI {
         return languageManager.getGuiItemName("bedrock_gui.status.experience.empty", placeholders);
     }
 
-    /**
-     * Handles the loot storage button click
-     *
-     * @param player The player clicking the button
-     * @param spawner The spawner data
-     */
+    private void handleButtonAction(Player player, SpawnerData spawner, String action) {
+        switch (action) {
+            case "open_storage":
+                handleLootStorage(player, spawner);
+                break;
+            case "open_stacker":
+                handleSpawnerInfo(player, spawner);
+                break;
+            case "sell_inventory":
+                handleSellInventory(player, spawner);
+                break;
+            case "sell_all":
+                handleSellAll(player, spawner);
+                break;
+            case "collect_exp":
+                handleExpCollection(player, spawner);
+                break;
+        }
+    }
+
     private void handleLootStorage(Player player, SpawnerData spawner) {
-        // Use the existing chest handler from your SpawnerMenuAction class
         plugin.getSpawnerMenuAction().handleChestClick(player, spawner);
     }
 
-    /**
-     * Handles the spawner info button click
-     *
-     * @param player The player clicking the button
-     * @param spawner The spawner data
-     */
     private void handleSpawnerInfo(Player player, SpawnerData spawner) {
         if (!player.hasPermission("smartspawner.stack")) {
             messageService.sendMessage(player, "no_permission");
             return;
         }
-
         plugin.getSpawnerStackerUI().openStackerGui(player, spawner);
     }
 
-    /**
-     * Handles the experience collection button click
-     *
-     * @param player The player clicking the button
-     * @param spawner The spawner data
-     */
+    private void handleSellInventory(Player player, SpawnerData spawner) {
+        if (!plugin.hasSellIntegration() || !player.hasPermission("smartspawner.sellall")) {
+            messageService.sendMessage(player, "no_permission");
+            return;
+        }
+        // Collect XP and sell all items
+        plugin.getSpawnerMenuAction().handleExpBottleClick(player, spawner, true);
+        plugin.getSpawnerSellManager().sellAllItems(player, spawner);
+    }
+
+    private void handleSellAll(Player player, SpawnerData spawner) {
+        if (!plugin.hasSellIntegration() || !player.hasPermission("smartspawner.sellall")) {
+            messageService.sendMessage(player, "no_permission");
+            return;
+        }
+        // Sell all items only (no XP collection)
+        plugin.getSpawnerSellManager().sellAllItems(player, spawner);
+    }
+
     private void handleExpCollection(Player player, SpawnerData spawner) {
-        // This will execute the same logic as your handleExpBottleClick method
         plugin.getSpawnerMenuAction().handleExpBottleClick(player, spawner, false);
     }
 
-    /**
-     * Calculates a percentage safely (avoids division by zero).
-     *
-     * @param current Current value
-     * @param maximum Maximum value
-     * @return Percentage (0-100)
-     */
-    private int calculatePercentage(long current, long maximum) {
-        return maximum > 0 ? (int) ((double) current / maximum * 100) : 0;
+    private void openFallbackForm(Player player, SpawnerData spawner, String title) {
+        // Fallback to original hard-coded form if layout is not available
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("entity", languageManager.getFormattedMobName(spawner.getEntityType()));
+        placeholders.put("amount", String.valueOf(spawner.getStackSize()));
+
+        String lootButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.storage", placeholders);
+        String infoButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.stack_info", placeholders);
+        String expButtonText = languageManager.getGuiItemName("bedrock_gui.buttons.experience", placeholders);
+
+        SimpleForm form = SimpleForm.builder()
+                .title(title)
+                .content(createInfoContent(player, spawner))
+                .button(lootButtonText, FormImage.Type.URL, "https://img.icons8.com/?size=100&id=e78DnJp8bhmX&format=png&color=000000")
+                .button(infoButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048")
+                .button(expButtonText, FormImage.Type.URL, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/10/Bottle_o%27_Enchanting.gif/revision/latest?cb=20200428012753")
+                .closedOrInvalidResultHandler(() -> {})
+                .validResultHandler(response -> {
+                    int buttonId = response.clickedButtonId();
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        switch (buttonId) {
+                            case 0: handleLootStorage(player, spawner); break;
+                            case 1: handleSpawnerInfo(player, spawner); break;
+                            case 2: handleExpCollection(player, spawner); break;
+                        }
+                    });
+                })
+                .build();
+
+        FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(form);
     }
 
-    /**
-     * Checks if a player is a Bedrock player via Floodgate
-     *
-     * @param player The player to check
-     * @return true if player is from Bedrock, false otherwise
-     */
     public static boolean isBedrockPlayer(Player player) {
         try {
             return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private static class ButtonInfo {
+        final String action;
+        final String text;
+        final String imageUrl;
+
+        ButtonInfo(String action, String text, String imageUrl) {
+            this.action = action;
+            this.text = text;
+            this.imageUrl = imageUrl;
         }
     }
 }
