@@ -24,6 +24,7 @@ softdepend:
   - SimpleClaimSystem
   - RedProtect
   - MinePlots
+  - PlotSquared
 
   # World Management Plugins
   - Multiverse-Core

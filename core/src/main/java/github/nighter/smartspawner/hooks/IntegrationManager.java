@@ -1,9 +1,11 @@
 package github.nighter.smartspawner.hooks;
 
+import com.plotsquared.core.PlotAPI;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.drops.MythicMobsHook;
 import github.nighter.smartspawner.hooks.protections.api.IridiumSkyblock;
 import github.nighter.smartspawner.hooks.protections.api.Lands;
+import github.nighter.smartspawner.hooks.protections.api.PlotSquared;
 import github.nighter.smartspawner.hooks.protections.api.SuperiorSkyblock2;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
 import lombok.Getter;
@@ -30,6 +32,7 @@ public class IntegrationManager {
     private boolean hasMinePlots = false;
     private boolean hasMythicMobs = false;
     private boolean hasIridiumSkyblock = false;
+    private boolean hasPlotSquared = false;
 
     // Integration plugin flags
     private boolean hasAuraSkills = false;
@@ -117,6 +120,19 @@ public class IntegrationManager {
             Plugin is = Bukkit.getPluginManager().getPlugin("IridiumSkyblock");
             if(is != null && is.isEnabled()) {
                 IridiumSkyblock.init();
+                return true;
+            }
+            return false;
+        }, true);
+
+        hasPlotSquared = checkPlugin("PlotSquared", () -> {
+            Plugin is = Bukkit.getPluginManager().getPlugin("PlotSquared");
+            if(is != null && is.isEnabled()) {
+                PlotAPI api = new PlotAPI();
+                if(api == null) return false;
+                PlotSquared ps = new PlotSquared();
+                api.registerListener(ps);
+                Bukkit.getPluginManager().registerEvents(ps, SmartSpawner.getInstance());
                 return true;
             }
             return false;
