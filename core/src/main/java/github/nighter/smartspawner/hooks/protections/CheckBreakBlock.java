@@ -19,6 +19,7 @@ public class CheckBreakBlock {
         if (integrationManager.isHasLands() && !Lands.canPlayerBreakClaimBlock(player, location)) return false;
         if (integrationManager.isHasTowny() && !Towny.canPlayerInteractSpawner(player, location)) return false;
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerBreakClaimBlock(player, location)) return false;
+        if (integrationManager.isHasPlotSquared() && !PlotSquared.canInteract(player, location)) return false;
         return true;
     }
 }
