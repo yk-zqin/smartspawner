@@ -23,6 +23,7 @@ buttons:
     condition: "shop_integration"
     actions:
       left_click: "sell_inventory"    # Collect EXP and sell items in storage
+      right_click: "sell_inventory"   # Collect EXP and sell items in storage
 
   # Spawner information display without shop integration
   # Without shop integration: Both clicks open stacker GUI

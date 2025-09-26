@@ -335,18 +335,6 @@ MOOSHROOM:
       amount: 1-3
       chance: 100.0
 
-# Reference: https://minecraft.wiki/w/Mooshroom#Drops
-# Legacy 1.20 fallback
-MUSHROOM_COW:
-  experience: 1
-  loot:
-    LEATHER:
-      amount: 0-2
-      chance: 100.0
-    BEEF:
-      amount: 1-3
-      chance: 100.0
-
 # Reference: https://minecraft.wiki/w/Mule#Drops
 MULE:
   experience: 1
