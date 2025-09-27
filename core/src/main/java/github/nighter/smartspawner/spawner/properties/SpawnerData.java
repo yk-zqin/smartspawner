@@ -114,57 +114,25 @@ public class SpawnerData {
         this.spawnerStop = true;
         this.isAtCapacity = false;
         this.stackSize = 1;
-        this.maxStackSize = plugin.getConfig().getInt("spawner_properties.default.max_stack_size", 1000);
-        this.maxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
-        this.maxSpawnerLootSlots = 45;
-        this.lootConfig = lootRegistry.getLootConfig(entityType);
-        // Initialize lastSpawnTime to current time to prevent timer display issues
         this.lastSpawnTime = System.currentTimeMillis();
     }
 
     public void loadConfigurationValues() {
-        int baseMaxStoredExp = plugin.getConfig().getInt("spawner_properties.default.max_stored_exp", 1000);
-        int baseMinMobs = plugin.getConfig().getInt("spawner_properties.default.min_mobs", 1);
-        int baseMaxMobs = plugin.getConfig().getInt("spawner_properties.default.max_mobs", 4);
-        long baseSpawnerDelay = plugin.getTimeFromConfig("spawner_properties.default.delay", "25s");
-
-        validateAndSetStoragePages();
-        calculateScaledValues(baseMaxStoredExp, baseMinMobs, baseMaxMobs);
-        setSpawnDelay(baseSpawnerDelay);
-        setSpawnerRange();
-    }
-
-    private void validateAndSetStoragePages() {
-        if (maxStoragePages <= 0) {
-            logger.warning("Invalid max_storage_pages value. Setting to default: 1");
-            maxStoragePages = 1;
-        }
-        this.maxSpawnerLootSlots = Math.max((45 * maxStoragePages) * stackSize, 45);
-    }
-
-    private void calculateScaledValues(int baseMaxStoredExp, int baseMinMobs, int baseMaxMobs) {
-        this.maxStoredExp = Math.max(baseMaxStoredExp * stackSize, baseMaxStoredExp);
-        this.minMobs = Math.max(baseMinMobs * stackSize, baseMinMobs);
-        this.maxMobs = Math.max(baseMaxMobs * stackSize, this.minMobs + stackSize);
-
-        if (this.maxMobs <= this.minMobs) {
-            logger.warning("Invalid max_mobs value after scaling. Adjusting to: " + (this.minMobs + stackSize));
-            this.maxMobs = this.minMobs + stackSize;
-        }
+        this.maxStackSize = plugin.getConfig().getInt("spawner_properties.default.max_stack_size", 1000);
+        this.maxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
+        this.maxSpawnerLootSlots = maxStoragePages * 45;
+        this.maxStoredExp = plugin.getConfig().getInt("spawner_properties.default.max_stored_exp", 1000);
+        this.minMobs = plugin.getConfig().getInt("spawner_properties.default.min_mobs", 1);
+        this.maxMobs = plugin.getConfig().getInt("spawner_properties.default.max_mobs", 4);
+        this.spawnDelay = plugin.getTimeFromConfig("spawner_properties.default.delay", "25s");
+        this.spawnerRange = plugin.getConfig().getInt("spawner_properties.default.range", 16);
+        this.lootConfig = lootRegistry.getLootConfig(entityType);
     }
 
     public void setSpawnDelay(long baseSpawnerDelay) {
         this.spawnDelay = baseSpawnerDelay > 0 ? baseSpawnerDelay : 400;
         if (baseSpawnerDelay <= 0) {
             logger.warning("Invalid delay value. Setting to default: 400");
-        }
-    }
-
-    private void setSpawnerRange() {
-        this.spawnerRange = plugin.getConfig().getInt("spawner_properties.default.range");
-        if (this.spawnerRange <= 0) {
-            logger.warning("Invalid range value. Setting to default: 16");
-            this.spawnerRange = 16;
         }
     }
 
@@ -191,6 +159,25 @@ public class SpawnerData {
         }
     }
 
+    private void validateAndSetStoragePages() {
+        if (maxStoragePages <= 0) {
+            logger.warning("Invalid max_storage_pages value. Setting to default: 1");
+            maxStoragePages = 1;
+        }
+        this.maxSpawnerLootSlots = Math.max((45 * maxStoragePages) * stackSize, 45);
+    }
+
+    private void calculateScaledValues(int baseMaxStoredExp, int baseMinMobs, int baseMaxMobs) {
+        this.maxStoredExp = Math.max(baseMaxStoredExp * stackSize, baseMaxStoredExp);
+        this.minMobs = Math.max(baseMinMobs * stackSize, baseMinMobs);
+        this.maxMobs = Math.max(baseMaxMobs * stackSize, this.minMobs + stackSize);
+
+        if (this.maxMobs <= this.minMobs) {
+            logger.warning("Invalid max_mobs value after scaling. Adjusting to: " + (this.minMobs + stackSize));
+            this.maxMobs = this.minMobs + stackSize;
+        }
+    }
+
     private void updateStackSize(int newStackSize) {
         if (newStackSize <= 0) {
             this.stackSize = 1;
@@ -211,7 +198,9 @@ public class SpawnerData {
         transferItemsToNewInventory(currentItems, newInventory);
 
         this.stackSize = newStackSize;
-        loadConfigurationValues();
+        // Recalculate dependent values
+        validateAndSetStoragePages();
+        calculateScaledValues(getMaxStoredExp(), getMinMobs(), getMaxMobs());
         this.spawnerExp = Math.min(this.spawnerExp, this.maxStoredExp);
         this.lastSpawnTime = System.currentTimeMillis();
         this.virtualInventory = newInventory;
@@ -337,7 +326,7 @@ public class SpawnerData {
         return lootConfig != null ? lootConfig.getExperience() : 0;
     }
 
-    public void reloadLootConfig() {
+    public void setLootConfig() {
         this.lootConfig = lootRegistry.getLootConfig(entityType);
     }
 
@@ -361,11 +350,7 @@ public class SpawnerData {
     public void clearInteracted() {
         interacted.compareAndSet(true, false);
     }
-    
-    /**
-     * Updates the last interacted player and marks the spawner as modified for saving
-     * @param playerName The name of the player who interacted with the spawner
-     */
+
     public void updateLastInteractedPlayer(String playerName) {
         this.lastInteractedPlayer = playerName;
         markInteracted();
