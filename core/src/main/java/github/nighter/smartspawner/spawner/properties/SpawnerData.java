@@ -131,6 +131,11 @@ public class SpawnerData {
             recreateVirtualInventory();
         }
         updateHologramData();
+        
+        // Invalidate GUI cache after config reload
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
     }
 
     private void calculateStackBasedValues() {
@@ -195,6 +200,11 @@ public class SpawnerData {
 
         this.lastSpawnTime = System.currentTimeMillis();
         updateHologramData();
+        
+        // Invalidate GUI cache when stack size changes
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
     }
 
     private void recreateVirtualInventory() {
@@ -227,6 +237,11 @@ public class SpawnerData {
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(Math.max(0, exp), maxStoredExp);
         updateHologramData();
+        
+        // Invalidate GUI cache when experience changes
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
     }
 
     public void setSpawnerExpData(int exp) {

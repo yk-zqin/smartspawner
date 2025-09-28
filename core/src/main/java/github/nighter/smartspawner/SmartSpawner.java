@@ -321,6 +321,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Clear spawner info slot cache since layout may have changed
         spawnerGuiViewManager.clearSlotCache();
         
+        // Clear GUI item cache since layout/config may have changed
+        if (spawnerMenuUI != null) {
+            spawnerMenuUI.clearCache();
+        }
+        
         spawnerStorageAction.reload();
         spawnerStorageUI.reload();
         filterConfigUI.reload();

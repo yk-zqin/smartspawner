@@ -148,7 +148,7 @@ public class SpawnerMenuAction implements Listener {
                 spawnerStackerUI.openStackerGui(player, spawner);
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 return true;
-            case "sell_inventory":
+            case "sell_and_exp":
                 if (isClickTooFrequent(player)) {
                     return true;
                 }

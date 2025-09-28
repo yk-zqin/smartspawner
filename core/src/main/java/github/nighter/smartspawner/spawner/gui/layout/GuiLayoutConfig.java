@@ -190,9 +190,12 @@ public class GuiLayoutConfig {
         // Load actions
         Map<String, String> actions = new HashMap<>();
         ConfigurationSection actionsSection = config.getConfigurationSection(path + ".actions");
-        if (actionsSection != null) {
+        if (actionsSection != null && !actionsSection.getKeys(false).isEmpty()) {
             for (String actionKey : actionsSection.getKeys(false)) {
-                actions.put(actionKey, actionsSection.getString(actionKey));
+                String actionValue = actionsSection.getString(actionKey);
+                if (actionValue != null && !actionValue.equals("none")) {
+                    actions.put(actionKey, actionValue);
+                }
             }
         }
 
