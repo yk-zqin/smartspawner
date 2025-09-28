@@ -9,6 +9,7 @@ import github.nighter.smartspawner.spawner.utils.SpawnerMobHeadTexture;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.language.LanguageManager;
+import github.nighter.smartspawner.api.events.SpawnerOpenGUIEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -37,6 +38,11 @@ public class SpawnerMenuUI {
     private final String lootItemFormat;
     private final String emptyLootMessage;
 
+    // Cache for GUI items - cleared when spawner data changes
+    private final Map<String, ItemStack> itemCache = new HashMap<>();
+    private final Map<String, Long> cacheTimestamps = new HashMap<>();
+    private static final long CACHE_EXPIRY_TIME_MS = 30000; // 30 seconds
+
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
@@ -46,7 +52,36 @@ public class SpawnerMenuUI {
         this.emptyLootMessage = languageManager.getGuiItemName(EMPTY_LOOT_MESSAGE_KEY, EMPTY_PLACEHOLDERS);
     }
 
+    public void clearCache() {
+        itemCache.clear();
+        cacheTimestamps.clear();
+    }
+
+    public void invalidateSpawnerCache(String spawnerId) {
+        itemCache.entrySet().removeIf(entry -> entry.getKey().startsWith(spawnerId + "|"));
+        cacheTimestamps.entrySet().removeIf(entry -> entry.getKey().startsWith(spawnerId + "|"));
+    }
+
+    private boolean isCacheEntryExpired(String cacheKey) {
+        Long timestamp = cacheTimestamps.get(cacheKey);
+        return timestamp == null || System.currentTimeMillis() - timestamp > CACHE_EXPIRY_TIME_MS;
+    }
+
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
+        // Fire SpawnerOpenGUI API event
+        SpawnerOpenGUIEvent openEvent = new SpawnerOpenGUIEvent(
+                player,
+                spawner.getSpawnerLocation(),
+                spawner.getEntityType(),
+                spawner.getStackSize(),
+                refresh
+        );
+        Bukkit.getPluginManager().callEvent(openEvent);
+        
+        if (openEvent.isCancelled()) {
+            return;
+        }
+
         Inventory menu = createMenu(spawner);
         GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
 
@@ -114,20 +149,20 @@ public class SpawnerMenuUI {
     }
 
     public ItemStack createLootStorageItem(SpawnerData spawner) {
-        // Get important data upfront
+        // Generate cache key based on spawner state
         VirtualInventory virtualInventory = spawner.getVirtualInventory();
         int currentItems = virtualInventory.getUsedSlots();
         int maxSlots = spawner.getMaxSpawnerLootSlots();
-        int percentStorage = calculatePercentage(currentItems, maxSlots);
-
-        // Create cache key for this specific spawner's storage state
-        final String cacheKey = spawner.getSpawnerId() + "|storage|" + currentItems + "|" + spawner.getEntityType();
-
-        // Check if we have a cached item for this exact spawner state
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
+        String cacheKey = spawner.getSpawnerId() + "|storage|" + currentItems + "|" + maxSlots + "|" + virtualInventory.hashCode();
+        
+        // Check cache first
+        ItemStack cachedItem = itemCache.get(cacheKey);
+        if (cachedItem != null && !isCacheEntryExpired(cacheKey)) {
             return cachedItem.clone();
         }
+
+        // Get important data upfront
+        int percentStorage = calculatePercentage(currentItems, maxSlots);
 
         // Not in cache, create new item
         ItemStack chestItem = new ItemStack(Material.CHEST);
@@ -153,11 +188,11 @@ public class SpawnerMenuUI {
         // Get lore efficiently
         List<String> lore = languageManager.getGuiItemLoreWithMultilinePlaceholders("spawner_storage_item.lore", placeholders);
         chestMeta.setLore(lore);
-
         chestItem.setItemMeta(chestMeta);
 
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, chestItem.clone());
+        // Cache the result
+        itemCache.put(cacheKey, chestItem.clone());
+        cacheTimestamps.put(cacheKey, System.currentTimeMillis());
 
         return chestItem;
     }
@@ -267,17 +302,6 @@ public class SpawnerMenuUI {
 
         // Create cache key including all relevant state
         boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
-        
-        String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
-                + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
-                + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()
-                + "|" + hasShopPermission + "|" + materialType;
-
-        // Check if we have a cached item
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
-            return cachedItem.clone();
-        }
 
         // Not in cache, create the ItemStack        
         ItemStack spawnerItem;
@@ -357,9 +381,9 @@ public class SpawnerMenuUI {
         // Create cache key for this specific spawner's exp state
         String cacheKey = spawner.getSpawnerId() + "|exp|" + currentExp + "|" + maxExp;
 
-        // Check if we have a cached item for this exact exp state
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
+        // Check cache first
+        ItemStack cachedItem = itemCache.get(cacheKey);
+        if (cachedItem != null && !isCacheEntryExpired(cacheKey)) {
             return cachedItem.clone();
         }
 
@@ -387,8 +411,9 @@ public class SpawnerMenuUI {
 
         expItem.setItemMeta(expMeta);
 
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, expItem.clone());
+        // Cache the result
+        itemCache.put(cacheKey, expItem.clone());
+        cacheTimestamps.put(cacheKey, System.currentTimeMillis());
 
         return expItem;
     }

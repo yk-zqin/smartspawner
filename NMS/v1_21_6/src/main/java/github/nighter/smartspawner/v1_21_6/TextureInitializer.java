@@ -3,7 +3,16 @@ package github.nighter.smartspawner.v1_21_6;
 import github.nighter.smartspawner.nms.TextureWrapper;
 import org.bukkit.entity.EntityType;
 
+/**
+ * This class is responsible for initializing version-specific textures
+ * for various entity types in the SmartSpawner plugin.
+ */
 public class TextureInitializer {
+
+    /**
+     * Initializes version-specific textures for various entity types.
+     * This method should be called during the plugin's initialization phase.
+     */
     public static void init() {
         TextureWrapper.addVersionSpecificTexture(
                 EntityType.ARMADILLO,

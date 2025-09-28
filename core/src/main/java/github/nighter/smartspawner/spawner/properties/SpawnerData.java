@@ -20,14 +20,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SpawnerData {
-    private static final Logger logger = Logger.getLogger("SmartSpawnerConfig");
-
-    // Core dependencies
     @Getter
     private final SmartSpawner plugin;
     private final EntityLootRegistry lootRegistry;
 
-    // Immutable properties
     @Getter
     private final String spawnerId;
     @Getter
@@ -35,7 +31,12 @@ public class SpawnerData {
     @Getter
     private final ReentrantLock lock = new ReentrantLock();
 
-    // Basic spawner properties
+    // Base values from config (immutable after load)
+    private int baseMaxStoredExp;
+    private int baseMaxStoragePages;
+    private int baseMinMobs;
+    private int baseMaxMobs;
+
     @Getter
     private Integer spawnerExp;
     @Getter @Setter
@@ -51,14 +52,13 @@ public class SpawnerData {
     @Getter
     private long spawnDelay;
 
-    // Entity and loot configuration
     @Getter
     private EntityType entityType;
     @Getter @Setter
     private EntityLootConfig lootConfig;
 
-    // Capacity limits
-    @Getter @Setter
+    // Calculated values based on stackSize
+    @Getter
     private int maxStoragePages;
     @Getter @Setter
     private int maxSpawnerLootSlots;
@@ -69,29 +69,25 @@ public class SpawnerData {
     @Getter @Setter
     private int maxMobs;
 
-    // Stack management
     @Getter
     private int stackSize;
     @Getter @Setter
     private int maxStackSize;
 
-    // Storage and filtering
     @Getter @Setter
     private VirtualInventory virtualInventory;
     @Getter
     private final Set<Material> filteredItems = new HashSet<>();
-    // Interaction tracking for GUI and data saving
+
     private final AtomicBoolean interacted = new AtomicBoolean(false);
     @Getter @Setter
     private String lastInteractedPlayer;
 
-    // Sales management
     @Getter
     private SellResult lastSellResult;
     @Getter
     private boolean lastSellProcessed;
 
-    // Display components
     private SpawnerHologram hologram;
     @Getter @Setter
     private long cachedSpawnDelay = 0;
@@ -105,6 +101,7 @@ public class SpawnerData {
 
         initializeDefaults();
         loadConfigurationValues();
+        calculateStackBasedValues();
         initializeComponents();
     }
 
@@ -114,63 +111,51 @@ public class SpawnerData {
         this.spawnerStop = true;
         this.isAtCapacity = false;
         this.stackSize = 1;
-        this.maxStackSize = plugin.getConfig().getInt("spawner_properties.default.max_stack_size", 1000);
-        this.maxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
-        this.maxSpawnerLootSlots = 45;
-        this.lootConfig = lootRegistry.getLootConfig(entityType);
-        // Initialize lastSpawnTime to current time to prevent timer display issues
         this.lastSpawnTime = System.currentTimeMillis();
     }
 
     public void loadConfigurationValues() {
-        int baseMaxStoredExp = plugin.getConfig().getInt("spawner_properties.default.max_stored_exp", 1000);
-        int baseMinMobs = plugin.getConfig().getInt("spawner_properties.default.min_mobs", 1);
-        int baseMaxMobs = plugin.getConfig().getInt("spawner_properties.default.max_mobs", 4);
-        long baseSpawnerDelay = plugin.getTimeFromConfig("spawner_properties.default.delay", "25s");
-
-        validateAndSetStoragePages();
-        calculateScaledValues(baseMaxStoredExp, baseMinMobs, baseMaxMobs);
-        setSpawnDelay(baseSpawnerDelay);
-        setSpawnerRange();
+        this.baseMaxStoredExp = plugin.getConfig().getInt("spawner_properties.default.max_stored_exp", 1000);
+        this.baseMaxStoragePages = plugin.getConfig().getInt("spawner_properties.default.max_storage_pages", 1);
+        this.baseMinMobs = plugin.getConfig().getInt("spawner_properties.default.min_mobs", 1);
+        this.baseMaxMobs = plugin.getConfig().getInt("spawner_properties.default.max_mobs", 4);
+        this.maxStackSize = plugin.getConfig().getInt("spawner_properties.default.max_stack_size", 1000);
+        this.spawnDelay = plugin.getTimeFromConfig("spawner_properties.default.delay", "25s");
+        this.spawnerRange = plugin.getConfig().getInt("spawner_properties.default.range", 16);
+        this.lootConfig = lootRegistry.getLootConfig(entityType);
     }
 
-    private void validateAndSetStoragePages() {
-        if (maxStoragePages <= 0) {
-            logger.warning("Invalid max_storage_pages value. Setting to default: 1");
-            maxStoragePages = 1;
+    public void recalculateAfterConfigReload() {
+        calculateStackBasedValues();
+        if (virtualInventory != null && virtualInventory.getMaxSlots() != maxSpawnerLootSlots) {
+            recreateVirtualInventory();
         }
-        this.maxSpawnerLootSlots = Math.max((45 * maxStoragePages) * stackSize, 45);
+        updateHologramData();
+        
+        // Invalidate GUI cache after config reload
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
     }
 
-    private void calculateScaledValues(int baseMaxStoredExp, int baseMinMobs, int baseMaxMobs) {
-        this.maxStoredExp = Math.max(baseMaxStoredExp * stackSize, baseMaxStoredExp);
-        this.minMobs = Math.max(baseMinMobs * stackSize, baseMinMobs);
-        this.maxMobs = Math.max(baseMaxMobs * stackSize, this.minMobs + stackSize);
-
-        if (this.maxMobs <= this.minMobs) {
-            logger.warning("Invalid max_mobs value after scaling. Adjusting to: " + (this.minMobs + stackSize));
-            this.maxMobs = this.minMobs + stackSize;
-        }
+    private void calculateStackBasedValues() {
+        this.maxStoredExp = baseMaxStoredExp * stackSize;
+        this.maxStoragePages = baseMaxStoragePages * stackSize;
+        this.maxSpawnerLootSlots = maxStoragePages * 45;
+        this.minMobs = baseMinMobs * stackSize;
+        this.maxMobs = baseMaxMobs * stackSize;
+        this.spawnerExp = Math.min(this.spawnerExp, this.maxStoredExp);
     }
 
     public void setSpawnDelay(long baseSpawnerDelay) {
         this.spawnDelay = baseSpawnerDelay > 0 ? baseSpawnerDelay : 400;
         if (baseSpawnerDelay <= 0) {
-            logger.warning("Invalid delay value. Setting to default: 400");
-        }
-    }
-
-    private void setSpawnerRange() {
-        this.spawnerRange = plugin.getConfig().getInt("spawner_properties.default.range");
-        if (this.spawnerRange <= 0) {
-            logger.warning("Invalid range value. Setting to default: 16");
-            this.spawnerRange = 16;
+            plugin.getLogger().warning("Invalid delay value. Setting to default: 400");
         }
     }
 
     private void initializeComponents() {
         this.virtualInventory = new VirtualInventory(maxSpawnerLootSlots);
-
         if (plugin.getConfig().getBoolean("hologram.enabled", false)) {
             createHologram();
         }
@@ -194,29 +179,41 @@ public class SpawnerData {
     private void updateStackSize(int newStackSize) {
         if (newStackSize <= 0) {
             this.stackSize = 1;
-            logger.warning("Invalid stack size. Setting to 1");
+            plugin.getLogger().warning("Invalid stack size. Setting to 1");
             return;
         }
 
         if (newStackSize > this.maxStackSize) {
             this.stackSize = this.maxStackSize;
-            logger.warning("Stack size exceeds maximum. Setting to " + this.stackSize);
+            plugin.getLogger().warning("Stack size exceeds maximum. Setting to " + this.stackSize);
             return;
         }
 
-        Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
-        int newMaxSlots = (45 * this.maxStoragePages) * newStackSize;
-        VirtualInventory newInventory = new VirtualInventory(newMaxSlots);
-
-        transferItemsToNewInventory(currentItems, newInventory);
-
         this.stackSize = newStackSize;
-        loadConfigurationValues();
-        this.spawnerExp = Math.min(this.spawnerExp, this.maxStoredExp);
-        this.lastSpawnTime = System.currentTimeMillis();
+        Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+
+        calculateStackBasedValues();
+
+        VirtualInventory newInventory = new VirtualInventory(this.maxSpawnerLootSlots);
+        transferItemsToNewInventory(currentItems, newInventory);
         this.virtualInventory = newInventory;
 
+        this.lastSpawnTime = System.currentTimeMillis();
         updateHologramData();
+        
+        // Invalidate GUI cache when stack size changes
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
+    }
+
+    private void recreateVirtualInventory() {
+        if (virtualInventory == null) return;
+
+        Map<VirtualInventory.ItemSignature, Long> currentItems = virtualInventory.getConsolidatedItems();
+        VirtualInventory newInventory = new VirtualInventory(maxSpawnerLootSlots);
+        transferItemsToNewInventory(currentItems, newInventory);
+        this.virtualInventory = newInventory;
     }
 
     private void transferItemsToNewInventory(Map<VirtualInventory.ItemSignature, Long> items,
@@ -240,26 +237,21 @@ public class SpawnerData {
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(Math.max(0, exp), maxStoredExp);
         updateHologramData();
+        
+        // Invalidate GUI cache when experience changes
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
     }
 
     public void setSpawnerExpData(int exp) {
         this.spawnerExp = exp;
     }
 
-    public Map<Integer, ItemStack> getDisplayInventory() {
-        return virtualInventory.getDisplayInventory();
-    }
-
     public void updateHologramData() {
         if (hologram != null) {
-            hologram.updateData(
-                    stackSize,
-                    entityType,
-                    spawnerExp,
-                    maxStoredExp,
-                    virtualInventory.getUsedSlots(),
-                    maxSpawnerLootSlots
-            );
+            hologram.updateData(stackSize, entityType, spawnerExp, maxStoredExp,
+                    virtualInventory.getUsedSlots(), maxSpawnerLootSlots);
         }
     }
 
@@ -308,13 +300,11 @@ public class SpawnerData {
 
     public boolean toggleItemFilter(Material material) {
         boolean wasFiltered = filteredItems.contains(material);
-
         if (wasFiltered) {
             filteredItems.remove(material);
         } else {
             filteredItems.add(material);
         }
-
         return !wasFiltered;
     }
 
@@ -322,7 +312,6 @@ public class SpawnerData {
         if (lootConfig == null) {
             return Collections.emptyList();
         }
-
         return lootConfig.getAllItems().stream()
                 .filter(this::isLootItemValid)
                 .collect(Collectors.toList());
@@ -337,7 +326,7 @@ public class SpawnerData {
         return lootConfig != null ? lootConfig.getExperience() : 0;
     }
 
-    public void reloadLootConfig() {
+    public void setLootConfig() {
         this.lootConfig = lootRegistry.getLootConfig(entityType);
     }
 
@@ -361,11 +350,7 @@ public class SpawnerData {
     public void clearInteracted() {
         interacted.compareAndSet(true, false);
     }
-    
-    /**
-     * Updates the last interacted player and marks the spawner as modified for saving
-     * @param playerName The name of the player who interacted with the spawner
-     */
+
     public void updateLastInteractedPlayer(String playerName) {
         this.lastInteractedPlayer = playerName;
         markInteracted();

@@ -19,18 +19,6 @@ public class ESGUICompatibilityHandler implements Listener {
     public void onESGUIShopItemsLoad(ShopItemsLoadEvent event) {
         plugin.getItemPriceManager().reloadShopIntegration();
         plugin.getEntityLootRegistry().loadConfigurations();
-        reloadSpawnerLootConfigs();
-    }
-
-    private void reloadSpawnerLootConfigs() {
-        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-        for (SpawnerData spawner : allSpawners) {
-            try {
-                spawner.reloadLootConfig();
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to reload loot config for spawner " +
-                        spawner.getSpawnerId() + ": " + e.getMessage());
-            }
-        }
+        plugin.getSpawnerManager().reloadSpawnerDrops();
     }
 }

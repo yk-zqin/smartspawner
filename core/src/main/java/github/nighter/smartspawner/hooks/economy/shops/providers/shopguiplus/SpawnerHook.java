@@ -37,20 +37,8 @@ public class SpawnerHook implements Listener{
         Scheduler.runTaskLater(() -> {
             plugin.getItemPriceManager().reloadShopIntegration();
             plugin.getEntityLootRegistry().loadConfigurations();
-            reloadSpawnerLootConfigs();
+            plugin.getSpawnerManager().reloadSpawnerDrops();
         }, 100L); // Run after 5 second to ensure the plugin is fully loaded
-    }
-
-    private void reloadSpawnerLootConfigs() {
-        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-        for (SpawnerData spawner : allSpawners) {
-            try {
-                spawner.reloadLootConfig();
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to reload loot config for spawner " +
-                        spawner.getSpawnerId() + ": " + e.getMessage());
-            }
-        }
     }
 
     public void unregister() {

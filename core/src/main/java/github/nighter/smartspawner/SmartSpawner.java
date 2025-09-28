@@ -85,7 +85,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
     // Core UI components
     private GuiLayoutConfig guiLayoutConfig;
-    private final ItemCache itemCache = new ItemCache(500, 30);
     private SpawnerMenuUI spawnerMenuUI;
     // private SpawnerMenuFormUI spawnerMenuFormUI;
     private SpawnerStorageUI spawnerStorageUI;
@@ -322,6 +321,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Clear spawner info slot cache since layout may have changed
         spawnerGuiViewManager.clearSlotCache();
         
+        // Clear GUI item cache since layout/config may have changed
+        if (spawnerMenuUI != null) {
+            spawnerMenuUI.clearCache();
+        }
+        
         spawnerStorageAction.reload();
         spawnerStorageUI.reload();
         filterConfigUI.reload();
@@ -330,7 +334,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         integrationManager.reload();
         spawnerMenuAction.reload();
         timeFormatter.clearCache();
-        itemCache.clear();
     }
 
     @Override

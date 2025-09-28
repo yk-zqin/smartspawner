@@ -108,14 +108,14 @@ public class SpawnerMenuFormUI {
             buttons.add(new ButtonInfo("open_stacker", text, "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cf/Spawner_with_fire.png/revision/latest?cb=20190925003048"));
         }
 
-        // Check for sell_inventory button (Claim XP and Sell All)
+        // Check for sell_and_exp button (Claim XP and Sell All)
         if (hasShopPermission) {
             GuiButton sellInventoryButton = layout.getButton("spawner_info_with_shop");
             if (sellInventoryButton != null && sellInventoryButton.isEnabled() &&
                 sellInventoryButton.getAction("left_click") != null &&
-                sellInventoryButton.getAction("left_click").equals("sell_inventory")) {
-                String text = languageManager.getGuiItemName("bedrock_gui.buttons.sell_inventory", placeholders);
-                buttons.add(new ButtonInfo("sell_inventory", text, "https://img.icons8.com/?size=100&id=12815&format=png&color=FFD700"));
+                sellInventoryButton.getAction("left_click").equals("sell_and_exp")) {
+                String text = languageManager.getGuiItemName("bedrock_gui.buttons.sell_and_exp", placeholders);
+                buttons.add(new ButtonInfo("sell_and_exp", text, "https://img.icons8.com/?size=100&id=12815&format=png&color=FFD700"));
             }
 
             // Check for sell_all button (Sell items only)
@@ -259,7 +259,7 @@ public class SpawnerMenuFormUI {
             case "open_stacker":
                 handleSpawnerInfo(player, spawner);
                 break;
-            case "sell_inventory":
+            case "sell_and_exp":
                 handleSellInventory(player, spawner);
                 break;
             case "sell_all":

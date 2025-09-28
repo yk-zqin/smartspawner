@@ -857,6 +857,11 @@ public class SpawnerGuiViewManager implements Listener {
         Set<UUID> viewers = spawnerToPlayersMap.get(spawner.getSpawnerId());
         if (viewers == null || viewers.isEmpty()) return;
 
+        // Invalidate cache for this spawner
+        if (plugin.getSpawnerMenuUI() != null) {
+            plugin.getSpawnerMenuUI().invalidateSpawnerCache(spawner.getSpawnerId());
+        }
+
         int viewerCount = viewers.size();
         if (viewerCount > 10) {
             plugin.debug(viewerCount + " spawner menu viewers to update for " + spawner.getSpawnerId() + " (batch update)");

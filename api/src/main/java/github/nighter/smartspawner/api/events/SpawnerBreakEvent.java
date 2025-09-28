@@ -6,7 +6,7 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * SpawnerBreakEvent is called when a spawner being broke by a player or an explosion.
+ * SpawnerBreakEvent is called when a spawner being broken by a player or an explosion.
  */
 public class SpawnerBreakEvent extends SpawnerEvent {
     private final Entity entity;

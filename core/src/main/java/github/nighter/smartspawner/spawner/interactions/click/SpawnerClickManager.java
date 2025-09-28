@@ -228,16 +228,6 @@ public class SpawnerClickManager implements Listener {
         return material.name().endsWith("_SPAWN_EGG");
     }
 
-    private void spawnActivationParticles(Location location) {
-        Scheduler.runLocationTask(location, () -> {
-            location.getWorld().spawnParticle(
-                    ParticleWrapper.SPELL_WITCH,
-                    location.clone().add(0.5, 0.5, 0.5),
-                    50, 0.5, 0.5, 0.5, 0
-            );
-        });
-    }
-
     private boolean isBedrockPlayer(Player player) {
         try {
             FloodgateApi api = FloodgateApi.getInstance();

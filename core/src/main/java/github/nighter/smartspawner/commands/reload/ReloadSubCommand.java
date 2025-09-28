@@ -63,7 +63,7 @@ public class ReloadSubCommand extends BaseSubCommand {
             plugin.setUpHopperHandler();
             plugin.getItemPriceManager().reload();
             plugin.getEntityLootRegistry().reload();
-            reloadSpawnerLootConfigs();
+            plugin.getSpawnerManager().reloadSpawnerDropsAndConfigs();
             plugin.getLanguageManager().reloadLanguages();
             
             // Recheck timer placeholders after language reload to detect GUI configuration changes
@@ -96,18 +96,4 @@ public class ReloadSubCommand extends BaseSubCommand {
             plugin.getLogger().info("  " + entry.getKey() + ": " + entry.getValue());
         }
     }
-
-    private void reloadSpawnerLootConfigs() {
-        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-        for (SpawnerData spawner : allSpawners) {
-            try {
-                spawner.loadConfigurationValues();
-                spawner.reloadLootConfig();
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to reload loot config for spawner " +
-                        spawner.getSpawnerId() + ": " + e.getMessage());
-            }
-        }
-    }
-
 }
