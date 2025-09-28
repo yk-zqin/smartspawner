@@ -2,6 +2,7 @@ package github.nighter.smartspawner.spawner.gui.layout;
 
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.updates.GuiLayoutUpdater;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -26,7 +27,9 @@ public class GuiLayoutConfig {
     private final File layoutsDir;
     private final GuiLayoutUpdater layoutUpdater;
     private String currentLayout;
+    @Getter
     private GuiLayout currentStorageLayout;
+    @Getter
     private GuiLayout currentMainLayout;
 
     public GuiLayoutConfig(SmartSpawner plugin) {
@@ -243,14 +246,6 @@ public class GuiLayoutConfig {
 
     public GuiLayout getCurrentLayout() {
         return getCurrentStorageLayout();
-    }
-
-    public GuiLayout getCurrentStorageLayout() {
-        return currentStorageLayout;
-    }
-
-    public GuiLayout getCurrentMainLayout() {
-        return currentMainLayout;
     }
 
     public void reloadLayouts() {
