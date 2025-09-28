@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.spawner.gui.main;
 
+import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.api.events.SpawnerExpClaimEvent;
 import github.nighter.smartspawner.hooks.rpg.AuraSkillsIntegration;
@@ -104,7 +105,7 @@ public class SpawnerMenuAction implements Listener {
         // Fallback to legacy material-based handling for backward compatibility
         Material itemType = clickedItem.getType();
         if (itemType == Material.CHEST) {
-            handleChestClick(player, spawner);
+            handleStorageClick(player, spawner);
         } else if (SPAWNER_INFO_MATERIALS.contains(itemType)) {
             handleSpawnerInfoClick(player, spawner, event.getClick());
         } else if (itemType == Material.EXPERIENCE_BOTTLE) {
@@ -134,7 +135,7 @@ public class SpawnerMenuAction implements Listener {
 
         switch (action) {
             case "open_storage":
-                handleChestClick(player, spawner);
+                handleStorageClick(player, spawner);
                 return true;
             case "open_stacker":
                 if (isClickTooFrequent(player)) {
@@ -191,12 +192,19 @@ public class SpawnerMenuAction implements Listener {
         };
     }
 
-    public void handleChestClick(Player player, SpawnerData spawner) {
+    public void handleStorageClick(Player player, SpawnerData spawner) {
         String title = languageManager.getGuiTitle("gui_title_storage");
         Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1, -1);
 
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
         player.closeInventory();
+        player.openInventory(pageInventory);
+    }
+
+    public void handleStorageClickBedrock(Player player, SpawnerData spawner) {
+        String title = languageManager.getGuiTitle("gui_title_storage");
+        Inventory pageInventory = spawnerStorageUI.createInventory(spawner, title, 1, -1);
+        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 1.0f);
         player.openInventory(pageInventory);
     }
 

@@ -418,3 +418,18 @@ price_item:
     - '&#d9b50c◈ &#fce96aᴅᴇᴛᴀɪʟᴇᴅ ᴘʀɪᴄᴇꜱ:'
     - '  &#f8f8ff•  ᴄᴜꜱᴛᴏᴍ: &#37eb9a$%custom_price%'
     - '  &#f8f8ff•  ꜱʜᴏᴘ: &#37eb9a$%shop_price%'
+
+# ---------------------------------------------------
+#                  Bedrock GUI
+# ---------------------------------------------------
+bedrock:
+  main_gui:
+    title_single_spawner: '%entity% Spawner'
+    title_stacked_spawner: '%amount% %entity% Spawners'
+
+    button_names:
+      storage: 'Open Storage'
+      exp: 'Collect EXP'
+      stacker: 'Manage Stack'
+
+
