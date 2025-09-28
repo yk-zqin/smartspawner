@@ -69,6 +69,7 @@ public class SpawnerManager {
         for (SpawnerData spawner : allSpawners) {
             try {
                 spawner.loadConfigurationValues();
+                spawner.recalculateAfterConfigReload();
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to reload config for spawner " +
                         spawner.getSpawnerId() + ": " + e.getMessage());

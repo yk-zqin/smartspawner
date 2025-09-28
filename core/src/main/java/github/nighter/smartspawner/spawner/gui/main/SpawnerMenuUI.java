@@ -120,15 +120,6 @@ public class SpawnerMenuUI {
         int maxSlots = spawner.getMaxSpawnerLootSlots();
         int percentStorage = calculatePercentage(currentItems, maxSlots);
 
-        // Create cache key for this specific spawner's storage state
-        final String cacheKey = spawner.getSpawnerId() + "|storage|" + currentItems + "|" + spawner.getEntityType();
-
-        // Check if we have a cached item for this exact spawner state
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
-            return cachedItem.clone();
-        }
-
         // Not in cache, create new item
         ItemStack chestItem = new ItemStack(Material.CHEST);
         ItemMeta chestMeta = chestItem.getItemMeta();
@@ -153,11 +144,7 @@ public class SpawnerMenuUI {
         // Get lore efficiently
         List<String> lore = languageManager.getGuiItemLoreWithMultilinePlaceholders("spawner_storage_item.lore", placeholders);
         chestMeta.setLore(lore);
-
         chestItem.setItemMeta(chestMeta);
-
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, chestItem.clone());
 
         return chestItem;
     }
@@ -267,17 +254,6 @@ public class SpawnerMenuUI {
 
         // Create cache key including all relevant state
         boolean hasShopPermission = plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
-        
-        String cacheKey = spawner.getSpawnerId() + "|info|" + stackSize + "|" + entityType + "|"
-                + formattedPercentStorage + "|" + formattedPercentExp + "|" + spawner.getSpawnerRange() + "|"
-                + spawner.getSpawnDelay() + "|" + spawner.getMinMobs() + "|" + spawner.getMaxMobs()
-                + "|" + hasShopPermission + "|" + materialType;
-
-        // Check if we have a cached item
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
-            return cachedItem.clone();
-        }
 
         // Not in cache, create the ItemStack        
         ItemStack spawnerItem;
@@ -357,12 +333,6 @@ public class SpawnerMenuUI {
         // Create cache key for this specific spawner's exp state
         String cacheKey = spawner.getSpawnerId() + "|exp|" + currentExp + "|" + maxExp;
 
-        // Check if we have a cached item for this exact exp state
-        ItemStack cachedItem = plugin.getItemCache().getIfPresent(cacheKey);
-        if (cachedItem != null) {
-            return cachedItem.clone();
-        }
-
         // Not in cache, create the ItemStack
         ItemStack expItem = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta expMeta = expItem.getItemMeta();
@@ -386,9 +356,6 @@ public class SpawnerMenuUI {
         expMeta.setLore(loreExp);
 
         expItem.setItemMeta(expMeta);
-
-        // Cache the result for future use
-        plugin.getItemCache().put(cacheKey, expItem.clone());
 
         return expItem;
     }
