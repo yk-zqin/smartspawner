@@ -27,6 +27,7 @@ public class IntegrationManager {
     private boolean hasWorldGuard = false;
     private boolean hasGriefPrevention = false;
     private boolean hasSuperiorSkyblock2 = false;
+    private boolean hasBentoBox = false;
     private boolean hasSimpleClaimSystem = false;
     private boolean hasRedProtect = false;
     private boolean hasMinePlots = false;
@@ -86,6 +87,11 @@ public class IntegrationManager {
                 return true;
             }
             return false;
+        }, true);
+
+        hasBentoBox = checkPlugin("BentoBox", () -> {
+            Plugin bentoPlugin = Bukkit.getPluginManager().getPlugin("BentoBox");
+            return bentoPlugin != null && bentoPlugin.isEnabled();
         }, true);
 
         hasSimpleClaimSystem = checkPlugin("SimpleClaimSystem", () -> {

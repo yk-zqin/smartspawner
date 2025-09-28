@@ -19,6 +19,7 @@ public class CheckStackBlock {
         if (integrationManager.isHasLands() && !Lands.canPlayerStackClaimBlock(player, location)) return false;
         if (integrationManager.isHasTowny() && !Towny.canPlayerInteractSpawner(player, location)) return false;
         if (integrationManager.isHasSuperiorSkyblock2() && SuperiorSkyblock2.canPlayerStackBlock(player, location)) return false;
+        if (integrationManager.isHasBentoBox() && !BentoBoxAPI.canPlayerStackBlock(player, location)) return false;
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerStackClaimBlock(player, location))
             return false;
         if (integrationManager.isHasMinePlots() && !MinePlots.canPlayerStackBlock(player, location)) return false;
