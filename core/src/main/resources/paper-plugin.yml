@@ -103,7 +103,7 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
-    Bentobox:
+    BentoBox:
       load: BEFORE
       required: false
       join-classpath: true

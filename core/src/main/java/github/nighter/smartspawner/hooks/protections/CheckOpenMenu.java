@@ -19,6 +19,7 @@ public class CheckOpenMenu {
         if (integrationManager.isHasLands() && !Lands.CanPlayerInteractContainer(player, location)) return false;
         if (integrationManager.isHasTowny() && !Towny.canPlayerInteractSpawner(player, location)) return false;
         if (integrationManager.isHasSuperiorSkyblock2() && SuperiorSkyblock2.canPlayerOpenMenu(player, location)) return false;
+        if (integrationManager.isHasBentoBox() && !BentoBoxAPI.canPlayerOpenMenu(player, location)) return false;
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerOpenMenuOnClaim(player, location))
             return false;
         if (integrationManager.isHasMinePlots() && !MinePlots.canPlayerOpenMenu(player, location)) return false;
