@@ -56,7 +56,7 @@ public class FilterConfigUI implements Listener {
     private void initializeStaticButtons() {
         // Create divider button that also functions as return button
         staticButtons.put("divider", createButton(
-                Material.PURPLE_STAINED_GLASS_PANE,
+                Material.CYAN_STAINED_GLASS_PANE,
                 languageManager.getGuiItemName("filter_divider.name"),
                 languageManager.getGuiItemLoreAsList("filter_divider.lore")
         ));

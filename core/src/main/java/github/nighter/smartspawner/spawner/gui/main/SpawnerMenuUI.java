@@ -35,8 +35,8 @@ public class SpawnerMenuUI {
     private final LanguageManager languageManager;
 
     // Format strings - initialized in constructor to avoid repeated lookups
-    private final String lootItemFormat;
-    private final String emptyLootMessage;
+    private String lootItemFormat;
+    private String emptyLootMessage;
 
     // Cache for GUI items - cleared when spawner data changes
     private final Map<String, ItemStack> itemCache = new HashMap<>();
@@ -46,8 +46,11 @@ public class SpawnerMenuUI {
     public SpawnerMenuUI(SmartSpawner plugin) {
         this.plugin = plugin;
         this.languageManager = plugin.getLanguageManager();
+        loadConfig();
+    }
 
-        // Preload frequently used format strings
+    public void loadConfig() {
+        clearCache();
         this.lootItemFormat = languageManager.getGuiItemName(LOOT_ITEM_FORMAT_KEY, EMPTY_PLACEHOLDERS);
         this.emptyLootMessage = languageManager.getGuiItemName(EMPTY_LOOT_MESSAGE_KEY, EMPTY_PLACEHOLDERS);
     }

@@ -190,31 +190,6 @@ public class SpawnerMenuFormUI {
         }
     }
 
-    private void handleButtonAction(Player player, SpawnerData spawner, String action) {
-        Scheduler.runTask(() -> {
-            switch (action) {
-                case "open_storage":
-                    plugin.getSpawnerMenuAction().handleStorageClickBedrock(player, spawner);
-                    break;
-                case "open_stacker":
-                    handleSpawnerInfo(player, spawner);
-                    break;
-                case "sell_and_exp":
-                    handleSellInventory(player, spawner);
-                    break;
-                case "sell_all":
-                    handleSellAll(player, spawner);
-                    break;
-                case "collect_exp":
-                    handleExpCollection(player, spawner);
-                    break;
-                default:
-                    plugin.getLogger().warning("Unknown action in FormUI: " + action);
-                    break;
-            }
-        });
-    }
-
     private void handleSpawnerInfo(Player player, SpawnerData spawner) {
         if (!player.hasPermission("smartspawner.stack")) {
             messageService.sendMessage(player, "no_permission");

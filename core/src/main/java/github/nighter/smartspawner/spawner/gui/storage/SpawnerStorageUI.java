@@ -291,20 +291,9 @@ public class SpawnerStorageUI {
         // Add sell button if shop integration is available and button is enabled
         if (layout.hasButton("sell_all")) {
             GuiButton sellButton = layout.getButton("sell_all");
-            String indicatorKey = getPageIndicatorKey(page, totalPages, spawner);
-            int finalTotalPages = totalPages;
-            ItemStack sellIndicator = pageIndicatorCache.computeIfAbsent(
-                    indicatorKey, k -> createSellButton(page, finalTotalPages, spawner, sellButton.getMaterial())
-            );
+            ItemStack sellIndicator = createSellButton(sellButton.getMaterial());
             updates.put(sellButton.getSlot(), sellIndicator);
         }
-    }
-
-    private String getPageIndicatorKey(int page, int totalPages, SpawnerData spawner) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int usedSlots = virtualInv.getUsedSlots();
-        int maxSlots = spawner.getMaxSpawnerLootSlots();
-        return page + "-" + totalPages + "-" + usedSlots + "-" + maxSlots;
     }
 
     private int calculateTotalPages(SpawnerData spawner) {
@@ -344,25 +333,9 @@ public class SpawnerStorageUI {
         return createButton(material, buttonName, Arrays.asList(buttonLore));
     }
 
-    private ItemStack createSellButton(int currentPage, int totalPages, SpawnerData spawner, Material material) {
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-        int maxSlots = spawner.getMaxSpawnerLootSlots();
-        int usedSlots = virtualInv.getUsedSlots();
-        int percentStorage = maxSlots > 0 ? (int) ((double) usedSlots / maxSlots * 100) : 0;
-
-        String formattedMaxSlots = languageManager.formatNumber(maxSlots);
-        String formattedUsedSlots = languageManager.formatNumber(usedSlots);
-
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("current_page", String.valueOf(currentPage));
-        placeholders.put("total_pages", String.valueOf(totalPages));
-        placeholders.put("max_slots", formattedMaxSlots);
-        placeholders.put("used_slots", formattedUsedSlots);
-        placeholders.put("percent_storage", String.valueOf(percentStorage));
-
-        String name = languageManager.getGuiItemName("sell_button.name", placeholders);
-        List<String> lore = languageManager.getGuiItemLoreAsList("sell_button.lore", placeholders);
-
+    private ItemStack createSellButton(Material material) {
+        String name = languageManager.getGuiItemName("sell_button.name");
+        List<String> lore = languageManager.getGuiItemLoreAsList("sell_button.lore");
         return createButton(material, name, lore);
     }
 

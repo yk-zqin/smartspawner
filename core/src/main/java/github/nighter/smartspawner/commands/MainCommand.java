@@ -75,32 +75,11 @@ public class MainCommand {
             return sender.hasPermission("smartspawner.admin");
         });
 
-        // Add default behavior when no subcommand is specified
-        builder.executes(context -> {
-            CommandSender sender = context.getSource().getSender();
-
-            // Send help/info message
-            sendHelpMessage(sender);
-            return 1; // Success
-        });
-
         // Add all subcommands to the builder
         for (BaseSubCommand subCommand : subCommands) {
             builder.then(subCommand.build());
         }
 
         return builder.build();
-    }
-
-    private void sendHelpMessage(CommandSender sender) {
-        // If sender is console or RCON, list all subcommands with descriptions
-        if (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender) {
-            for (BaseSubCommand subCommand : subCommands) {
-                sender.sendMessage("§e/smartspawner " + subCommand.getName() + " §7- " + subCommand.getDescription());
-            }
-        } else {
-            // For players, send a usage message
-            messageService.sendMessage(sender, "command_usage");
-        }
     }
 }

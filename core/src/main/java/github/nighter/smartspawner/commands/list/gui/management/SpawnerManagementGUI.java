@@ -57,8 +57,8 @@ public class SpawnerManagementGUI {
 
         // Create action items with better materials and positioning
         createActionItem(inv, TELEPORT_SLOT, "spawner_management.teleport", Material.ENDER_PEARL);
-        createActionItem(inv, OPEN_SPAWNER_SLOT, "spawner_management.open_spawner", Material.SPAWNER);
-        createActionItem(inv, STACK_SLOT, "spawner_management.stack", Material.EMERALD);
+        createActionItem(inv, OPEN_SPAWNER_SLOT, "spawner_management.open_spawner", Material.ENDER_EYE);
+        createActionItem(inv, STACK_SLOT, "spawner_management.stack", Material.SPAWNER);
         createActionItem(inv, REMOVE_SLOT, "spawner_management.remove", Material.BARRIER);
         createActionItem(inv, BACK_SLOT, "spawner_management.back", Material.RED_STAINED_GLASS_PANE);
 
@@ -75,7 +75,7 @@ public class SpawnerManagementGUI {
             meta.setDisplayName(languageManager.getGuiItemName(langKey + ".name"));
             List<String> lore = Arrays.asList(languageManager.getGuiItemLore(langKey + ".lore"));
             meta.setLore(lore);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
             item.setItemMeta(meta);
         }
         inv.setItem(slot, item);

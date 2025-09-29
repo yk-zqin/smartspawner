@@ -294,13 +294,7 @@ public class SpawnerPlaceListener implements Listener {
             showCreationParticles(block);
         }
 
-        if (stackSize > 1) {
-            Map<String, String> placeholders = new HashMap<>();
-            placeholders.put("amount", String.valueOf(stackSize));
-            messageService.sendMessage(player, "spawner_stack_placed", placeholders);
-        } else {
-            messageService.sendMessage(player, "spawner_activated");
-        }
+        messageService.sendMessage(player, "spawner_activated");
     }
 
     private void showCreationParticles(Block block) {

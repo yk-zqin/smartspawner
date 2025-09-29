@@ -20,21 +20,21 @@
 #     sound: sound.effect       # Sound to play (optional)
 #
 #   KEY FEATURES:
-#   - If 'enabled: false' is set, none of the components will be sent to the player
+#   - If "enabled: false" is set, none of the components will be sent to the player
 #   - If multiple components are present (message, title, action_bar, sound), all will be sent
 #   - All components are optional - you can use any combination as needed
-#   - The 'message' field is not required and can be omitted if you only want other components
+#   - The "message" field is not required and can be omitted if you only want other components
 
 # ------------------------------------------------------
 #                  Messages Prefix
 # ------------------------------------------------------
-prefix: "&8[&#7b68eeSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
+prefix: "&8[&#3498dbSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
 
 # ------------------------------------------------------
 #             Spawner - Player Interaction
 # ------------------------------------------------------
 spawner_activated:
-  message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ &#ab7afdᴀᴄᴛɪᴠᴀᴛᴇᴅ&#e6e6fa! ᴄᴏʟʟᴇᴄᴛ ʟᴏᴏᴛ & xᴘ ᴛʜʀᴏᴜɢʜ ꜱᴘᴀᴡɴᴇʀ ɢᴜɪ."
+  message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ &#3498dbᴀᴄᴛɪᴠᴀᴛᴇᴅ&#e6e6fa! ᴄᴏʟʟᴇᴄᴛ ʟᴏᴏᴛ & xᴘ ᴛʜʀᴏᴜɢʜ ꜱᴘᴀᴡɴᴇʀ ɢᴜɪ."
   sound: block.beacon.activate
 
 spawner_protected:
@@ -49,7 +49,8 @@ no_exp:
   sound: block.note_block.pling
 
 exp_collected:
-  action_bar: "&#37eb9a+%exp% ᴇxᴘ ᴄᴏʟʟᴇᴄᴛᴇᴅ"
+  message: "&#2ecc71+%exp% ᴇxᴘ ᴄᴏʟʟᴇᴄᴛᴇᴅ"
+  action_bar: "&#2ecc71+%exp% ᴇxᴘ ᴄᴏʟʟᴇᴄᴛᴇᴅ"
   sound: entity.experience_orb.pickup
 
 exp_collected_with_mending:
@@ -118,11 +119,7 @@ spawner_stack_full:
   sound: block.note_block.pling
 
 spawner_stack_success:
-  action_bar: '[&#37eb9a&l✓&f] ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ꜱᴛᴀᴄᴋᴇᴅ &#37eb9a%amount% &fꜱᴘᴀᴡɴᴇʀꜱ'
-  sound: entity.player.levelup
-
-spawner_stack_placed:
-  message: '[&#37eb9a&l✓&f] ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴘʟᴀᴄᴇᴅ &#37eb9a%amount% &fꜱᴘᴀᴡɴᴇʀ(ꜱ)'
+  action_bar: "[&#37eb9a&l✓&f] ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ꜱᴛᴀᴄᴋᴇᴅ &#37eb9a%amount% &fꜱᴘᴀᴡɴᴇʀꜱ"
   sound: entity.player.levelup
 
 # ------------------------------------------------------
@@ -195,29 +192,15 @@ no_sellable_items:
   sound: block.note_block.pling
 
 sell_success:
-  message: "&#e6e6faꜱᴏʟᴅ &#f0c857%amount% ɪᴛᴇᴍꜱ&#e6e6fa ꜰᴏʀ &#37eb9a+$%price%"
+  message: "&#e6e6faꜱᴏʟᴅ &#e67e22%amount% ɪᴛᴇᴍꜱ&#e6e6fa ꜰᴏʀ &a+$%price%"
   sound: block.note_block.bell
 
 # ------------------------------------------------------
 #                Plugin command messages
 # ------------------------------------------------------
 no_permission:
-  message: "&#ff5252ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪꜱꜱɪᴏɴ ᴛᴏ ᴅᴏ ᴛʜɪꜱ"
+  message: "&#ff5252ʏᴏᴜ ᴅᴏɴᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪꜱꜱɪᴏɴ ᴛᴏ ᴅᴏ ᴛʜɪꜱ"
   sound: block.note_block.pling
-
-command_usage:
-  message: |
-    &8&m
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    &#7b68ee&l&oSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ &#ab7afd&l&oᴄᴏᴍᴍᴀɴᴅs
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    &#ab7afd» &#e6e6fa/ss reload &#7b68ee- &#a8e6cf&oʀᴇʟᴏᴀᴅ ᴄᴏɴꜰɪɢᴜʀᴀᴛɪᴏɴ
-    &#ab7afd» &#e6e6fa/ss list &#7b68ee- &#dcedc1&oᴏᴘᴇɴ ꜱᴘᴀᴡɴᴇʀ ʟɪꜱᴛ
-    &#ab7afd» &#e6e6fa/ss give &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffd3b6&oɢɪᴠᴇ ꜱᴍᴀʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ
-    &#ab7afd» &#e6e6fa/ss giveVanillaSpawner &#c2a8ff<player> <mobtype> [amount] &#7b68ee- &#ffaaa5&oɢɪᴠᴇ ᴠᴀɴɪʟʟᴀ ꜱᴘᴀᴡɴᴇʀꜱ
-    &#ab7afd» &#e6e6fa/ss hologram &#7b68ee- &#ff8b94&oᴛᴏɢɢʟᴇ ʜᴏʟᴏɢʀᴀᴍ ᴠɪꜱɪʙɪʟɪᴛʏ
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  sound: entity.player.levelup
 
 # Reload command messages
 reload_command_start:
@@ -277,7 +260,7 @@ command_hologram_disabled:
   message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍꜱ &#e05252ᴅɪꜱᴀʙʟᴇᴅ &#f8f8ffꜰᴏʀ ᴀʟʟ ꜱᴘᴀᴡɴᴇʀꜱ"
   sound: block.note_block.bass
 
-# Prices command messages
+# Prices command messagess
 prices_not_available:
   message: "&#ff5252ꜱᴇʟʟ ɪɴᴛᴇɢʀᴀᴛɪᴏɴ ɪꜱ ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ. ᴘʟᴇᴀꜱᴇ ᴄᴏɴꜰɪɢᴜʀᴇ ᴇᴄᴏɴᴏᴍʏ ꜱᴇᴛᴛɪɴɢꜱ."
   sound: block.note_block.pling
@@ -285,18 +268,16 @@ prices_not_available:
 no_priceable_items:
   message: "&#ff5252ɴᴏ ɪᴛᴇᴍꜱ ᴡɪᴛʜ ᴘʀɪᴄᴇꜱ ꜰᴏᴜɴᴅ."
 
-# ------------------------------------------------------
-#             Spawner Management Messages
-# ------------------------------------------------------
+# Spawner management command messages
 spawner_management:
   removed:
-    message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ #&#ab7afd%id% &#ff5252ʀᴇᴍᴏᴠᴇᴅ &#e6e6faꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!"
+    message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ &#ff5252ʀᴇᴍᴏᴠᴇᴅ &#e6e6faꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!"
     sound: entity.item.break
-  
+
   stack_increased:
     message: "&#e6e6faꜱᴛᴀᴄᴋ &#37eb9aɪɴᴄʀᴇᴀꜱᴇᴅ &#e6e6faby &#fce96a%amount% &#e6e6fa- ɴᴇᴡ ꜱɪᴢᴇ: &#37eb9a%new_size%"
     sound: entity.experience_orb.pickup
-  
+
   stack_decreased:
     message: "&#e6e6faꜱᴛᴀᴄᴋ &#ff6b6bᴅᴇᴄʀᴇᴀꜱᴇᴅ &#e6e6faby &#fce96a%amount% &#e6e6fa- ɴᴇᴡ ꜱɪᴢᴇ: &#37eb9a%new_size%"
     sound: entity.experience_orb.pickup
