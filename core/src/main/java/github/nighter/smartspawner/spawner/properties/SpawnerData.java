@@ -116,6 +116,7 @@ public class SpawnerData {
         this.isAtCapacity = false;
         this.stackSize = 1;
         this.lastSpawnTime = System.currentTimeMillis();
+        this.preferredSortItem = null; // Initialize sort preference as null
     }
 
     public void loadConfigurationValues() {

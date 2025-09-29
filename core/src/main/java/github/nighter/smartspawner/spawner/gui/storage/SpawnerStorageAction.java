@@ -589,7 +589,8 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
-        if (!player.hasPermission("smartspawner.storage.sort")) {
+        // Use same permission as storage access
+        if (!player.hasPermission("smartspawner.storage")) {
             messageService.sendMessage(player, "no_permission");
             return;
         }

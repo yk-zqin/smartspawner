@@ -314,6 +314,12 @@ public class VirtualInventory {
         // Clear the sorted cache to force re-sorting with new preference
         this.sortedEntriesCache = null;
         
+        // Only proceed if we have items to sort
+        if (consolidatedItems.isEmpty()) {
+            this.displayCacheDirty = true;
+            return;
+        }
+        
         // Generate new sorted entries with preference
         if (preferredMaterial != null) {
             this.sortedEntriesCache = consolidatedItems.entrySet().stream()
