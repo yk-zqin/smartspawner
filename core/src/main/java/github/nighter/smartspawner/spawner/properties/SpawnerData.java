@@ -92,6 +92,10 @@ public class SpawnerData {
     @Getter @Setter
     private long cachedSpawnDelay = 0;
 
+    // Sort preference for spawner storage
+    @Getter @Setter
+    private Material preferredSortItem;
+
     public SpawnerData(String id, Location location, EntityType type, SmartSpawner plugin) {
         this.plugin = plugin;
         this.spawnerId = id;

@@ -6,6 +6,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class VirtualInventory {
     private final Map<ItemSignature, Long> consolidatedItems;
@@ -301,5 +302,40 @@ public class VirtualInventory {
 
     public boolean isDirty() {
         return displayCacheDirty;
+    }
+
+    /**
+     * Sorts items with the specified material type prioritized first.
+     * This method optimizes by only invalidating caches when necessary.
+     * 
+     * @param preferredMaterial The material to sort first, or null for no preference
+     */
+    public void sortItems(org.bukkit.Material preferredMaterial) {
+        // Clear the sorted cache to force re-sorting with new preference
+        this.sortedEntriesCache = null;
+        
+        // Generate new sorted entries with preference
+        if (preferredMaterial != null) {
+            this.sortedEntriesCache = consolidatedItems.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    boolean e1Preferred = e1.getKey().getTemplate().getType() == preferredMaterial;
+                    boolean e2Preferred = e2.getKey().getTemplate().getType() == preferredMaterial;
+                    
+                    if (e1Preferred && !e2Preferred) return -1;
+                    if (!e1Preferred && e2Preferred) return 1;
+                    
+                    // Both preferred or both not preferred, sort by material name
+                    return e1.getKey().getMaterialName().compareTo(e2.getKey().getMaterialName());
+                })
+                .collect(java.util.stream.Collectors.toList());
+        } else {
+            // No preference, sort alphabetically by material name
+            this.sortedEntriesCache = consolidatedItems.entrySet().stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getMaterialName()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        // Mark display cache as dirty to force regeneration
+        this.displayCacheDirty = true;
     }
 }
