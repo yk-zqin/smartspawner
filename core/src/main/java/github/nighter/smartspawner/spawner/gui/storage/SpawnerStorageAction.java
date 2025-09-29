@@ -39,6 +39,7 @@ import org.bukkit.entity.Item;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
@@ -162,8 +163,8 @@ public class SpawnerStorageAction implements Listener {
         }
 
         switch (action) {
-            case "discard_all":
-                handleDiscardAllItems(player, spawner, inventory);
+            case "sort_items":
+                handleSortItemsClick(player, spawner, inventory);
                 break;
             case "item_filter":
                 openFilterConfig(player, spawner);
@@ -217,8 +218,8 @@ public class SpawnerStorageAction implements Listener {
         String buttonType = buttonTypeOpt.get();
 
         switch (buttonType) {
-            case "discard_all":
-                handleDiscardAllItems(player, spawner, inventory);
+            case "sort_items":
+                handleSortItemsClick(player, spawner, inventory);
                 break;
             case "item_filter":
                 openFilterConfig(player, spawner);
@@ -582,6 +583,84 @@ public class SpawnerStorageAction implements Listener {
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("amount", languageManager.formatNumber(totalItems));
         messageService.sendMessage(player, "discard_all_success", placeholders);
+        if (!spawner.isInteracted()) {
+            spawner.markInteracted();
+        }
+    }
+
+    private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
+        // Use same permission as storage access
+        if (!player.hasPermission("smartspawner.storage")) {
+            messageService.sendMessage(player, "no_permission");
+            return;
+        }
+
+        // Get available loot items
+        if (spawner.getLootConfig() == null || spawner.getLootConfig().getLootItems() == null) {
+            return; // No items to sort by
+        }
+
+        var lootItems = spawner.getLootConfig().getLootItems();
+        if (lootItems.isEmpty()) {
+            return; // No items to sort by
+        }
+
+        // Get current sort item
+        Material currentSort = spawner.getPreferredSortItem();
+        
+        // Find next sort item in the list
+        Material nextSort = null;
+        boolean foundCurrent = false;
+        
+        // Sort items for consistent ordering
+        var sortedLoot = lootItems.stream()
+            .map(item -> item.getMaterial())
+            .sorted(Comparator.comparing(Material::name))
+            .collect(Collectors.toList());
+        
+        if (currentSort == null) {
+            // No current sort, select first item
+            nextSort = sortedLoot.get(0);
+        } else {
+            // Find current item and select next one
+            for (int i = 0; i < sortedLoot.size(); i++) {
+                if (sortedLoot.get(i) == currentSort) {
+                    // Found current, get next (or wrap to first)
+                    nextSort = sortedLoot.get((i + 1) % sortedLoot.size());
+                    foundCurrent = true;
+                    break;
+                }
+            }
+            
+            // If current sort item is not in the loot list anymore, reset to first
+            if (!foundCurrent) {
+                nextSort = sortedLoot.get(0);
+            }
+        }
+
+        // Set new sort preference
+        spawner.setPreferredSortItem(nextSort);
+        
+        // Mark spawner as modified to save the preference
+        spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
+
+        // Re-sort the virtual inventory
+        spawner.getVirtualInventory().sortItems(nextSort);
+
+        // Update the display
+        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
+        if (holder != null) {
+            updatePageContent(player, spawner, holder.getCurrentPage(), inventory, false);
+        }
+
+        // Play sound and show feedback
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.2f);
+        
+        String itemName = languageManager.getVanillaItemName(nextSort);
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("item", itemName);
+        messageService.sendMessage(player, "sort_changed", placeholders);
+        
         if (!spawner.isInteracted()) {
             spawner.markInteracted();
         }

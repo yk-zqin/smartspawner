@@ -198,10 +198,16 @@ item_filter_button:
   lore:
     - '&#3498db⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴄᴏɴꜰɪɢᴜʀᴇ'
 
-discard_all_button:
-  name: '&#ff5252ᴅɪꜱᴄᴀʀᴅ ᴀʟʟ ɪᴛᴇᴍꜱ'
+sort_items_button:
+  name: '&#ffd700ꜱᴏʀᴛ ɪᴛᴇᴍꜱ'
   lore:
-    - '&#e63939⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ &#ff5252ʀᴇᴍᴏᴠᴇ&#f8f8ff ᴀʟʟ ɪᴛᴇᴍꜱ'
+    - '&#ffd700◈ ᴄᴜʀʀᴇɴᴛ ꜱᴏʀᴛ:'
+    - '  %current_sort_item%'
+    - ''
+    - '&#ffd700◈ ᴀᴠᴀɪʟᴀʙʟᴇ ɪᴛᴇᴍꜱ:'
+    - '%available_items%'
+    - ''
+    - '&#ffd700⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴄʏᴄʟᴇ ꜱᴏʀᴛ ᴏᴘᴛɪᴏɴ'
 
 drop_page_button:
   name: '&#607D8Bᴅʀᴏᴘ ᴀʟʟ ɪᴛᴇᴍꜱ'

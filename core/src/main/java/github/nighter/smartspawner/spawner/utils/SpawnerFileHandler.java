@@ -194,6 +194,10 @@ public class SpawnerFileHandler {
                 // Save last interacted player separately
                 spawnerData.set(path + ".lastInteractedPlayer", spawner.getLastInteractedPlayer());
 
+                // Save preferred sort item
+                spawnerData.set(path + ".preferredSortItem", spawner.getPreferredSortItem() != null ?
+                        spawner.getPreferredSortItem().name() : null);
+
                 Set<Material> filteredItems = spawner.getFilteredItems();
                 if (filteredItems != null && !filteredItems.isEmpty()) {
                     List<String> materials = filteredItems.stream()
@@ -440,6 +444,17 @@ public class SpawnerFileHandler {
         // Load last interacted player
         String lastInteractedPlayer = spawnerData.getString(path + ".lastInteractedPlayer");
         spawner.setLastInteractedPlayer(lastInteractedPlayer);
+
+        // Load preferred sort item
+        String preferredSortItemStr = spawnerData.getString(path + ".preferredSortItem");
+        if (preferredSortItemStr != null && !preferredSortItemStr.isEmpty()) {
+            try {
+                Material preferredSortItem = Material.valueOf(preferredSortItemStr);
+                spawner.setPreferredSortItem(preferredSortItem);
+            } catch (IllegalArgumentException e) {
+                logger.warning("Invalid preferred sort item for spawner " + spawnerId + ": " + preferredSortItemStr);
+            }
+        }
         
         return spawner;
     }

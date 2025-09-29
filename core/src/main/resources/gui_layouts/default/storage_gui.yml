@@ -10,10 +10,10 @@ buttons:
     material: SPECTRAL_ARROW
     enabled: true
 
-  # Discard all items button
-  discard_all:
+  # Item sort button (replaces discard all)
+  sort_items:
     slot: 3
-    material: CAULDRON
+    material: COMPARATOR
     enabled: true
 
   # Item filter configuration button

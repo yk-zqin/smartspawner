@@ -18,6 +18,7 @@ import org.bukkit.Material;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class SpawnerStorageUI {
     private static final int INVENTORY_SIZE = 54;
@@ -90,13 +91,13 @@ public class SpawnerStorageUI {
             ));
         }
 
-        // Create discard all button
-        GuiButton discardAllButton = layout.getButton("discard_all");
-        if (discardAllButton != null) {
-            staticButtons.put("discardAll", createButton(
-                    discardAllButton.getMaterial(),
-                    languageManager.getGuiItemName("discard_all_button.name"),
-                    languageManager.getGuiItemLoreAsList("discard_all_button.lore")
+        // Create sort items button
+        GuiButton sortItemsButton = layout.getButton("sort_items");
+        if (sortItemsButton != null) {
+            staticButtons.put("sortItems", createButton(
+                    sortItemsButton.getMaterial(),
+                    languageManager.getGuiItemName("sort_items_button.name"),
+                    languageManager.getGuiItemLoreAsList("sort_items_button.lore")
             ));
         }
 
@@ -264,10 +265,11 @@ public class SpawnerStorageUI {
             updates.put(takeAllButton.getSlot(), staticButtons.get("takeAll"));
         }
 
-        // Add discard all button if enabled
-        if (layout.hasButton("discard_all")) {
-            GuiButton discardAllButton = layout.getButton("discard_all");
-            updates.put(discardAllButton.getSlot(), staticButtons.get("discardAll"));
+        // Add sort items button if enabled
+        if (layout.hasButton("sort_items")) {
+            GuiButton sortItemsButton = layout.getButton("sort_items");
+            ItemStack sortButton = createSortButton(spawner, sortItemsButton.getMaterial());
+            updates.put(sortItemsButton.getSlot(), sortButton);
         }
 
         // Add drop page button if enabled
@@ -336,6 +338,43 @@ public class SpawnerStorageUI {
     private ItemStack createSellButton(Material material) {
         String name = languageManager.getGuiItemName("sell_button.name");
         List<String> lore = languageManager.getGuiItemLoreAsList("sell_button.lore");
+        return createButton(material, name, lore);
+    }
+
+    private ItemStack createSortButton(SpawnerData spawner, Material material) {
+        Map<String, String> placeholders = new HashMap<>();
+        
+        // Get current sort item
+        Material currentSort = spawner.getPreferredSortItem();
+        String currentSortName = currentSort != null ? 
+            languageManager.getVanillaItemName(currentSort) : "&#f8f8ffNone";
+        placeholders.put("current_sort_item", "  &#37eb9a• " + currentSortName);
+        
+        // Get available items from spawner drops
+        StringBuilder availableItems = new StringBuilder();
+        if (spawner.getLootConfig() != null && spawner.getLootConfig().getLootItems() != null) {
+            boolean first = true;
+            var sortedLoot = spawner.getLootConfig().getLootItems().stream()
+                .sorted(Comparator.comparing(item -> item.getMaterial().name()))
+                .collect(java.util.stream.Collectors.toList());
+                
+            for (var lootItem : sortedLoot) {
+                if (!first) availableItems.append("\n");
+                String itemName = languageManager.getVanillaItemName(lootItem.getMaterial());
+                String color = currentSort == lootItem.getMaterial() ? "&#37eb9a" : "&#bdc3c7";
+                availableItems.append("  ").append(color).append("• ").append(itemName);
+                first = false;
+            }
+        }
+        
+        if (availableItems.length() == 0) {
+            availableItems.append("  &#bdc3c7• None");
+        }
+        
+        placeholders.put("available_items", availableItems.toString());
+        
+        String name = languageManager.getGuiItemName("sort_items_button.name", placeholders);
+        List<String> lore = languageManager.getItemLoreWithMultilinePlaceholders("sort_items_button.lore", placeholders);
         return createButton(material, name, lore);
     }
 

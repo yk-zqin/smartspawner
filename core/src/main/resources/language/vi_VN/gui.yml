@@ -145,10 +145,16 @@ item_filter_button:
   lore:
     - '&#7b68ee⊳ &#f8f8ffɴʜấᴘ ᴠàᴏ để ᴄàɪ đặᴛ'
 
-discard_all_button:
-  name: '&#ff5252ʟᴏạɪ ʙỏ ᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ'
+sort_items_button:
+  name: '&#ffd700sắᴘ xếᴘ ᴠậᴛ ᴘʜẩᴍ'
   lore:
-    - '&#e63939⊳ &#f8f8ffɴʜấᴘ để &#ff5252xóᴀ&#f8f8ff ᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ'
+    - '&#ffd700◈ ᴄáᴄʜ sắᴘ xếᴘ ʜɪệɴ ᴛạɪ:'
+    - '  %current_sort_item%'
+    - ''
+    - '&#ffd700◈ ᴠậᴛ ᴘʜẩᴍ ᴄó sẵɴ:'
+    - '%available_items%'
+    - ''
+    - '&#ffd700⊳ &#f8f8ffɴʜấᴘ để ᴄʜuyểɴ đổɪ ᴄáᴄʜ sắᴘ xếᴘ'
 
 drop_page_button:
   name: '&#7b68eeᴛʜả đồ'
@@ -358,3 +364,16 @@ price_item:
     - '&#d9b50c◈ &#fce96aɢɪá ᴄʜɪ ᴛɪếᴛ:'
     - '  &#f8f8ff•  ᴛùʏ ᴄʜỉɴʜ: &#37eb9a$%custom_price%'
     - '  &#f8f8ff•  ᴄửᴀ ʜàɴɢ: &#37eb9a$%shop_price%'
+
+# ---------------------------------------------------
+#                  Bedrock GUI
+# ---------------------------------------------------
+bedrock:
+  main_gui:
+    title_single_spawner: 'ʟồɴɢ sᴘᴀᴡɴ %entity%'
+    title_stacked_spawner: '%amount% ʟồɴɢ sᴘᴀᴡɴ %entity%'
+
+    button_names:
+      storage: Mở ᴋʜᴏ ᴄʜứᴀ
+      exp: Thu ᴛʜậᴘ XP
+      stacker: Qᴜảɴ ʟý xếᴘ ᴄʜồɴɢ
