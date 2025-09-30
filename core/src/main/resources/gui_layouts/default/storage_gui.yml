@@ -13,7 +13,7 @@ buttons:
   # Item sort button (replaces discard all)
   sort_items:
     slot: 3
-    material: COMPARATOR
+    material: CAULDRON
     enabled: true
 
   # Item filter configuration button

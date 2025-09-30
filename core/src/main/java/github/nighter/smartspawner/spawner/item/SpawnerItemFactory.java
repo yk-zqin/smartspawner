@@ -5,6 +5,9 @@ import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.loot.EntityLootRegistry;
 import github.nighter.smartspawner.spawner.loot.LootItem;
+import io.lumine.mythic.bukkit.utils.lib.jooq.True;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
@@ -18,8 +21,6 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP;
 
 /**
  * Factory class for creating spawner items with optimized caching
@@ -199,8 +200,7 @@ public class SpawnerItemFactory {
             }
 
             // Hide enchants and attributes
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                    HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
 
             // Add hidden tag to identify as smart spawner
 //            meta.getPersistentDataContainer().set(
@@ -210,6 +210,10 @@ public class SpawnerItemFactory {
 //            );
 
             spawner.setItemMeta(meta);
+            spawner.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
+                    .addHiddenComponents(DataComponentTypes.ATTRIBUTE_MODIFIERS)
+                    .build()
+            );
         }
 
         // Cache the item for future use (only for single items)
@@ -284,8 +288,7 @@ public class SpawnerItemFactory {
                 meta.setLore(lore);
 
                 // If we have custom lore, then also add the item flags to hide attributes
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
-                        HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
             }
 
             // Add hidden tag to identify as vanilla spawner

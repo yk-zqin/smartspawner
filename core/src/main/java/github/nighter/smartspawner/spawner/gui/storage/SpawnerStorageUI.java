@@ -343,38 +343,35 @@ public class SpawnerStorageUI {
 
     private ItemStack createSortButton(SpawnerData spawner, Material material) {
         Map<String, String> placeholders = new HashMap<>();
-        
+
         // Get current sort item
         Material currentSort = spawner.getPreferredSortItem();
-        String currentSortName = currentSort != null ? 
-            languageManager.getVanillaItemName(currentSort) : "&#f8f8ffNone";
-        placeholders.put("current_sort_item", "  &#37eb9a• " + currentSortName);
-        
+
         // Get available items from spawner drops
         StringBuilder availableItems = new StringBuilder();
-        if (spawner.getLootConfig() != null && spawner.getLootConfig().getLootItems() != null) {
+        if (spawner.getLootConfig() != null && spawner.getLootConfig().getAllItems() != null) {
             boolean first = true;
-            var sortedLoot = spawner.getLootConfig().getLootItems().stream()
+            var sortedLoot = spawner.getLootConfig().getAllItems().stream()
                 .sorted(Comparator.comparing(item -> item.getMaterial().name()))
-                .collect(java.util.stream.Collectors.toList());
-                
+                .toList();
+
             for (var lootItem : sortedLoot) {
                 if (!first) availableItems.append("\n");
                 String itemName = languageManager.getVanillaItemName(lootItem.getMaterial());
-                String color = currentSort == lootItem.getMaterial() ? "&#37eb9a" : "&#bdc3c7";
-                availableItems.append("  ").append(color).append("• ").append(itemName);
+                String color = currentSort == lootItem.getMaterial() ? "&#00F986" : "&#f8f8ff";
+                availableItems.append(color).append("• ").append(itemName);
                 first = false;
             }
         }
-        
-        if (availableItems.length() == 0) {
-            availableItems.append("  &#bdc3c7• None");
+
+        if (availableItems.isEmpty()) {
+            availableItems.append("&#bdc3c7• None");
         }
-        
+
         placeholders.put("available_items", availableItems.toString());
-        
+
         String name = languageManager.getGuiItemName("sort_items_button.name", placeholders);
-        List<String> lore = languageManager.getItemLoreWithMultilinePlaceholders("sort_items_button.lore", placeholders);
+        List<String> lore = languageManager.getGuiItemLoreWithMultilinePlaceholders("sort_items_button.lore", placeholders);
         return createButton(material, name, lore);
     }
 

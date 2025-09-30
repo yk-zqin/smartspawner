@@ -281,10 +281,3 @@ spawner_management:
   stack_decreased:
     message: "&#e6e6faꜱᴛᴀᴄᴋ &#ff6b6bᴅᴇᴄʀᴇᴀꜱᴇᴅ &#e6e6faby &#fce96a%amount% &#e6e6fa- ɴᴇᴡ ꜱɪᴢᴇ: &#37eb9a%new_size%"
     sound: entity.experience_orb.pickup
-
-# ------------------------------------------------------
-#             Spawner Storage - Sort Messages
-# ------------------------------------------------------
-sort_changed:
-  message: "&#ffd700ɪᴛᴇᴍ ꜱᴏʀᴛ ᴄʜᴀɴɢᴇᴅ ᴛᴏ: &#f8f8ff%item%"
-  sound: entity.experience_orb.pickup

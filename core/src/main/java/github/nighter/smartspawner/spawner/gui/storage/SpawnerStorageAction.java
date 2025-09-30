@@ -11,6 +11,7 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
+import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
 import github.nighter.smartspawner.language.LanguageManager;
@@ -589,59 +590,57 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
-        // Use same permission as storage access
-        if (!player.hasPermission("smartspawner.storage")) {
-            messageService.sendMessage(player, "no_permission");
+        // Validate loot config
+        if (spawner.getLootConfig() == null || spawner.getLootConfig().getAllItems() == null) {
             return;
         }
 
-        // Get available loot items
-        if (spawner.getLootConfig() == null || spawner.getLootConfig().getLootItems() == null) {
-            return; // No items to sort by
-        }
-
-        var lootItems = spawner.getLootConfig().getLootItems();
+        var lootItems = spawner.getLootConfig().getAllItems();
         if (lootItems.isEmpty()) {
-            return; // No items to sort by
+            return;
         }
 
         // Get current sort item
         Material currentSort = spawner.getPreferredSortItem();
-        
-        // Find next sort item in the list
-        Material nextSort = null;
-        boolean foundCurrent = false;
-        
-        // Sort items for consistent ordering
+
+        // Build sorted list of available materials
         var sortedLoot = lootItems.stream()
-            .map(item -> item.getMaterial())
-            .sorted(Comparator.comparing(Material::name))
-            .collect(Collectors.toList());
-        
+                .map(LootItem::getMaterial)
+                .distinct() // Remove duplicates if any
+                .sorted(Comparator.comparing(Material::name))
+                .toList();
+
+        if (sortedLoot.isEmpty()) {
+            return;
+        }
+
+        // Find next sort item
+        Material nextSort;
+
         if (currentSort == null) {
             // No current sort, select first item
-            nextSort = sortedLoot.get(0);
+            nextSort = sortedLoot.getFirst();
         } else {
-            // Find current item and select next one
-            for (int i = 0; i < sortedLoot.size(); i++) {
-                if (sortedLoot.get(i) == currentSort) {
-                    // Found current, get next (or wrap to first)
-                    nextSort = sortedLoot.get((i + 1) % sortedLoot.size());
-                    foundCurrent = true;
-                    break;
-                }
-            }
-            
-            // If current sort item is not in the loot list anymore, reset to first
-            if (!foundCurrent) {
-                nextSort = sortedLoot.get(0);
+            // Find current item index
+            int currentIndex = sortedLoot.indexOf(currentSort);
+
+            if (currentIndex == -1) {
+                // Current sort item not in list anymore, reset to first
+                nextSort = sortedLoot.getFirst();
+            } else {
+                // Select next item (wrap around to first if at end)
+                int nextIndex = (currentIndex + 1) % sortedLoot.size();
+                nextSort = sortedLoot.get(nextIndex);
             }
         }
 
         // Set new sort preference
         spawner.setPreferredSortItem(nextSort);
-        
+
         // Mark spawner as modified to save the preference
+        if (!spawner.isInteracted()) {
+            spawner.markInteracted();
+        }
         spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
 
         // Re-sort the virtual inventory
@@ -655,15 +654,6 @@ public class SpawnerStorageAction implements Listener {
 
         // Play sound and show feedback
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.2f);
-        
-        String itemName = languageManager.getVanillaItemName(nextSort);
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("item", itemName);
-        messageService.sendMessage(player, "sort_changed", placeholders);
-        
-        if (!spawner.isInteracted()) {
-            spawner.markInteracted();
-        }
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {

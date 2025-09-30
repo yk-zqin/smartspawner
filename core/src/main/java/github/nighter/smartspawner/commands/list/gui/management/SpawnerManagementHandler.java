@@ -114,6 +114,8 @@ public class SpawnerManagementHandler implements Listener {
         }
 
         // Remove from manager and save
+        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
+        spawnerManager.markSpawnerDeleted(spawner.getSpawnerId());
         spawnerManager.removeSpawner(spawner.getSpawnerId());
 
         Map<String, String> placeholders = new HashMap<>();

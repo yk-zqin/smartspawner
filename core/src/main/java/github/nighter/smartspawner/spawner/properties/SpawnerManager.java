@@ -210,6 +210,10 @@ public class SpawnerManager {
         spawnerFileHandler.markSpawnerModified(spawnerId);
     }
 
+    public void markSpawnerDeleted(String spawnerId) {
+        spawnerFileHandler.markSpawnerDeleted(spawnerId);
+    }
+
     /**
      * Immediately queues a spawner for saving
      *
