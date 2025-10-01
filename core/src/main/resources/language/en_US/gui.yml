@@ -204,6 +204,9 @@ sort_items_button:
     - '%available_items%'
     - ''
     - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜱᴏʀᴛ'
+  selected_item: '&#00F986• %item_name%'
+  unselected_item: '&#f8f8ff• %item_name%'
+  none_text: '&#bdc3c7• None'
 
 drop_page_button:
   name: '&#607D8Bᴅʀᴏᴘ ᴀʟʟ ɪᴛᴇᴍꜱ'
