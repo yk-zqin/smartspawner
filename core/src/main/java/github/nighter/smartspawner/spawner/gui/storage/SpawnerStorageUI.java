@@ -347,10 +347,10 @@ public class SpawnerStorageUI {
         // Get current sort item
         Material currentSort = spawner.getPreferredSortItem();
 
-        // Get colors from configuration
-        String selectedColor = languageManager.getColorCode("sort_items_button.selected_color");
-        String unselectedColor = languageManager.getColorCode("sort_items_button.unselected_color");
-        String noneColor = languageManager.getColorCode("sort_items_button.none_color");
+        // Get format strings from configuration
+        String selectedItemFormat = languageManager.getGuiItemName("sort_items_button.selected_item");
+        String unselectedItemFormat = languageManager.getGuiItemName("sort_items_button.unselected_item");
+        String noneText = languageManager.getGuiItemName("sort_items_button.none_text");
 
         // Get available items from spawner drops
         StringBuilder availableItems = new StringBuilder();
@@ -363,14 +363,17 @@ public class SpawnerStorageUI {
             for (var lootItem : sortedLoot) {
                 if (!first) availableItems.append("\n");
                 String itemName = languageManager.getVanillaItemName(lootItem.getMaterial());
-                String color = currentSort == lootItem.getMaterial() ? selectedColor : unselectedColor;
-                availableItems.append(color).append("• ").append(itemName);
+                String format = currentSort == lootItem.getMaterial() ? selectedItemFormat : unselectedItemFormat;
+                
+                // Replace %item_name% placeholder in format string
+                String formattedItem = format.replace("%item_name%", itemName);
+                availableItems.append(formattedItem);
                 first = false;
             }
         }
 
         if (availableItems.isEmpty()) {
-            availableItems.append(noneColor).append("• None");
+            availableItems.append(noneText);
         }
 
         placeholders.put("available_items", availableItems.toString());
