@@ -590,6 +590,10 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
+        if (isClickTooFrequent(player)) {
+            return;
+        }
+
         // Validate loot config
         if (spawner.getLootConfig() == null || spawner.getLootConfig().getAllItems() == null) {
             return;
