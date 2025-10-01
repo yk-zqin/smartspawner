@@ -77,13 +77,9 @@ public class SpawnerManagementGUI {
             meta.setDisplayName(languageManager.getGuiItemName(langKey + ".name"));
             List<String> lore = Arrays.asList(languageManager.getGuiItemLore(langKey + ".lore"));
             meta.setLore(lore);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                    ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
             item.setItemMeta(meta);
-            item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
-                            .addHiddenComponents(DataComponentTypes.BLOCK_DATA)
-                            .addHiddenComponents(DataComponentTypes.TOOLTIP_DISPLAY)
-                            .build()
-            );
         }
         inv.setItem(slot, item);
     }

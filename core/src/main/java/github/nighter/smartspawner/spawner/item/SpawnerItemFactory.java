@@ -200,7 +200,7 @@ public class SpawnerItemFactory {
             }
 
             // Hide enchants and attributes
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
             // Add hidden tag to identify as smart spawner
 //            meta.getPersistentDataContainer().set(
@@ -210,10 +210,6 @@ public class SpawnerItemFactory {
 //            );
 
             spawner.setItemMeta(meta);
-            spawner.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
-                    .addHiddenComponents(DataComponentTypes.ATTRIBUTE_MODIFIERS)
-                    .build()
-            );
         }
 
         // Cache the item for future use (only for single items)
@@ -288,7 +284,8 @@ public class SpawnerItemFactory {
                 meta.setLore(lore);
 
                 // If we have custom lore, then also add the item flags to hide attributes
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES,
+                        ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_UNBREAKABLE);
             }
 
             // Add hidden tag to identify as vanilla spawner
