@@ -682,6 +682,35 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
+        // Initialize sort preference on first open
+        Material currentSort = spawner.getPreferredSortItem();
+        if (currentSort == null && spawner.getLootConfig() != null && spawner.getLootConfig().getAllItems() != null) {
+            var lootItems = spawner.getLootConfig().getAllItems();
+            if (!lootItems.isEmpty()) {
+                var sortedLoot = lootItems.stream()
+                    .map(LootItem::getMaterial)
+                    .distinct()
+                    .sorted(Comparator.comparing(Material::name))
+                    .toList();
+                
+                if (!sortedLoot.isEmpty()) {
+                    Material firstItem = sortedLoot.getFirst();
+                    spawner.setPreferredSortItem(firstItem);
+                    currentSort = firstItem;
+                    
+                    if (!spawner.isInteracted()) {
+                        spawner.markInteracted();
+                    }
+                    spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
+                }
+            }
+        }
+        
+        // Apply sort to virtual inventory if a sort preference exists
+        if (currentSort != null) {
+            spawner.getVirtualInventory().sortItems(currentSort);
+        }
+
         Inventory pageInventory = lootManager.createInventory(spawner, title, page, totalPages);
 
         openStorageInventories.put(playerId, pageInventory);

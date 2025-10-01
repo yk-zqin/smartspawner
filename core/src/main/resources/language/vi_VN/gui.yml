@@ -155,6 +155,9 @@ sort_items_button:
     - '%available_items%'
     - ''
     - '&#ffd700⊳ &#f8f8ffɴʜấᴘ để ᴄʜuyểɴ đổɪ ᴄáᴄʜ sắᴘ xếᴘ'
+  selected_color: '&#ffd700'
+  unselected_color: '&#f8f8ff'
+  none_color: '&#bdc3c7'
 
 drop_page_button:
   name: '&#7b68eeᴛʜả đồ'

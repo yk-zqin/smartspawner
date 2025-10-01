@@ -347,6 +347,11 @@ public class SpawnerStorageUI {
         // Get current sort item
         Material currentSort = spawner.getPreferredSortItem();
 
+        // Get colors from configuration
+        String selectedColor = languageManager.getColorCode("sort_items_button.selected_color");
+        String unselectedColor = languageManager.getColorCode("sort_items_button.unselected_color");
+        String noneColor = languageManager.getColorCode("sort_items_button.none_color");
+
         // Get available items from spawner drops
         StringBuilder availableItems = new StringBuilder();
         if (spawner.getLootConfig() != null && spawner.getLootConfig().getAllItems() != null) {
@@ -358,14 +363,14 @@ public class SpawnerStorageUI {
             for (var lootItem : sortedLoot) {
                 if (!first) availableItems.append("\n");
                 String itemName = languageManager.getVanillaItemName(lootItem.getMaterial());
-                String color = currentSort == lootItem.getMaterial() ? "&#00F986" : "&#f8f8ff";
+                String color = currentSort == lootItem.getMaterial() ? selectedColor : unselectedColor;
                 availableItems.append(color).append("• ").append(itemName);
                 first = false;
             }
         }
 
         if (availableItems.isEmpty()) {
-            availableItems.append("&#bdc3c7• None");
+            availableItems.append(noneColor).append("• None");
         }
 
         placeholders.put("available_items", availableItems.toString());

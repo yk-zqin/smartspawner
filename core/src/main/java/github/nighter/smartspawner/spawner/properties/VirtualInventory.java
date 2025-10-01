@@ -19,6 +19,7 @@ public class VirtualInventory {
     private boolean metricsCacheDirty;
     // Cache sorted entries to avoid resorting when display isn't changing
     private List<Map.Entry<ItemSignature, Long>> sortedEntriesCache;
+    private org.bukkit.Material preferredSortMaterial;
 
     // Add an LRU cache for expensive item operations
     private static final int ITEM_CACHE_SIZE = 128;
@@ -39,6 +40,7 @@ public class VirtualInventory {
         this.usedSlotsCache = 0;
         this.totalItemsCache = 0;
         this.sortedEntriesCache = null;
+        this.preferredSortMaterial = null;
     }
 
     public static class ItemSignature {
@@ -219,8 +221,22 @@ public class VirtualInventory {
         // Get and sort the items - only use cached sort result if available
         if (sortedEntriesCache == null) {
             sortedEntriesCache = new ArrayList<>(consolidatedItems.entrySet());
-            // Use optimized comparator based on cached material name
-            sortedEntriesCache.sort(Comparator.comparing(e -> e.getKey().getMaterialName()));
+            // Apply preferred sort if set, otherwise sort alphabetically
+            if (preferredSortMaterial != null) {
+                sortedEntriesCache.sort((e1, e2) -> {
+                    boolean e1Preferred = e1.getKey().getTemplate().getType() == preferredSortMaterial;
+                    boolean e2Preferred = e2.getKey().getTemplate().getType() == preferredSortMaterial;
+                    
+                    if (e1Preferred && !e2Preferred) return -1;
+                    if (!e1Preferred && e2Preferred) return 1;
+                    
+                    // Both preferred or both not preferred, sort by material name
+                    return e1.getKey().getMaterialName().compareTo(e2.getKey().getMaterialName());
+                });
+            } else {
+                // Use optimized comparator based on cached material name
+                sortedEntriesCache.sort(Comparator.comparing(e -> e.getKey().getMaterialName()));
+            }
         }
 
         // Process items directly to the display inventory
@@ -311,6 +327,9 @@ public class VirtualInventory {
      * @param preferredMaterial The material to sort first, or null for no preference
      */
     public void sortItems(org.bukkit.Material preferredMaterial) {
+        // Store the preferred material for future cache rebuilds
+        this.preferredSortMaterial = preferredMaterial;
+        
         // Clear the sorted cache to force re-sorting with new preference
         this.sortedEntriesCache = null;
         
