@@ -377,10 +377,10 @@ price_item:
 # ---------------------------------------------------
 bedrock:
   main_gui:
-    title_single_spawner: ꜱᴘᴀᴡɴᴇʀ %entity%
-    title_stacked_spawner: '%amount% ꜱᴘᴀᴡɴᴇʀ %entity%'
+    title_single_spawner: Spawner %entity%
+    title_stacked_spawner: '%amount% Spawner %entity%'
 
     button_names:
-      storage: ᴍở ᴋʜᴏ ꜱᴘᴀᴡɴᴇʀ
-      exp: ᴛʜᴜ ᴛʜậᴘ xᴘ
-      stacker: ǫᴜᴀ̉ɴ ʟʏ́ xếᴘ ᴄʜồɴɢ
+      storage: Mở kho spawner
+      exp: Thu thập kinh nghiệm
+      stacker: Stack spawner

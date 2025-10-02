@@ -21,7 +21,6 @@ import github.nighter.smartspawner.hooks.IntegrationManager;
 import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.migration.SpawnerDataMigration;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayoutConfig;
-import github.nighter.smartspawner.spawner.gui.main.ItemCache;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuAction;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuFormUI;
@@ -86,7 +85,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     // Core UI components
     private GuiLayoutConfig guiLayoutConfig;
     private SpawnerMenuUI spawnerMenuUI;
-    // private SpawnerMenuFormUI spawnerMenuFormUI;
+    private SpawnerMenuFormUI spawnerMenuFormUI;
     private SpawnerStorageUI spawnerStorageUI;
     private FilterConfigUI filterConfigUI;
     private SpawnerStackerUI spawnerStackerUI;
@@ -237,7 +236,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.filterConfigUI = new FilterConfigUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
-        // this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
+        this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.spawnerSellManager = new SpawnerSellManager(this);
