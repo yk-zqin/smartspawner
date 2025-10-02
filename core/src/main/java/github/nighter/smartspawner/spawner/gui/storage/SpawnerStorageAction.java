@@ -282,7 +282,7 @@ public class SpawnerStorageAction implements Listener {
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         List<ItemStack> itemsToRemove = new ArrayList<>();
         itemsToRemove.add(droppedItem);
-        virtualInv.removeItems(itemsToRemove);
+        spawner.removeItemsAndUpdateSellValue(itemsToRemove);
 
         int remaining = item.getAmount() - amountToDrop;
         if (remaining <= 0) {
@@ -363,7 +363,7 @@ public class SpawnerStorageAction implements Listener {
         }
 
         VirtualInventory virtualInv = spawner.getVirtualInventory();
-        virtualInv.removeItems(pageItems);
+        spawner.removeItemsAndUpdateSellValue(pageItems);
 
         dropItemsInDirection(player, pageItems);
 
@@ -445,7 +445,7 @@ public class SpawnerStorageAction implements Listener {
         );
         if (result.getAmountMoved() > 0) {
             updateInventorySlot(sourceInv, slot, item, result.getAmountMoved());
-            virtualInv.removeItems(result.getMovedItems());
+            spawner.removeItemsAndUpdateSellValue(result.getMovedItems());
             player.updateInventory();
 
             spawner.updateHologramData();
@@ -767,8 +767,8 @@ public class SpawnerStorageAction implements Listener {
         }
 
         if (!itemsToRemove.isEmpty()) {
-            virtualInv.removeItems(itemsToRemove);
             StoragePageHolder holder = (StoragePageHolder) sourceInventory.getHolder(false);
+            holder.getSpawnerData().removeItemsAndUpdateSellValue(itemsToRemove);
             holder.getSpawnerData().updateHologramData();
             holder.updateOldUsedSlots();
         }

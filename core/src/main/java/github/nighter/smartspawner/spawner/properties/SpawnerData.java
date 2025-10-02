@@ -87,6 +87,11 @@ public class SpawnerData {
     private SellResult lastSellResult;
     @Getter
     private boolean lastSellProcessed;
+    
+    // Accumulated sell value for optimization
+    @Getter
+    private volatile double accumulatedSellValue;
+    private volatile boolean sellValueDirty;
 
     private SpawnerHologram hologram;
     @Getter @Setter
@@ -117,6 +122,8 @@ public class SpawnerData {
         this.stackSize = 1;
         this.lastSpawnTime = System.currentTimeMillis();
         this.preferredSortItem = null; // Initialize sort preference as null
+        this.accumulatedSellValue = 0.0;
+        this.sellValueDirty = true;
     }
 
     public void loadConfigurationValues() {
@@ -359,5 +366,224 @@ public class SpawnerData {
     public void updateLastInteractedPlayer(String playerName) {
         this.lastInteractedPlayer = playerName;
         markInteracted();
+    }
+    
+    /**
+     * Marks the sell value as dirty, requiring recalculation
+     */
+    public void markSellValueDirty() {
+        this.sellValueDirty = true;
+    }
+    
+    /**
+     * Updates the accumulated sell value for specific items being added
+     * @param itemsAdded Map of item signatures to quantities added
+     * @param priceCache Price cache from loot config
+     */
+    public void incrementSellValue(Map<VirtualInventory.ItemSignature, Long> itemsAdded, 
+                                   Map<String, Double> priceCache) {
+        if (itemsAdded == null || itemsAdded.isEmpty()) {
+            return;
+        }
+        
+        double addedValue = 0.0;
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : itemsAdded.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
+            double itemPrice = findItemPrice(template, priceCache);
+            if (itemPrice > 0.0) {
+                addedValue += itemPrice * amount;
+            }
+        }
+        
+        this.accumulatedSellValue += addedValue;
+        this.sellValueDirty = false;
+    }
+    
+    /**
+     * Decrements the accumulated sell value when items are removed
+     * @param itemsRemoved List of items removed
+     * @param priceCache Price cache from loot config
+     */
+    public void decrementSellValue(List<ItemStack> itemsRemoved, Map<String, Double> priceCache) {
+        if (itemsRemoved == null || itemsRemoved.isEmpty()) {
+            return;
+        }
+        
+        // Consolidate removed items
+        Map<VirtualInventory.ItemSignature, Long> consolidated = new java.util.HashMap<>();
+        for (ItemStack item : itemsRemoved) {
+            if (item == null || item.getAmount() <= 0) continue;
+            VirtualInventory.ItemSignature sig = new VirtualInventory.ItemSignature(item);
+            consolidated.merge(sig, (long) item.getAmount(), Long::sum);
+        }
+        
+        double removedValue = 0.0;
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : consolidated.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
+            double itemPrice = findItemPrice(template, priceCache);
+            if (itemPrice > 0.0) {
+                removedValue += itemPrice * amount;
+            }
+        }
+        
+        this.accumulatedSellValue = Math.max(0.0, this.accumulatedSellValue - removedValue);
+    }
+    
+    /**
+     * Forces a full recalculation of the accumulated sell value
+     * Should be called when the cache is dirty or on spawner load
+     */
+    public void recalculateSellValue() {
+        if (lootConfig == null) {
+            this.accumulatedSellValue = 0.0;
+            this.sellValueDirty = false;
+            return;
+        }
+        
+        // Get price cache
+        Map<String, Double> priceCache = createPriceCache();
+        
+        // Calculate from current inventory
+        Map<VirtualInventory.ItemSignature, Long> items = virtualInventory.getConsolidatedItems();
+        double totalValue = 0.0;
+        
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
+            double itemPrice = findItemPrice(template, priceCache);
+            if (itemPrice > 0.0) {
+                totalValue += itemPrice * amount;
+            }
+        }
+        
+        this.accumulatedSellValue = totalValue;
+        this.sellValueDirty = false;
+    }
+    
+    /**
+     * Gets the price cache from loot config
+     */
+    public Map<String, Double> createPriceCache() {
+        if (lootConfig == null) {
+            return new java.util.HashMap<>();
+        }
+        
+        Map<String, Double> cache = new java.util.HashMap<>();
+        java.util.List<LootItem> allLootItems = lootConfig.getAllItems();
+        
+        for (LootItem lootItem : allLootItems) {
+            if (lootItem.getSellPrice() > 0.0) {
+                ItemStack template = lootItem.createItemStack(new java.util.Random());
+                if (template != null) {
+                    String key = createItemKey(template);
+                    cache.put(key, lootItem.getSellPrice());
+                }
+            }
+        }
+        
+        return cache;
+    }
+    
+    /**
+     * Finds item price using the cache
+     */
+    private double findItemPrice(ItemStack item, Map<String, Double> priceCache) {
+        if (item == null || priceCache == null) {
+            return 0.0;
+        }
+        String itemKey = createItemKey(item);
+        Double price = priceCache.get(itemKey);
+        return price != null ? price : 0.0;
+    }
+    
+    /**
+     * Creates a unique key for an item (same logic as SpawnerSellManager)
+     */
+    private String createItemKey(ItemStack item) {
+        if (item == null) {
+            return "null";
+        }
+
+        StringBuilder key = new StringBuilder();
+        key.append(item.getType().name());
+
+        // Add enchantments if present
+        if (item.hasItemMeta() && item.getItemMeta().hasEnchants()) {
+            key.append("_enchants:");
+            item.getItemMeta().getEnchants().entrySet().stream()
+                    .sorted(java.util.Map.Entry.comparingByKey(java.util.Comparator.comparing(enchantment -> enchantment.getKey().toString())))
+                    .forEach(entry -> key.append(entry.getKey().getKey()).append(":").append(entry.getValue()).append(","));
+        }
+
+        // Add custom model data if present
+        if (item.hasItemMeta() && item.getItemMeta().hasCustomModelData()) {
+            key.append("_cmd:").append(item.getItemMeta().getCustomModelData());
+        }
+
+        // Add display name if present
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            key.append("_name:").append(item.getItemMeta().getDisplayName());
+        }
+
+        return key.toString();
+    }
+    
+    /**
+     * Checks if sell value needs recalculation
+     */
+    public boolean isSellValueDirty() {
+        return sellValueDirty;
+    }
+    
+    /**
+     * Adds items to virtual inventory and updates accumulated sell value
+     * This is the preferred method to add items to maintain accurate sell value cache
+     * @param items Items to add
+     */
+    public void addItemsAndUpdateSellValue(List<ItemStack> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        
+        // Consolidate items being added for efficient price lookup
+        Map<VirtualInventory.ItemSignature, Long> itemsToAdd = new java.util.HashMap<>();
+        for (ItemStack item : items) {
+            if (item == null || item.getAmount() <= 0) continue;
+            VirtualInventory.ItemSignature sig = new VirtualInventory.ItemSignature(item);
+            itemsToAdd.merge(sig, (long) item.getAmount(), Long::sum);
+        }
+        
+        // Add to inventory
+        virtualInventory.addItems(items);
+        
+        // Update sell value
+        if (!sellValueDirty) {
+            Map<String, Double> priceCache = createPriceCache();
+            incrementSellValue(itemsToAdd, priceCache);
+        }
+    }
+    
+    /**
+     * Removes items from virtual inventory and updates accumulated sell value
+     * @param items Items to remove
+     * @return true if items were removed successfully
+     */
+    public boolean removeItemsAndUpdateSellValue(List<ItemStack> items) {
+        if (items == null || items.isEmpty()) {
+            return true;
+        }
+        
+        // Remove from inventory
+        boolean removed = virtualInventory.removeItems(items);
+        
+        // Update sell value if removal was successful
+        if (removed && !sellValueDirty) {
+            Map<String, Double> priceCache = createPriceCache();
+            decrementSellValue(items, priceCache);
+        }
+        
+        return removed;
     }
 }

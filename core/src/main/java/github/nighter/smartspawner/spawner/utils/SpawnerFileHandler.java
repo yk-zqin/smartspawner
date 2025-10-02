@@ -407,6 +407,9 @@ public class SpawnerFileHandler {
 
         spawner.setVirtualInventory(virtualInv);
         
+        // Recalculate accumulated sell value after loading inventory
+        spawner.recalculateSellValue();
+        
         // Load last interacted player
         String lastInteractedPlayer = spawnerData.getString(path + ".lastInteractedPlayer");
         spawner.setLastInteractedPlayer(lastInteractedPlayer);
