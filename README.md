@@ -23,13 +23,14 @@
 
 ## Localization
 
-| Language | Locale Code | Contributor | Status |
-|----------|-------------|-------------|--------|
+| Language          | Locale Code | Contributor                                     | Status |
+|-------------------|-------------|-------------------------------------------------|--------|
 | Chinese Simplified | `zh_CN` | [SnowCutieOwO](https://github.com/SnowCutieOwO) | v1.2.3 |
-| English | `en_US` | Core language | Latest |
-| Italian | `it_IT` | [RV_SkeLe](https://github.com/RVSkeLe) | v1.3.5 |
-| Turkish | `tr_TR` | berkkorkmaz | v1.3.5 |
-| Vietnamese | `vi_VN` | [maiminhdung](https://github.com/maiminhdung), [ptthanh02](https://github.com/ptthanh02) | Latest |
+| German            | `de_DE` | [jannispkz](https://github.com/jannispkz)       | Latest |
+| English           | `en_US` | core language                                   | Latest |
+| Italian           | `it_IT` | [RV_SkeLe](https://github.com/RVSkeLe)          | v1.3.5 |
+| Turkish           | `tr_TR` | berkkorkmaz                                     | v1.3.5 |
+| Vietnamese        | `vi_VN` | [ptthanh02](https://github.com/ptthanh02)       | Latest |
 
 ## API
 
