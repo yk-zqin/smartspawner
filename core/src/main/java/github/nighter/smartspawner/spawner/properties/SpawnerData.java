@@ -142,6 +142,8 @@ public class SpawnerData {
         if (virtualInventory != null && virtualInventory.getMaxSlots() != maxSpawnerLootSlots) {
             recreateVirtualInventory();
         }
+        // Mark sell value as dirty after config reload since prices may have changed
+        this.sellValueDirty = true;
         updateHologramData();
         
         // Invalidate GUI cache after config reload
@@ -307,6 +309,8 @@ public class SpawnerData {
     public void setEntityType(EntityType newType) {
         this.entityType = newType;
         this.lootConfig = lootRegistry.getLootConfig(newType);
+        // Mark sell value as dirty since entity type and prices changed
+        this.sellValueDirty = true;
         updateHologramData();
     }
 
@@ -340,6 +344,9 @@ public class SpawnerData {
 
     public void setLootConfig() {
         this.lootConfig = lootRegistry.getLootConfig(entityType);
+        // Mark sell value as dirty since prices may have changed
+        this.sellValueDirty = true;
+    }
     }
 
     public void setLastSellResult(SellResult sellResult) {
