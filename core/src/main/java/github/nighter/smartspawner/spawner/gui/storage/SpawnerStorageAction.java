@@ -532,63 +532,6 @@ public class SpawnerStorageAction implements Listener {
         spawnerMenuUI.openSpawnerMenu(player, spawner, true);
     }
 
-    private void handleDiscardAllItems(Player player, SpawnerData spawner, Inventory inventory) {
-        if (isClickTooFrequent(player)) {
-            return;
-        }
-
-        VirtualInventory virtualInv = spawner.getVirtualInventory();
-
-        if (virtualInv.getUsedSlots() == 0) {
-            messageService.sendMessage(player, "no_items_to_discard");
-            return;
-        }
-
-        long totalItems = virtualInv.getTotalItems();
-
-        Map<VirtualInventory.ItemSignature, Long> items = virtualInv.getConsolidatedItems();
-        List<ItemStack> itemsToRemove = new ArrayList<>();
-
-        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
-            ItemStack template = entry.getKey().getTemplate();
-            long amount = entry.getValue();
-
-            while (amount > 0) {
-                ItemStack stack = template.clone();
-                int stackSize = (int) Math.min(amount, template.getMaxStackSize());
-                stack.setAmount(stackSize);
-                itemsToRemove.add(stack);
-                amount -= stackSize;
-            }
-        }
-
-        virtualInv.removeItems(itemsToRemove);
-
-        StoragePageHolder holder = (StoragePageHolder) inventory.getHolder(false);
-        // int oldTotalPages = calculateTotalPages(spawner);
-
-        spawner.updateHologramData();
-        if (spawner.getIsAtCapacity()) {
-            spawner.setIsAtCapacity(false);
-        }
-
-        int newTotalPages = calculateTotalPages(spawner);
-        holder.setTotalPages(newTotalPages);
-        holder.setCurrentPage(1);
-        holder.updateOldUsedSlots();
-
-        spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
-
-        updatePageContent(player, spawner, 1, inventory, false);
-
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("amount", languageManager.formatNumber(totalItems));
-        messageService.sendMessage(player, "discard_all_success", placeholders);
-        if (!spawner.isInteracted()) {
-            spawner.markInteracted();
-        }
-    }
-
     private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
         if (isClickTooFrequent(player)) {
             return;

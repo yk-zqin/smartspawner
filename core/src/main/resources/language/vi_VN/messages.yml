@@ -28,17 +28,17 @@
 # ------------------------------------------------------
 #                  Messages Prefix
 # ------------------------------------------------------
-prefix: "&8[&#7b68eeSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
+prefix: "&8[&#3498dbSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
 
 # ------------------------------------------------------
 #             Spawner - Player Interaction
 # ------------------------------------------------------
 spawner_activated:
-  message: "&#e6e6faʟồɴɢ sᴘᴀᴡɴ &#ab7afdđã ᴋíᴄʜ ʜᴏạᴛ&#e6e6fa! ᴛʜᴜ ᴛʜậᴘ ᴠậᴛ ᴘʜẩᴍ ᴠà ᴋɪɴʜ ɴɢʜɪệᴍ ǫᴜᴀ ɢɪᴀᴏ ᴅɪệɴ."
+  message: "&#e6e6faꜱᴘᴀᴡɴᴇʀ &#3498dbđã ᴋíᴄʜ ʜᴏạᴛ&#e6e6fa! ᴛʜᴜ ᴛʜậᴘ ᴠậᴛ ᴘʜẩᴍ ᴠà ᴋɪɴʜ ɴɢʜɪệᴍ ǫᴜᴀ ɢɪᴀᴏ ᴅɪệɴ."
   sound: block.beacon.activate
 
 spawner_protected:
-  action_bar: "&#ff5252⚠ ʟồɴɢ sᴘᴀᴡɴ đᴀɴɢ đượᴄ ʙảᴏ ᴠệ ⚠"
+  action_bar: "&#ff5252⚠ ꜱᴘᴀᴡɴᴇʀ đᴀɴɢ đượᴄ ʙảᴏ ᴠệ ⚠"
   sound: block.note_block.pling
 
 # ------------------------------------------------------
@@ -63,20 +63,12 @@ inventory_full:
   message: "&#ff5252ᴛúɪ đồ đầʏ!"
   sound: block.note_block.pling
 
-no_items_to_discard:
-  message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʟᴏạɪ ʙỏ!"
-  sound: block.note_block.pling
-
-discard_all_success:
-  action_bar: "&#ff5252Đã ʟᴏạɪ ʙỏ &#f8f8ff%amount% &#ff5252ᴠậᴛ ᴘʜẩᴍ"
-  sound: entity.generic.burn
-
 no_items_to_take:
   message: "&#ff5252ᴋʜôɴɢ ᴄó ᴠậᴛ ᴘʜẩᴍ để ʟấʏ"
   sound: block.note_block.pling
 
 take_all_items:
-  action_bar: "&#37eb9aĐã ʟấʏ &#f8f8ff%amount% &#37eb9aᴠậᴛ ᴘʜẩᴍ ᴛừ ʟồɴɢ sᴘᴀᴡɴ"
+  action_bar: "&#37eb9aĐã ʟấʏ &#f8f8ff%amount% &#37eb9aᴠậᴛ ᴘʜẩᴍ ᴛừ ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.item.pickup
 
 no_items_to_drop:
@@ -87,15 +79,15 @@ no_items_to_drop:
 #         Spawner - Stacker GUI Interaction
 # ------------------------------------------------------
 spawner_stacker_minimum_reached:
-  message: "&#ff5252ᴄʜỉ ᴄó ᴛʜể ɢộᴘ &#f8f8ff+%amount% &#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴅᴏ đã đếɴ ɢɪớɪ ʜạɴ."
+  message: "&#ff5252ᴄʜỉ ᴄó ᴛʜể ɢộᴘ &#f8f8ff+%amount% &#ff5252ꜱᴘᴀᴡɴᴇʀ ᴅᴏ đã đếɴ ɢɪớɪ ʜạɴ."
   sound: block.note_block.pling
 
 spawner_cannot_remove_last:
-  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴛáᴄʜ ʟồɴɢ sᴘᴀᴡɴ ᴄᴜốɪ ᴄùɴɢ"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴛáᴄʜ ꜱᴘᴀᴡɴᴇʀ ᴄᴜốɪ ᴄùɴɢ"
   sound: block.note_block.pling
 
 spawner_insufficient_quantity:
-  action_bar: "&#ff5252ᴋʜôɴɢ đủ ʟồɴɢ sᴘᴀᴡɴ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
+  action_bar: "&#ff5252ᴋʜôɴɢ đủ ꜱᴘᴀᴡɴᴇʀ: &#f8f8ff%amountAvailable%&#ff5252/&#f8f8ff%amountChange%"
   sound: block.note_block.pling
 
 inventory_full_items_dropped:
@@ -106,11 +98,11 @@ inventory_full_items_dropped:
 #             Spawner - Stack Interaction
 # ------------------------------------------------------
 spawner_invalid:
-  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴋʜôɴɢ ʜợᴘ ʟệ"
+  action_bar: "&#ff5252ꜱᴘᴀᴡɴᴇʀ ᴋʜôɴɢ ʜợᴘ ʟệ"
   sound: block.note_block.pling
 
 spawner_different:
-  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴘʜảɪ ᴄùɴɢ ʟᴏạɪ"
+  action_bar: "&#ff5252ꜱᴘᴀᴡɴᴇʀ ᴘʜảɪ ᴄùɴɢ ʟᴏạɪ"
   sound: block.note_block.pling
 
 spawner_stack_full:
@@ -118,22 +110,22 @@ spawner_stack_full:
   sound: block.note_block.pling
 
 spawner_stack_success:
-  action_bar: '[&#37eb9a&l✓&f] ɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fʟồɴɢ sᴘᴀᴡɴ'
+  action_bar: '[&#37eb9a&l✓&f] ɢộᴘ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fꜱᴘᴀᴡɴᴇʀ'
   sound: entity.player.levelup
 
 spawner_stack_placed:
-  message: '[&#37eb9a&l✓&f] ᴅặᴛ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fʟồɴɢ sᴘᴀᴡɴ'
+  message: '[&#37eb9a&l✓&f] ᴅặᴛ ᴛʜàɴʜ ᴄôɴɢ &#37eb9a%amount% &fꜱᴘᴀᴡɴᴇʀ'
   sound: entity.player.levelup
 
 # ------------------------------------------------------
 #             Spawner - List GUI Interaction
 # ------------------------------------------------------
 teleported_to_spawner:
-  message: "&#37eb9aĐã ᴅịᴄʜ ᴄʜᴜʏểɴ ᴛʜàɴʜ ᴄôɴɢ đếɴ ᴠị ᴛʀí ʟồɴɢ sᴘᴀᴡɴ"
+  message: "&#37eb9aĐã ᴅịᴄʜ ᴄʜᴜʏểɴ ᴛʜàɴʜ ᴄôɴɢ đếɴ ᴠị ᴛʀí ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.enderman.teleport
 
 spawner_not_found:
-  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ʟồɴɢ sᴘᴀᴡɴ"
+  message: "&#ff5252ᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.enderman.teleport
 
 # ------------------------------------------------------
@@ -151,7 +143,7 @@ entity_changed:
 #             Spawner - Break Interaction
 # ------------------------------------------------------
 spawner_break_no_permission:
-  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴘʜá ʟồɴɢ sᴘᴀᴡɴ"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴘʜá ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.villager.no
 
 spawner_break_silk_touch_required:
@@ -159,17 +151,17 @@ spawner_break_silk_touch_required:
   sound: item.shield.block
 
 spawner_break_required_tools:
-  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴘʜá ʟồɴɢ sᴘᴀᴡɴ ʙằɴɢ ᴄôɴɢ ᴄụ ɴàʏ!!"
+  action_bar: "&#ff5252ᴋʜôɴɢ ᴛʜể ᴘʜá ꜱᴘᴀᴡɴᴇʀ ʙằɴɢ ᴄôɴɢ ᴄụ ɴàʏ!!"
   sound: item.shield.block
 
 spawner_break_warning:
   enabled: false
   title: "&#f0c857ᴄảɴʜ ʙáᴏ"
-  subtitle: "&#e6e6faᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ ᴛʀᴏɴɢ ʟồɴɢ sᴘᴀᴡɴ sẽ ʙị ᴍấᴛ!"
+  subtitle: "&#e6e6faᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ ᴛʀᴏɴɢ ꜱᴘᴀᴡɴᴇʀ sẽ ʙị ᴍấᴛ!"
   sound: block.note_block.bass
 
 natural_spawner_break_blocked:
-  action_bar: "&#ff5252ʟồɴɢ sᴘᴀᴡɴ ᴛự ɴʜɪêɴ ᴋʜôɴɢ ᴛʜể ʙị ᴘʜá và sử ᴅụɴɢ"
+  action_bar: "&#ff5252ꜱᴘᴀᴡɴᴇʀ ᴛự ɴʜɪêɴ ᴋʜôɴɢ ᴛʜể ʙị ᴘʜá và sử ᴅụɴɢ"
   sound: block.note_block.pling
 
 # ------------------------------------------------------
@@ -195,7 +187,7 @@ no_sellable_items:
   sound: block.note_block.pling
 
 sell_success:
-  message: "&#e6e6faĐã ʙáɴ &#f0c857%amount% ᴠậᴛ ᴘʜẩᴍ&#e6e6fa ᴠớɪ ɢɪá &#37eb9a+$%price%"
+  message: "&#e6e6faĐã ʙáɴ  &#e67e22%amount% ᴠậᴛ ᴘʜẩᴍ&#e6e6fa ᴠớɪ ɢɪá &a+$%price%"
   sound: block.note_block.bell
 
 # ------------------------------------------------------
@@ -204,18 +196,6 @@ sell_success:
 no_permission:
   message: "&#ff5252ʙạɴ ᴋʜôɴɢ ᴄó ǫᴜʏềɴ ᴛʜựᴄ ʜɪệɴ đɪềᴜ ɴàʏ"
   sound: block.note_block.pling
-
-command_usage:
-  message: |
-    &8&m
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    &#ab7afd» &#e6e6fa/ss ʀᴇʟᴏᴀᴅ &#7b68ee- &#a8e6cfʀᴇʟᴏᴀᴅ ᴄᴏɴꜰɪɢᴜʀᴀᴛɪᴏɴ
-    &#ab7afd» &#e6e6fa/ss ʟɪsᴛ &#7b68ee- &#dcedc1ᴏᴘᴇɴ ꜱᴘᴀᴡɴᴇʀ ʟɪꜱᴛ
-    &#ab7afd» &#e6e6fa/ss ʜᴏʟᴏɢʀᴀᴍ &#7b68ee- &#ff8b94ᴛᴏɢɢʟᴇ ʜᴏʟᴏɢʀᴀᴍ ᴠɪꜱɪʙɪʟɪᴛʏ
-    &#ab7afd» &#e6e6fa/ss ɢɪᴠᴇ &#c2a8ff<ᴘʟᴀʏᴇʀ> <ᴍᴏʙᴛʏᴘᴇ> [ᴀᴍᴏᴜɴᴛ] &#7b68ee- &#ffd3b6ɢɪᴠᴇ ꜱᴍᴀʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ
-    &#ab7afd» &#e6e6fa/ss ɢɪᴠᴇᴠᴀɴɪʟʟᴀsᴘᴀᴡɴᴇʀ &#c2a8ff<ᴘʟᴀʏᴇʀ> <ᴍᴏʙᴛʏᴘᴇ> [ᴀᴍᴏᴜɴᴛ] &#7b68ee- &#ffaaa5ɢɪᴠᴇ ᴠᴀɴɪʟʟᴀ ꜱᴘᴀᴡɴᴇʀꜱ
-    &8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  sound: entity.player.levelup
 
 # Reload command messages
 reload_command_start:
@@ -255,24 +235,24 @@ command_give_amount_too_large:
   sound: block.note_block.pling
 
 command_give_inventory_full:
-  message: "&#ff5252ᴍộᴛ ꜱố ʟồɴɢ sᴘᴀᴡɴ đã ʀơɪ ʀᴀ đấᴛ ᴅᴏ ᴛúɪ đồ đã đầʏ"
+  message: "&#ff5252ᴍộᴛ ꜱố ꜱᴘᴀᴡɴᴇʀ đã ʀơɪ ʀᴀ đấᴛ ᴅᴏ ᴛúɪ đồ đã đầʏ"
   sound: block.note_block.pling
 
 command_give_spawner_received:
-  message: "&#37eb9aʙạɴ đã ɴʜậɴ được &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ%"
+  message: "&#37eb9aʙạɴ đã ɴʜậɴ được &#f8f8ff%amount% ꜱᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%"
   sound: entity.experience_orb.pickup
 
 command_give_spawner_given:
-  message: "&#37eb9aĐã ᴄʜᴏ &#f8f8ff%amount% ʟồɴɢ sᴘᴀᴡɴ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
+  message: "&#37eb9aĐã ᴄʜᴏ &#f8f8ff%amount% ꜱᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ% &#37eb9aᴄʜᴏ &#f8f8ff%player%"
   sound: entity.experience_orb.pickup
 
 # Hologram command messages
 command_hologram_enabled:
-  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#37eb9ađã ʙậᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ʟồɴɢ sᴘᴀᴡɴ"
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#37eb9ađã ʙậᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ꜱᴘᴀᴡɴᴇʀ"
   sound: entity.experience_orb.pickup
 
 command_hologram_disabled:
-  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ʟồɴɢ sᴘᴀᴡɴ"
+  message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ꜱᴘᴀᴡɴᴇʀ"
   sound: block.note_block.bass
 
 # Prices command messages
@@ -289,11 +269,3 @@ spawner_management:
   removed:
     message: "&#e6e6faLồɴɢ sᴘᴀᴡɴ #&#ab7afd%id% &#ff5252đã xóᴀ &#e6e6faᴛʜàɴʜ ᴄôɴɢ!"
     sound: entity.item.break
-  
-  stack_increased:
-    message: "&#e6e6faXếᴘ ᴄʜồɴɢ &#37eb9atăɴɢ &#e6e6fa&#fce96a%amount% &#e6e6fa- ᴋíᴄʜ ᴛʜướᴄ ᴍớɪ: &#37eb9a%new_size%"
-    sound: entity.experience_orb.pickup
-  
-  stack_decreased:
-    message: "&#e6e6faXếᴘ ᴄʜồɴɢ &#ff6b6bɢɪảᴍ &#e6e6fa&#fce96a%amount% &#e6e6fa- ᴋíᴄʜ ᴛʜướᴄ ᴍớɪ: &#37eb9a%new_size%"
-    sound: entity.experience_orb.pickup

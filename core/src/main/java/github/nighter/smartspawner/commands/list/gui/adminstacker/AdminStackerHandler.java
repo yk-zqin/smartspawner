@@ -100,6 +100,9 @@ public class AdminStackerHandler implements Listener {
             newStackSize = 1;
         } else if (newStackSize > spawner.getMaxStackSize()) {
             newStackSize = spawner.getMaxStackSize();
+            Map<String, String> placeholders = new HashMap<>(2);
+            placeholders.put("max", String.valueOf(newStackSize));
+            messageService.sendMessage(player, "spawner_stack_full", placeholders);
         }
 
         // Update the spawner stack size
@@ -107,18 +110,6 @@ public class AdminStackerHandler implements Listener {
         
         // Track interaction
         spawner.updateLastInteractedPlayer(player.getName());
-
-        // Send feedback message
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("amount", String.valueOf(Math.abs(change)));
-        placeholders.put("new_size", String.valueOf(newStackSize));
-        
-        if (change > 0) {
-            messageService.sendMessage(player, "spawner_management.stack_increased", placeholders);
-        } else {
-            messageService.sendMessage(player, "spawner_management.stack_decreased", placeholders);
-        }
-
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
 
         // Refresh the GUI to show updated values

@@ -10,7 +10,7 @@ buttons:
     material: SPECTRAL_ARROW
     enabled: true
 
-  # Item sort button (replaces discard all)
+  # Item sort button
   sort_items:
     slot: 3
     material: CAULDRON

@@ -224,36 +224,6 @@ public class SpawnerFileHandler {
         }
     }
 
-    public Map<String, SpawnerData> loadAllSpawners() {
-        Map<String, SpawnerData> loadedSpawners = new HashMap<>();
-
-        ConfigurationSection spawnersSection = spawnerData.getConfigurationSection("spawners");
-        if (spawnersSection == null) return loadedSpawners;
-
-        int loadedCount = 0;
-        int errorCount = 0;
-
-        for (String spawnerId : spawnersSection.getKeys(false)) {
-            try {
-                SpawnerData spawner = loadSpawnerFromConfig(spawnerId);
-                if (spawner != null) {
-                    loadedSpawners.put(spawnerId, spawner);
-                    loadedCount++;
-                }
-            } catch (Exception e) {
-                logger.warning("Error loading spawner " + spawnerId + ": " + e.getMessage());
-                errorCount++;
-            }
-        }
-
-        logger.info("Loaded " + loadedCount + " spawners. Errors: " + errorCount);
-        return loadedSpawners;
-    }
-
-    /**
-     * Load all spawners from config, returning null for spawners whose worlds aren't loaded yet
-     * This method is used by WorldEventHandler for delayed loading
-     */
     public Map<String, SpawnerData> loadAllSpawnersRaw() {
         Map<String, SpawnerData> loadedSpawners = new HashMap<>();
 
@@ -276,9 +246,6 @@ public class SpawnerFileHandler {
         return loadedSpawners;
     }
 
-    /**
-     * Load a specific spawner by ID
-     */
     public SpawnerData loadSpecificSpawner(String spawnerId) {
         try {
             return loadSpawnerFromConfig(spawnerId, false);
@@ -460,10 +427,6 @@ public class SpawnerFileHandler {
 
     public void queueSpawnerForSaving(String spawnerId) {
         markSpawnerModified(spawnerId);
-    }
-
-    public int getDataVersion() {
-        return spawnerData.getInt(DATA_VERSION_KEY, 1);
     }
 
     public void shutdown() {

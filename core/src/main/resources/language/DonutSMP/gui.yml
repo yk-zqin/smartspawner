@@ -116,10 +116,15 @@ item_filter_button:
   lore:
     - '&#3498db⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ᴄᴏɴꜰɪɢᴜʀᴇ'
 
-discard_all_button:
-  name: '&#ff5252ᴅɪꜱᴄᴀʀᴅ ᴀʟʟ ɪᴛᴇᴍꜱ'
+sort_items_button:
+  name: '&#00F986ꜱᴏʀᴛ ɪᴛᴇᴍꜱ'
   lore:
-    - '&#e63939⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ &#ff5252ʀᴇᴍᴏᴠᴇ&#f8f8ff ᴀʟʟ ɪᴛᴇᴍꜱ'
+    - '%available_items%'
+    - ''
+    - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜱᴏʀᴛ'
+  selected_item: '&#00F986• %item_name%'
+  unselected_item: '&#f8f8ff• %item_name%'
+  none_text: '&#bdc3c7• None'
 
 drop_page_button:
   name: '&#00F986ᴅʀᴏᴘ ʟᴏᴏᴛ'
@@ -226,13 +231,15 @@ gui_title_spawner_list: '%world% - [%current%/%total%]'
 
 filter:
   button:
-    name: '&#37eb9aꜰɪʟᴛᴇʀ sᴘᴀᴡɴᴇʀs'
+    name: '&#00F986ꜰɪʟᴛᴇʀ sᴘᴀᴡɴᴇʀs'
     lore:
-      - '%all_color% • ᴀʟʟ'
-      - '%active_color% • ᴀᴄᴛɪᴠᴇ'
-      - '%inactive_color% • ɪɴᴀᴄᴛɪᴠᴇ'
+      - '%all_color%• ᴀʟʟ'
+      - '%active_color%• ᴀᴄᴛɪᴠᴇ'
+      - '%inactive_color%• ɪɴᴀᴄᴛɪᴠᴇ'
+      - ''
+      - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜰɪʟᴛᴇʀ'
   all:
-    color: '&#37eb9a'
+    color: '&#00F986'
   active:
     color: '&a'
   inactive:
@@ -240,17 +247,19 @@ filter:
 
 sort:
   button:
-    name: '&#37eb9aꜱᴏʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ'
+    name: '&#00F986ꜱᴏʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ'
     lore:
-      - '%default_color% • ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
-      - '%stack_size_asc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
-      - '%stack_size_desc_color% • ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
+      - '%default_color%• ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
+      - '%stack_size_desc_color%• ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
+      - '%stack_size_asc_color%• ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
+      - ''
+      - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜱᴏʀᴛ'
   default:
-    color: '&#37eb9a'
+    color: '&#00F986'
   stack_size_asc:
-    color: '&#37eb9a'
+    color: '&#00F986'
   stack_size_desc:
-    color: '&#37eb9a'
+    color: '&#00F986'
 
 spawner_item_list:
   name: '&#3498dbꜱᴘᴀᴡɴᴇʀ #%id%'

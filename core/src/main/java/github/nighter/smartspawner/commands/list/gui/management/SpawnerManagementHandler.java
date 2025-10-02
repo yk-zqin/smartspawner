@@ -9,6 +9,7 @@ import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
+import github.nighter.smartspawner.spawner.utils.SpawnerFileHandler;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -25,6 +26,7 @@ public class SpawnerManagementHandler implements Listener {
     private final SmartSpawner plugin;
     private final MessageService messageService;
     private final SpawnerManager spawnerManager;
+    private final SpawnerFileHandler spawnerFileHandler;
     private final ListSubCommand listSubCommand;
     private final SpawnerMenuUI spawnerMenuUI;
     private final AdminStackerUI adminStackerUI;
@@ -33,6 +35,7 @@ public class SpawnerManagementHandler implements Listener {
         this.plugin = plugin;
         this.messageService = plugin.getMessageService();
         this.spawnerManager = plugin.getSpawnerManager();
+        this.spawnerFileHandler = plugin.getSpawnerFileHandler();
         this.listSubCommand = listSubCommand;
         this.spawnerMenuUI = plugin.getSpawnerMenuUI();
         this.adminStackerUI = new AdminStackerUI(plugin);
@@ -69,11 +72,6 @@ public class SpawnerManagementHandler implements Listener {
     }
 
     private void handleTeleport(Player player, SpawnerData spawner) {
-        if (!player.hasPermission("smartspawner.list.teleport")) {
-            messageService.sendMessage(player, "no_permission_teleport");
-            return;
-        }
-
         Location loc = spawner.getSpawnerLocation().clone().add(0.5, 1, 0.5);
         player.teleportAsync(loc);
         messageService.sendMessage(player, "teleported_to_spawner");
@@ -82,11 +80,6 @@ public class SpawnerManagementHandler implements Listener {
     }
 
     private void handleOpenSpawner(Player player, SpawnerData spawner) {
-        if (!player.hasPermission("smartspawner.use")) {
-            messageService.sendMessage(player, "no_permission");
-            return;
-        }
-
         spawnerMenuUI.openSpawnerMenu(player, spawner, false);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
     }
@@ -102,22 +95,18 @@ public class SpawnerManagementHandler implements Listener {
     }
 
     private void handleRemoveSpawner(Player player, SpawnerData spawner, String worldName, int listPage) {
-        if (!player.hasPermission("smartspawner.remove")) {
-            messageService.sendMessage(player, "no_permission");
-            return;
-        }
-
         // Remove the spawner block and data
         Location loc = spawner.getSpawnerLocation();
+        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
+        String spawnerId = spawner.getSpawnerId();
+        spawner.setSpawnerStop(true);
         if (loc.getBlock().getType() == Material.SPAWNER) {
             loc.getBlock().setType(Material.AIR);
         }
 
         // Remove from manager and save
-        plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
-        spawnerManager.markSpawnerDeleted(spawner.getSpawnerId());
-        spawnerManager.removeSpawner(spawner.getSpawnerId());
-
+        spawnerManager.removeSpawner(spawnerId);
+        spawnerFileHandler.markSpawnerDeleted(spawnerId);
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("id", spawner.getSpawnerId());
         messageService.sendMessage(player, "spawner_management.removed", placeholders);
