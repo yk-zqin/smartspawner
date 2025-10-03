@@ -80,7 +80,12 @@ public class SpawnerManagementHandler implements Listener {
     }
 
     private void handleOpenSpawner(Player player, SpawnerData spawner) {
-        spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        // Check if player is Bedrock and use appropriate menu
+        if (isBedrockPlayer(player)) {
+            plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+        } else {
+            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
     }
 
@@ -131,5 +136,13 @@ public class SpawnerManagementHandler implements Listener {
 
         listSubCommand.openSpawnerListGUI(player, worldName, listPage, filter, sort);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+    }
+
+    private boolean isBedrockPlayer(Player player) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
+            return false;
+        }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 }

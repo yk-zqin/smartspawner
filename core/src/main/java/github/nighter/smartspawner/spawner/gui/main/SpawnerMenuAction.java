@@ -313,7 +313,13 @@ public class SpawnerMenuAction implements Listener {
         // Reset spawner exp and update menu
         spawner.setSpawnerExp(0);
         plugin.getSpawnerManager().markSpawnerModified(spawner.getSpawnerId());
-        spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+        
+        // Check if player is Bedrock and use appropriate menu
+        if (isBedrockPlayer(player)) {
+            plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+        } else {
+            spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+        }
 
         // Update all viewers instead of just current player
         spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
@@ -426,5 +432,13 @@ public class SpawnerMenuAction implements Listener {
             plugin.getLogger().warning("Error giving AuraSkills XP: " + e.getMessage());
             plugin.debug("AuraSkills integration error: " + e.toString());
         }
+    }
+
+    private boolean isBedrockPlayer(Player player) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
+            return false;
+        }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 }

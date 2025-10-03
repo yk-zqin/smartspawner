@@ -116,7 +116,12 @@ public class SpawnerStackerHandler implements Listener {
 
         // Handle navigation back to main menu if spawner is clicked
         if (clickedItem.getType() == Material.SPAWNER) {
-            spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+            // Check if player is Bedrock and use appropriate menu
+            if (isBedrockPlayer(player)) {
+                plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+            } else {
+                spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+            }
             player.playSound(player.getLocation(), CLICK_SOUND, SOUND_VOLUME, SOUND_PITCH);
             return;
         }
@@ -669,5 +674,13 @@ public class SpawnerStackerHandler implements Listener {
                 viewer.closeInventory();
             }
         }
+    }
+
+    private boolean isBedrockPlayer(Player player) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
+            return false;
+        }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 }

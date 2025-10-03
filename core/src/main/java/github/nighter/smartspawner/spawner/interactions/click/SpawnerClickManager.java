@@ -22,7 +22,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.Map;
 import java.util.UUID;
@@ -229,12 +228,11 @@ public class SpawnerClickManager implements Listener {
     }
 
     private boolean isBedrockPlayer(Player player) {
-        try {
-            FloodgateApi api = FloodgateApi.getInstance();
-            return api != null && api.isFloodgatePlayer(player.getUniqueId());
-        } catch (NoClassDefFoundError | NullPointerException e) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
             return false;
         }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 
     private void initCleanupTask() {

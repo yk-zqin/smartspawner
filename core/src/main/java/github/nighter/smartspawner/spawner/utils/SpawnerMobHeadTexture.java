@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.spawner.utils;
 
+import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.nms.TextureWrapper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -11,7 +12,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
 import org.bukkit.profile.PlayerProfile;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.net.URL;
 import java.util.EnumMap;
@@ -26,13 +26,12 @@ public class SpawnerMobHeadTexture {
     }
 
     private static boolean isBedrockPlayer(Player player) {
-        UUID uuid = player.getUniqueId();
-        try {
-            FloodgateApi api = FloodgateApi.getInstance();
-            return api.isFloodgatePlayer(uuid);
-        } catch (NoClassDefFoundError | NullPointerException e) {
+        SmartSpawner plugin = SmartSpawner.getInstance();
+        if (plugin == null || plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
             return false;
         }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 
     public static ItemStack getCustomHead(EntityType entityType, Player player) {

@@ -529,7 +529,21 @@ public class SpawnerStorageAction implements Listener {
             spawnerManager.markSpawnerModified(spawner.getSpawnerId());
             spawner.clearInteracted();
         }
-        spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+        
+        // Check if player is Bedrock and use appropriate menu
+        if (isBedrockPlayer(player)) {
+            plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+        } else {
+            spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+        }
+    }
+
+    private boolean isBedrockPlayer(Player player) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
+            return false;
+        }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 
     private void handleSortItemsClick(Player player, SpawnerData spawner, Inventory inventory) {
