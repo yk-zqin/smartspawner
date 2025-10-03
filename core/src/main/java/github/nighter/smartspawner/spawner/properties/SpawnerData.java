@@ -87,7 +87,7 @@ public class SpawnerData {
     private SellResult lastSellResult;
     @Getter
     private boolean lastSellProcessed;
-    
+
     // Accumulated sell value for optimization
     @Getter
     private volatile double accumulatedSellValue;
@@ -145,10 +145,13 @@ public class SpawnerData {
         // Mark sell value as dirty after config reload since prices may have changed
         this.sellValueDirty = true;
         updateHologramData();
-        
+
         // Invalidate GUI cache after config reload
         if (plugin.getSpawnerMenuUI() != null) {
             plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
+        if (plugin.getSpawnerMenuFormUI() != null) {
+            plugin.getSpawnerMenuFormUI().invalidateSpawnerCache(this.spawnerId);
         }
     }
 
@@ -214,10 +217,13 @@ public class SpawnerData {
 
         this.lastSpawnTime = System.currentTimeMillis();
         updateHologramData();
-        
+
         // Invalidate GUI cache when stack size changes
         if (plugin.getSpawnerMenuUI() != null) {
             plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
+        if (plugin.getSpawnerMenuFormUI() != null) {
+            plugin.getSpawnerMenuFormUI().invalidateSpawnerCache(this.spawnerId);
         }
     }
 
@@ -251,10 +257,13 @@ public class SpawnerData {
     public void setSpawnerExp(int exp) {
         this.spawnerExp = Math.min(Math.max(0, exp), maxStoredExp);
         updateHologramData();
-        
+
         // Invalidate GUI cache when experience changes
         if (plugin.getSpawnerMenuUI() != null) {
             plugin.getSpawnerMenuUI().invalidateSpawnerCache(this.spawnerId);
+        }
+        if (plugin.getSpawnerMenuFormUI() != null) {
+            plugin.getSpawnerMenuFormUI().invalidateSpawnerCache(this.spawnerId);
         }
     }
 
@@ -373,25 +382,25 @@ public class SpawnerData {
         this.lastInteractedPlayer = playerName;
         markInteracted();
     }
-    
+
     /**
      * Marks the sell value as dirty, requiring recalculation
      */
     public void markSellValueDirty() {
         this.sellValueDirty = true;
     }
-    
+
     /**
      * Updates the accumulated sell value for specific items being added
      * @param itemsAdded Map of item signatures to quantities added
      * @param priceCache Price cache from loot config
      */
-    public void incrementSellValue(Map<VirtualInventory.ItemSignature, Long> itemsAdded, 
+    public void incrementSellValue(Map<VirtualInventory.ItemSignature, Long> itemsAdded,
                                    Map<String, Double> priceCache) {
         if (itemsAdded == null || itemsAdded.isEmpty()) {
             return;
         }
-        
+
         double addedValue = 0.0;
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : itemsAdded.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
@@ -401,11 +410,11 @@ public class SpawnerData {
                 addedValue += itemPrice * amount;
             }
         }
-        
+
         this.accumulatedSellValue += addedValue;
         this.sellValueDirty = false;
     }
-    
+
     /**
      * Decrements the accumulated sell value when items are removed
      * @param itemsRemoved List of items removed
@@ -415,7 +424,7 @@ public class SpawnerData {
         if (itemsRemoved == null || itemsRemoved.isEmpty()) {
             return;
         }
-        
+
         // Consolidate removed items
         Map<VirtualInventory.ItemSignature, Long> consolidated = new java.util.HashMap<>();
         for (ItemStack item : itemsRemoved) {
@@ -423,7 +432,7 @@ public class SpawnerData {
             VirtualInventory.ItemSignature sig = new VirtualInventory.ItemSignature(item);
             consolidated.merge(sig, (long) item.getAmount(), Long::sum);
         }
-        
+
         double removedValue = 0.0;
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : consolidated.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
@@ -433,10 +442,10 @@ public class SpawnerData {
                 removedValue += itemPrice * amount;
             }
         }
-        
+
         this.accumulatedSellValue = Math.max(0.0, this.accumulatedSellValue - removedValue);
     }
-    
+
     /**
      * Forces a full recalculation of the accumulated sell value
      * Should be called when the cache is dirty or on spawner load
@@ -447,14 +456,14 @@ public class SpawnerData {
             this.sellValueDirty = false;
             return;
         }
-        
+
         // Get price cache
         Map<String, Double> priceCache = createPriceCache();
-        
+
         // Calculate from current inventory
         Map<VirtualInventory.ItemSignature, Long> items = virtualInventory.getConsolidatedItems();
         double totalValue = 0.0;
-        
+
         for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : items.entrySet()) {
             ItemStack template = entry.getKey().getTemplate();
             long amount = entry.getValue();
@@ -463,11 +472,11 @@ public class SpawnerData {
                 totalValue += itemPrice * amount;
             }
         }
-        
+
         this.accumulatedSellValue = totalValue;
         this.sellValueDirty = false;
     }
-    
+
     /**
      * Gets the price cache from loot config
      */
@@ -475,10 +484,10 @@ public class SpawnerData {
         if (lootConfig == null) {
             return new java.util.HashMap<>();
         }
-        
+
         Map<String, Double> cache = new java.util.HashMap<>();
         java.util.List<LootItem> allLootItems = lootConfig.getAllItems();
-        
+
         for (LootItem lootItem : allLootItems) {
             if (lootItem.getSellPrice() > 0.0) {
                 ItemStack template = lootItem.createItemStack(new java.util.Random());
@@ -488,10 +497,10 @@ public class SpawnerData {
                 }
             }
         }
-        
+
         return cache;
     }
-    
+
     /**
      * Finds item price using the cache
      */
@@ -503,7 +512,7 @@ public class SpawnerData {
         Double price = priceCache.get(itemKey);
         return price != null ? price : 0.0;
     }
-    
+
     /**
      * Creates a unique key for an item (same logic as SpawnerSellManager)
      */
@@ -535,14 +544,14 @@ public class SpawnerData {
 
         return key.toString();
     }
-    
+
     /**
      * Checks if sell value needs recalculation
      */
     public boolean isSellValueDirty() {
         return sellValueDirty;
     }
-    
+
     /**
      * Adds items to virtual inventory and updates accumulated sell value
      * This is the preferred method to add items to maintain accurate sell value cache
@@ -552,7 +561,7 @@ public class SpawnerData {
         if (items == null || items.isEmpty()) {
             return;
         }
-        
+
         // Consolidate items being added for efficient price lookup
         Map<VirtualInventory.ItemSignature, Long> itemsToAdd = new java.util.HashMap<>();
         for (ItemStack item : items) {
@@ -560,17 +569,17 @@ public class SpawnerData {
             VirtualInventory.ItemSignature sig = new VirtualInventory.ItemSignature(item);
             itemsToAdd.merge(sig, (long) item.getAmount(), Long::sum);
         }
-        
+
         // Add to inventory
         virtualInventory.addItems(items);
-        
+
         // Update sell value
         if (!sellValueDirty) {
             Map<String, Double> priceCache = createPriceCache();
             incrementSellValue(itemsToAdd, priceCache);
         }
     }
-    
+
     /**
      * Removes items from virtual inventory and updates accumulated sell value
      * @param items Items to remove
@@ -580,16 +589,16 @@ public class SpawnerData {
         if (items == null || items.isEmpty()) {
             return true;
         }
-        
+
         // Remove from inventory
         boolean removed = virtualInventory.removeItems(items);
-        
+
         // Update sell value if removal was successful
         if (removed && !sellValueDirty) {
             Map<String, Double> priceCache = createPriceCache();
             decrementSellValue(items, priceCache);
         }
-        
+
         return removed;
     }
 }

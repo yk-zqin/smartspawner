@@ -8,7 +8,6 @@ import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.storage.SpawnerStorageUI;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
 import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
-import github.nighter.smartspawner.spawner.gui.synchronization.ItemUpdater;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.Scheduler;
@@ -39,9 +38,8 @@ public class SpawnerGuiViewManager implements Listener {
     private static final long UPDATE_INTERVAL_TICKS = 20L; // 1 second updates
     private static final long INITIAL_DELAY_TICKS = 20L;   // Match the update interval
     private static final int ITEMS_PER_PAGE = 45;
-    
+
     // Performance optimization: batch processing interval
-    private static final long BATCH_PROCESS_INTERVAL = 5L; // Process batches every 250ms
     private static final int MAX_PLAYERS_PER_BATCH = 10;   // Limit players processed per batch
 
     // Cached slot positions - initialized once when config loads, re-initialized on reload
@@ -64,7 +62,7 @@ public class SpawnerGuiViewManager implements Listener {
     private final Map<UUID, SpawnerViewerInfo> playerToSpawnerMap;
     private final Map<String, Set<UUID>> spawnerToPlayersMap;
     private final Set<Class<? extends InventoryHolder>> validHolderTypes;
-    
+
     // Additional tracking for filter GUI viewers to prevent duplication exploits
     private final Map<String, Set<UUID>> spawnerToFilterViewersMap;
 
@@ -75,7 +73,7 @@ public class SpawnerGuiViewManager implements Listener {
     // Batched update tracking to reduce inventory updates
     private final Set<UUID> pendingUpdates = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> updateFlags = new ConcurrentHashMap<>();
-    
+
     // Performance optimization: track last update times to avoid unnecessary updates
     private final Map<UUID, Long> lastTimerUpdate = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastTimerValue = new ConcurrentHashMap<>();
@@ -86,7 +84,7 @@ public class SpawnerGuiViewManager implements Listener {
     // For timer optimizations - these avoid constant string lookups
     private String cachedInactiveText;
     private String cachedFullText;
-    
+
     // Timer placeholder detection - cache whether GUI uses timer placeholders
     private volatile Boolean hasTimerPlaceholders = null;
 
@@ -127,7 +125,7 @@ public class SpawnerGuiViewManager implements Listener {
 
         // Preload commonly used strings to avoid repeated lookups
         initCachedStrings();
-        
+
         // Initialize all slot positions from layout configuration
         initializeSlotPositions();
     }
@@ -136,11 +134,11 @@ public class SpawnerGuiViewManager implements Listener {
         // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
-        
+
         // Detect if timer placeholders are used in GUI configuration
         checkTimerPlaceholderUsage();
     }
-    
+
     /**
      * Check if the GUI configuration uses %time% placeholders.
      * This optimization allows us to skip timer processing entirely for servers
@@ -151,10 +149,10 @@ public class SpawnerGuiViewManager implements Listener {
             // Check both regular and no-shop lore configurations
             String[] loreLines = languageManager.getGuiItemLore("spawner_info_item.lore");
             String[] loreNoShopLines = languageManager.getGuiItemLore("spawner_info_item.lore_no_shop");
-            
+
             // Check if any lore line contains %time% placeholder
             boolean hasTimers = false;
-            
+
             if (loreLines != null) {
                 for (String line : loreLines) {
                     if (line != null && line.contains("%time%")) {
@@ -163,7 +161,7 @@ public class SpawnerGuiViewManager implements Listener {
                     }
                 }
             }
-            
+
             if (!hasTimers && loreNoShopLines != null) {
                 for (String line : loreNoShopLines) {
                     if (line != null && line.contains("%time%")) {
@@ -172,9 +170,9 @@ public class SpawnerGuiViewManager implements Listener {
                     }
                 }
             }
-            
+
             this.hasTimerPlaceholders = hasTimers;
-            
+
         } catch (Exception e) {
             // Fallback to enabled if we can't determine
             this.hasTimerPlaceholders = true;
@@ -197,7 +195,7 @@ public class SpawnerGuiViewManager implements Listener {
     public void recheckTimerPlaceholders() {
         // Reset cached strings with new language data
         initCachedStrings();
-        
+
         // If timer placeholders were disabled but are now enabled, 
         // start timer updates for current viewers (if not already running)
         if (hasTimerPlaceholders != null && hasTimerPlaceholders && !playerToSpawnerMap.isEmpty() && !isTaskRunning) {
@@ -264,7 +262,7 @@ public class SpawnerGuiViewManager implements Listener {
             spawnerToMainMenuViewers.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
                     .add(playerId);
         }
-        
+
         // Separately track filter GUI viewers to prevent duplication exploits
         if (viewerType == ViewerType.FILTER) {
             spawnerToFilterViewersMap.computeIfAbsent(spawner.getSpawnerId(), k -> ConcurrentHashMap.newKeySet())
@@ -275,12 +273,6 @@ public class SpawnerGuiViewManager implements Listener {
         if (!isTaskRunning && !playerToSpawnerMap.isEmpty()) {
             startUpdateTask();
         }
-    }
-
-    // Backward compatibility method
-    public void trackViewer(UUID playerId, SpawnerData spawner) {
-        // Default to main menu for backward compatibility
-        trackViewer(playerId, spawner, ViewerType.MAIN_MENU);
     }
 
     public void untrackViewer(UUID playerId) {
@@ -308,7 +300,7 @@ public class SpawnerGuiViewManager implements Listener {
                 }
             }
         }
-        
+
         // Also remove from filter viewer tracking if present
         if (info != null) {
             String spawnerId = info.spawnerData.getSpawnerId();
@@ -382,37 +374,37 @@ public class SpawnerGuiViewManager implements Listener {
             cachedSpawnerInfoSlot = -1;
             return;
         }
-        
+
         // Initialize storage slot
         GuiButton storageButton = layout.getButton("storage");
         cachedStorageSlot = storageButton != null ? storageButton.getSlot() : -1;
-        
+
         // Initialize exp slot
         GuiButton expButton = layout.getButton("exp");
         cachedExpSlot = expButton != null ? expButton.getSlot() : -1;
-        
+
         // Initialize spawner info slot using the same logic as SpawnerMenuUI
         GuiButton spawnerInfoButton = null;
-        
+
         // Check for shop integration to determine which button to use
         if (plugin.hasSellIntegration()) {
             spawnerInfoButton = layout.getButton("spawner_info_with_shop");
         }
-        
+
         if (spawnerInfoButton == null) {
             spawnerInfoButton = layout.getButton("spawner_info_no_shop");
         }
-        
+
         if (spawnerInfoButton == null) {
             spawnerInfoButton = layout.getButton("spawner_info");
         }
-        
+
         cachedSpawnerInfoSlot = spawnerInfoButton != null ? spawnerInfoButton.getSlot() : -1;
     }
 
     /**
      * Get the storage slot from the cached layout configuration.
-     * 
+     *
      * @return the slot number for the storage button, or -1 if not found
      */
     private int getStorageSlot() {
@@ -421,7 +413,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     /**
      * Get the exp slot from the cached layout configuration.
-     * 
+     *
      * @return the slot number for the exp button, or -1 if not found
      */
     private int getExpSlot() {
@@ -430,7 +422,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     /**
      * Get the spawner info slot from the cached layout configuration.
-     * 
+     *
      * @return the slot number for the spawner info button, or -1 if not found
      */
     private int getSpawnerInfoSlot() {
@@ -500,7 +492,7 @@ public class SpawnerGuiViewManager implements Listener {
     private void updateGuiForSpawnerInfo() {
         // Always process batched updates first (storage, exp, etc.) regardless of timer placeholders
         processPendingUpdates();
-        
+
         // Skip timer-specific processing if GUI doesn't use timer placeholders
         if (!isTimerPlaceholdersEnabled()) {
             // Check if we should stop the task (only if no viewers at all)
@@ -509,7 +501,7 @@ public class SpawnerGuiViewManager implements Listener {
             }
             return;
         }
-        
+
         // Only process main menu viewers for timer updates
         if (mainMenuViewers.isEmpty()) {
             // Check if we should stop the task (only if no viewers at all)
@@ -520,16 +512,16 @@ public class SpawnerGuiViewManager implements Listener {
         }
 
         long currentTime = System.currentTimeMillis();
-        
+
         // Group main menu viewers by spawner to optimize timer calculations for multiple players viewing same spawner
         Map<String, List<UUID>> spawnerViewers = new HashMap<>();
-        
+
         for (Map.Entry<UUID, SpawnerViewerInfo> entry : mainMenuViewers.entrySet()) {
             UUID playerId = entry.getKey();
             SpawnerViewerInfo viewerInfo = entry.getValue();
             SpawnerData spawner = viewerInfo.spawnerData;
             String spawnerId = spawner.getSpawnerId();
-            
+
             Player player = Bukkit.getPlayer(playerId);
             if (!isValidGuiSession(player)) {
                 untrackViewer(playerId);
@@ -552,27 +544,27 @@ public class SpawnerGuiViewManager implements Listener {
 
             spawnerViewers.computeIfAbsent(spawnerId, k -> new ArrayList<>()).add(playerId);
         }
-        
+
         int processedPlayers = 0;
-        
+
         // Process spawners in batches - calculate timer once per spawner, apply to all viewers
         for (Map.Entry<String, List<UUID>> spawnerGroup : spawnerViewers.entrySet()) {
             String spawnerId = spawnerGroup.getKey();
             List<UUID> viewers = spawnerGroup.getValue();
-            
+
             if (viewers.isEmpty()) continue;
-            
+
             // Get spawner data from first viewer
             UUID firstViewer = viewers.get(0);
             SpawnerViewerInfo viewerInfo = mainMenuViewers.get(firstViewer);
             if (viewerInfo == null) continue;
-            
+
             SpawnerData spawner = viewerInfo.spawnerData;
-            
+
             // Calculate timer value once for this spawner
             long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
             String newTimerValue;
-            
+
             if (spawner.getIsAtCapacity()) {
                 newTimerValue = cachedFullText;
             } else if (timeUntilNextSpawn == -1) {
@@ -580,25 +572,25 @@ public class SpawnerGuiViewManager implements Listener {
             } else {
                 newTimerValue = formatTime(timeUntilNextSpawn);
             }
-            
+
             // Apply to all viewers of this spawner
             for (UUID playerId : viewers) {
                 // Batch limit for performance
                 if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
                     break;
                 }
-                
+
                 // Race condition prevention: double-check that player is still in main menu viewers
                 if (!mainMenuViewers.containsKey(playerId)) {
                     continue; // Player was removed by another thread
                 }
-                
+
                 Player player = Bukkit.getPlayer(playerId);
                 if (!isValidGuiSession(player)) {
                     untrackViewer(playerId);
                     continue;
                 }
-                
+
                 // Check if timer value actually changed for this player
                 String lastValue = lastTimerValue.get(playerId);
                 if (lastValue != null && lastValue.equals(newTimerValue)) {
@@ -608,7 +600,7 @@ public class SpawnerGuiViewManager implements Listener {
                 // Update tracking atomically to prevent race conditions
                 lastTimerUpdate.put(playerId, currentTime);
                 lastTimerValue.put(playerId, newTimerValue);
-                
+
                 processedPlayers++;
 
                 // Using location to make sure we're on the correct region thread
@@ -616,7 +608,7 @@ public class SpawnerGuiViewManager implements Listener {
                 if (playerLocation != null) {
                     final String finalTimerValue = newTimerValue;
                     final UUID finalPlayerId = playerId; // Capture for thread safety
-                    
+
                     // This is the key fix: use location-based scheduling to ensure we're on the right thread
                     Scheduler.runLocationTask(playerLocation, () -> {
                         // Final validation that player is still online and tracked
@@ -641,7 +633,7 @@ public class SpawnerGuiViewManager implements Listener {
                     });
                 }
             }
-            
+
             // Break early if we've processed enough players
             if (processedPlayers >= MAX_PLAYERS_PER_BATCH) {
                 break;
@@ -730,7 +722,7 @@ public class SpawnerGuiViewManager implements Listener {
      * Forces an immediate timer update when spawner state changes.
      * This is called when spawner transitions from inactive to active or vice versa.
      * Only updates main menu viewers since they're the ones that need timer updates.
-     * 
+     *
      * @param spawner The spawner whose state has changed
      */
     public void forceStateChangeUpdate(SpawnerData spawner) {
@@ -738,16 +730,16 @@ public class SpawnerGuiViewManager implements Listener {
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
-        
+
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
-        
+
         // Clear previous timer values to force refresh for main menu viewers only
         for (UUID viewerId : mainMenuViewerSet) {
             lastTimerUpdate.remove(viewerId);
             lastTimerValue.remove(viewerId);
         }
-        
+
         // Update immediately - but only for main menu viewers
         updateMainMenuViewers(spawner);
     }
@@ -761,14 +753,14 @@ public class SpawnerGuiViewManager implements Listener {
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
-        
+
         Set<UUID> mainMenuViewerSet = spawnerToMainMenuViewers.get(spawner.getSpawnerId());
         if (mainMenuViewerSet == null || mainMenuViewerSet.isEmpty()) return;
 
         // Calculate timer value once for all main menu viewers
         long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
         String timerValue;
-        
+
         if (spawner.getIsAtCapacity()) {
             timerValue = cachedFullText;
         } else if (timeUntilNextSpawn == -1) {
@@ -789,10 +781,10 @@ public class SpawnerGuiViewManager implements Listener {
             if (loc != null) {
                 final String finalTimerValue = timerValue;
                 final UUID finalViewerId = viewerId;
-                
+
                 Scheduler.runLocationTask(loc, () -> {
                     if (!viewer.isOnline() || !mainMenuViewers.containsKey(finalViewerId)) return;
-                    
+
                     Inventory openInv = viewer.getOpenInventory().getTopInventory();
                     if (openInv == null || !(openInv.getHolder(false) instanceof SpawnerMenuHolder)) {
                         untrackViewer(finalViewerId);
@@ -809,7 +801,7 @@ public class SpawnerGuiViewManager implements Listener {
     /**
      * Forces an immediate timer update for a specific player's spawner GUI.
      * This is used when opening a new GUI to ensure the timer displays immediately.
-     * 
+     *
      * @param player The player whose GUI should be updated
      * @param spawner The spawner data for the timer calculation
      */
@@ -818,19 +810,19 @@ public class SpawnerGuiViewManager implements Listener {
         if (hasTimerPlaceholders != null && !hasTimerPlaceholders) {
             return;
         }
-        
+
         if (!isValidGuiSession(player)) return;
-        
+
         Location playerLocation = player.getLocation();
         if (playerLocation == null) return;
-        
+
         // Schedule the timer update on the appropriate thread
         Scheduler.runLocationTask(playerLocation, () -> {
             if (!player.isOnline()) return;
-            
+
             Inventory openInventory = player.getOpenInventory().getTopInventory();
             if (openInventory == null) return;
-            
+
             InventoryHolder holder = openInventory.getHolder(false);
             if (holder instanceof SpawnerMenuHolder) {
                 int spawnerInfoSlot = getSpawnerInfoSlot();
@@ -860,6 +852,10 @@ public class SpawnerGuiViewManager implements Listener {
         // Invalidate cache for this spawner
         if (plugin.getSpawnerMenuUI() != null) {
             plugin.getSpawnerMenuUI().invalidateSpawnerCache(spawner.getSpawnerId());
+        }
+
+        if (plugin.getSpawnerMenuFormUI() != null) {
+            plugin.getSpawnerMenuFormUI().invalidateSpawnerCache(spawner.getSpawnerId());
         }
 
         int viewerCount = viewers.size();
@@ -999,7 +995,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void updateSpawnerInfoItem(Inventory inventory, SpawnerData spawner, Player player, int spawnerInfoSlot) {
         if (spawnerInfoSlot < 0) return;
-        
+
         // Get the current spawner info item from the inventory
         ItemStack currentSpawnerItem = inventory.getItem(spawnerInfoSlot);
         if (currentSpawnerItem == null || !currentSpawnerItem.hasItemMeta()) return;
@@ -1034,7 +1030,7 @@ public class SpawnerGuiViewManager implements Listener {
         // but were previously processed (meaning they had %time% before)
         String currentTimerValue = null;
         int currentTimerLineIndex = -1;
-        
+
         // First, find the line in new lore that has %time% placeholder
         int newTimerLineIndex = -1;
         for (int i = 0; i < newLore.size(); i++) {
@@ -1043,28 +1039,28 @@ public class SpawnerGuiViewManager implements Listener {
                 break;
             }
         }
-        
+
         // If there's no %time% placeholder in new lore, nothing to preserve
         if (newTimerLineIndex == -1) return;
-        
+
         // Check if the corresponding line in current lore has been processed (no %time% but same structure)
         if (newTimerLineIndex < currentLore.size()) {
             String currentLine = currentLore.get(newTimerLineIndex);
             String newLine = newLore.get(newTimerLineIndex);
-            
+
             // If current line doesn't have %time% but new line does, extract the timer value
             if (!currentLine.contains("%time%") && newLine.contains("%time%")) {
                 // Find the timer value by comparing the structure
                 String newLineTemplate = newLine.replace("%time%", "TIMER_PLACEHOLDER");
                 String cleanNewTemplate = ChatColor.stripColor(newLineTemplate);
                 String cleanCurrentLine = ChatColor.stripColor(currentLine);
-                
+
                 // Extract timer value by finding what replaced the placeholder
                 int placeholderIndex = cleanNewTemplate.indexOf("TIMER_PLACEHOLDER");
                 if (placeholderIndex >= 0 && cleanCurrentLine.length() >= placeholderIndex) {
                     String beforePlaceholder = cleanNewTemplate.substring(0, placeholderIndex);
                     String afterPlaceholder = cleanNewTemplate.substring(placeholderIndex + "TIMER_PLACEHOLDER".length());
-                    
+
                     if (cleanCurrentLine.startsWith(beforePlaceholder) && cleanCurrentLine.endsWith(afterPlaceholder)) {
                         int startIndex = beforePlaceholder.length();
                         int endIndex = cleanCurrentLine.length() - afterPlaceholder.length();
@@ -1080,11 +1076,11 @@ public class SpawnerGuiViewManager implements Listener {
         if (currentTimerValue != null && !currentTimerValue.isEmpty()) {
             Map<String, String> timerPlaceholder = Collections.singletonMap("time", currentTimerValue);
             List<String> updatedLore = new ArrayList<>(newLore.size());
-            
+
             for (String line : newLore) {
                 updatedLore.add(languageManager.applyOnlyPlaceholders(line, timerPlaceholder));
             }
-            
+
             newMeta.setLore(updatedLore);
             newItem.setItemMeta(newMeta);
         }
@@ -1099,9 +1095,9 @@ public class SpawnerGuiViewManager implements Listener {
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
-        
+
         if (spawnerInfoSlot < 0) return;
-        
+
         ItemStack spawnerItem = inventory.getItem(spawnerInfoSlot);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
@@ -1114,7 +1110,7 @@ public class SpawnerGuiViewManager implements Listener {
         // Find and update the timer line - handle both placeholder and already processed lines
         boolean needsUpdate = false;
         List<String> updatedLore = new ArrayList<>(lore.size());
-        
+
         for (String line : lore) {
             if (line.contains("%time%")) {
                 // This line has the placeholder - replace it with timer display
@@ -1147,9 +1143,9 @@ public class SpawnerGuiViewManager implements Listener {
         if (!isTimerPlaceholdersEnabled()) {
             return;
         }
-        
+
         if (spawnerInfoSlot < 0) return;
-        
+
         ItemStack spawnerItem = inventory.getItem(spawnerInfoSlot);
         if (spawnerItem == null || !spawnerItem.hasItemMeta()) return;
 
@@ -1175,7 +1171,7 @@ public class SpawnerGuiViewManager implements Listener {
         // Find and update the timer line - handle both placeholder and already processed lines
         boolean needsUpdate = false;
         List<String> updatedLore = new ArrayList<>(lore.size());
-        
+
         for (String line : lore) {
             if (line.contains("%time%")) {
                 // This line has the placeholder - replace it with timer display
@@ -1213,24 +1209,24 @@ public class SpawnerGuiViewManager implements Listener {
         // Pattern to match timer formats: "01:30", "00:45", etc. or status messages
         String strippedLine = org.bukkit.ChatColor.stripColor(line);
         String strippedNewDisplay = org.bukkit.ChatColor.stripColor(newTimeDisplay);
-        
+
         // Look for time patterns (mm:ss format) or our cached status messages
-        if (strippedLine.matches(".*\\d{2}:\\d{2}.*") || 
+        if (strippedLine.matches(".*\\d{2}:\\d{2}.*") ||
             strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
             strippedLine.contains(org.bukkit.ChatColor.stripColor(cachedFullText))) {
-            
+
             // This looks like a timer line - we need to replace the timer portion
-            
+
             // For time format (mm:ss), replace it
             String updatedLine = line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
             if (!updatedLine.equals(line)) {
                 return updatedLine;
             }
-            
+
             // For status messages, replace the entire status portion
             String strippedCachedInactive = org.bukkit.ChatColor.stripColor(cachedInactiveText);
             String strippedCachedFull = org.bukkit.ChatColor.stripColor(cachedFullText);
-            
+
             if (strippedLine.contains(strippedCachedInactive)) {
                 // Replace the inactive status with new time display
                 return line.replace(cachedInactiveText, newTimeDisplay);
@@ -1239,17 +1235,17 @@ public class SpawnerGuiViewManager implements Listener {
                 return line.replace(cachedFullText, newTimeDisplay);
             }
         }
-        
+
         // Additional check: if the new display is a status message, see if we need to replace timer format
         if (strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedInactiveText)) ||
             strippedNewDisplay.equals(org.bukkit.ChatColor.stripColor(cachedFullText))) {
-            
+
             // If line contains timer format, replace it with status message
             if (strippedLine.matches(".*\\d{2}:\\d{2}.*")) {
                 return line.replaceAll("\\d{2}:\\d{2}", newTimeDisplay);
             }
         }
-        
+
         // No timer pattern found, return line unchanged
         return line;
     }
@@ -1265,19 +1261,19 @@ public class SpawnerGuiViewManager implements Listener {
         long currentTime = System.currentTimeMillis();
         long lastSpawnTime = spawner.getLastSpawnTime();
         long timeElapsed = currentTime - lastSpawnTime;
-        
+
         // Check if spawner is truly inactive (not just in initial stopped state)
         // This mirrors the logic from SpawnerMenuUI.calculateInitialTimerValue() to ensure consistency
         // between initial display and ongoing timer updates
-        boolean isSpawnerInactive = !spawner.getSpawnerActive() || 
+        boolean isSpawnerInactive = !spawner.getSpawnerActive() ||
             (spawner.getSpawnerStop() && timeElapsed > cachedDelay * 2); // Only inactive if stopped for more than 2 cycles
-        
+
         if (isSpawnerInactive) {
             return -1;
         }
 
         long timeUntilNextSpawn = cachedDelay - timeElapsed;
-        
+
         // Ensure we don't go below 0 or above the delay
         timeUntilNextSpawn = Math.max(0, Math.min(timeUntilNextSpawn, cachedDelay));
 
@@ -1291,11 +1287,11 @@ public class SpawnerGuiViewManager implements Listener {
                         currentTime = System.currentTimeMillis();
                         lastSpawnTime = spawner.getLastSpawnTime();
                         timeElapsed = currentTime - lastSpawnTime;
-                        
+
                         if (timeElapsed >= cachedDelay) {
                             // Update last spawn time to current time for next cycle
                             spawner.setLastSpawnTime(currentTime);
-                            
+
                             // Get the spawner location to schedule on the right region
                             Location spawnerLocation = spawner.getSpawnerLocation();
                             if (spawnerLocation != null) {
@@ -1306,7 +1302,7 @@ public class SpawnerGuiViewManager implements Listener {
                             }
                             return cachedDelay; // Start new cycle with full delay
                         }
-                        
+
                         return cachedDelay - timeElapsed;
                     } finally {
                         spawner.getLock().unlock();
@@ -1337,7 +1333,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void updateChestItem(Inventory inventory, SpawnerData spawner, int storageSlot) {
         if (storageSlot < 0) return;
-        
+
         // Get the chest item from the inventory
         ItemStack currentChestItem = inventory.getItem(storageSlot);
         if (currentChestItem == null || !currentChestItem.hasItemMeta()) return;
@@ -1353,7 +1349,7 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void updateExpItem(Inventory inventory, SpawnerData spawner, int expSlot) {
         if (expSlot < 0) return;
-        
+
         // Get the exp item from the inventory
         ItemStack currentExpItem = inventory.getItem(expSlot);
         if (currentExpItem == null || !currentExpItem.hasItemMeta()) return;
@@ -1381,7 +1377,7 @@ public class SpawnerGuiViewManager implements Listener {
                 }
             }
         }
-        
+
         // Force close filter GUI viewers to prevent duplication exploits
         Set<UUID> filterViewers = spawnerToFilterViewersMap.get(spawnerId);
         if (filterViewers != null && !filterViewers.isEmpty()) {

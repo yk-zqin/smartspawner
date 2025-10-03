@@ -6,7 +6,6 @@ import github.nighter.smartspawner.language.MessageService;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
-import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.Scheduler;
 
 import org.bukkit.Bukkit;
@@ -58,7 +57,7 @@ public class SpawnerSellManager {
             // Process selling async to avoid blocking main thread
             Scheduler.runTaskAsync(() -> {
                 // Use cached sell value for optimization
-                SellResult result = calculateSellValueOptimized(consolidatedItems, spawner);
+                SellResult result = calculateSellValue(consolidatedItems, spawner);
 
                 // Store the result in SpawnerData for later access
                 spawner.setLastSellResult(result);
@@ -159,41 +158,11 @@ public class SpawnerSellManager {
     }
 
     /**
-     * Get the current sell value without actually selling (preview)
-     * Uses cached value for optimization
-     */
-    public SellResult previewSellValue(SpawnerData spawner) {
-        boolean lockAcquired = spawner.getLock().tryLock();
-        if (!lockAcquired) {
-            return SellResult.empty();
-        }
-
-        try {
-            VirtualInventory virtualInv = spawner.getVirtualInventory();
-            if (virtualInv.getUsedSlots() == 0) {
-                return SellResult.empty();
-            }
-            
-            // Recalculate if dirty
-            if (spawner.isSellValueDirty()) {
-                spawner.recalculateSellValue();
-            }
-
-            Map<VirtualInventory.ItemSignature, Long> consolidatedItems =
-                    new HashMap<>(virtualInv.getConsolidatedItems());
-
-            return calculateSellValueOptimized(consolidatedItems, spawner);
-        } finally {
-            spawner.getLock().unlock();
-        }
-    }
-
-    /**
      * Calculates the total sell value of items using cached accumulated value
      * This method is optimized to use pre-calculated sell values
      */
-    private SellResult calculateSellValueOptimized(Map<VirtualInventory.ItemSignature, Long> consolidatedItems,
-                                                   SpawnerData spawner) {
+    private SellResult calculateSellValue(Map<VirtualInventory.ItemSignature, Long> consolidatedItems,
+                                          SpawnerData spawner) {
         // Use the accumulated sell value from spawner (already calculated incrementally)
         double totalValue = spawner.getAccumulatedSellValue();
         long totalItemsSold = 0;
@@ -219,121 +188,6 @@ public class SpawnerSellManager {
         }
 
         return new SellResult(totalValue, totalItemsSold, itemsToRemove);
-    }
-
-    /**
-     * Calculates the total sell value of items asynchronously
-     * This method processes large inventories efficiently without blocking
-     */
-    private SellResult calculateSellValue(Map<VirtualInventory.ItemSignature, Long> consolidatedItems,
-                                          SpawnerData spawner) {
-        double totalValue = 0.0;
-        long totalItemsSold = 0;
-        List<ItemStack> itemsToRemove = new ArrayList<>();
-
-        // Get valid loot items for price lookup
-        List<LootItem> allLootItems = spawner.getLootConfig().getAllItems();
-
-        // Create durability-ignorant price cache for efficiency
-        Map<String, Double> priceCache = createDurabilityIgnorantPriceCache(allLootItems);
-
-        // Process each item type in the inventory
-        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : consolidatedItems.entrySet()) {
-            ItemStack template = entry.getKey().getTemplate();
-            long amount = entry.getValue();
-
-            // Find the price for this item using the new cache system
-            double itemPrice = findItemPriceByKey(template, priceCache);
-
-            // Skip items with no sell value
-            if (itemPrice <= 0.0) {
-                continue;
-            }
-
-            // Calculate total value for this item type
-            double itemTotalValue = itemPrice * amount;
-            totalValue += itemTotalValue;
-            totalItemsSold += amount;
-
-            // Create ItemStacks to remove (handle stacking properly)
-            long remainingAmount = amount;
-            while (remainingAmount > 0) {
-                ItemStack stackToRemove = template.clone();
-                int stackSize = (int) Math.min(remainingAmount, template.getMaxStackSize());
-                stackToRemove.setAmount(stackSize);
-                itemsToRemove.add(stackToRemove);
-                remainingAmount -= stackSize;
-            }
-        }
-
-        return new SellResult(totalValue, totalItemsSold, itemsToRemove);
-    }
-
-    /**
-     * Finds the sell price for an item using the key-based price cache
-     * This method is optimized for handling durability differences efficiently
-     */
-    private double findItemPriceByKey(ItemStack item, Map<String, Double> priceCache) {
-        if (item == null) {
-            return 0.0;
-        }
-
-        String itemKey = createItemKey(item);
-        Double price = priceCache.get(itemKey);
-
-        return price != null ? price : 0.0;
-    }
-
-    /**
-     * Create a price cache that groups items by their base type
-     * This is more efficient for large inventories with many durability variants
-     */
-    private Map<String, Double> createDurabilityIgnorantPriceCache(List<LootItem> validLootItems) {
-        Map<String, Double> cache = new HashMap<>();
-
-        for (LootItem lootItem : validLootItems) {
-            if (lootItem.getSellPrice() > 0.0) {
-                ItemStack template = lootItem.createItemStack(new Random());
-                if (template != null) {
-                    String key = createItemKey(template);
-                    cache.put(key, lootItem.getSellPrice());
-                }
-            }
-        }
-
-        return cache;
-    }
-
-    /**
-     * Creates a unique key for an item that ignores durability
-     */
-    private String createItemKey(ItemStack item) {
-        if (item == null) {
-            return "null";
-        }
-
-        StringBuilder key = new StringBuilder();
-        key.append(item.getType().name());
-
-        // Add enchantments if present
-        if (item.hasItemMeta() && item.getItemMeta().hasEnchants()) {
-            key.append("_enchants:");
-            item.getItemMeta().getEnchants().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(enchantment -> enchantment.getKey().toString())))
-                    .forEach(entry -> key.append(entry.getKey().getKey()).append(":").append(entry.getValue()).append(","));
-        }
-
-        // Add custom model data if present
-        if (item.hasItemMeta() && item.getItemMeta().hasCustomModelData()) {
-            key.append("_cmd:").append(item.getItemMeta().getCustomModelData());
-        }
-
-        // Add display name if present
-        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            key.append("_name:").append(item.getItemMeta().getDisplayName());
-        }
-
-        return key.toString();
     }
 
     /**
