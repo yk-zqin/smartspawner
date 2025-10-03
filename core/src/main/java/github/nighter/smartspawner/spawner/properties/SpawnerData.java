@@ -347,7 +347,6 @@ public class SpawnerData {
         // Mark sell value as dirty since prices may have changed
         this.sellValueDirty = true;
     }
-    }
 
     public void setLastSellResult(SellResult sellResult) {
         this.lastSellResult = sellResult;
