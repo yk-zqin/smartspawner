@@ -348,7 +348,7 @@ public class SpawnerStorageUI {
         // Get format strings from configuration
         String selectedItemFormat = languageManager.getGuiItemName("sort_items_button.selected_item");
         String unselectedItemFormat = languageManager.getGuiItemName("sort_items_button.unselected_item");
-        String noneText = languageManager.getGuiItemName("sort_items_button.none_text");
+        String noneText = languageManager.getGuiItemName("sort_items_button.no_item");
 
         // Get available items from spawner drops
         StringBuilder availableItems = new StringBuilder();
