@@ -418,3 +418,5 @@ bedrock:
       storage: Lager öffnen
       exp: EXP einsammeln
       stacker: Stack verwalten
+      sell_and_exp: Verkaufen & EXP einsammeln
+      sell: Verkaufen

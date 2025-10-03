@@ -383,5 +383,7 @@ bedrock:
 
     button_names:
       storage: Mở Kho Spawner
-      exp: Thu Thập Kinh Nghiệm
+      exp: Nhận Kinh Nghiệm
       stacker: Stack Spawner
+      sell_and_exp: Bán Vật Phẩm & Nhận Kinh Nghiệm
+      sell: Bán Vật Phẩm

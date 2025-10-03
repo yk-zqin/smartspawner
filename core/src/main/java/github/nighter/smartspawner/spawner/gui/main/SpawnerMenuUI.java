@@ -285,7 +285,6 @@ public class SpawnerMenuUI {
         // Get layout configuration first for cache key calculation
         GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
         GuiButton spawnerInfoButton = layout.getButton("spawner_info");
-        String materialType = spawnerInfoButton != null ? spawnerInfoButton.getMaterial().toString() : "MOB_HEAD";
         
         // Get important data upfront
         EntityType entityType = spawner.getEntityType();

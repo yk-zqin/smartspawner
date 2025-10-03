@@ -25,22 +25,22 @@ public class SpawnerMenuFormUI {
     static {
         ACTION_BUTTON_CONFIG.put("open_storage", new ActionButtonInfo(
                 "bedrock.main_gui.button_names.storage",
-                "https://minecraft.wiki/images/thumb/Chest.gif/150px-Chest.gif"
+                "https://i.pinimg.com/736x/7a/28/50/7a28504d8446ab0ad670757cfa32fe59.jpg"
         ));
 
         ACTION_BUTTON_CONFIG.put("open_stacker", new ActionButtonInfo(
                 "bedrock.main_gui.button_names.stacker",
-                "https://minecraft.wiki/images/thumb/Spawner_with_fire.png/150px-Spawner_with_fire.png"
+                "https://cdn.modrinth.com/data/9tQwxSFr/f0f1cc267f587a39acd2c820cfe6b29d0f2ccae3.png"
         ));
 
         ACTION_BUTTON_CONFIG.put("sell_and_exp", new ActionButtonInfo(
                 "bedrock.main_gui.button_names.sell_and_exp",
-                "https://img.icons8.com/?size=100&id=12815&format=png&color=FFD700"
+                "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8a/Gold_Ingot_JE4_BE2.png/revision/latest?cb=20200224211607"
         ));
 
         ACTION_BUTTON_CONFIG.put("sell_all", new ActionButtonInfo(
                 "bedrock.main_gui.button_names.sell_all",
-                "https://img.icons8.com/?size=100&id=12815&format=png&color=FFA500"
+                "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8a/Gold_Ingot_JE4_BE2.png/revision/latest?cb=20200224211607"
         ));
 
         ACTION_BUTTON_CONFIG.put("collect_exp", new ActionButtonInfo(

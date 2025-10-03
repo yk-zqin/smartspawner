@@ -418,3 +418,5 @@ bedrock:
       storage: Open Storage
       exp: Collect EXP
       stacker: Manage Stack
+      sell_and_exp: Sell Items & Collect EXP
+      sell: Sell Items

@@ -215,13 +215,13 @@ public class SpawnerClickManager implements Listener {
 
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         // Check if the player is a Bedrock player and use FormUI
-//        if (isBedrockPlayer(player)) {
-//            spawnerMenuFormUI.openSpawnerForm(player, spawner);
-//        } else {
-//            // Open the regular GUI menu for Java players
-//            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
-//        }
-        spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        if (isBedrockPlayer(player)) {
+            spawnerMenuFormUI.openSpawnerForm(player, spawner);
+        } else {
+            // Open the regular GUI menu for Java players
+            spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+        }
+        // spawnerMenuUI.openSpawnerMenu(player, spawner, false);
     }
 
     private boolean isSpawnEgg(Material material) {
