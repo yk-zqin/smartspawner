@@ -62,12 +62,12 @@ spawner_info_item:
   lore:
     - ''
     - '&#3498db◈ &#ecf0f1ᴛʜôɴɢ ᴛɪɴ:'
-    - '  &#bdc3c7•  xếᴘ ᴄʜồɴɢ: &#3498db%stack_size%'
+    - '  &#bdc3c7•  ꜱᴛᴀᴄᴋ: &#3498db%stack_size%'
     - '  &#bdc3c7•  ᴘʜạᴍ ᴠɪ: &#3498db%range% &#bdc3c7ᴋʜốɪ'
     - '  &#bdc3c7•  số ᴍᴏʙ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴛʜờɪ ɢɪᴀɴ: &#3498db%delay% &#bdc3c7ɢɪâʏ'
     - '  &#bdc3c7•  ʟầɴ sᴘᴀᴡɴ ᴛɪếᴘ: &#3498db%time%'
-    - '  &#bdc3c7•  ɢɪá ʙáɴ: +&a%total_sell_price%'
+    - '  &#bdc3c7•  ɢɪá ʙáɴ: &a+&%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ᴄʜᴜộᴛ ᴘʜảɪ ᴍở &#3498dbɢɪᴀᴏ ᴅɪệɴ ꜱᴛᴀᴄᴋᴇʀ'
     - '&#3498db⊳ &#ecf0f1ɴʜấᴘ để &#e67e22ʙáɴ ᴠậᴛ ᴘʜẩᴍ &#ecf0f1& &#2ecc71ɴʜậɴ xᴘ'
@@ -75,12 +75,11 @@ spawner_info_item:
   lore_no_shop:
     - ''
     - '&#3498db◈ &#ecf0f1ᴛʜôɴɢ ᴛɪɴ:'
-    - '  &#bdc3c7•  xếᴘ ᴄʜồɴɢ: &#3498db%stack_size%'
+    - '  &#bdc3c7•  ꜱᴛᴀᴄᴋ: &#3498db%stack_size%'
     - '  &#bdc3c7•  ᴘʜạᴍ ᴠɪ: &#3498db%range% &#bdc3c7ᴋʜốɪ'
     - '  &#bdc3c7•  số ᴍᴏʙ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴛʜờɪ ɢɪᴀɴ: &#3498db%delay% &#bdc3c7ɢɪâʏ'
     - '  &#bdc3c7•  ʟầɴ sᴘᴀᴡɴ ᴛɪếᴘ: &#3498db%time%'
-    - '  &#bdc3c7•  ɢɪá ʙáɴ: +&a%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ᴄʜᴜộᴛ ᴘʜảɪ ᴍở &#3498dbɢɪᴀᴏ ᴅɪệɴ ꜱᴛᴀᴄᴋᴇʀ'
 
@@ -100,17 +99,17 @@ exp_info_item:
 # ---------------------------------------------------
 #              Spawner Stacker GUI
 # ---------------------------------------------------
-gui_title_stacker: xếᴘ ᴄʜồɴɢ ꜱᴘᴀᴡɴᴇʀ
+gui_title_stacker: '&#545454ꜱᴛᴀᴄᴋ ꜱᴘᴀᴡɴᴇʀ'
 
 button_spawner:
-  name: '&#ab7afdꜱᴘᴀᴡɴᴇʀ %ᴇɴᴛɪᴛʏ%'
+  name: '&#3498db%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
   lore:
     - ''
-    - '&#7b68ee◈ &#a885fcᴛʜôɴɢ ᴛɪɴ xếᴘ ᴄʜồɴɢ:'
-    - '  &#f8f8ff•  ʜɪệɴ ᴛạɪ: &#c2a8fc%stack_size%'
-    - '  &#f8f8ff•  ᴛốɪ đᴀ: &#c2a8fc%max_stack_size%'
+    - '&#3498db◈ &#ecf0f1ᴛʜôɴɢ ᴛɪɴ:'
+    - '  &#bdc3c7•  ꜱᴛᴀᴄᴋ ʜɪệɴ ᴛạɪ: &#3498db%stack_size%'
+    - '  &#bdc3c7•  ᴛốɪ đᴀ: &#3498db%max_stack_size%'
     - ''
-    - '&#7b68ee⊳ &#f8f8ffɴʜấᴘ để ᴛʀở ᴠề ᴍᴇɴᴜ ꜱᴘᴀᴡɴᴇʀ'
+    - '&#3498db⊳ &#ecf0f1ɴʜấᴘ để ᴛʀở ᴠề ᴍᴇɴᴜ ꜱᴘᴀᴡɴᴇʀ'
 
 button_remove:
   name: '&#ff5252-%amount% ꜱᴘᴀᴡɴᴇʀ'
@@ -118,9 +117,9 @@ button_remove:
     - ''
     - '&#e63939◈ &#ff7070ʜàɴʜ độɴɢ:'
     - '  &#f8f8ff•  ɢỡ ʙỏ: &#ff5252%amount% &#e63939ꜱᴘᴀᴡɴᴇʀ'
-    - '  &#f8f8ff•  ʜɪệɴ ᴛạɪ: &#ff5252%stack_size%'
+    - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ ʜɪệɴ ᴛạɪ: &#ff5252%stack_size%'
     - ''
-    - '&#e63939⊳ &#f8f8ffɴʜấᴘ để ɢỡ ʙỏ ᴋʜỏɪ xếᴘ ᴄʜồɴɢ'
+    - '&#e63939⊳ &#f8f8ffɴʜấᴘ để ɢỡ ʙỏ ᴋʜỏɪ ꜱᴛᴀᴄᴋ'
 
 button_add:
   name: '&#37eb9a+%amount% ꜱᴘᴀᴡɴᴇʀ'
@@ -128,9 +127,9 @@ button_add:
     - ''
     - '&#2cc483◈ &#48e89bʜàɴʜ độɴɢ:'
     - '  &#f8f8ff•  ᴛʜêᴍ: &#37eb9a%amount% &#2cc483ꜱᴘᴀᴡɴᴇʀ'
-    - '  &#f8f8ff•  ʜɪệɴ ᴛạɪ: &#37eb9a%stack_size%'
+    - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ ʜɪệɴ ᴛạɪ: &#37eb9a%stack_size%'
     - ''
-    - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để ᴛʜêᴍ ᴠàᴏ xếᴘ ᴄʜồɴɢ'
+    - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để ᴛʜêᴍ ᴠàᴏ ꜱᴛᴀᴄᴋ'
 
 # ---------------------------------------------------
 #             Spawner Storage GUI
@@ -148,7 +147,7 @@ navigation_button_next:
     - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để đếɴ ᴛʀᴀɴɢ &#37eb9a%target_page%'
 
 sell_button:
-  name: '&aʙáɴ ᴠậᴛ ᴘʜẩᴍ: +&a%total_sell_price%'
+  name: '&aʙáɴ ᴠậᴛ ᴘʜẩᴍ: +$%total_sell_price%'
   lore:
     - '&a⊳ &#f8f8ffɴʜấᴘ để ʙáɴ ᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ'
 
@@ -220,7 +219,7 @@ world_buttons:
       - ''
       - '&#2cc483◈ &#48e89bꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#37eb9a%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#37eb9a%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#37eb9a%total_stacked%'
       - ''
       - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   nether:
@@ -229,7 +228,7 @@ world_buttons:
       - ''
       - '&#e63939◈ &#ff7070ꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#ff5252%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#ff5252%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#ff5252%total_stacked%'
       - ''
       - '&#e63939⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   end:
@@ -238,7 +237,7 @@ world_buttons:
       - ''
       - '&#7b68ee◈ &#a885fcꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#c2a8fc%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#c2a8fc%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#c2a8fc%total_stacked%'
       - ''
       - '&#7b68ee⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   custom_overworld:
@@ -247,7 +246,7 @@ world_buttons:
       - ''
       - '&#2cc483◈ &#48e89bꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#37eb9a%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#37eb9a%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#37eb9a%total_stacked%'
       - ''
       - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   custom_nether:
@@ -256,7 +255,7 @@ world_buttons:
       - ''
       - '&#e63939◈ &#ff7070ꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#ff5252%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#ff5252%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#ff5252%total_stacked%'
       - ''
       - '&#e63939⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   custom_end:
@@ -265,7 +264,7 @@ world_buttons:
       - ''
       - '&#7b68ee◈ &#a885fcꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#c2a8fc%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#c2a8fc%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#c2a8fc%total_stacked%'
       - ''
       - '&#7b68ee⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
   custom_default:
@@ -274,7 +273,7 @@ world_buttons:
       - ''
       - '&#7b68ee◈ &#a885fcꜱᴘᴀᴡɴᴇʀ:'
       - '  &#f8f8ff•  ᴛổɴɢ: &#c2a8fc%total%'
-      - '  &#f8f8ff•  xếᴘ ᴄʜồɴɢ: &#c2a8fc%total_stacked%'
+      - '  &#f8f8ff•  ꜱᴛᴀᴄᴋ: &#c2a8fc%total_stacked%'
       - ''
       - '&#7b68ee⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ ꜱᴘᴀᴡɴᴇʀ'
 
@@ -302,8 +301,8 @@ sort:
     lore:
       - ''
       - '%default_color%• ᴍặᴄ địɴʜ (ɪᴅ)'
-      - '%stack_size_asc_color%• xếᴘ ᴄʜồɴɢ (↑)'
-      - '%stack_size_desc_color%• xếᴘ ᴄʜồɴɢ (↓)'
+      - '%stack_size_asc_color%• ꜱᴛᴀᴄᴋ (↑)'
+      - '%stack_size_desc_color%• ꜱᴛᴀᴄᴋ (↓)'
   default:
     color: '&#37eb9a'
   stack_size_asc:
@@ -341,7 +340,7 @@ spawner_management:
       - '&#3498db⊳ &#f8f8ffɴʜấᴘ để xᴇᴍ'
 
   stack:
-    name: '&#3498dbᴄʜỉɴʜ ꜱửᴀ xếᴘ ᴄʜồɴɢ ꜱᴘᴀᴡɴᴇʀ'
+    name: '&#3498dbᴄʜỉɴʜ ꜱửᴀ ꜱᴛᴀᴄᴋ ꜱᴘᴀᴡɴᴇʀ'
     lore:
       - '&#3498db⊳ &#f8f8ffɴʜấᴘ để ᴄʜỉɴʜ ꜱửᴀ'
 
@@ -383,6 +382,6 @@ bedrock:
     title_stacked_spawner: '%amount% Spawner %entity%'
 
     button_names:
-      storage: Mở kho spawner
-      exp: Thu thập kinh nghiệm
-      stacker: Stack spawner
+      storage: Mở Kho Spawner
+      exp: Thu Thập Kinh Nghiệm
+      stacker: Stack Spawner

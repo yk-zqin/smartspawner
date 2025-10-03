@@ -99,7 +99,7 @@ spawner_info_item:
     - '  &#bdc3c7•  ᴍᴏʙꜱ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴠᴇʀᴢᴏᴇɢᴇʀᴜɴɢ: &#3498db%delay% &#bdc3c7ꜱ'
     - '  &#bdc3c7•  ɴᴀᴇᴄʜꜱᴛᴇʀ ꜱᴘᴀᴡɴ: &#3498db%time%'
-    - '  &#bdc3c7•  ᴠᴇʀᴋᴀᴜꜰʙᴀʀ: +&a%total_sell_price%'
+    - '  &#bdc3c7•  ᴠᴇʀᴋᴀᴜꜰʙᴀʀ: &a+$%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ʀᴇᴄʜᴛꜱᴋʟɪᴄᴋ ᴢᴜᴍ ᴏᴇꜰꜰɴᴇɴ ᴅᴇʀ &#3498dbꜱᴛᴀᴄᴋᴇʀ ɢᴜɪ'
     - '&#3498db⊳ &#ecf0f1ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ &#e67e22ᴠᴇʀᴋᴀᴜꜰᴇɴ &#ecf0f1& &#2ecc71xᴘ ᴇɪɴꜱᴀᴍᴍᴇʟɴ'
@@ -112,7 +112,6 @@ spawner_info_item:
     - '  &#bdc3c7•  ᴍᴏʙꜱ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴠᴇʀᴢᴏᴇɢᴇʀᴜɴɢ: &#3498db%delay% &#bdc3c7ꜱ'
     - '  &#bdc3c7•  ɴᴀᴇᴄʜꜱᴛᴇʀ ꜱᴘᴀᴡɴ: &#3498db%time%'
-    - '  &#bdc3c7•  ᴠᴇʀᴋᴀᴜꜰʙᴀʀ: +&a%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴏᴇꜰꜰɴᴇɴ ᴅᴇʀ &#3498dbꜱᴛᴀᴄᴋᴇʀ ɢᴜɪ'
 
@@ -180,7 +179,7 @@ navigation_button_next:
     - '&#2cc483⊳ &#f8f8ffᴋʟɪᴄᴋᴇɴ ᴜᴍ ᴢᴜ ꜱᴇɪᴛᴇ &#37eb9a%target_page% &#f8f8ffᴢᴜ ɢᴇʜᴇɴ'
 
 sell_button:
-  name: '&aᴀʟʟᴇ ɪᴛᴇᴍꜱ ᴠᴇʀᴋᴀᴜꜰᴇɴ: +&a%total_sell_price%'
+  name: '&aᴀʟʟᴇ ɪᴛᴇᴍꜱ ᴠᴇʀᴋᴀᴜꜰᴇɴ: +$%total_sell_price%'
   lore:
     - '&a⊳ &#f8f8ffᴋʟɪᴄᴋᴇɴ ᴜᴍ ᴀʟʟᴇ ɪᴛᴇᴍꜱ ᴢᴜ ᴠᴇʀᴋᴀᴜꜰᴇɴ'
 

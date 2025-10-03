@@ -34,12 +34,10 @@ spawner_info_item:
     - '&#FCE300● &fClick to sell items and collect xp'
     - '&#FCE300Storage:&f %formatted_storage%% &#FCE300Filled.'
     - '&#FCE300Exp:&f %formatted_exp%% &#FCE300Stored.'
-    - '&#FCE300Sellable: +&a%total_sell_price%'
   lore_no_shop:
     - '&#FCE300● &fClick to collect xp'
     - '&#FCE300Storage:&f %formatted_storage%% &#FCE300Filled.'
     - '&#FCE300Exp:&f %formatted_exp%% &#FCE300Stored.'
-    - '&#FCE300Sellable: +&a%total_sell_price%'
   lore_full: ''
   lore_inactive: ''
 
@@ -99,7 +97,7 @@ navigation_button_next:
     - '&fClick to go forward a page'
 
 sell_button:
-  name: '&#00F986ꜱᴇʟʟ ᴀʟʟ: +&a%total_sell_price%'
+  name: '&#00F986ꜱᴇʟʟ ᴀʟʟ: +$%total_sell_price%'
   lore:
     - '&fClick to sell all mob drops'
 
