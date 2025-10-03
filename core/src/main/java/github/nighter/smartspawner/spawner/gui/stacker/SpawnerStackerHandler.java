@@ -118,7 +118,12 @@ public class SpawnerStackerHandler implements Listener {
         if (clickedItem.getType() == Material.SPAWNER) {
             // Check if player is Bedrock and use appropriate menu
             if (isBedrockPlayer(player)) {
-                plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+                if (plugin.getSpawnerMenuFormUI() != null) {
+                    plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+                } else {
+                    // Fallback to standard GUI if FormUI not available
+                    spawnerMenuUI.openSpawnerMenu(player, spawner, true);
+                }
             } else {
                 spawnerMenuUI.openSpawnerMenu(player, spawner, true);
             }

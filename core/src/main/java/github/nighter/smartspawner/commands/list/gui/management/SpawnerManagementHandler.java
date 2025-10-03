@@ -82,7 +82,12 @@ public class SpawnerManagementHandler implements Listener {
     private void handleOpenSpawner(Player player, SpawnerData spawner) {
         // Check if player is Bedrock and use appropriate menu
         if (isBedrockPlayer(player)) {
-            plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+            if (plugin.getSpawnerMenuFormUI() != null) {
+                plugin.getSpawnerMenuFormUI().openSpawnerForm(player, spawner);
+            } else {
+                // Fallback to standard GUI if FormUI not available
+                spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+            }
         } else {
             spawnerMenuUI.openSpawnerMenu(player, spawner, false);
         }

@@ -236,11 +236,29 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.spawnerStorageUI = new SpawnerStorageUI(this);
         this.filterConfigUI = new FilterConfigUI(this);
         this.spawnerMenuUI = new SpawnerMenuUI(this);
-        this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
         this.spawnerGuiViewManager = new SpawnerGuiViewManager(this);
         this.spawnerLootGenerator = new SpawnerLootGenerator(this);
         this.spawnerSellManager = new SpawnerSellManager(this);
         this.rangeChecker = new SpawnerRangeChecker(this);
+        
+        // Initialize FormUI components only if Floodgate is available
+        initializeFormUIComponents();
+    }
+
+    private void initializeFormUIComponents() {
+        if (integrationManager != null && integrationManager.getFloodgateHook() != null 
+            && integrationManager.getFloodgateHook().isEnabled()) {
+            try {
+                this.spawnerMenuFormUI = new SpawnerMenuFormUI(this);
+                getLogger().info("FormUI components initialized successfully for Bedrock player support");
+            } catch (NoClassDefFoundError | Exception e) {
+                getLogger().warning("Failed to initialize FormUI components: " + e.getMessage());
+                this.spawnerMenuFormUI = null;
+            }
+        } else {
+            this.spawnerMenuFormUI = null;
+            debug("FormUI components not initialized - Floodgate integration not available");
+        }
     }
 
     private void initializeHandlers() {
