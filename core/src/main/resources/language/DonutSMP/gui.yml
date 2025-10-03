@@ -233,33 +233,27 @@ filter:
   button:
     name: '&#00F986ꜰɪʟᴛᴇʀ sᴘᴀᴡɴᴇʀs'
     lore:
-      - '%all_color%• ᴀʟʟ'
-      - '%active_color%• ᴀᴄᴛɪᴠᴇ'
-      - '%inactive_color%• ɪɴᴀᴄᴛɪᴠᴇ'
+      - '%available_options%'
       - ''
       - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜰɪʟᴛᴇʀ'
-  all:
-    color: '&#00F986'
-  active:
-    color: '&a'
-  inactive:
-    color: '&#ff5252'
+  selected_option: '&#00F986• %option_name%'
+  unselected_option: '&#f8f8ff• %option_name%'
+  all: 'ᴀʟʟ'
+  active: 'ᴀᴄᴛɪᴠᴇ'
+  inactive: 'ɪɴᴀᴄᴛɪᴠᴇ'
 
 sort:
   button:
     name: '&#00F986ꜱᴏʀᴛ ꜱᴘᴀᴡɴᴇʀꜱ'
     lore:
-      - '%default_color%• ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
-      - '%stack_size_desc_color%• ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
-      - '%stack_size_asc_color%• ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
+      - '%available_options%'
       - ''
       - '&#00F986⊳ &#f8f8ffᴄʟɪᴄᴋ ᴛᴏ ꜱᴏʀᴛ'
-  default:
-    color: '&#00F986'
-  stack_size_asc:
-    color: '&#00F986'
-  stack_size_desc:
-    color: '&#00F986'
+  selected_option: '&#00F986• %option_name%'
+  unselected_option: '&#f8f8ff• %option_name%'
+  default: 'ᴅᴇꜰᴀᴜʟᴛ (ɪᴅ)'
+  stack_size_asc: 'ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↑)'
+  stack_size_desc: 'ꜱᴛᴀᴄᴋ ꜱɪᴢᴇ (↓)'
 
 spawner_item_list:
   name: '&#3498dbꜱᴘᴀᴡɴᴇʀ #%id%'
