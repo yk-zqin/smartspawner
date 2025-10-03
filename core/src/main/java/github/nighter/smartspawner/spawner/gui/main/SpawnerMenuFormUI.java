@@ -54,6 +54,11 @@ public class SpawnerMenuFormUI {
                 "bedrock.main_gui.button_names.exp",
                 "https://minecraft.wiki/images/Bottle_o%27_Enchanting.gif"
         ));
+
+        ACTION_BUTTON_CONFIG.put("view_info", new ActionButtonInfo(
+                "bedrock.main_gui.button_names.view_info",
+                "https://i.pinimg.com/736x/d5/5a/32/d55a3207e894d44d7e82d93b0df81bd1.jpg"
+        ));
     }
 
     public SpawnerMenuFormUI(SmartSpawner plugin) {
@@ -100,12 +105,11 @@ public class SpawnerMenuFormUI {
             return;
         }
 
-        // Generate spawner info content
+        // Generate spawner info content (for view info button)
         String spawnerInfo = createSpawnerInfoContent(player, spawner, placeholders);
 
         SimpleForm.Builder formBuilder = SimpleForm.builder()
-                .title(title)
-                .content(spawnerInfo);
+                .title(title);
 
         for (ButtonInfo buttonInfo : availableButtons) {
             formBuilder.button(buttonInfo.text, FormImage.Type.URL, buttonInfo.imageUrl);
@@ -134,6 +138,9 @@ public class SpawnerMenuFormUI {
                                     break;
                                 case "collect_exp":
                                     handleExpCollection(player, spawner);
+                                    break;
+                                case "view_info":
+                                    openViewInfoForm(player, spawner);
                                     break;
                                 default:
                                     plugin.getLogger().warning("Unknown action in FormUI: " + buttonInfo.action);
@@ -190,6 +197,15 @@ public class SpawnerMenuFormUI {
             }
         }
 
+        // Always add "View Info" button at the end, regardless of GUI layout
+        if (!addedActions.contains("view_info")) {
+            ActionButtonInfo viewInfoConfig = ACTION_BUTTON_CONFIG.get("view_info");
+            if (viewInfoConfig != null) {
+                String text = languageManager.getGuiItemName(viewInfoConfig.langKey, placeholders);
+                buttons.add(new ButtonInfo("view_info", text, viewInfoConfig.imageUrl));
+            }
+        }
+
         return buttons;
     }
 
@@ -216,6 +232,8 @@ public class SpawnerMenuFormUI {
                 return plugin.hasSellIntegration() && player.hasPermission("smartspawner.sellall");
             case "collect_exp":
                 return true; // EXP collection doesn't require special permission
+            case "view_info":
+                return true; // View Info doesn't require special permission
             default:
                 return false;
         }
@@ -248,6 +266,35 @@ public class SpawnerMenuFormUI {
 
     private void handleExpCollection(Player player, SpawnerData spawner) {
         plugin.getSpawnerMenuAction().handleExpBottleClick(player, spawner, false);
+    }
+
+    private void openViewInfoForm(Player player, SpawnerData spawner) {
+        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
+        Map<String, String> placeholders = createPlaceholders(player, spawner);
+        
+        String title = languageManager.getGuiTitle("bedrock.main_gui.view_info_title", placeholders);
+        
+        // Generate spawner info content
+        String spawnerInfo = createSpawnerInfoContent(player, spawner, placeholders);
+        
+        // Get back button text
+        String backButtonText = languageManager.getGuiItemName("bedrock.main_gui.button_names.back", placeholders);
+        
+        SimpleForm form = SimpleForm.builder()
+                .title(title)
+                .content(spawnerInfo)
+                .button(backButtonText, FormImage.Type.URL, "https://i.pinimg.com/736x/ff/52/52/ff5252ff5252ff5252ff5252ff5252ff.jpg")
+                .closedOrInvalidResultHandler(() -> {
+                })
+                .validResultHandler(response -> {
+                    // Back button was clicked, reopen main spawner form
+                    Scheduler.runTask(() -> {
+                        openSpawnerForm(player, spawner);
+                    });
+                })
+                .build();
+        
+        FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(form);
     }
 
     private Map<String, String> createPlaceholders(Player player, SpawnerData spawner) {
