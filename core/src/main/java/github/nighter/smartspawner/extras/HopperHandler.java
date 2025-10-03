@@ -241,7 +241,7 @@ public class HopperHandler implements Listener {
             }
 
             if (!itemsToRemove.isEmpty()) {
-                virtualInv.removeItems(itemsToRemove);
+                spawner.removeItemsAndUpdateSellValue(itemsToRemove);
             }
 
             if (inventoryChanged) {

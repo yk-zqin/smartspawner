@@ -28,7 +28,7 @@ public class SpawnerSellManager {
 
     /**
      * Sells all items from the spawner's virtual inventory
-     * This method is async-optimized and handles large inventories efficiently
+     * This method is async-optimized and uses cached sell values for efficiency
      */
     public void sellAllItems(Player player, SpawnerData spawner) {
         // Try to acquire lock for thread safety
@@ -46,13 +46,19 @@ public class SpawnerSellManager {
                 messageService.sendMessage(player, "no_items");
                 return;
             }
+            
+            // Recalculate sell value if dirty (should rarely happen)
+            if (spawner.isSellValueDirty()) {
+                spawner.recalculateSellValue();
+            }
 
-            // Get all items for async processing
+            // Get all items for processing
             Map<VirtualInventory.ItemSignature, Long> consolidatedItems = virtualInv.getConsolidatedItems();
 
             // Process selling async to avoid blocking main thread
             Scheduler.runTaskAsync(() -> {
-                SellResult result = calculateSellValue(consolidatedItems, spawner);
+                // Use cached sell value for optimization
+                SellResult result = calculateSellValueOptimized(consolidatedItems, spawner);
 
                 // Store the result in SpawnerData for later access
                 spawner.setLastSellResult(result);
@@ -112,8 +118,8 @@ public class SpawnerSellManager {
                 return;
             }
 
-            // Remove sold items from virtual inventory
-            boolean itemsRemoved = virtualInv.removeItems(sellResult.getItemsToRemove());
+            // Remove sold items from virtual inventory and update sell value
+            boolean itemsRemoved = spawner.removeItemsAndUpdateSellValue(sellResult.getItemsToRemove());
             if (!itemsRemoved) {
                 // If items couldn't be removed (race condition), this indicates a critical issue
                 // The money has already been deposited, so we need to log this for investigation
@@ -154,6 +160,7 @@ public class SpawnerSellManager {
 
     /**
      * Get the current sell value without actually selling (preview)
+     * Uses cached value for optimization
      */
     public SellResult previewSellValue(SpawnerData spawner) {
         boolean lockAcquired = spawner.getLock().tryLock();
@@ -166,14 +173,52 @@ public class SpawnerSellManager {
             if (virtualInv.getUsedSlots() == 0) {
                 return SellResult.empty();
             }
+            
+            // Recalculate if dirty
+            if (spawner.isSellValueDirty()) {
+                spawner.recalculateSellValue();
+            }
 
             Map<VirtualInventory.ItemSignature, Long> consolidatedItems =
                     new HashMap<>(virtualInv.getConsolidatedItems());
 
-            return calculateSellValue(consolidatedItems, spawner);
+            return calculateSellValueOptimized(consolidatedItems, spawner);
         } finally {
             spawner.getLock().unlock();
         }
+    }
+
+    /**
+     * Calculates the total sell value of items using cached accumulated value
+     * This method is optimized to use pre-calculated sell values
+     */
+    private SellResult calculateSellValueOptimized(Map<VirtualInventory.ItemSignature, Long> consolidatedItems,
+                                                   SpawnerData spawner) {
+        // Use the accumulated sell value from spawner (already calculated incrementally)
+        double totalValue = spawner.getAccumulatedSellValue();
+        long totalItemsSold = 0;
+        List<ItemStack> itemsToRemove = new ArrayList<>();
+
+        // We still need to create the items list for removal
+        for (Map.Entry<VirtualInventory.ItemSignature, Long> entry : consolidatedItems.entrySet()) {
+            ItemStack template = entry.getKey().getTemplate();
+            long amount = entry.getValue();
+            
+            // Count items (we need this even if we skip price calculation)
+            totalItemsSold += amount;
+
+            // Create ItemStacks to remove (handle stacking properly)
+            long remainingAmount = amount;
+            while (remainingAmount > 0) {
+                ItemStack stackToRemove = template.clone();
+                int stackSize = (int) Math.min(remainingAmount, template.getMaxStackSize());
+                stackToRemove.setAmount(stackSize);
+                itemsToRemove.add(stackToRemove);
+                remainingAmount -= stackSize;
+            }
+        }
+
+        return new SellResult(totalValue, totalItemsSold, itemsToRemove);
     }
 
     /**

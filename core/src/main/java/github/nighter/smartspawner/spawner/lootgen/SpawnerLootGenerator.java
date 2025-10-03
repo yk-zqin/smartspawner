@@ -188,7 +188,7 @@ public class SpawnerLootGenerator {
                             }
 
                             if (!itemsToAdd.isEmpty()) {
-                                spawner.getVirtualInventory().addItems(itemsToAdd);
+                                spawner.addItemsAndUpdateSellValue(itemsToAdd);
                                 changed = true;
                             }
                         }

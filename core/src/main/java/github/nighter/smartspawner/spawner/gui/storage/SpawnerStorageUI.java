@@ -121,15 +121,8 @@ public class SpawnerStorageUI {
             ));
         }
 
-        // Create sell button
-        GuiButton sellButton = layout.getButton("sell_all");
-        if (sellButton != null) {
-            staticButtons.put("sell", createButton(
-                    sellButton.getMaterial(),
-                    languageManager.getGuiItemName("sell_button.name"),
-                    languageManager.getGuiItemLoreAsList("sell_button.lore")
-            ));
-        }
+        // Note: Sell button is created dynamically in updateDynamicButtons() 
+        // to show the current total sell price
     }
 
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
@@ -293,7 +286,7 @@ public class SpawnerStorageUI {
         // Add sell button if shop integration is available and button is enabled
         if (layout.hasButton("sell_all")) {
             GuiButton sellButton = layout.getButton("sell_all");
-            ItemStack sellIndicator = createSellButton(sellButton.getMaterial());
+            ItemStack sellIndicator = createSellButton(spawner, sellButton.getMaterial());
             updates.put(sellButton.getSlot(), sellIndicator);
         }
     }
@@ -335,8 +328,13 @@ public class SpawnerStorageUI {
         return createButton(material, buttonName, Arrays.asList(buttonLore));
     }
 
-    private ItemStack createSellButton(Material material) {
-        String name = languageManager.getGuiItemName("sell_button.name");
+    private ItemStack createSellButton(SpawnerData spawner, Material material) {
+        // Create placeholders for total sell price
+        Map<String, String> placeholders = new HashMap<>();
+        double totalSellPrice = spawner.getAccumulatedSellValue();
+        placeholders.put("total_sell_price", languageManager.formatNumber(totalSellPrice));
+        
+        String name = languageManager.getGuiItemName("sell_button.name", placeholders);
         List<String> lore = languageManager.getGuiItemLoreAsList("sell_button.lore");
         return createButton(material, name, lore);
     }

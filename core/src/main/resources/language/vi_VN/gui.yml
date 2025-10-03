@@ -67,6 +67,7 @@ spawner_info_item:
     - '  &#bdc3c7•  số ᴍᴏʙ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴛʜờɪ ɢɪᴀɴ: &#3498db%delay% &#bdc3c7ɢɪâʏ'
     - '  &#bdc3c7•  ʟầɴ sᴘᴀᴡɴ ᴛɪếᴘ: &#3498db%time%'
+    - '  &#bdc3c7•  ɢɪá ʙáɴ: +&a%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ᴄʜᴜộᴛ ᴘʜảɪ ᴍở &#3498dbɢɪᴀᴏ ᴅɪệɴ ꜱᴛᴀᴄᴋᴇʀ'
     - '&#3498db⊳ &#ecf0f1ɴʜấᴘ để &#e67e22ʙáɴ ᴠậᴛ ᴘʜẩᴍ &#ecf0f1& &#2ecc71ɴʜậɴ xᴘ'
@@ -79,6 +80,7 @@ spawner_info_item:
     - '  &#bdc3c7•  số ᴍᴏʙ: &#3498db%min_mobs% &#bdc3c7- &#3498db%max_mobs%'
     - '  &#bdc3c7•  ᴛʜờɪ ɢɪᴀɴ: &#3498db%delay% &#bdc3c7ɢɪâʏ'
     - '  &#bdc3c7•  ʟầɴ sᴘᴀᴡɴ ᴛɪếᴘ: &#3498db%time%'
+    - '  &#bdc3c7•  ɢɪá ʙáɴ: +&a%total_sell_price%'
     - ''
     - '&#3498db⊳ &#ecf0f1ᴄʜᴜộᴛ ᴘʜảɪ ᴍở &#3498dbɢɪᴀᴏ ᴅɪệɴ ꜱᴛᴀᴄᴋᴇʀ'
 
@@ -146,7 +148,7 @@ navigation_button_next:
     - '&#2cc483⊳ &#f8f8ffɴʜấᴘ để đếɴ ᴛʀᴀɴɢ &#37eb9a%target_page%'
 
 sell_button:
-  name: '&aʙáɴ ᴠậᴛ ᴘʜẩᴍ'
+  name: '&aʙáɴ ᴠậᴛ ᴘʜẩᴍ: +&a%total_sell_price%'
   lore:
     - '&a⊳ &#f8f8ffɴʜấᴘ để ʙáɴ ᴛấᴛ ᴄả ᴠậᴛ ᴘʜẩᴍ'
 
