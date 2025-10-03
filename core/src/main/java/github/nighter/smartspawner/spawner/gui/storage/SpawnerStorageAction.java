@@ -10,7 +10,6 @@ import github.nighter.smartspawner.spawner.gui.storage.utils.ItemMoveResult;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.synchronization.SpawnerGuiViewManager;
 import github.nighter.smartspawner.spawner.gui.layout.GuiLayout;
-import github.nighter.smartspawner.spawner.gui.layout.GuiButton;
 import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.VirtualInventory;
@@ -40,7 +39,6 @@ import org.bukkit.entity.Item;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class SpawnerStorageAction implements Listener {
     private final SmartSpawner plugin;
@@ -51,7 +49,6 @@ public class SpawnerStorageAction implements Listener {
     private final FilterConfigUI filterConfigUI;
     private final SpawnerSellManager spawnerSellManager;
     private final SpawnerManager spawnerManager;
-    @Setter
     private GuiLayoutConfig guiLayoutConfig;
 
     private static final int INVENTORY_SIZE = 54;
@@ -61,6 +58,7 @@ public class SpawnerStorageAction implements Listener {
     private final Map<UUID, Inventory> openStorageInventories = new HashMap<>();
     private final Map<UUID, Long> lastItemClickTime = new ConcurrentHashMap<>();
     private Random random = new Random();
+    private GuiLayout layout;
 
     public SpawnerStorageAction(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -71,12 +69,13 @@ public class SpawnerStorageAction implements Listener {
         this.messageService = plugin.getMessageService();
         this.filterConfigUI = plugin.getFilterConfigUI();
         this.spawnerSellManager = plugin.getSpawnerSellManager();
-        this.guiLayoutConfig = plugin.getGuiLayoutConfig();
         this.spawnerManager = plugin.getSpawnerManager();
+        loadConfig();
     }
 
-    public void reload() {
+    public void loadConfig() {
         this.guiLayoutConfig = plugin.getGuiLayoutConfig();
+        layout = guiLayoutConfig.getCurrentLayout();
     }
 
     private Map<ClickType, ItemClickHandler> initializeClickHandlers() {
@@ -120,12 +119,8 @@ public class SpawnerStorageAction implements Listener {
         }
 
         if (isControlSlot(slot)) {
-            plugin.debug("Control slot clicked: " + slot);
-            plugin.debug("Click type: " + event.getClick().name());
-            plugin.debug("Inventory action: " + event.getAction().name());
-            plugin.debug("Clicked item: " + (event.getCurrentItem() != null ? event.getCurrentItem().getType().name() : "null"));
-            plugin.debug(plugin.hasSellIntegration() ? "Sell integration enabled" : "Sell integration disabled");
-            handleControlSlotClick(player, slot, holder, spawner, event.getInventory());
+
+            handleControlSlotClick(player, slot, holder, spawner, event.getInventory(), layout);
             return;
         }
 
@@ -141,76 +136,7 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void handleControlSlotClick(Player player, int slot, StoragePageHolder holder,
-                                        SpawnerData spawner, Inventory inventory) {
-        GuiLayout layout = plugin.getSpawnerStorageUI().getLayoutConfig().getCurrentLayout();
-        if (layout == null) {
-            return;
-        }
-
-        Optional<GuiButton> buttonOpt = layout.getButtonAtSlot(slot);
-        if (buttonOpt.isEmpty()) {
-            return;
-        }
-
-        GuiButton button = buttonOpt.get();
-        
-        // For now, we'll use left_click as the default action since storage GUI
-        // currently doesn't differentiate between click types in most cases
-        String action = button.getAction("left_click");
-        if (action == null) {
-            // Fallback to legacy button type handling
-            handleLegacyButtonType(player, slot, holder, spawner, inventory, layout);
-            return;
-        }
-
-        switch (action) {
-            case "sort_items":
-                handleSortItemsClick(player, spawner, inventory);
-                break;
-            case "item_filter":
-                openFilterConfig(player, spawner);
-                break;
-            case "previous_page":
-                if (holder.getCurrentPage() > 1) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() - 1, inventory, true);
-                }
-                break;
-            case "take_all":
-                handleTakeAllItems(player, inventory);
-                break;
-            case "next_page":
-                if (holder.getCurrentPage() < holder.getTotalPages()) {
-                    updatePageContent(player, spawner, holder.getCurrentPage() + 1, inventory, true);
-                }
-                break;
-            case "drop_page":
-                handleDropPageItems(player, spawner, inventory);
-                break;
-            case "sell_all":
-                if (plugin.hasSellIntegration()) {
-                    if (!player.hasPermission("smartspawner.sellall")) {
-                        messageService.sendMessage(player, "no_permission");
-                        return;
-                    }
-                    if (isClickTooFrequent(player)) {
-                        return;
-                    }
-                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                    spawnerSellManager.sellAllItems(player, spawner);
-                }
-                break;
-            case "return":
-                openMainMenu(player, spawner);
-                break;
-            default:
-                // Fallback to legacy handling for unknown actions
-                handleLegacyButtonType(player, slot, holder, spawner, inventory, layout);
-                break;
-        }
-    }
-
-    private void handleLegacyButtonType(Player player, int slot, StoragePageHolder holder,
-                                       SpawnerData spawner, Inventory inventory, GuiLayout layout) {
+                                        SpawnerData spawner, Inventory inventory, GuiLayout layout) {
         Optional<String> buttonTypeOpt = layout.getButtonTypeAtSlot(slot);
         if (buttonTypeOpt.isEmpty()) {
             return;
@@ -268,7 +194,6 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private boolean isControlSlot(int slot) {
-        GuiLayout layout = guiLayoutConfig.getCurrentLayout();
         return layout != null && layout.isSlotUsed(slot);
     }
 

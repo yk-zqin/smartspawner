@@ -61,7 +61,7 @@ public class PricesGUI implements Listener {
         // Sort items by material name for consistent ordering
         List<Map.Entry<Material, PriceInfo>> sortedItems = allItems.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.comparing(Material::name)))
-                .collect(Collectors.toList());
+                .toList();
 
         int totalPages = (int) Math.ceil((double) sortedItems.size() / ITEMS_PER_PAGE);
         if (page > totalPages) page = totalPages;

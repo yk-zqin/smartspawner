@@ -5,9 +5,6 @@ import github.nighter.smartspawner.language.LanguageManager;
 import github.nighter.smartspawner.spawner.loot.EntityLootConfig;
 import github.nighter.smartspawner.spawner.loot.EntityLootRegistry;
 import github.nighter.smartspawner.spawner.loot.LootItem;
-import io.lumine.mythic.bukkit.utils.lib.jooq.True;
-import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
@@ -148,7 +145,6 @@ public class SpawnerItemFactory {
             // Sort by material name to ensure consistent order
             sortedLootItems.sort(Comparator.comparing(item -> item.getMaterial().name()));
             // Sort by material name in reverse order (Z to A)
-            // sortedLootItems.sort(Comparator.comparing((LootItem item) -> item.getMaterial().name()).reversed());
 
             if (!sortedLootItems.isEmpty()) {
                 // Get the custom loot format from the config

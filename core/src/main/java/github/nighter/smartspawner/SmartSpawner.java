@@ -343,7 +343,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
             spawnerMenuUI.clearCache();
         }
         
-        spawnerStorageAction.reload();
+        spawnerStorageAction.loadConfig();
         spawnerStorageUI.reload();
         filterConfigUI.reload();
 
