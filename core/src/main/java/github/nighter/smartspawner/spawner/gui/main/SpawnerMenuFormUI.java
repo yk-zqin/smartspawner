@@ -57,7 +57,7 @@ public class SpawnerMenuFormUI {
 
         ACTION_BUTTON_CONFIG.put("view_info", new ActionButtonInfo(
                 "bedrock.main_gui.button_names.view_info",
-                "https://i.pinimg.com/736x/d5/5a/32/d55a3207e894d44d7e82d93b0df81bd1.jpg"
+                "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9f/Information_sign.png/revision/latest/scale-to-width-down/268?cb=20200105100749"
         ));
     }
 
@@ -76,8 +76,7 @@ public class SpawnerMenuFormUI {
     }
 
     public void openSpawnerForm(Player player, SpawnerData spawner) {
-        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        Map<String, String> placeholders = createPlaceholders(player, spawner);
+        Map<String, String> placeholders = createPlaceholders(spawner);
 
         String title;
         if (spawner.getStackSize() > 1) {
@@ -87,7 +86,7 @@ public class SpawnerMenuFormUI {
         }
 
         GuiLayout layout = plugin.getGuiLayoutConfig().getCurrentMainLayout();
-        List<ButtonInfo> availableButtons = collectAvailableButtons(layout, player, spawner, placeholders);
+        List<ButtonInfo> availableButtons = collectAvailableButtons(layout, player, placeholders);
 
         if (availableButtons.isEmpty()) {
             messageService.sendMessage(player, "no_permission");
@@ -104,9 +103,6 @@ public class SpawnerMenuFormUI {
             FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(cachedForm.form);
             return;
         }
-
-        // Generate spawner info content (for view info button)
-        String spawnerInfo = createSpawnerInfoContent(player, spawner, placeholders);
 
         SimpleForm.Builder formBuilder = SimpleForm.builder()
                 .title(title);
@@ -157,7 +153,7 @@ public class SpawnerMenuFormUI {
         FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(form);
     }
 
-    private List<ButtonInfo> collectAvailableButtons(GuiLayout layout, Player player, SpawnerData spawner, Map<String, String> placeholders) {
+    private List<ButtonInfo> collectAvailableButtons(GuiLayout layout, Player player, Map<String, String> placeholders) {
         List<ButtonInfo> buttons = new ArrayList<>();
         Set<String> addedActions = new HashSet<>();
 
@@ -269,13 +265,12 @@ public class SpawnerMenuFormUI {
     }
 
     private void openViewInfoForm(Player player, SpawnerData spawner) {
-        String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
-        Map<String, String> placeholders = createPlaceholders(player, spawner);
+        Map<String, String> placeholders = createPlaceholders(spawner);
         
         String title = languageManager.getGuiTitle("bedrock.main_gui.view_info_title", placeholders);
         
         // Generate spawner info content
-        String spawnerInfo = createSpawnerInfoContent(player, spawner, placeholders);
+        String spawnerInfo = createSpawnerInfoContent(placeholders);
         
         // Get back button text
         String backButtonText = languageManager.getGuiItemName("bedrock.main_gui.button_names.back", placeholders);
@@ -297,7 +292,7 @@ public class SpawnerMenuFormUI {
         FloodgateApi.getInstance().getPlayer(player.getUniqueId()).sendForm(form);
     }
 
-    private Map<String, String> createPlaceholders(Player player, SpawnerData spawner) {
+    private Map<String, String> createPlaceholders(SpawnerData spawner) {
         String entityName = languageManager.getFormattedMobName(spawner.getEntityType());
         String entityNameSmallCaps = languageManager.getSmallCaps(entityName);
 
@@ -351,7 +346,7 @@ public class SpawnerMenuFormUI {
         return placeholders;
     }
 
-    private String createSpawnerInfoContent(Player player, SpawnerData spawner, Map<String, String> placeholders) {
+    private String createSpawnerInfoContent(Map<String, String> placeholders) {
         // Get the info lines from config
         List<String> infoLines = languageManager.getGuiItemLoreAsList("bedrock.main_gui.spawner_info", placeholders);
 
