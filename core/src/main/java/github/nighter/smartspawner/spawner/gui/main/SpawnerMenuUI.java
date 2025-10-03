@@ -360,6 +360,10 @@ public class SpawnerMenuUI {
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
         placeholders.put("formatted_exp", formattedPercentExp);
 
+        // Total sell price information
+        double totalSellPrice = spawner.getAccumulatedSellValue();
+        placeholders.put("total_sell_price", languageManager.formatNumber(totalSellPrice));
+
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
 
