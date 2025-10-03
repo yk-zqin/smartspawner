@@ -395,44 +395,49 @@ public class ListSubCommand extends BaseSubCommand {
 
         Map<String, String> placeholders = new HashMap<>();
 
+        // Get format strings from configuration
+        String selectedFormat = languageManager.getGuiItemName(controlType + ".selected_option");
+        String unselectedFormat = languageManager.getGuiItemName(controlType + ".unselected_option");
+
+        // Build available options list
+        StringBuilder availableOptions = new StringBuilder();
+        boolean first = true;
+
         if (controlType.equals("filter")) {
             FilterOption currentFilter = (FilterOption) currentOption;
 
-            // Set up color placeholders for all filter options
             for (FilterOption option : FilterOption.values()) {
-                // Set active color for current option, white for others
-                String colorKey = option.getName() + "_color";
-                if (option == currentFilter) {
-                    placeholders.put(colorKey, languageManager.getColorCode("filter." + option.getName() + ".color"));
-                } else {
-                    placeholders.put(colorKey, "&f");
-                }
+                if (!first) availableOptions.append("\n");
+                String optionName = languageManager.getGuiItemName("filter." + option.getName());
+                String format = option == currentFilter ? selectedFormat : unselectedFormat;
+                String formattedOption = format.replace("%option_name%", optionName);
+                availableOptions.append(formattedOption);
+                first = false;
             }
 
-            // Set button name
             meta.setDisplayName(languageManager.getGuiItemName("filter.button.name"));
 
         } else if (controlType.equals("sort")) {
             SortOption currentSort = (SortOption) currentOption;
 
-            // Set up color placeholders for all sort options
             for (SortOption option : SortOption.values()) {
-                // Set active color for current option, white for others
-                String colorKey = option.getName() + "_color";
-                if (option == currentSort) {
-                    placeholders.put(colorKey, languageManager.getColorCode("sort." + option.getName() + ".color"));
-                } else {
-                    placeholders.put(colorKey, "&f");
-                }
+                if (!first) availableOptions.append("\n");
+                String optionName = languageManager.getGuiItemName("sort." + option.getName());
+                String format = option == currentSort ? selectedFormat : unselectedFormat;
+                String formattedOption = format.replace("%option_name%", optionName);
+                availableOptions.append(formattedOption);
+                first = false;
             }
 
-            // Set button name
             meta.setDisplayName(languageManager.getGuiItemName("sort.button.name"));
         }
 
+        placeholders.put("available_options", availableOptions.toString());
+
         // Set the lore using the appropriate button lore path and the placeholders
         String lorePath = controlType + ".button.lore";
-        meta.setLore(languageManager.getGuiItemLoreAsList(lorePath, placeholders));
+        List<String> lore = languageManager.getGuiItemLoreWithMultilinePlaceholders(lorePath, placeholders);
+        meta.setLore(lore);
 
         button.setItemMeta(meta);
         return button;
