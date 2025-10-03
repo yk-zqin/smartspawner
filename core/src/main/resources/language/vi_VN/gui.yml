@@ -380,6 +380,8 @@ bedrock:
   main_gui:
     title_single_spawner: Spawner %entity%
     title_stacked_spawner: '%amount% Spawner %entity%'
+    
+    view_info_title: Spawner %entity% - Thông tin
 
     button_names:
       storage: Mở Kho Spawner
@@ -387,6 +389,8 @@ bedrock:
       stacker: Stack Spawner
       sell_and_exp: Bán Vật Phẩm & Nhận Kinh Nghiệm
       sell: Bán Vật Phẩm
+      view_info: Xem Thông Tin
+      back: Quay Lại
 
     # Thông tin Spawner (hiển thị bên dưới các nút trong giao diện Bedrock)
     # Placeholder có sẵn: xem en_US/gui.yml để biết danh sách đầy đủ
