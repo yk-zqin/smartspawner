@@ -22,7 +22,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.Map;
 import java.util.UUID;
@@ -216,12 +215,16 @@ public class SpawnerClickManager implements Listener {
     private void openSpawnerMenu(Player player, SpawnerData spawner) {
         // Check if the player is a Bedrock player and use FormUI
         if (isBedrockPlayer(player)) {
-            spawnerMenuFormUI.openSpawnerForm(player, spawner);
+            if (spawnerMenuFormUI != null) {
+                spawnerMenuFormUI.openSpawnerForm(player, spawner);
+            } else {
+                // Fallback to standard GUI if FormUI not available
+                spawnerMenuUI.openSpawnerMenu(player, spawner, false);
+            }
         } else {
             // Open the regular GUI menu for Java players
             spawnerMenuUI.openSpawnerMenu(player, spawner, false);
         }
-        // spawnerMenuUI.openSpawnerMenu(player, spawner, false);
     }
 
     private boolean isSpawnEgg(Material material) {
@@ -229,12 +232,11 @@ public class SpawnerClickManager implements Listener {
     }
 
     private boolean isBedrockPlayer(Player player) {
-        try {
-            FloodgateApi api = FloodgateApi.getInstance();
-            return api != null && api.isFloodgatePlayer(player.getUniqueId());
-        } catch (NoClassDefFoundError | NullPointerException e) {
+        if (plugin.getIntegrationManager() == null || 
+            plugin.getIntegrationManager().getFloodgateHook() == null) {
             return false;
         }
+        return plugin.getIntegrationManager().getFloodgateHook().isBedrockPlayer(player);
     }
 
     private void initCleanupTask() {
