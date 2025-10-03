@@ -413,6 +413,8 @@ bedrock:
   main_gui:
     title_single_spawner: '%entity% Spawner'
     title_stacked_spawner: '%amount% %entity% Spawner'
+    
+    view_info_title: '%entity% Spawner - Informationen'
 
     button_names:
       storage: Lager öffnen
@@ -420,6 +422,8 @@ bedrock:
       stacker: Stack verwalten
       sell_and_exp: Verkaufen & EXP einsammeln
       sell: Verkaufen
+      view_info: Info ansehen
+      back: Zurück
 
     # Spawner-Informationen (wird unter den Buttons in der Bedrock-UI angezeigt)
     # Verfügbare Platzhalter: siehe en_US/gui.yml für vollständige Liste

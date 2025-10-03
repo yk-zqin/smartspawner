@@ -331,6 +331,8 @@ bedrock:
   main_gui:
     title_single_spawner: '%entity% Spawner'
     title_stacked_spawner: '%amount% %entity% Spawners'
+    
+    view_info_title: '%entity% Spawner - Information'
 
     button_names:
       storage: Open Storage
@@ -338,6 +340,8 @@ bedrock:
       stacker: Manage Stack
       sell_and_exp: Sell Items & Collect EXP
       sell: Sell Items
+      view_info: View Info
+      back: Back
 
     # Spawner Info (displayed below buttons in Bedrock UI)
     # Available placeholders: see en_US/gui.yml for complete list
