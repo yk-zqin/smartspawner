@@ -420,6 +420,8 @@ public class SpawnerFileHandler {
             try {
                 Material preferredSortItem = Material.valueOf(preferredSortItemStr);
                 spawner.setPreferredSortItem(preferredSortItem);
+                // Apply the sort preference to the virtual inventory
+                virtualInv.sortItems(preferredSortItem);
             } catch (IllegalArgumentException e) {
                 logger.warning("Invalid preferred sort item for spawner " + spawnerId + ": " + preferredSortItemStr);
             }
