@@ -20,6 +20,11 @@ prefix: "SmartSpawner"
 # Dependencies
 dependencies:
   server:
+    # Bedrock Support Plugins
+    Floodgate:
+      load: BEFORE
+      required: false
+      join-classpath: true
     Geyser-Spigot:
       load: BEFORE
       required: false
