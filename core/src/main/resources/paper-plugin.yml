@@ -21,7 +21,7 @@ prefix: "SmartSpawner"
 dependencies:
   server:
     # Bedrock Support Plugins
-    Floodgate:
+    floodgate:
       load: BEFORE
       required: false
       join-classpath: true
@@ -35,7 +35,7 @@ dependencies:
       required: false
       join-classpath: true
     EconomyShopGUI-Premium:
-      load: BEFORE
+      load: AFTER
       required: false
       join-classpath: true
     ShopGUIPlus:

@@ -6,7 +6,7 @@ authors: [ https://github.com/ptthanh02/Smart-Spawner/graphs/contributors ]
 folia-supported: true
 softdepend:
   # Bedrock Support Plugins
-  - Floodgate
+  - floodgate
   - Geyser-Spigot
 
   # Shop Plugins
