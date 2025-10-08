@@ -22,7 +22,7 @@ public class HologramClearSubCommand extends BaseSubCommand {
 
     @Override
     public String getPermission() {
-        return "smartspawner.hologram.clear";
+        return "smartspawner.hologram";
     }
 
     @Override
