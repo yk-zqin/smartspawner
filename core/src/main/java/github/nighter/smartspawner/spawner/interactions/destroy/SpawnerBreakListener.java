@@ -277,7 +277,7 @@ public class SpawnerBreakListener implements Listener {
     }
 
     private void cleanupSpawner(Block block, SpawnerData spawner) {
-        spawner.setSpawnerStop(true);
+        spawner.getSpawnerStop().set(true);
         block.setType(Material.AIR);
 
         String spawnerId = spawner.getSpawnerId();

@@ -109,7 +109,7 @@ public class SpawnerManagementHandler implements Listener {
         Location loc = spawner.getSpawnerLocation();
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
         String spawnerId = spawner.getSpawnerId();
-        spawner.setSpawnerStop(true);
+        spawner.getSpawnerStop().set(true);
         if (loc.getBlock().getType() == Material.SPAWNER) {
             loc.getBlock().setType(Material.AIR);
         }

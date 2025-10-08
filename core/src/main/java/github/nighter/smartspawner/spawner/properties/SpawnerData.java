@@ -8,27 +8,10 @@ import github.nighter.smartspawner.spawner.loot.LootItem;
 import github.nighter.smartspawner.spawner.sell.SellResult;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.spawner.SpawnRule;
-import org.bukkit.block.spawner.SpawnerEntry;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntitySnapshot;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataHolder;
-import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,8 +42,8 @@ public class SpawnerData {
     private Boolean spawnerActive;
     @Getter @Setter
     private Integer spawnerRange;
-    @Getter @Setter
-    private Boolean spawnerStop;
+    @Getter
+    private AtomicBoolean spawnerStop;
     @Getter @Setter
     private Boolean isAtCapacity;
     @Getter @Setter
@@ -134,7 +117,7 @@ public class SpawnerData {
     private void initializeDefaults() {
         this.spawnerExp = 0;
         this.spawnerActive = true;
-        this.spawnerStop = true;
+        this.spawnerStop = new AtomicBoolean(false);
         this.isAtCapacity = false;
         this.stackSize = 1;
         this.lastSpawnTime = System.currentTimeMillis();
