@@ -26,6 +26,7 @@ public class ItemPriceManager {
 
     @Getter
     private ShopIntegrationManager shopIntegrationManager;
+    @Getter
     private CurrencyManager currencyManager;
 
     private double defaultPrice;
