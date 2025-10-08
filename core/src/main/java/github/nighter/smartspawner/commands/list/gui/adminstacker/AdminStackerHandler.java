@@ -38,7 +38,7 @@ public class AdminStackerHandler implements Listener {
 
     @EventHandler
     public void onAdminStackerClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof AdminStackerHolder holder)) return;
+        if (!(event.getInventory().getHolder(false) instanceof AdminStackerHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         event.setCancelled(true);
