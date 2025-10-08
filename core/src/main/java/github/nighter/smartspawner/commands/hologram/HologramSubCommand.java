@@ -1,10 +1,12 @@
 package github.nighter.smartspawner.commands.hologram;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.commands.BaseSubCommand;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jspecify.annotations.NullMarked;
@@ -12,10 +14,12 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public class HologramSubCommand extends BaseSubCommand {
     private final SpawnerManager spawnerManager;
+    private final HologramClearSubCommand clearSubCommand;
 
     public HologramSubCommand(SmartSpawner plugin) {
         super(plugin);
         this.spawnerManager = plugin.getSpawnerManager();
+        this.clearSubCommand = new HologramClearSubCommand(plugin);
     }
 
     @Override
@@ -34,6 +38,20 @@ public class HologramSubCommand extends BaseSubCommand {
     }
 
     @Override
+    public LiteralArgumentBuilder<CommandSourceStack> build() {
+        LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal(getName());
+        builder.requires(source -> hasPermission(source.getSender()));
+        
+        // Add the toggle functionality as the default execution
+        builder.executes(this::execute);
+        
+        // Add the clear subcommand
+        builder.then(clearSubCommand.build());
+        
+        return builder;
+    }
+
+    @Override
     public int execute(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
 
@@ -41,13 +59,11 @@ public class HologramSubCommand extends BaseSubCommand {
             // Toggle hologram state
             boolean newValue = !plugin.getConfig().getBoolean("hologram.enabled");
 
-            // Get main config and set new value
-            FileConfiguration mainConfig = plugin.getConfig();
-            mainConfig.set("hologram.enabled", newValue);
+            // Set new value in config
+            plugin.getConfig().set("hologram.enabled", newValue);
 
-            // Save configs and reload
+            // Save the config (this only saves the current config, it doesn't create a new one)
             plugin.saveConfig();
-            plugin.reloadConfig();
 
             // Update all holograms
             spawnerManager.refreshAllHolograms();
