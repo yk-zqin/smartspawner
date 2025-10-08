@@ -96,9 +96,6 @@ public class GiveSubCommand extends BaseSubCommand {
 
     @Override
     public int execute(CommandContext<CommandSourceStack> context) {
-        // This won't be called since we have specific executes for subcommands
-        CommandSender sender = context.getSource().getSender();
-        sendError(sender, "Usage: /smartspawner give <spawner|vanilla> <player> <mobType> [amount]");
         return 0;
     }
 
@@ -171,7 +168,6 @@ public class GiveSubCommand extends BaseSubCommand {
             return 1;
         } catch (Exception e) {
             plugin.getLogger().severe("Error executing give command: " + e.getMessage());
-            sendError(sender, "An error occurred while executing the command");
             return 0;
         }
     }

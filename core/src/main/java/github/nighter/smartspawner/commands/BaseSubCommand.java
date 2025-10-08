@@ -65,6 +65,13 @@ public abstract class BaseSubCommand {
         return sender instanceof Player;
     }
 
+    protected Player getPlayer(CommandSender sender) {
+        if (isPlayer(sender)) {
+            return (Player) sender;
+        }
+        return null;
+    }
+
     /**
      * Check if the sender is console or RCON
      */

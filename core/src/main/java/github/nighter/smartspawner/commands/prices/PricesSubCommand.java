@@ -35,14 +35,10 @@ public class PricesSubCommand extends BaseSubCommand {
     @Override
     public int execute(CommandContext<CommandSourceStack> context) {
         if (!isPlayer(context.getSource().getSender())) {
-            sendPlayerOnly(context.getSource().getSender());
             return 0;
         }
 
         Player player = getPlayer(context.getSource().getSender());
-        if (player == null) {
-            return 0;
-        }
 
         // Check if sell integration is available
         if (!plugin.hasSellIntegration()) {

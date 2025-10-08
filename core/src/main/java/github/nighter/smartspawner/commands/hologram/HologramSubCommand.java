@@ -59,7 +59,6 @@ public class HologramSubCommand extends BaseSubCommand {
             return 1;
         } catch (Exception e) {
             plugin.getLogger().severe("Error toggling holograms: " + e.getMessage());
-            sendError(sender, "An error occurred while toggling holograms");
             return 0;
         }
     }
