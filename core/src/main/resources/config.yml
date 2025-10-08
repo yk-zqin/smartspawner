@@ -163,6 +163,16 @@ hopper:
   stack_per_transfer: 5 # Number of item stacks transferred in one operation (max 5)
 
 #---------------------------------------------------
+#              Bedrock Player Support
+#---------------------------------------------------
+# Configuration for Bedrock Edition player support via Floodgate
+bedrock_support:
+  # Enable FormUI (form-based menus) for Bedrock players
+  # When enabled, Bedrock players will see mobile-friendly form menus instead of chest GUIs
+  # Requires Floodgate plugin to be installed and enabled
+  enable_formui: true
+
+#---------------------------------------------------
 #                 Visual Effects
 #---------------------------------------------------
 # Configure visual indicators and effects for spawners
