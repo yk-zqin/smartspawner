@@ -59,27 +59,6 @@ public abstract class BaseSubCommand {
     }
 
     /**
-     * Send a message to the command sender with proper formatting
-     */
-    protected void sendMessage(CommandSender sender, String message) {
-        sender.sendMessage("§7[§6SmartSpawner§7] " + message);
-    }
-
-    /**
-     * Send an error message to the command sender
-     */
-    protected void sendError(CommandSender sender, String message) {
-        sender.sendMessage("§7[§6SmartSpawner§7] §c" + message);
-    }
-
-    /**
-     * Send a success message to the command sender
-     */
-    protected void sendSuccess(CommandSender sender, String message) {
-        sender.sendMessage("§7[§6SmartSpawner§7] §a" + message);
-    }
-
-    /**
      * Check if the sender is a player
      */
     protected boolean isPlayer(CommandSender sender) {
@@ -91,26 +70,5 @@ public abstract class BaseSubCommand {
      */
     protected boolean isConsoleOrRcon(CommandSender sender) {
         return sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender;
-    }
-
-    /**
-     * Get the player from the sender, or null if not a player
-     */
-    protected Player getPlayer(CommandSender sender) {
-        return sender instanceof Player ? (Player) sender : null;
-    }
-
-    /**
-     * Send no permission message
-     */
-    protected void sendNoPermission(CommandSender sender) {
-        sendError(sender, "You don't have permission to use this command!");
-    }
-
-    /**
-     * Send player only message
-     */
-    protected void sendPlayerOnly(CommandSender sender) {
-        sendError(sender, "This command can only be used by players!");
     }
 }
