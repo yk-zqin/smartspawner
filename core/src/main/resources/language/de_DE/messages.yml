@@ -252,6 +252,14 @@ command_hologram_disabled:
   message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍᴍᴇ &#e05252ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴛ &#f8f8ffꜰᴜ̈ʀ ᴀʟʟᴇ ꜱᴘᴀᴡɴᴇʀ"
   sound: block.note_block.bass
 
+command_hologram_cleared:
+  message: "&#37eb9aᴇʀꜰᴏʟɢʀᴇɪᴄʜ &#f8f8ffᴀʟʟᴇ ʜᴏʟᴏɢʀᴀᴍᴍᴇ ɢᴇʟᴏ̈ꜱᴄʜᴛ"
+  sound: entity.experience_orb.pickup
+
+command_hologram_clear_error:
+  message: "&#ff5252ꜰᴇʜʟᴇʀ ʙᴇɪᴍ ʟᴏ̈ꜱᴄʜᴇɴ ᴅᴇʀ ʜᴏʟᴏɢʀᴀᴍᴍᴇ"
+  sound: block.note_block.pling
+
 # Prices command messagess
 prices_not_available:
   message: "&#ff5252ᴠᴇʀᴋᴀᴜꜰ ɪɴᴛᴇɢʀᴀᴛɪᴏɴ ɪꜱᴛ ɴɪᴄʜᴛ ᴠᴇʀꜰᴜ̈ɢʙᴀʀ. ʙɪᴛᴛᴇ ᴇᴄᴏɴᴏᴍʏ ᴇɪɴꜱᴛᴇʟʟᴜɴɢᴇɴ ᴋᴏɴꜰɪɢᴜʀɪᴇʀᴇɴ."
