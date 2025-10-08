@@ -135,13 +135,6 @@ public class SpawnerHologram {
     }
 
     public void updateData(int stackSize, EntityType entityType, int currentExp, int maxExp, int currentItems, int maxSlots) {
-        // First, ensure we have a valid hologram
-        TextDisplay display = textDisplay.get();
-        if (display == null || !display.isValid()) {
-            // If hologram doesn't exist or is invalid, recreate it
-            createHologram();
-        }
-
         // Update data values
         this.stackSize = stackSize;
         this.entityType = entityType;
@@ -150,17 +143,39 @@ public class SpawnerHologram {
         this.currentItems = currentItems;
         this.maxSlots = maxSlots;
 
-        // Update the text display
-        updateText();
+        // First, ensure we have a valid hologram
+        TextDisplay display = textDisplay.get();
+        if (display == null) {
+            // If hologram doesn't exist, recreate it
+            createHologram();
+        } else {
+            // Check validity on the entity thread to avoid race conditions
+            Scheduler.runEntityTask(display, () -> {
+                if (!display.isValid()) {
+                    // If invalid, recreate the hologram
+                    textDisplay.set(null);
+                    createHologram();
+                } else {
+                    // Update the text display
+                    updateText();
+                }
+            });
+        }
     }
 
     public void remove() {
         TextDisplay display = textDisplay.get();
-        if (display != null && display.isValid()) {
-            // Run on the entity's thread
-            Scheduler.runEntityTask(display, display::remove);
+        if (display != null) {
+            // Run on the entity's thread to ensure safe removal
+            Scheduler.runEntityTask(display, () -> {
+                if (display.isValid()) {
+                    display.remove();
+                }
+            });
             textDisplay.set(null);
         }
+        // Also clean up any stuck holograms
+        cleanupExistingHologram();
     }
 
     public void cleanupExistingHologram() {
@@ -169,13 +184,16 @@ public class SpawnerHologram {
         // First, check if our tracked hologram is still valid
         TextDisplay display = textDisplay.get();
         if (display != null) {
-            if (display.isValid()) {
-                // If it's valid but we're cleaning up, remove it
-                display.remove();
-            }
+            // Always remove the tracked display, even if it appears invalid
+            Scheduler.runEntityTask(display, () -> {
+                if (display.isValid()) {
+                    display.remove();
+                }
+            });
             textDisplay.set(null);
         }
 
+        // Use async task to avoid blocking
         Scheduler.runLocationTask(spawnerLocation, () -> {
             // Define a tighter search radius just to catch any potentially duplicated holograms
             // with the same identifier (which shouldn't happen but being safe)
@@ -186,7 +204,9 @@ public class SpawnerHologram {
                     .stream()
                     .filter(entity -> entity instanceof TextDisplay && entity.getCustomName() != null)
                     .filter(entity -> entity.getCustomName().equals(uniqueIdentifier))
-                    .forEach(Entity::remove);
+                    .forEach(entity -> {
+                        Scheduler.runEntityTask(entity, entity::remove);
+                    });
         });
     }
 }

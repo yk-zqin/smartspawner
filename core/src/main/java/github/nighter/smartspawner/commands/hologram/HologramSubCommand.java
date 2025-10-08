@@ -1,10 +1,12 @@
 package github.nighter.smartspawner.commands.hologram;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.commands.BaseSubCommand;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jspecify.annotations.NullMarked;
@@ -12,10 +14,12 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public class HologramSubCommand extends BaseSubCommand {
     private final SpawnerManager spawnerManager;
+    private final HologramClearSubCommand clearSubCommand;
 
     public HologramSubCommand(SmartSpawner plugin) {
         super(plugin);
         this.spawnerManager = plugin.getSpawnerManager();
+        this.clearSubCommand = new HologramClearSubCommand(plugin);
     }
 
     @Override
@@ -31,6 +35,20 @@ public class HologramSubCommand extends BaseSubCommand {
     @Override
     public String getDescription() {
         return "Toggle hologram display for spawners";
+    }
+
+    @Override
+    public LiteralArgumentBuilder<CommandSourceStack> build() {
+        LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal(getName());
+        builder.requires(source -> hasPermission(source.getSender()));
+        
+        // Add the toggle functionality as the default execution
+        builder.executes(this::execute);
+        
+        // Add the clear subcommand
+        builder.then(clearSubCommand.build());
+        
+        return builder;
     }
 
     @Override
