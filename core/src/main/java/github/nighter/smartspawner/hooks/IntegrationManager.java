@@ -35,6 +35,7 @@ public class IntegrationManager {
     private boolean hasMythicMobs = false;
     private boolean hasIridiumSkyblock = false;
     private boolean hasPlotSquared = false;
+    private boolean hasResidence = false;
 
     // Integration plugin flags
     private boolean hasAuraSkills = false;
@@ -145,6 +146,11 @@ public class IntegrationManager {
                 return true;
             }
             return false;
+        }, true);
+
+        hasResidence = checkPlugin("Residence", () -> {
+            Plugin residence = Bukkit.getPluginManager().getPlugin("Residence");
+            return residence != null && residence.isEnabled();
         }, true);
     }
 

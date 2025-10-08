@@ -29,6 +29,7 @@ softdepend:
   - RedProtect
   - MinePlots
   - PlotSquared
+  - Residence
 
   # World Management Plugins
   - Multiverse-Core
