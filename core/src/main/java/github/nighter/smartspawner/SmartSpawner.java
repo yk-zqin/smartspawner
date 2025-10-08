@@ -246,6 +246,15 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     }
 
     private void initializeFormUIComponents() {
+        // Check if FormUI is enabled in config
+        boolean formUIEnabled = getConfig().getBoolean("bedrock_support.enable_formui", true);
+        
+        if (!formUIEnabled) {
+            this.spawnerMenuFormUI = null;
+            debug("FormUI components not initialized - disabled in config");
+            return;
+        }
+        
         if (integrationManager != null && integrationManager.getFloodgateHook() != null 
             && integrationManager.getFloodgateHook().isEnabled()) {
             try {
@@ -351,6 +360,9 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         integrationManager.reload();
         spawnerMenuAction.reload();
         timeFormatter.clearCache();
+        
+        // Reinitialize FormUI components in case config changed
+        initializeFormUIComponents();
     }
 
     @Override
