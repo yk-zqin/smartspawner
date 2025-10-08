@@ -137,16 +137,8 @@ dependencies:
 permissions:
   # Admin permissions
   smartspawner.admin:
-    description: "Full access to all SmartSpawner features"
+    description: "Allow access to all SmartSpawner commands"
     default: op
-    children:
-      - smartspawner.reload
-      - smartspawner.give
-      - smartspawner.list
-      - smartspawner.hologram
-      - smartspawner.changetype
-      - smartspawner.sellall
-      - smartspawner.limits.bypass
 
   # Subcommand permissions
   smartspawner.reload:

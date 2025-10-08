@@ -55,17 +55,8 @@ commands:
 permissions:
   # Admin permissions
   smartspawner.admin:
-    description: Full access to all SmartSpawner features
+    description: Allow access to all SmartSpawner commands
     default: op
-    children:
-      smartspawner.reload: true
-      smartspawner.give: true
-      smartspawner.list: true
-      smartspawner.hologram: true
-      smartspawner.prices: true
-      smartspawner.changetype: true
-      smartspawner.sellall: true
-      smartspawner.limits.bypass: true
 
   # Subcommand permissions
   smartspawner.reload:
