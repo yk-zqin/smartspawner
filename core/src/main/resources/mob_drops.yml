@@ -175,7 +175,7 @@ BOGGED:
       amount: 0-2
       chance: 66.67
     BOW:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-384
     TIPPED_ARROW:
@@ -412,11 +412,11 @@ PIGLIN:
   experience: 5
   loot:
     CROSSBOW:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-326
     GOLDEN_SWORD:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-32
 
@@ -425,7 +425,7 @@ PIGLIN_BRUTE:
   experience: 20
   loot:
     GOLDEN_AXE:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-32
 
@@ -434,7 +434,7 @@ PILLAGER:
   experience: 5
   loot:
     CROSSBOW:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-326
     ARROW:
@@ -530,7 +530,7 @@ SKELETON:
       amount: 0-2
       chance: 66.67
     BOW:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-384
 
@@ -601,7 +601,7 @@ STRAY:
       amount: 0-2
       chance: 66.67
     BOW:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-384
     TIPPED_ARROW:
@@ -664,7 +664,7 @@ VINDICATOR:
       amount: 0-1
       chance: 50.0
     IRON_AXE:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-250
 
@@ -720,7 +720,7 @@ WITHER_SKELETON:
       amount: 0-1
       chance: 2.5
     STONE_SWORD:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-131
 
@@ -792,6 +792,6 @@ ZOMBIFIED_PIGLIN:
       amount: 0-1
       chance: 2.5
     GOLDEN_SWORD:
-      amount: 0-1
+      amount: 1-1
       chance: 8.5
       durability: 1-32
