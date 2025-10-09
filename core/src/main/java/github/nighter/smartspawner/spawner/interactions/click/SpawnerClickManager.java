@@ -3,7 +3,6 @@ package github.nighter.smartspawner.spawner.interactions.click;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.hooks.protections.CheckOpenMenu;
 import github.nighter.smartspawner.language.MessageService;
-import github.nighter.smartspawner.nms.ParticleWrapper;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuUI;
 import github.nighter.smartspawner.spawner.gui.main.SpawnerMenuFormUI;
 import github.nighter.smartspawner.spawner.interactions.stack.SpawnerStackHandler;
@@ -11,7 +10,6 @@ import github.nighter.smartspawner.spawner.interactions.type.SpawnEggHandler;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.Scheduler;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
@@ -169,7 +167,7 @@ public class SpawnerClickManager implements Listener {
 
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
-            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, heldItem);
+            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(false), spawner, heldItem);
             return;
         }
 
@@ -193,7 +191,7 @@ public class SpawnerClickManager implements Listener {
 
         // Handle spawn egg usage
         if (isSpawnEgg(itemType)) {
-            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(), spawner, heldItem);
+            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(false), spawner, heldItem);
             return;
         }
 

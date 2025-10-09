@@ -15,8 +15,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -177,7 +175,7 @@ public class SpawnerFileHandler {
                         spawner.getSpawnerExp(),
                         spawner.getSpawnerActive(),
                         spawner.getSpawnerRange(),
-                        spawner.getSpawnerStop(),
+                        spawner.getSpawnerStop().get(),
                         spawner.getSpawnDelay(),
                         spawner.getMaxSpawnerLootSlots(),
                         spawner.getMaxStoredExp(),
@@ -333,7 +331,7 @@ public class SpawnerFileHandler {
                         spawner.setSpawnerExpData(Integer.parseInt(settings[0]));
                         spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                         spawner.setSpawnerRange(Integer.parseInt(settings[2]));
-                        spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
+                        spawner.getSpawnerStop().set(Boolean.parseBoolean(settings[3]));
                         spawner.setSpawnDelay(Integer.parseInt(settings[4]));
                         spawner.setMaxSpawnerLootSlots(Integer.parseInt(settings[5]));
                         spawner.setMaxStoredExp(Integer.parseInt(settings[6]));
@@ -348,7 +346,7 @@ public class SpawnerFileHandler {
                     spawner.setSpawnerExpData(Integer.parseInt(settings[0]));
                     spawner.setSpawnerActive(Boolean.parseBoolean(settings[1]));
                     spawner.setSpawnerRange(Integer.parseInt(settings[2]));
-                    spawner.setSpawnerStop(Boolean.parseBoolean(settings[3]));
+                    spawner.getSpawnerStop().set(Boolean.parseBoolean(settings[3]));
                     spawner.setSpawnDelay(Integer.parseInt(settings[4]));
                     spawner.setMaxSpawnerLootSlots(Integer.parseInt(settings[5]));
                     spawner.setMaxStoredExp(Integer.parseInt(settings[6]));
@@ -478,4 +476,3 @@ public class SpawnerFileHandler {
         }
     }
 }
-

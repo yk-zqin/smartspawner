@@ -43,7 +43,7 @@ public class SpawnerManagementHandler implements Listener {
 
     @EventHandler
     public void onSpawnerManagementClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof SpawnerManagementHolder holder)) return;
+        if (!(event.getInventory().getHolder(false) instanceof SpawnerManagementHolder holder)) return;
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         event.setCancelled(true);
@@ -109,7 +109,7 @@ public class SpawnerManagementHandler implements Listener {
         Location loc = spawner.getSpawnerLocation();
         plugin.getSpawnerGuiViewManager().closeAllViewersInventory(spawner);
         String spawnerId = spawner.getSpawnerId();
-        spawner.setSpawnerStop(true);
+        spawner.getSpawnerStop().set(true);
         if (loc.getBlock().getType() == Material.SPAWNER) {
             loc.getBlock().setType(Material.AIR);
         }
