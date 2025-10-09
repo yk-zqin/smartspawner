@@ -20,6 +20,7 @@ public class CheckBreakBlock {
         if (integrationManager.isHasTowny() && !Towny.canPlayerInteractSpawner(player, location)) return false;
         if (integrationManager.isHasSimpleClaimSystem() && !SimpleClaimSystem.canPlayerBreakClaimBlock(player, location)) return false;
         if (integrationManager.isHasPlotSquared() && !PlotSquared.canInteract(player, location)) return false;
+        if (integrationManager.isHasResidence() && !Residence.canPlayerBreakBlock(player, location)) return false;
         return true;
     }
 }
