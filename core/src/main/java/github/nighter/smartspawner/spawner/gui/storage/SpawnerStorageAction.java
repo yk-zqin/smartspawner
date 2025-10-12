@@ -601,6 +601,17 @@ public class SpawnerStorageAction implements Listener {
         Inventory pageInventory = lootManager.createInventory(spawner, title, page, totalPages);
 
         openStorageInventories.put(playerId, pageInventory);
+        
+        // Log storage GUI opening
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_STORAGE_OPEN, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("page", page)
+                    .metadata("total_pages", totalPages)
+            );
+        }
 
         Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
         float pitch = refresh ? 1.2f : 1.0f;

@@ -3,6 +3,7 @@ package github.nighter.smartspawner.commands;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.logging.SpawnerEventType;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +39,11 @@ public abstract class BaseSubCommand {
         // Set permission requirements
         builder.requires(source -> hasPermission(source.getSender()));
 
-        // Set execution behavior
-        builder.executes(this::execute);
+        // Set execution behavior with logging
+        builder.executes(context -> {
+            logCommandExecution(context);
+            return execute(context);
+        });
 
         return builder;
     }
@@ -77,5 +81,35 @@ public abstract class BaseSubCommand {
      */
     protected boolean isConsoleOrRcon(CommandSender sender) {
         return sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender;
+    }
+    
+    /**
+     * Log command execution
+     */
+    protected void logCommandExecution(CommandContext<CommandSourceStack> context) {
+        if (plugin.getSpawnerActionLogger() == null) {
+            return;
+        }
+        
+        CommandSender sender = context.getSource().getSender();
+        SpawnerEventType eventType;
+        
+        if (sender instanceof RemoteConsoleCommandSender) {
+            eventType = SpawnerEventType.COMMAND_EXECUTE_RCON;
+        } else if (sender instanceof ConsoleCommandSender) {
+            eventType = SpawnerEventType.COMMAND_EXECUTE_CONSOLE;
+        } else {
+            eventType = SpawnerEventType.COMMAND_EXECUTE_PLAYER;
+        }
+        
+        plugin.getSpawnerActionLogger().log(eventType, builder -> {
+            if (sender instanceof Player player) {
+                builder.player(player.getName(), player.getUniqueId());
+            } else {
+                builder.metadata("sender", sender.getName());
+            }
+            builder.metadata("command", getName());
+            builder.metadata("full_command", context.getInput());
+        });
     }
 }
