@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Event listener that automatically logs spawner-related events.
@@ -34,7 +35,6 @@ public class SpawnerAuditListener implements Listener {
     public void onSpawnerBreak(SpawnerBreakEvent event) {
         logger.log(new SpawnerLogEntry.Builder(SpawnerEventType.SPAWNER_BREAK)
                 .location(event.getLocation())
-                .entityType(event.getEntityType())
                 .metadata("quantity", event.getQuantity())
                 .build());
     }
@@ -44,7 +44,6 @@ public class SpawnerAuditListener implements Listener {
         logger.log(new SpawnerLogEntry.Builder(SpawnerEventType.SPAWNER_BREAK)
                 .player(event.getPlayer().getName(), event.getPlayer().getUniqueId())
                 .location(event.getLocation())
-                .entityType(event.getEntityType())
                 .metadata("quantity", event.getQuantity())
                 .build());
     }
@@ -60,16 +59,18 @@ public class SpawnerAuditListener implements Listener {
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onSpawnerStack(SpawnerStackEvent event) {
-        SpawnerEventType eventType = event.isStackedByHand() ? 
+        SpawnerEventType eventType = event.getSource() == SpawnerStackEvent.StackSource.PLACE ? 
                 SpawnerEventType.SPAWNER_STACK_HAND : 
                 SpawnerEventType.SPAWNER_STACK_GUI;
+        
+        int amountAdded = event.getNewQuantity() - event.getOldQuantity();
         
         logger.log(new SpawnerLogEntry.Builder(eventType)
                 .player(event.getPlayer().getName(), event.getPlayer().getUniqueId())
                 .location(event.getLocation())
-                .entityType(event.getEntityType())
-                .metadata("amount_added", event.getAmountAdded())
-                .metadata("new_stack_size", event.getNewStackSize())
+                .metadata("amount_added", amountAdded)
+                .metadata("old_stack_size", event.getOldQuantity())
+                .metadata("new_stack_size", event.getNewQuantity())
                 .build());
     }
     
@@ -93,12 +94,15 @@ public class SpawnerAuditListener implements Listener {
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onSpawnerSell(SpawnerSellEvent event) {
+        int itemsSold = event.getItems().stream()
+                .mapToInt(ItemStack::getAmount)
+                .sum();
+        
         logger.log(new SpawnerLogEntry.Builder(SpawnerEventType.SPAWNER_SELL_ALL)
                 .player(event.getPlayer().getName(), event.getPlayer().getUniqueId())
                 .location(event.getLocation())
-                .entityType(event.getEntityType())
-                .metadata("total_value", event.getTotalValue())
-                .metadata("items_sold", event.getItemsSold())
+                .metadata("total_value", event.getMoneyAmount())
+                .metadata("items_sold", itemsSold)
                 .build());
     }
     

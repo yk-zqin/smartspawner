@@ -553,7 +553,7 @@ public class SpawnerStorageAction implements Listener {
 
         int totalPages = calculateTotalPages(spawner);
 
-        page = Math.max(1, Math.min(page, totalPages));
+        final int finalPage = Math.max(1, Math.min(page, totalPages));
 
         UUID playerId = player.getUniqueId();
         Inventory existingInventory = openStorageInventories.get(playerId);
@@ -562,10 +562,10 @@ public class SpawnerStorageAction implements Listener {
             StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder(false);
 
             holder.setTotalPages(totalPages);
-            holder.setCurrentPage(page);
+            holder.setCurrentPage(finalPage);
             holder.updateOldUsedSlots();
 
-            updatePageContent(player, spawner, page, existingInventory, false);
+            updatePageContent(player, spawner, finalPage, existingInventory, false);
             return;
         }
 
@@ -598,7 +598,7 @@ public class SpawnerStorageAction implements Listener {
             spawner.getVirtualInventory().sortItems(currentSort);
         }
 
-        Inventory pageInventory = lootManager.createInventory(spawner, title, page, totalPages);
+        Inventory pageInventory = lootManager.createInventory(spawner, title, finalPage, totalPages);
 
         openStorageInventories.put(playerId, pageInventory);
         
@@ -608,7 +608,7 @@ public class SpawnerStorageAction implements Listener {
                 builder.player(player.getName(), player.getUniqueId())
                     .location(spawner.getSpawnerLocation())
                     .entityType(spawner.getEntityType())
-                    .metadata("page", page)
+                    .metadata("page", finalPage)
                     .metadata("total_pages", totalPages)
             );
         }

@@ -13,7 +13,6 @@ import java.util.Set;
  */
 public class LoggingConfig {
     private final boolean enabled;
-    private final boolean asyncLogging;
     private final boolean jsonFormat;
     private final boolean consoleOutput;
     private final Set<SpawnerEventType> enabledEvents;
@@ -23,7 +22,6 @@ public class LoggingConfig {
     
     public LoggingConfig(ConfigurationSection config) {
         this.enabled = config.getBoolean("enabled", false);
-        this.asyncLogging = config.getBoolean("async", true);
         this.jsonFormat = config.getBoolean("json_format", false);
         this.consoleOutput = config.getBoolean("console_output", false);
         this.logDirectory = config.getString("log_directory", "logs/spawner");
@@ -70,7 +68,8 @@ public class LoggingConfig {
     }
     
     public boolean isAsyncLogging() {
-        return asyncLogging;
+        // Always use async logging for better performance
+        return true;
     }
     
     public boolean isJsonFormat() {

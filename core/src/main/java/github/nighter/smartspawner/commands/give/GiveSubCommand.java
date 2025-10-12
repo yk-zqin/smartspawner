@@ -177,7 +177,7 @@ public class GiveSubCommand extends BaseSubCommand {
                         .metadata("target_player", target.getName())
                         .metadata("target_uuid", target.getUniqueId().toString())
                         .metadata("amount", amount)
-                        .metadata("vanilla", vanilla);
+                        .metadata("vanilla", isVanilla);
                 });
             }
 

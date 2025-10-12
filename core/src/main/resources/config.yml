@@ -236,12 +236,10 @@ ghost_spawners:
 #---------------------------------------------------
 # Comprehensive logging system for tracking spawner interactions and events
 # Provides audit trail and debugging capabilities with minimal performance impact
+# Note: Logging always uses asynchronous processing to prevent blocking game threads
 logging:
   # Enable/disable the logging system
   enabled: false
-  
-  # Use asynchronous logging to prevent blocking game threads (recommended)
-  async: true
   
   # Output format: false for human-readable, true for JSON structured logs
   json_format: false
@@ -279,11 +277,6 @@ logging:
   # - COMMAND_EXECUTE_CONSOLE: Command executed by console
   # - COMMAND_EXECUTE_RCON: Command executed by RCON
   # - SPAWNER_EGG_CHANGE: Entity type changed
-  # - LOOT_GENERATED: Loot generation event
-  # - HOPPER_COLLECT: Hopper collection
-  # - ADMIN_GIVE: Admin gave spawner
-  # - ADMIN_REMOVE: Admin removed spawner
-  # - CONFIG_RELOAD: Configuration reloaded
   logged_events:
     - SPAWNER_PLACE
     - SPAWNER_BREAK

@@ -391,13 +391,6 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         // Re-register the audit listener
         getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
         
-        // Log the reload event
-        if (spawnerActionLogger != null) {
-            spawnerActionLogger.log(SpawnerEventType.CONFIG_RELOAD, builder -> 
-                builder.metadata("timestamp", System.currentTimeMillis())
-            );
-        }
-        
         // Reinitialize FormUI components in case config changed
         initializeFormUIComponents();
     }

@@ -33,18 +33,9 @@ public enum SpawnerEventType {
     // Entity type change
     SPAWNER_EGG_CHANGE("Spawner entity type changed"),
     
-    // Loot generation
-    LOOT_GENERATED("Loot generated"),
-    
-    // Hopper interaction
-    HOPPER_COLLECT("Items collected by hopper"),
-    
-    // Admin actions
+    // Admin actions (kept for backward compatibility but removed from default config)
     ADMIN_GIVE("Spawner given by admin"),
-    ADMIN_REMOVE("Spawner removed by admin"),
-    
-    // Configuration changes
-    CONFIG_RELOAD("Configuration reloaded");
+    ADMIN_REMOVE("Spawner removed by admin");
     
     private final String description;
     
