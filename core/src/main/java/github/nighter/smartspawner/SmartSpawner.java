@@ -12,6 +12,10 @@ import github.nighter.smartspawner.commands.list.gui.management.SpawnerManagemen
 import github.nighter.smartspawner.commands.list.gui.management.SpawnerManagementGUI;
 import github.nighter.smartspawner.commands.list.gui.adminstacker.AdminStackerHandler;
 import github.nighter.smartspawner.commands.prices.PricesGUI;
+import github.nighter.smartspawner.logging.LoggingConfig;
+import github.nighter.smartspawner.logging.SpawnerActionLogger;
+import github.nighter.smartspawner.logging.SpawnerAuditListener;
+import github.nighter.smartspawner.logging.SpawnerEventType;
 import github.nighter.smartspawner.spawner.natural.NaturalSpawnerListener;
 import github.nighter.smartspawner.utils.TimeFormatter;
 import github.nighter.smartspawner.hooks.economy.ItemPriceManager;
@@ -126,6 +130,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     private SpawnerManagementHandler spawnerManagementHandler;
     private AdminStackerHandler adminStackerHandler;
     private PricesGUI pricesGUI;
+    
+    // Logging system
+    @Getter
+    private SpawnerActionLogger spawnerActionLogger;
+    private SpawnerAuditListener spawnerAuditListener;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -219,6 +228,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.languageManager = new LanguageManager(this);
         this.languageUpdater = new LanguageUpdater(this);
         this.messageService = new MessageService(this, languageManager);
+        
+        // Initialize logging system
+        LoggingConfig loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
+        this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
+        this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
     }
 
     private void initializeEconomyComponents() {
@@ -314,6 +328,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         pm.registerEvents(spawnerManagementHandler, this);
         pm.registerEvents(adminStackerHandler, this);
         pm.registerEvents(pricesGUI, this);
+        
+        // Register logging listener
+        if (spawnerAuditListener != null) {
+            pm.registerEvents(spawnerAuditListener, this);
+        }
     }
 
     private void setupCommand() {
@@ -361,6 +380,24 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         spawnerMenuAction.reload();
         timeFormatter.clearCache();
         
+        // Reload logging system
+        if (spawnerActionLogger != null) {
+            spawnerActionLogger.shutdown();
+        }
+        LoggingConfig loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
+        this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
+        this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
+        
+        // Re-register the audit listener
+        getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
+        
+        // Log the reload event
+        if (spawnerActionLogger != null) {
+            spawnerActionLogger.log(SpawnerEventType.CONFIG_RELOAD, builder -> 
+                builder.metadata("timestamp", System.currentTimeMillis())
+            );
+        }
+        
         // Reinitialize FormUI components in case config changed
         initializeFormUIComponents();
     }
@@ -388,6 +425,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
 
         if (itemPriceManager != null) {
             itemPriceManager.cleanup();
+        }
+        
+        // Shutdown logging system
+        if (spawnerActionLogger != null) {
+            spawnerActionLogger.shutdown();
         }
 
         // Clean up resources
