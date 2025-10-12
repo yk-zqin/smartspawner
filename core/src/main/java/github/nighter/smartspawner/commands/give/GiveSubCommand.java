@@ -164,6 +164,22 @@ public class GiveSubCommand extends BaseSubCommand {
             String messageKey = "command_give_spawner_";
             plugin.getMessageService().sendMessage(sender, messageKey + "given", senderPlaceholders);
             plugin.getMessageService().sendMessage(target, messageKey + "received", targetPlaceholders);
+            
+            // Log admin give action
+            if (plugin.getSpawnerActionLogger() != null) {
+                plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.ADMIN_GIVE, builder -> {
+                    if (sender instanceof Player senderPlayer) {
+                        builder.player(senderPlayer.getName(), senderPlayer.getUniqueId());
+                    } else {
+                        builder.metadata("sender", sender.getName());
+                    }
+                    builder.entityType(entityType)
+                        .metadata("target_player", target.getName())
+                        .metadata("target_uuid", target.getUniqueId().toString())
+                        .metadata("amount", amount)
+                        .metadata("vanilla", vanilla);
+                });
+            }
 
             return 1;
         } catch (Exception e) {
