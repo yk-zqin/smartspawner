@@ -4,74 +4,80 @@ import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import lombok.Getter;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class RangeMath {
 
-    private final List<Player> players;
     private final List<SpawnerData> spawners;
-    private final List<Location> playerLocations = new ArrayList<>();
-    private final boolean[] playerIsConnectedAndAlive;
+    private final RangePlayerWrapper[] rangePlayers;
     @Getter
     private final boolean[] activeSpawners;
 
     public RangeMath(List<Player> players, List<SpawnerData> spawners) {
-        this.players = players;
         this.spawners = spawners;
-
+        this.rangePlayers = new RangePlayerWrapper[players.size()];
         this.activeSpawners = new boolean[spawners.size()];
-        this.playerIsConnectedAndAlive = new boolean[players.size()];
 
-        // Huge allocation improvement
         for (int i = 0; i < players.size(); i++) {
-            this.playerLocations.add(players.get(i).getLocation());
-            this.playerIsConnectedAndAlive[i] = players.get(i).isConnected() && !players.get(i).isDead();
+            Player p = players.get(i);
+            Location loc = p.getLocation();
+            boolean conditions = p.isConnected() && !p.isDead()
+                    && p.getGameMode() != GameMode.SPECTATOR;
+
+            // Store data in wrapper for faster access
+            this.rangePlayers[i] = new RangePlayerWrapper(
+                    loc.getWorld() != null ? loc.getWorld().getUID() : null,
+                    loc.getX(),
+                    loc.getY(),
+                    loc.getZ(),
+                    conditions
+            );
         }
     }
 
     public void updateActiveSpawners() {
-        int i = 0, j;
         boolean playerFound;
-        Location playerLoc;
 
-        for (SpawnerData s : spawners) {
+        for (int i = 0; i < spawners.size(); i++) {
+            SpawnerData s = spawners.get(i);
             final Location spawnerLoc = s.getSpawnerLocation();
             if (spawnerLoc == null) continue;
 
-            j = 0;
+            final World locWorld = spawnerLoc.getWorld();
+            if (locWorld == null) continue;
+
+            final UUID worldUID = locWorld.getUID();
+            final double rangeSq = s.getSpawnerRange() * s.getSpawnerRange();
 
             playerFound = false;
 
-            final double rangeSq = s.getSpawnerRange() * s.getSpawnerRange();
+            for (RangePlayerWrapper p : rangePlayers) {
+                if (!p.spawnConditions) continue;
+                if (p.worldUID == null) continue;
+                if (!worldUID.equals(p.worldUID)) continue;
 
-            for (Player p : players) {
-                if (p == null || !playerIsConnectedAndAlive[j]) continue;
-                if (p.getGameMode() == GameMode.SPECTATOR) continue;
-
-                playerLoc = playerLocations.get(j);
-
-                if (playerLoc.getWorld() == null || playerLoc.getWorld() != spawnerLoc.getWorld()) continue;
-
-                if (this.distanceSquared(spawnerLoc, playerLoc) <= rangeSq) {
+                if (p.distanceSquared(spawnerLoc) <= rangeSq) {
                     playerFound = true;
                     break;
                 }
-
-                j++;
             }
 
-            activeSpawners[i++] = playerFound;
+            activeSpawners[i] = playerFound;
         }
     }
 
-    private double distanceSquared(Location loc1, Location loc2) {
-        double dx = loc1.getX() - loc2.getX();
-        double dy = loc1.getY() - loc2.getY();
-        double dz = loc1.getZ() - loc2.getZ();
-        return dx * dx + dy * dy + dz * dz;
+    private record RangePlayerWrapper(UUID worldUID, double x, double y, double z, boolean spawnConditions) {
+
+        double distanceSquared(Location loc2) {
+            double dx = this.x - loc2.getX();
+            double dy = this.y - loc2.getY();
+            double dz = this.z - loc2.getZ();
+            return dx * dx + dy * dy + dz * dz;
+        }
     }
 
 }
