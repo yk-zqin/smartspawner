@@ -327,7 +327,7 @@ logging:
     # Discord Embed Configuration
     embed:
       # Embed title (supports placeholders)
-      title: "🔔 Spawner Action Log"
+      title: "SmartSpawner Log - {event_type}"
       
       # Embed description (supports placeholders)
       # Available placeholders: {description}, {event_type}, {player}, {world}, {x}, {y}, {z}, {location}, {entity}, {time}

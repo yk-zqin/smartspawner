@@ -237,7 +237,5 @@ public class SpawnerActionLogger {
         if (discordLogger != null) {
             discordLogger.shutdown();
         }
-        
-        plugin.getLogger().info("Spawner action logger shut down successfully");
     }
 }
