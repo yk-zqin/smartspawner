@@ -232,7 +232,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.messageService = new MessageService(this, languageManager);
         
         // Initialize logging system
-        this.loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
+        this.loggingConfig = new LoggingConfig(this);
         this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
         this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
     }
@@ -383,18 +383,11 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         timeFormatter.clearCache();
         
         // Reload logging system
-        if (loggingConfig != null && spawnerActionLogger != null) {
-            ConfigurationSection loggingSection = getConfig().getConfigurationSection("logging");
-            if (loggingSection != null) {
-                loggingConfig.reload(loggingSection);
-                spawnerActionLogger.shutdown();
-                this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
-                this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
-                
-                // Re-register the audit listener
-                getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
-            }
-        }
+        loggingConfig.loadConfig();
+        spawnerActionLogger.shutdown();
+        this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
+        this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
+        getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
         
         // Reinitialize FormUI components in case config changed
         initializeFormUIComponents();

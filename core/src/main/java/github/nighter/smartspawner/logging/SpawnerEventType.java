@@ -23,7 +23,6 @@ public enum SpawnerEventType {
     // Player actions
     SPAWNER_EXP_CLAIM("Experience claimed"),
     SPAWNER_SELL_ALL("Items sold"),
-    SPAWNER_SELL_AND_CLAIM("Items sold and exp claimed"),
     
     // Storage actions
     SPAWNER_ITEM_TAKE_ALL("All items taken from storage"),

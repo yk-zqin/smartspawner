@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.logging;
 
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ public class SpawnerLogEntry {
             .withZone(ZoneId.systemDefault());
     
     private final long timestamp;
+    @Getter
     private final SpawnerEventType eventType;
     private final String playerName;
     private final UUID playerUuid;
@@ -36,15 +38,7 @@ public class SpawnerLogEntry {
         this.entityType = builder.entityType;
         this.metadata = new HashMap<>(builder.metadata);
     }
-    
-    public long getTimestamp() {
-        return timestamp;
-    }
-    
-    public SpawnerEventType getEventType() {
-        return eventType;
-    }
-    
+
     @Nullable
     public String getPlayerName() {
         return playerName;

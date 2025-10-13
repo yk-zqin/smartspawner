@@ -37,7 +37,7 @@ public class SpawnerActionLogger {
         this.logQueue = new ConcurrentLinkedQueue<>();
         this.isShuttingDown = new AtomicBoolean(false);
         
-        if (config.isEnabled()) {
+        if (plugin.getConfig().getBoolean("enabled", true)) {
             setupLogDirectory();
             startLoggingTask();
         }
@@ -219,13 +219,5 @@ public class SpawnerActionLogger {
         processLogQueue();
         
         plugin.getLogger().info("Spawner action logger shut down successfully");
-    }
-    
-    /**
-     * Reloads the logger with a new configuration.
-     */
-    public void reload(LoggingConfig newConfig) {
-        shutdown();
-        // Note: Caller should create a new instance with new config
     }
 }
