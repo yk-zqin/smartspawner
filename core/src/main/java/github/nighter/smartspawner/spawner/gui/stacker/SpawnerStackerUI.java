@@ -40,6 +40,17 @@ public class SpawnerStackerUI {
 
         // Fill GUI with modifier buttons and spawner info
         populateStackerGui(gui, spawner);
+        
+        // Log stacker GUI opening
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_STACKER_OPEN, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("current_stack_size", spawner.getStackSize())
+                    .metadata("max_stack_size", spawner.getMaxStackSize())
+            );
+        }
 
         player.openInventory(gui);
     }
