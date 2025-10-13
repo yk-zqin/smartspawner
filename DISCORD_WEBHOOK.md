@@ -208,8 +208,8 @@ The system automatically handles Discord's rate limits:
 
 ### Player Heads Not Showing
 1. Check `show_player_head: true`
-2. Ensure player has UUID (not offline mode)
-3. Verify Crafatar service is accessible
+2. Ensure player has a valid username
+3. Verify Mineatar service is accessible
 
 ## Example Configurations
 
