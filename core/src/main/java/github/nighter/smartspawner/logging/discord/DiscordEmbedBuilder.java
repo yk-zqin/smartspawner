@@ -43,14 +43,14 @@ public class DiscordEmbedBuilder {
         embed.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis()));
         
         // Add player thumbnail if enabled and player exists
-        if (config.isShowPlayerHead() && entry.getPlayerUuid() != null) {
-            String avatarUrl = getPlayerAvatarUrl(entry.getPlayerUuid());
+        if (config.isShowPlayerHead() && entry.getPlayerName() != null) {
+            String avatarUrl = getPlayerAvatarUrl(entry.getPlayerName());
             embed.setThumbnail(avatarUrl);
         }
         
         // Add default fields based on entry data
         if (entry.getPlayerName() != null) {
-            embed.addField("Player", entry.getPlayerName(), true);
+            embed.addField("👤 Player", entry.getPlayerName(), true);
         }
         
         if (entry.getLocation() != null) {
@@ -60,11 +60,12 @@ public class DiscordEmbedBuilder {
                     loc.getBlockX(), 
                     loc.getBlockY(), 
                     loc.getBlockZ());
-            embed.addField("Location", locationStr, true);
+            embed.addField("📍 Location", locationStr, true);
         }
         
         if (entry.getEntityType() != null) {
-            embed.addField("Entity Type", entry.getEntityType().name(), true);
+            String entityName = formatEntityName(entry.getEntityType().name());
+            embed.addField("🐾 Entity Type", entityName, true);
         }
         
         // Add metadata fields
@@ -73,7 +74,9 @@ public class DiscordEmbedBuilder {
             for (Map.Entry<String, Object> metaEntry : metadata.entrySet()) {
                 String key = formatFieldName(metaEntry.getKey());
                 String value = String.valueOf(metaEntry.getValue());
-                embed.addField(key, value, true);
+                // Add icons for common metadata fields
+                String fieldName = addFieldIcon(key);
+                embed.addField(fieldName, value, true);
             }
         }
         
@@ -134,9 +137,9 @@ public class DiscordEmbedBuilder {
         return result;
     }
     
-    private static String getPlayerAvatarUrl(UUID playerUuid) {
-        // Use Crafatar service for player heads
-        return "https://crafatar.com/avatars/" + playerUuid.toString() + "?overlay=true";
+    private static String getPlayerAvatarUrl(String playerName) {
+        // Use Mineatar service for player heads
+        return "https://api.mineatar.io/face/" + playerName;
     }
     
     private static String formatFieldName(String fieldName) {
@@ -153,5 +156,44 @@ public class DiscordEmbedBuilder {
             }
         }
         return result.toString().trim();
+    }
+    
+    private static String formatEntityName(String entityType) {
+        // Convert UPPER_CASE to Title Case for better readability
+        if (entityType == null || entityType.isEmpty()) {
+            return entityType;
+        }
+        String[] words = entityType.toLowerCase().split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                result.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    result.append(word.substring(1));
+                }
+                result.append(" ");
+            }
+        }
+        return result.toString().trim();
+    }
+    
+    private static String addFieldIcon(String fieldName) {
+        // Add appropriate icons for common field names
+        String lowerFieldName = fieldName.toLowerCase();
+        if (lowerFieldName.contains("command")) {
+            return "⚙️ " + fieldName;
+        } else if (lowerFieldName.contains("amount") || lowerFieldName.contains("count")) {
+            return "🔢 " + fieldName;
+        } else if (lowerFieldName.contains("price") || lowerFieldName.contains("cost") || lowerFieldName.contains("money")) {
+            return "💰 " + fieldName;
+        } else if (lowerFieldName.contains("exp") || lowerFieldName.contains("experience")) {
+            return "✨ " + fieldName;
+        } else if (lowerFieldName.contains("stack")) {
+            return "📚 " + fieldName;
+        } else if (lowerFieldName.contains("type")) {
+            return "🏷️ " + fieldName;
+        }
+        // Return with a generic info icon for other fields
+        return "ℹ️ " + fieldName;
     }
 }

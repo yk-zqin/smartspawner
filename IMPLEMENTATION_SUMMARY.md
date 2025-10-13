@@ -99,11 +99,13 @@ SpawnerActionLogger.log()
 - Automatic color categories
 - Custom event colors
 - Configurable title/description/footer
+- Emoji icons for visual appeal
+- Formatted entity names (Title Case)
 
 #### Player Avatars
-- Crafatar API integration
+- Mineatar API integration
 - Player head/skin display
-- Thumbnail positioning
+- High-quality face rendering
 - Fallback handling
 
 #### Placeholder System
