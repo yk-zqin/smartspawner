@@ -60,6 +60,7 @@ import github.nighter.smartspawner.utils.SpawnerTypeChecker;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
