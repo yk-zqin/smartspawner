@@ -54,6 +54,9 @@ public class HologramSubCommand extends BaseSubCommand {
     @Override
     public int execute(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
+        
+        // Log command execution
+        logCommandExecution(context);
 
         try {
             // Toggle hologram state
