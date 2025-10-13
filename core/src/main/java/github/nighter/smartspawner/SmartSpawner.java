@@ -382,16 +382,17 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         timeFormatter.clearCache();
         
         // Reload logging system
-        if (loggingConfig != null) {
-            loggingConfig.reload(getConfig().getConfigurationSection("logging"));
-        }
-        if (spawnerActionLogger != null) {
-            spawnerActionLogger.shutdown();
-            this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
-            this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
-            
-            // Re-register the audit listener
-            getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
+        if (loggingConfig != null && spawnerActionLogger != null) {
+            ConfigurationSection loggingSection = getConfig().getConfigurationSection("logging");
+            if (loggingSection != null) {
+                loggingConfig.reload(loggingSection);
+                spawnerActionLogger.shutdown();
+                this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
+                this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
+                
+                // Re-register the audit listener
+                getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
+            }
         }
         
         // Reinitialize FormUI components in case config changed

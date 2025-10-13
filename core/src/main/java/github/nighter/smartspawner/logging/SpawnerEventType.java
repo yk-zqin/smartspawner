@@ -25,6 +25,11 @@ public enum SpawnerEventType {
     SPAWNER_SELL_ALL("Items sold"),
     SPAWNER_SELL_AND_CLAIM("Items sold and exp claimed"),
     
+    // Storage actions
+    SPAWNER_ITEM_TAKE_ALL("All items taken from storage"),
+    SPAWNER_ITEM_DROP("Item dropped from storage"),
+    SPAWNER_ITEMS_SORT("Items sorted in storage"),
+    
     // Command events
     // Note: These events capture ALL command executions including admin actions like /ss give
     // The full_command metadata contains all command parameters (target player, amount, entity type, etc.)

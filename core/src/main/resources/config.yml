@@ -273,6 +273,9 @@ logging:
   # - SPAWNER_EXP_CLAIM: Experience claimed
   # - SPAWNER_SELL_ALL: Items sold
   # - SPAWNER_SELL_AND_CLAIM: Items sold and exp claimed
+  # - SPAWNER_ITEM_TAKE_ALL: All items taken from storage
+  # - SPAWNER_ITEM_DROP: Item dropped from storage
+  # - SPAWNER_ITEMS_SORT: Items sorted in storage
   # - COMMAND_EXECUTE_PLAYER: Command executed by player
   # - COMMAND_EXECUTE_CONSOLE: Command executed by console
   # - COMMAND_EXECUTE_RCON: Command executed by RCON

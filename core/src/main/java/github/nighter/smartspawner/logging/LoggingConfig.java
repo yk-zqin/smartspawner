@@ -32,6 +32,18 @@ public class LoggingConfig {
     }
     
     private void loadConfig(ConfigurationSection config) {
+        if (config == null) {
+            // Use defaults if config section is null
+            this.enabled = false;
+            this.jsonFormat = false;
+            this.consoleOutput = false;
+            this.logDirectory = "logs";
+            this.maxLogFiles = 10;
+            this.maxLogSizeMB = 10;
+            this.enabledEvents = EnumSet.noneOf(SpawnerEventType.class);
+            return;
+        }
+        
         this.enabled = config.getBoolean("enabled", false);
         this.jsonFormat = config.getBoolean("json_format", false);
         this.consoleOutput = config.getBoolean("console_output", false);
