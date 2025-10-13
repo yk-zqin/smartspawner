@@ -2,6 +2,8 @@ package github.nighter.smartspawner.logging;
 
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.logging.discord.DiscordWebhookConfig;
+import github.nighter.smartspawner.logging.discord.DiscordWebhookLogger;
 import org.bukkit.Bukkit;
 
 import java.io.BufferedWriter;
@@ -27,9 +29,11 @@ public class SpawnerActionLogger {
     private final Queue<SpawnerLogEntry> logQueue;
     private final AtomicBoolean isShuttingDown;
     private Scheduler.Task logTask;
+    private DiscordWebhookLogger discordLogger;
     
     private File currentLogFile;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private static final ThreadLocal<SimpleDateFormat> dateFormat = 
+            ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd"));
     
     public SpawnerActionLogger(SmartSpawner plugin, LoggingConfig config) {
         this.plugin = plugin;
@@ -40,6 +44,12 @@ public class SpawnerActionLogger {
         if (plugin.getConfig().getBoolean("enabled", true)) {
             setupLogDirectory();
             startLoggingTask();
+        }
+        
+        // Initialize Discord webhook logger
+        DiscordWebhookConfig discordConfig = new DiscordWebhookConfig(plugin);
+        if (discordConfig.isEnabled()) {
+            this.discordLogger = new DiscordWebhookLogger(plugin, discordConfig);
         }
     }
     
@@ -57,6 +67,11 @@ public class SpawnerActionLogger {
         
         // Always use async logging
         logQueue.offer(entry);
+        
+        // Also send to Discord if enabled
+        if (discordLogger != null) {
+            discordLogger.queueWebhook(entry);
+        }
     }
     
     /**
@@ -82,7 +97,7 @@ public class SpawnerActionLogger {
             Path logPath = Paths.get(plugin.getDataFolder().getAbsolutePath(), config.getLogDirectory());
             Files.createDirectories(logPath);
             
-            String fileName = "spawner-" + dateFormat.format(new Date()) + 
+            String fileName = "spawner-" + dateFormat.get().format(new Date()) + 
                     (config.isJsonFormat() ? ".json" : ".log");
             currentLogFile = logPath.resolve(fileName).toFile();
             
@@ -165,7 +180,7 @@ public class SpawnerActionLogger {
             File rotatedFile = logPath.resolve("spawner-" + timestamp + extension).toFile();
             Files.move(currentLogFile.toPath(), rotatedFile.toPath());
             
-            String fileName = "spawner-" + dateFormat.format(new Date()) + extension;
+            String fileName = "spawner-" + dateFormat.get().format(new Date()) + extension;
             currentLogFile = logPath.resolve(fileName).toFile();
             
             plugin.getLogger().info("Rotated spawner log to: " + rotatedFile.getName());
@@ -217,6 +232,11 @@ public class SpawnerActionLogger {
         
         // Flush remaining entries
         processLogQueue();
+        
+        // Shutdown Discord logger
+        if (discordLogger != null) {
+            discordLogger.shutdown();
+        }
         
         plugin.getLogger().info("Spawner action logger shut down successfully");
     }

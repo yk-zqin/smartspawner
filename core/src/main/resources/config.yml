@@ -297,3 +297,69 @@ logging:
     - COMMAND_EXECUTE_PLAYER
     - COMMAND_EXECUTE_CONSOLE
     - COMMAND_EXECUTE_RCON
+  
+  # Discord Webhook Integration
+  # Send beautiful formatted log messages to Discord with rich embeds
+  discord:
+    # Enable/disable Discord webhook logging
+    enabled: false
+    
+    # Discord webhook URL (get this from your Discord server settings)
+    # Server Settings -> Integrations -> Webhooks -> Create Webhook
+    webhook_url: ""
+    
+    # Show player head/avatar in embed thumbnail
+    show_player_head: true
+    
+    # Log all events to Discord (if true, logged_events list is ignored)
+    log_all_events: false
+    
+    # Specific events to log to Discord (only used if log_all_events is false)
+    # Uses same event types as main logging system
+    logged_events:
+      - COMMAND_EXECUTE_PLAYER
+      - COMMAND_EXECUTE_CONSOLE
+      - COMMAND_EXECUTE_RCON
+      - SPAWNER_PLACE
+      - SPAWNER_BREAK
+      - SPAWNER_EXPLODE
+    
+    # Discord Embed Configuration
+    embed:
+      # Embed title (supports placeholders)
+      title: "🔔 Spawner Action Log"
+      
+      # Embed description (supports placeholders)
+      # Available placeholders: {description}, {event_type}, {player}, {world}, {x}, {y}, {z}, {location}, {entity}, {time}
+      # Plus any metadata fields from the log entry
+      description: "{description}"
+      
+      # Embed footer text
+      footer: "SmartSpawner Logger"
+      
+      # Color scheme for different event types (hexadecimal colors without #)
+      # Colors are automatically chosen based on event category if not specified
+      colors:
+        # Category colors (applied to all events in that category)
+        COMMAND: "5865F2"      # Blurple - for all command events
+        PLACE: "57F287"        # Green - for placement events
+        BREAK: "ED4245"        # Red - for break/explode events
+        STACK: "FEE75C"        # Yellow - for stacking events
+        DEFAULT: "5865F2"      # Default blurple
+        
+        # You can also specify colors for specific events
+        # SPAWNER_PLACE: "57F287"
+        # SPAWNER_BREAK: "ED4245"
+        # COMMAND_EXECUTE_PLAYER: "5865F2"
+      
+      # Custom fields to add to embeds (supports placeholders)
+      # These fields are added in addition to the automatic fields (Player, Location, Entity Type, Metadata)
+      fields:
+        # Example custom field:
+        # - name: "Server"
+        #   value: "Production"
+        #   inline: true
+        # 
+        # - name: "Action Time"
+        #   value: "{time}"
+        #   inline: false
