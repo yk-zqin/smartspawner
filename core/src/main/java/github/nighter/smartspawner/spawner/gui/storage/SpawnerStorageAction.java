@@ -283,13 +283,13 @@ public class SpawnerStorageAction implements Listener {
         }
 
         List<ItemStack> pageItems = new ArrayList<>();
-        int itemsFound = 0;
+        int itemsFoundCount = 0;
 
         for (int i = 0; i < STORAGE_SLOTS; i++) {
             ItemStack item = inventory.getItem(i);
             if (item != null && item.getType() != Material.AIR) {
                 pageItems.add(item.clone());
-                itemsFound += item.getAmount();
+                itemsFoundCount += item.getAmount();
                 inventory.setItem(i, null);
             }
         }
@@ -299,6 +299,8 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
+        final int itemsFound = itemsFoundCount;
+        
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         spawner.removeItemsAndUpdateSellValue(pageItems);
 
