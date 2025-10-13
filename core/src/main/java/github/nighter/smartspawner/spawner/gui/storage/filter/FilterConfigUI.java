@@ -280,6 +280,17 @@ public class FilterConfigUI implements Listener {
         Sound sound = wasFiltered ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.UI_BUTTON_CLICK;
         player.playSound(player.getLocation(), sound, 0.5f, 1.0f);
 
+        // Log item filter action
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_ITEM_FILTER, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("item_type", itemType.name())
+                    .metadata("is_filtered", wasFiltered)
+            );
+        }
+
         return true;
     }
 }

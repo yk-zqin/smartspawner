@@ -230,3 +230,136 @@ ghost_spawners:
   # Remove ghost spawners when players approach them
   # This checks when players enter spawner range
   remove_on_approach: false
+
+#---------------------------------------------------
+#              Spawner Action Logging
+#---------------------------------------------------
+# Comprehensive logging system for tracking spawner interactions and events
+# Provides audit trail and debugging capabilities with minimal performance impact
+logging:
+  # Enable/disable the logging system
+  enabled: true
+  
+  # Output format: false for human-readable, true for JSON structured logs
+  json_format: false
+  
+  # Also output logs to console (useful for debugging)
+  console_output: false
+  
+  # Directory where log files are stored (relative to plugin folder)
+  log_directory: "logs"
+  
+  # Maximum number of log files to keep (oldest files deleted first)
+  max_log_files: 10
+  
+  # Maximum size of each log file in MB before rotation
+  max_log_size_mb: 10
+  
+  # Log all events (if true, logged_events list is ignored)
+  log_all_events: false
+  
+  # Specific events to log (only used if log_all_events is false)
+  # Available events:
+  # - SPAWNER_PLACE: Spawner placement
+  # - SPAWNER_BREAK: Spawner breaking
+  # - SPAWNER_EXPLODE: Spawner destroyed by explosion
+  # - SPAWNER_STACK_HAND: Spawner stacked by hand
+  # - SPAWNER_STACK_GUI: Spawner stacked via GUI
+  # - SPAWNER_DESTACK_GUI: Spawner destacked via GUI
+  # - SPAWNER_GUI_OPEN: Main spawner GUI opened
+  # - SPAWNER_STORAGE_OPEN: Storage GUI opened
+  # - SPAWNER_STACKER_OPEN: Stacker GUI opened
+  # - SPAWNER_EXP_CLAIM: Experience claimed
+  # - SPAWNER_SELL_ALL: Items sold
+  # - SPAWNER_ITEM_TAKE_ALL: All items taken from storage
+  # - SPAWNER_ITEM_DROP: Item dropped from storage (using Q key)
+  # - SPAWNER_ITEMS_SORT: Items sorted in storage
+  # - SPAWNER_ITEM_FILTER: Item filter toggled in storage
+  # - SPAWNER_DROP_PAGE_ITEMS: All items on current page dropped from storage
+  # - COMMAND_EXECUTE_PLAYER: Command executed by player
+  # - COMMAND_EXECUTE_CONSOLE: Command executed by console
+  # - COMMAND_EXECUTE_RCON: Command executed by RCON
+  # - SPAWNER_EGG_CHANGE: Entity type changed
+  logged_events:
+    - SPAWNER_PLACE
+    - SPAWNER_BREAK
+    - SPAWNER_EXPLODE
+    - SPAWNER_STACK_HAND
+    - SPAWNER_STACK_GUI
+    - SPAWNER_DESTACK_GUI
+    - SPAWNER_GUI_OPEN
+    - SPAWNER_EXP_CLAIM
+    - SPAWNER_SELL_ALL
+    - SPAWNER_ITEM_TAKE_ALL
+    - SPAWNER_ITEMS_SORT
+    - SPAWNER_ITEM_FILTER
+    - SPAWNER_DROP_PAGE_ITEMS
+    - COMMAND_EXECUTE_PLAYER
+    - COMMAND_EXECUTE_CONSOLE
+    - COMMAND_EXECUTE_RCON
+  
+  # Discord Webhook Integration
+  # Send beautiful formatted log messages to Discord with rich embeds
+  discord:
+    # Enable/disable Discord webhook logging
+    enabled: false
+    
+    # Discord webhook URL (get this from your Discord server settings)
+    # Server Settings -> Integrations -> Webhooks -> Create Webhook
+    webhook_url: ""
+    
+    # Show player head/avatar in embed thumbnail
+    show_player_head: true
+    
+    # Log all events to Discord (if true, logged_events list is ignored)
+    log_all_events: false
+    
+    # Specific events to log to Discord (only used if log_all_events is false)
+    # Uses same event types as main logging system
+    logged_events:
+      - COMMAND_EXECUTE_PLAYER
+      - COMMAND_EXECUTE_CONSOLE
+      - COMMAND_EXECUTE_RCON
+      - SPAWNER_PLACE
+      - SPAWNER_BREAK
+      - SPAWNER_EXPLODE
+    
+    # Discord Embed Configuration
+    embed:
+      # Embed title (supports placeholders)
+      title: "SmartSpawner Log - {event_type}"
+      
+      # Embed description (supports placeholders)
+      # Available placeholders: {description}, {event_type}, {player}, {world}, {x}, {y}, {z}, {location}, {entity}, {time}
+      # Plus any metadata fields from the log entry
+      description: "{description}"
+      
+      # Embed footer text
+      footer: "SmartSpawner Logger"
+      
+      # Color scheme for different event types (hexadecimal colors without #)
+      # Colors are automatically chosen based on event category if not specified
+      colors:
+        # Category colors (applied to all events in that category)
+        COMMAND: "5865F2"      # Blurple - for all command events
+        PLACE: "57F287"        # Green - for placement events
+        BREAK: "ED4245"        # Red - for break/explode events
+        STACK: "FEE75C"        # Yellow - for stacking events
+        DEFAULT: "5865F2"      # Default blurple
+        
+        # You can also specify colors for specific events
+        # SPAWNER_PLACE: "57F287"
+        # SPAWNER_BREAK: "ED4245"
+        # COMMAND_EXECUTE_PLAYER: "5865F2"
+      
+      # Custom fields to add to embeds (supports placeholders)
+      # These fields are added in addition to the automatic fields (Player, Location, Entity Type, Metadata)
+      fields:
+        # Example custom field:
+        # - name: "Server"
+        #   value: "Production"
+        #   inline: true
+        # 
+        # - name: "Action Time"
+        #   value: "{time}"
+        #   inline: false

@@ -242,8 +242,20 @@ public class SpawnerStorageAction implements Listener {
                 sinPitch * 0.3 + 0.1 + (random.nextDouble() - 0.5) * 0.1,
                 cosYaw * cosPitch * 0.3 + (random.nextDouble() - 0.5) * 0.1
         );
-
         droppedItemWorld.setVelocity(velocity);
+        
+        // Log item drop action
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_ITEM_DROP, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("item_type", droppedItem.getType().name())
+                    .metadata("amount_dropped", droppedItem.getAmount())
+                    .metadata("drop_stack", dropStack)
+            );
+        }
+
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
 
         spawner.updateHologramData();
@@ -271,13 +283,13 @@ public class SpawnerStorageAction implements Listener {
         }
 
         List<ItemStack> pageItems = new ArrayList<>();
-        int itemsFound = 0;
+        int itemsFoundCount = 0;
 
         for (int i = 0; i < STORAGE_SLOTS; i++) {
             ItemStack item = inventory.getItem(i);
             if (item != null && item.getType() != Material.AIR) {
                 pageItems.add(item.clone());
-                itemsFound += item.getAmount();
+                itemsFoundCount += item.getAmount();
                 inventory.setItem(i, null);
             }
         }
@@ -287,6 +299,8 @@ public class SpawnerStorageAction implements Listener {
             return;
         }
 
+        final int itemsFound = itemsFoundCount;
+        
         VirtualInventory virtualInv = spawner.getVirtualInventory();
         spawner.removeItemsAndUpdateSellValue(pageItems);
 
@@ -307,6 +321,17 @@ public class SpawnerStorageAction implements Listener {
         }
         if (!spawner.isInteracted()) {
             spawner.markInteracted();
+        }
+
+        // Log drop page items action
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_DROP_PAGE_ITEMS, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("items_dropped", itemsFound)
+                    .metadata("page_number", holder.getCurrentPage())
+            );
         }
 
         updatePageContent(player, spawner, holder.getCurrentPage(), inventory, false);
@@ -545,6 +570,17 @@ public class SpawnerStorageAction implements Listener {
 
         // Play sound and show feedback
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.2f);
+        
+        // Log items sort action
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_ITEMS_SORT, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("sort_item", nextSort.name())
+                    .metadata("previous_sort", currentSort != null ? currentSort.name() : "none")
+            );
+        }
     }
 
     private void openLootPage(Player player, SpawnerData spawner, int page, boolean refresh) {
@@ -553,7 +589,7 @@ public class SpawnerStorageAction implements Listener {
 
         int totalPages = calculateTotalPages(spawner);
 
-        page = Math.max(1, Math.min(page, totalPages));
+        final int finalPage = Math.max(1, Math.min(page, totalPages));
 
         UUID playerId = player.getUniqueId();
         Inventory existingInventory = openStorageInventories.get(playerId);
@@ -562,10 +598,10 @@ public class SpawnerStorageAction implements Listener {
             StoragePageHolder holder = (StoragePageHolder) existingInventory.getHolder(false);
 
             holder.setTotalPages(totalPages);
-            holder.setCurrentPage(page);
+            holder.setCurrentPage(finalPage);
             holder.updateOldUsedSlots();
 
-            updatePageContent(player, spawner, page, existingInventory, false);
+            updatePageContent(player, spawner, finalPage, existingInventory, false);
             return;
         }
 
@@ -598,9 +634,20 @@ public class SpawnerStorageAction implements Listener {
             spawner.getVirtualInventory().sortItems(currentSort);
         }
 
-        Inventory pageInventory = lootManager.createInventory(spawner, title, page, totalPages);
+        Inventory pageInventory = lootManager.createInventory(spawner, title, finalPage, totalPages);
 
         openStorageInventories.put(playerId, pageInventory);
+        
+        // Log storage GUI opening
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_STORAGE_OPEN, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("page", finalPage)
+                    .metadata("total_pages", totalPages)
+            );
+        }
 
         Sound sound = refresh ? Sound.ITEM_ARMOR_EQUIP_DIAMOND : Sound.UI_BUTTON_CLICK;
         float pitch = refresh ? 1.2f : 1.0f;
@@ -646,6 +693,18 @@ public class SpawnerStorageAction implements Listener {
             }
             if (!spawner.isInteracted()) {
                 spawner.markInteracted();
+            }
+            
+            // Log take all items action
+            if (plugin.getSpawnerActionLogger() != null) {
+                int itemsLeft = spawner.getVirtualInventory().getUsedSlots();
+                plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_ITEM_TAKE_ALL, builder -> 
+                    builder.player(player.getName(), player.getUniqueId())
+                        .location(spawner.getSpawnerLocation())
+                        .entityType(spawner.getEntityType())
+                        .metadata("items_taken", result.totalMoved)
+                        .metadata("items_left", itemsLeft)
+                );
             }
         }
     }

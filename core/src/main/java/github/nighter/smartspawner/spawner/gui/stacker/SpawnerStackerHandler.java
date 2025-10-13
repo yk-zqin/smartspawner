@@ -312,6 +312,18 @@ public class SpawnerStackerHandler implements Listener {
         // Update stack size and give spawners to player
         spawner.setStackSize(targetSize);
         giveSpawnersToPlayer(player, actualChange, spawner.getEntityType());
+        
+        // Log destack operation
+        if (plugin.getSpawnerActionLogger() != null) {
+            plugin.getSpawnerActionLogger().log(github.nighter.smartspawner.logging.SpawnerEventType.SPAWNER_DESTACK_GUI, builder -> 
+                builder.player(player.getName(), player.getUniqueId())
+                    .location(spawner.getSpawnerLocation())
+                    .entityType(spawner.getEntityType())
+                    .metadata("amount_removed", actualChange)
+                    .metadata("old_stack_size", currentSize)
+                    .metadata("new_stack_size", targetSize)
+            );
+        }
 
         // Play sound
         player.playSound(player.getLocation(), STACK_SOUND, SOUND_VOLUME, SOUND_PITCH);
