@@ -26,16 +26,14 @@ public enum SpawnerEventType {
     SPAWNER_SELL_AND_CLAIM("Items sold and exp claimed"),
     
     // Command events
+    // Note: These events capture ALL command executions including admin actions like /ss give
+    // The full_command metadata contains all command parameters (target player, amount, entity type, etc.)
     COMMAND_EXECUTE_PLAYER("Command executed by player"),
     COMMAND_EXECUTE_CONSOLE("Command executed by console"),
     COMMAND_EXECUTE_RCON("Command executed by RCON"),
     
     // Entity type change
-    SPAWNER_EGG_CHANGE("Spawner entity type changed"),
-    
-    // Admin actions (kept for backward compatibility but removed from default config)
-    ADMIN_GIVE("Spawner given by admin"),
-    ADMIN_REMOVE("Spawner removed by admin");
+    SPAWNER_EGG_CHANGE("Spawner entity type changed");
     
     private final String description;
     
