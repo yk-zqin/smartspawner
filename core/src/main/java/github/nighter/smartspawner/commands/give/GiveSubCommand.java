@@ -101,6 +101,9 @@ public class GiveSubCommand extends BaseSubCommand {
 
     private int executeGive(CommandContext<CommandSourceStack> context, boolean isVanilla, int amount) {
         CommandSender sender = context.getSource().getSender();
+        
+        // Log command execution
+        logCommandExecution(context);
 
         try {
             // Get the player selector and resolve it
