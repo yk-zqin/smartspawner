@@ -12,19 +12,30 @@ import java.util.Set;
  * Controls what events are logged and how they're formatted.
  */
 public class LoggingConfig {
-    private final boolean enabled;
-    private final boolean jsonFormat;
-    private final boolean consoleOutput;
-    private final Set<SpawnerEventType> enabledEvents;
-    private final String logDirectory;
-    private final int maxLogFiles;
-    private final long maxLogSizeMB;
+    private boolean enabled;
+    private boolean jsonFormat;
+    private boolean consoleOutput;
+    private Set<SpawnerEventType> enabledEvents;
+    private String logDirectory;
+    private int maxLogFiles;
+    private long maxLogSizeMB;
     
     public LoggingConfig(ConfigurationSection config) {
+        loadConfig(config);
+    }
+    
+    /**
+     * Reload configuration from the provided configuration section.
+     */
+    public void reload(ConfigurationSection config) {
+        loadConfig(config);
+    }
+    
+    private void loadConfig(ConfigurationSection config) {
         this.enabled = config.getBoolean("enabled", false);
         this.jsonFormat = config.getBoolean("json_format", false);
         this.consoleOutput = config.getBoolean("console_output", false);
-        this.logDirectory = config.getString("log_directory", "logs/spawner");
+        this.logDirectory = config.getString("log_directory", "logs");
         this.maxLogFiles = config.getInt("max_log_files", 10);
         this.maxLogSizeMB = config.getLong("max_log_size_mb", 10);
         
@@ -65,11 +76,6 @@ public class LoggingConfig {
     
     public boolean isEnabled() {
         return enabled;
-    }
-    
-    public boolean isAsyncLogging() {
-        // Always use async logging for better performance
-        return true;
     }
     
     public boolean isJsonFormat() {

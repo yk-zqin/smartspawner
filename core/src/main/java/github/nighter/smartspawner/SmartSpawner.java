@@ -135,6 +135,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
     @Getter
     private SpawnerActionLogger spawnerActionLogger;
     private SpawnerAuditListener spawnerAuditListener;
+    private LoggingConfig loggingConfig;
 
     // API implementation
     private SmartSpawnerAPIImpl apiImpl;
@@ -230,7 +231,7 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         this.messageService = new MessageService(this, languageManager);
         
         // Initialize logging system
-        LoggingConfig loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
+        this.loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
         this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
         this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
     }
@@ -381,15 +382,17 @@ public class SmartSpawner extends JavaPlugin implements SmartSpawnerPlugin {
         timeFormatter.clearCache();
         
         // Reload logging system
+        if (loggingConfig != null) {
+            loggingConfig.reload(getConfig().getConfigurationSection("logging"));
+        }
         if (spawnerActionLogger != null) {
             spawnerActionLogger.shutdown();
+            this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
+            this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
+            
+            // Re-register the audit listener
+            getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
         }
-        LoggingConfig loggingConfig = new LoggingConfig(getConfig().getConfigurationSection("logging"));
-        this.spawnerActionLogger = new SpawnerActionLogger(this, loggingConfig);
-        this.spawnerAuditListener = new SpawnerAuditListener(this, spawnerActionLogger);
-        
-        // Re-register the audit listener
-        getServer().getPluginManager().registerEvents(spawnerAuditListener, this);
         
         // Reinitialize FormUI components in case config changed
         initializeFormUIComponents();

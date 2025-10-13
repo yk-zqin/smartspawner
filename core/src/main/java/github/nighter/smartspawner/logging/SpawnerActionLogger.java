@@ -55,12 +55,8 @@ public class SpawnerActionLogger {
             plugin.getLogger().info("[SpawnerLog] " + entry.toReadableString());
         }
         
-        if (config.isAsyncLogging()) {
-            logQueue.offer(entry);
-        } else {
-            // Synchronous logging (not recommended for production)
-            writeLogEntry(entry);
-        }
+        // Always use async logging
+        logQueue.offer(entry);
     }
     
     /**
@@ -98,11 +94,7 @@ public class SpawnerActionLogger {
     }
     
     private void startLoggingTask() {
-        if (!config.isAsyncLogging()) {
-            return;
-        }
-        
-        // Process log queue every 2 seconds
+        // Process log queue every 2 seconds (always async)
         logTask = Scheduler.runTaskTimerAsync(() -> {
             if (isShuttingDown.get()) {
                 return;

@@ -248,7 +248,7 @@ logging:
   console_output: false
   
   # Directory where log files are stored (relative to plugin folder)
-  log_directory: "logs/spawner"
+  log_directory: "logs"
   
   # Maximum number of log files to keep (oldest files deleted first)
   max_log_files: 10
