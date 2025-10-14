@@ -69,7 +69,6 @@ public class LoggingConfig {
             events.add(SpawnerEventType.SPAWNER_STACK_HAND);
             events.add(SpawnerEventType.SPAWNER_STACK_GUI);
             events.add(SpawnerEventType.SPAWNER_DESTACK_GUI);
-            events.add(SpawnerEventType.SPAWNER_GUI_OPEN);
             events.add(SpawnerEventType.SPAWNER_EXP_CLAIM);
             events.add(SpawnerEventType.SPAWNER_SELL_ALL);
             events.add(SpawnerEventType.SPAWNER_ITEM_TAKE_ALL);

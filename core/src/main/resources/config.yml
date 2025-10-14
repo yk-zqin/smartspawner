@@ -287,7 +287,6 @@ logging:
     - SPAWNER_STACK_HAND
     - SPAWNER_STACK_GUI
     - SPAWNER_DESTACK_GUI
-    - SPAWNER_GUI_OPEN
     - SPAWNER_EXP_CLAIM
     - SPAWNER_SELL_ALL
     - SPAWNER_ITEM_TAKE_ALL
@@ -303,63 +302,87 @@ logging:
   discord:
     # Enable/disable Discord webhook logging
     enabled: false
-    
-    # Discord webhook URL (get this from your Discord server settings)
-    # Server Settings -> Integrations -> Webhooks -> Create Webhook
+
+    # Discord webhook URL
     webhook_url: ""
-    
+
     # Show player head/avatar in embed thumbnail
     show_player_head: true
-    
+
     # Log all events to Discord (if true, logged_events list is ignored)
     log_all_events: false
-    
-    # Specific events to log to Discord (only used if log_all_events is false)
-    # Uses same event types as main logging system
+
+    # Specific events to log to Discord
     logged_events:
-      - COMMAND_EXECUTE_PLAYER
-      - COMMAND_EXECUTE_CONSOLE
-      - COMMAND_EXECUTE_RCON
       - SPAWNER_PLACE
       - SPAWNER_BREAK
       - SPAWNER_EXPLODE
-    
+      - SPAWNER_STACK_HAND
+      - SPAWNER_STACK_GUI
+      - SPAWNER_DESTACK_GUI
+      - SPAWNER_GUI_OPEN
+      - COMMAND_EXECUTE_PLAYER
+      - COMMAND_EXECUTE_CONSOLE
+      - COMMAND_EXECUTE_RCON
+
     # Discord Embed Configuration
     embed:
       # Embed title (supports placeholders)
-      title: "SmartSpawner Log - {description}"
-      
+      title: "{description}"
+
       # Embed description (supports placeholders)
-      # Available placeholders: {description}, {event_type}, {player}, {world}, {x}, {y}, {z}, {location}, {entity}, {time}
-      # Plus any metadata fields from the log entry
       description: "{description}"
-      
+
       # Embed footer text
-      footer: "SmartSpawner Logger"
-      
-      # Color scheme for different event types (hexadecimal colors without #)
-      # Colors are automatically chosen based on event category if not specified
+      footer: "SmartSpawner • {time}"
+
+      # Individual embed colors for each event type (hexadecimal without #)
+      # You can customize any event color below
       colors:
-        # Category colors (applied to all events in that category)
-        COMMAND: "5865F2"      # Blurple - for all command events
-        PLACE: "57F287"        # Green - for placement events
-        BREAK: "ED4245"        # Red - for break/explode events
-        STACK: "FEE75C"        # Yellow - for stacking events
-        DEFAULT: "5865F2"      # Default blurple
-        
-        # You can also specify colors for specific events
-        # SPAWNER_PLACE: "57F287"
-        # SPAWNER_BREAK: "ED4245"
-        # COMMAND_EXECUTE_PLAYER: "5865F2"
-      
+        # Command Events - Blue Shades
+        COMMAND_EXECUTE_PLAYER: "5865F2"    # Discord Blurple
+        COMMAND_EXECUTE_CONSOLE: "3B5998"   # Dark Blue
+        COMMAND_EXECUTE_RCON: "7289DA"      # Light Blurple
+
+        # Spawner Actions - Green/Red
+        SPAWNER_PLACE: "57F287"             # Green (Success)
+        SPAWNER_BREAK: "ED4245"             # Red (Destructive)
+        SPAWNER_EXPLODE: "FF6B6B"           # Light Red (Danger)
+
+        # Stack Operations - Yellow/Orange
+        SPAWNER_STACK_HAND: "FEE75C"        # Yellow
+        SPAWNER_STACK_GUI: "F1C40F"         # Gold
+        SPAWNER_DESTACK_GUI: "E67E22"       # Orange
+
+        # GUI Operations - Purple Shades
+        SPAWNER_GUI_OPEN: "9B59B6"          # Purple
+        SPAWNER_STORAGE_OPEN: "8E44AD"      # Dark Purple
+        SPAWNER_STACKER_OPEN: "BB8FCE"      # Light Purple
+
+        # Economic Actions - Green Shades
+        SPAWNER_EXP_CLAIM: "2ECC71"         # Emerald Green
+        SPAWNER_SELL_ALL: "27AE60"          # Dark Green
+
+        # Item Management - Cyan/Teal
+        SPAWNER_ITEM_TAKE_ALL: "1ABC9C"     # Turquoise
+        SPAWNER_ITEM_DROP: "16A085"         # Dark Turquoise
+        SPAWNER_ITEMS_SORT: "48C9B0"        # Light Teal
+        SPAWNER_ITEM_FILTER: "45B7AF"       # Teal
+        SPAWNER_DROP_PAGE_ITEMS: "138D75"   # Dark Teal
+
+        # Entity Change - Pink
+        SPAWNER_EGG_CHANGE: "E91E63"        # Pink
+
+        # Default fallback color
+        DEFAULT: "99AAB5"                   # Gray
+
       # Custom fields to add to embeds (supports placeholders)
-      # These fields are added in addition to the automatic fields (Player, Location, Entity Type, Metadata)
       fields:
-        # Example custom field:
-#         - name: "Server"
-#           value: "Production"
-#           inline: true
-#
-#         - name: "Action Time"
-#           value: "{time}"
-#           inline: false
+      # Example custom field:
+      #  - name: "Server"
+      #    value: "Production"
+      #    inline: true
+
+      #  - name: "Action Time"
+      #    value: "{time}"
+      #    inline: false

@@ -1,5 +1,7 @@
 package github.nighter.smartspawner.logging.discord;
 
+import lombok.Setter;
+
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -9,8 +11,11 @@ import java.util.List;
  * Represents a Discord embed structure.
  */
 public class DiscordEmbed {
+    @Setter
     private String title;
+    @Setter
     private String description;
+    @Setter
     private int color;
     private Footer footer;
     private Thumbnail thumbnail;
@@ -21,19 +26,7 @@ public class DiscordEmbed {
         this.fields = new ArrayList<>();
         this.color = 0x5865F2; // Default Discord blurple
     }
-    
-    public void setTitle(String title) {
-        this.title = title;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    public void setColor(int color) {
-        this.color = color;
-    }
-    
+
     public void setFooter(String text, String iconUrl) {
         this.footer = new Footer(text, iconUrl);
     }

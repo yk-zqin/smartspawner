@@ -9,96 +9,127 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
- * Builds Discord embeds from log entries with placeholder support.
+ * Builds compact Discord embeds from log entries.
  */
 public class DiscordEmbedBuilder {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss")
             .withZone(ZoneId.systemDefault());
 
     public static DiscordEmbed buildEmbed(SpawnerLogEntry entry, DiscordWebhookConfig config, SmartSpawner plugin) {
         DiscordEmbed embed = new DiscordEmbed();
 
-        // Set color based on event type
+        // Set color based on specific event type
         embed.setColor(config.getColorForEvent(entry.getEventType()));
 
         // Build placeholders
         Map<String, String> placeholders = buildPlaceholders(entry);
 
-        // Set title with placeholder replacement
-        String title = replacePlaceholders(config.getEmbedTitle(), placeholders);
+        // Set compact title with icon
+        String eventIcon = getEventIcon(entry.getEventType());
+        String title = eventIcon + " " + replacePlaceholders(config.getEmbedTitle(), placeholders);
         embed.setTitle(title);
 
-        // Set description with placeholder replacement - add line breaks for better spacing
-        String description = replacePlaceholders(config.getEmbedDescription(), placeholders);
-        embed.setDescription(description + "\n"); // Add spacing after description
+        // Set compact description
+        String description = buildCompactDescription(entry, placeholders, config);
+        embed.setDescription(description);
 
         // Set footer
         String footer = replacePlaceholders(config.getEmbedFooter(), placeholders);
-        embed.setFooter(footer, null);
+        embed.setFooter(footer, "https://images.minecraft-heads.com/render2d/head/2e/2eaa2d8b7e9a098ebd33fcb6cf1120f4.webp");
 
         // Set timestamp
         embed.setTimestamp(Instant.ofEpochMilli(System.currentTimeMillis()));
 
-        // Add player thumbnail if enabled and player exists
+        // Add player thumbnail if enabled
         if (config.isShowPlayerHead() && entry.getPlayerName() != null) {
-            String avatarUrl = getPlayerAvatarUrl(entry.getPlayerName());
-            embed.setThumbnail(avatarUrl);
+            embed.setThumbnail(getPlayerAvatarUrl(entry.getPlayerName()));
         }
 
-        // Add fields in organized groups with better spacing
+        // Add only important metadata as inline fields
+        addCompactFields(embed, entry);
 
-        // Group 1: Player Info (if exists)
-        if (entry.getPlayerName() != null) {
-            embed.addField("👤 Player: ", "`" + entry.getPlayerName() + "`", true);
-            // Add empty field for spacing in 3-column layout
-            embed.addField("\u200B", "\u200B", true);
-            embed.addField("\u200B", "\u200B", true);
-        }
-
-        // Group 2: Location Info (if exists)
-        if (entry.getLocation() != null) {
-            Location loc = entry.getLocation();
-            String locationStr = String.format("```\n%s(%d, %d, %d)\n```",
-                    loc.getWorld().getName(),
-                    loc.getBlockX(),
-                    loc.getBlockY(),
-                    loc.getBlockZ());
-            embed.addField("📍 Location", locationStr, false); // Full width for better readability
-        }
-
-        // Group 3: Entity Info (if exists)
-        if (entry.getEntityType() != null) {
-            String entityName = formatEntityName(entry.getEntityType().name());
-            embed.addField("🐾 Entity Type", "`" + entityName + "`", true);
-        }
-
-        // Add metadata fields with improved formatting
-        Map<String, Object> metadata = entry.getMetadata();
-        if (!metadata.isEmpty()) {
-            for (Map.Entry<String, Object> metaEntry : metadata.entrySet()) {
-                String key = formatFieldName(metaEntry.getKey());
-                String value = formatValue(String.valueOf(metaEntry.getValue()));
-                String fieldName = addFieldIcon(key);
-                embed.addField(fieldName, value, true);
-            }
-        }
-
-        // Add separator before custom fields
-        if (!config.getCustomFields().isEmpty() && (!metadata.isEmpty() || entry.getEntityType() != null)) {
-            embed.addField("\u200B", "\u200B", false);
-        }
-
-        // Add custom fields from config
+        // Add custom fields from config (if any)
         for (DiscordWebhookConfig.EmbedField customField : config.getCustomFields()) {
             String fieldName = replacePlaceholders(customField.getName(), placeholders);
-            String fieldValue = formatValue(replacePlaceholders(customField.getValue(), placeholders));
+            String fieldValue = replacePlaceholders(customField.getValue(), placeholders);
             embed.addField(fieldName, fieldValue, customField.isInline());
         }
 
         return embed;
+    }
+
+    private static String buildCompactDescription(SpawnerLogEntry entry, Map<String, String> placeholders, DiscordWebhookConfig config) {
+        StringBuilder desc = new StringBuilder();
+
+        // Main description
+        String mainDesc = replacePlaceholders(config.getEmbedDescription(), placeholders);
+        desc.append(mainDesc);
+
+        // Player info (if exists)
+        if (entry.getPlayerName() != null) {
+            desc.append("👤 `").append(entry.getPlayerName()).append("`");
+        }
+
+        // Location info (compact format)
+        if (entry.getLocation() != null) {
+            Location loc = entry.getLocation();
+            if (entry.getPlayerName() != null) desc.append(" • ");
+            desc.append("📍 `").append(loc.getWorld().getName())
+                    .append(" (").append(loc.getBlockX())
+                    .append(", ").append(loc.getBlockY())
+                    .append(", ").append(loc.getBlockZ()).append(")`");
+        }
+
+        // Entity type (if exists)
+        if (entry.getEntityType() != null) {
+            desc.append("\n🐾 `").append(formatEntityName(entry.getEntityType().name())).append("`");
+        }
+
+        return desc.toString();
+    }
+
+    private static void addCompactFields(DiscordEmbed embed, SpawnerLogEntry entry) {
+        Map<String, Object> metadata = entry.getMetadata();
+
+        if (metadata.isEmpty()) {
+            return;
+        }
+
+        // Only add important metadata (max 6 fields for compact look)
+        int fieldCount = 0;
+        int maxFields = 6;
+
+        for (Map.Entry<String, Object> metaEntry : metadata.entrySet()) {
+            if (fieldCount >= maxFields) break;
+
+            String key = formatFieldName(metaEntry.getKey());
+            String icon = getFieldIcon(metaEntry.getKey());
+            Object value = metaEntry.getValue();
+
+            String formattedValue = formatCompactValue(value);
+            embed.addField(icon + " " + key, formattedValue, true);
+            fieldCount++;
+        }
+    }
+
+    private static String formatCompactValue(Object value) {
+        if (value == null) return "`N/A`";
+
+        if (value instanceof Number) {
+            Number num = (Number) value;
+            if (value instanceof Double || value instanceof Float) {
+                return "`" + String.format("%.2f", num.doubleValue()) + "`";
+            }
+            return "`" + num.toString() + "`";
+        }
+
+        String str = String.valueOf(value);
+        if (str.length() > 50) {
+            str = str.substring(0, 47) + "...";
+        }
+        return "`" + str + "`";
     }
 
     private static Map<String, String> buildPlaceholders(SpawnerLogEntry entry) {
@@ -127,10 +158,10 @@ public class DiscordEmbedBuilder {
         }
 
         if (entry.getEntityType() != null) {
-            placeholders.put("entity", entry.getEntityType().name());
+            placeholders.put("entity", formatEntityName(entry.getEntityType().name()));
         }
 
-        // Add all metadata as placeholders
+        // Add metadata as placeholders
         for (Map.Entry<String, Object> metaEntry : entry.getMetadata().entrySet()) {
             placeholders.put(metaEntry.getKey(), String.valueOf(metaEntry.getValue()));
         }
@@ -148,41 +179,11 @@ public class DiscordEmbedBuilder {
         return result;
     }
 
-    /**
-     * Format value with code blocks for better readability
-     */
-    private static String formatValue(String value) {
-        if (value == null || value.isEmpty()) {
-            return "`N/A`";
-        }
-
-        // If value is a number, format it nicely
-        try {
-            if (value.contains(".")) {
-                Double.parseDouble(value);
-                return "`" + value + "`";
-            } else {
-                Integer.parseInt(value);
-                return "`" + value + "`";
-            }
-        } catch (NumberFormatException e) {
-            // Not a number, continue
-        }
-
-        // If value contains spaces or is long, use regular code block
-        if (value.length() > 30 || value.contains(" ")) {
-            return "`" + value + "`";
-        }
-
-        return "`" + value + "`";
-    }
-
     private static String getPlayerAvatarUrl(String playerName) {
-        return "https://mc-heads.net/avatar/" + playerName;
+        return "https://mc-heads.net/avatar/" + playerName + "/64.png";
     }
 
     private static String formatFieldName(String fieldName) {
-        // Convert snake_case or camelCase to Title Case
         String[] words = fieldName.split("_");
         StringBuilder result = new StringBuilder();
         for (String word : words) {
@@ -198,7 +199,6 @@ public class DiscordEmbedBuilder {
     }
 
     private static String formatEntityName(String entityType) {
-        // Convert UPPER_CASE to Title Case for better readability
         if (entityType == null || entityType.isEmpty()) {
             return entityType;
         }
@@ -216,25 +216,54 @@ public class DiscordEmbedBuilder {
         return result.toString().trim();
     }
 
-    private static String addFieldIcon(String fieldName) {
-        // Add appropriate icons for common field names
-        String lowerFieldName = fieldName.toLowerCase();
-        if (lowerFieldName.contains("command")) {
-            return "⚙️ " + fieldName;
-        } else if (lowerFieldName.contains("amount") || lowerFieldName.contains("count")) {
-            return "🔢 " + fieldName;
-        } else if (lowerFieldName.contains("quantity")) {
-            return "📊 " + fieldName;
-        } else if (lowerFieldName.contains("price") || lowerFieldName.contains("cost") || lowerFieldName.contains("money")) {
-            return "💰 " + fieldName;
-        } else if (lowerFieldName.contains("exp") || lowerFieldName.contains("experience")) {
-            return "✨ " + fieldName;
-        } else if (lowerFieldName.contains("stack")) {
-            return "📚 " + fieldName;
-        } else if (lowerFieldName.contains("type")) {
-            return "🏷️ " + fieldName;
+    private static String getFieldIcon(String fieldName) {
+        String lower = fieldName.toLowerCase();
+        if (lower.contains("command")) return "⚙️";
+        if (lower.contains("amount") || lower.contains("count")) return "🔢";
+        if (lower.contains("quantity")) return "📊";
+        if (lower.contains("price") || lower.contains("cost") || lower.contains("money")) return "💰";
+        if (lower.contains("exp") || lower.contains("experience")) return "✨";
+        if (lower.contains("stack")) return "📚";
+        if (lower.contains("type")) return "🏷️";
+        return "•";
+    }
+
+    private static String getEventIcon(github.nighter.smartspawner.logging.SpawnerEventType eventType) {
+        String eventName = eventType.name();
+
+        // Command events
+        if (eventName.startsWith("COMMAND_")) {
+            if (eventName.contains("PLAYER")) return "👤";
+            if (eventName.contains("CONSOLE")) return "🖥️";
+            if (eventName.contains("RCON")) return "🔌";
+            return "⚙️";
         }
-        // Return with a generic info icon for other fields
-        return "ℹ️ " + fieldName;
+
+        // Spawner events
+        if (eventName.equals("SPAWNER_PLACE")) return "✅";
+        if (eventName.equals("SPAWNER_BREAK")) return "❌";
+        if (eventName.equals("SPAWNER_EXPLODE")) return "💥";
+
+        // Stack events
+        if (eventName.contains("STACK_HAND")) return "✋";
+        if (eventName.contains("STACK_GUI")) return "📦";
+        if (eventName.contains("DESTACK")) return "📤";
+
+        // GUI events
+        if (eventName.contains("GUI_OPEN")) return "📋";
+        if (eventName.contains("STORAGE_OPEN")) return "📦";
+        if (eventName.contains("STACKER_OPEN")) return "🔢";
+
+        // Action events
+        if (eventName.contains("EXP_CLAIM")) return "✨";
+        if (eventName.contains("SELL_ALL")) return "💰";
+        if (eventName.contains("ITEM_TAKE_ALL")) return "🎒";
+        if (eventName.contains("ITEM_DROP")) return "🗑️";
+        if (eventName.contains("ITEMS_SORT")) return "🔃";
+        if (eventName.contains("ITEM_FILTER")) return "🔍";
+        if (eventName.contains("DROP_PAGE_ITEMS")) return "📄";
+        if (eventName.contains("EGG_CHANGE")) return "🥚";
+
+        return "📌";
     }
 }

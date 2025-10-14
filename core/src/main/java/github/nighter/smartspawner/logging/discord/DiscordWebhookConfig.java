@@ -49,9 +49,9 @@ public class DiscordWebhookConfig {
         this.enabled = section.getBoolean("enabled", false);
         this.webhookUrl = section.getString("webhook_url", "");
         this.showPlayerHead = section.getBoolean("show_player_head", true);
-        this.embedTitle = section.getString("embed.title", "🔔 Spawner Action Log");
+        this.embedTitle = section.getString("embed.title", "{description}");
         this.embedDescription = section.getString("embed.description", "{description}");
-        this.embedFooter = section.getString("embed.footer", "SmartSpawner Logger");
+        this.embedFooter = section.getString("embed.footer", "SmartSpawner • {time}");
         this.logAllEvents = section.getBoolean("log_all_events", false);
         
         // Load event colors
@@ -89,12 +89,15 @@ public class DiscordWebhookConfig {
         if (eventList.isEmpty()) {
             // Default to all command events and major spawner events
             Set<SpawnerEventType> events = EnumSet.noneOf(SpawnerEventType.class);
-            events.add(SpawnerEventType.COMMAND_EXECUTE_PLAYER);
-            events.add(SpawnerEventType.COMMAND_EXECUTE_CONSOLE);
-            events.add(SpawnerEventType.COMMAND_EXECUTE_RCON);
             events.add(SpawnerEventType.SPAWNER_PLACE);
             events.add(SpawnerEventType.SPAWNER_BREAK);
             events.add(SpawnerEventType.SPAWNER_EXPLODE);
+            events.add(SpawnerEventType.SPAWNER_STACK_HAND);
+            events.add(SpawnerEventType.SPAWNER_STACK_GUI);
+            events.add(SpawnerEventType.SPAWNER_DESTACK_GUI);
+            events.add(SpawnerEventType.COMMAND_EXECUTE_PLAYER);
+            events.add(SpawnerEventType.COMMAND_EXECUTE_CONSOLE);
+            events.add(SpawnerEventType.COMMAND_EXECUTE_RCON);
             return events;
         }
         
@@ -131,19 +134,6 @@ public class DiscordWebhookConfig {
         if (color != null) {
             return color;
         }
-        
-        // Try category-based colors
-        String eventName = eventType.name();
-        if (eventName.startsWith("COMMAND_")) {
-            return eventColors.getOrDefault("COMMAND", 0x5865F2); // Blurple
-        } else if (eventName.contains("BREAK") || eventName.contains("EXPLODE")) {
-            return eventColors.getOrDefault("BREAK", 0xED4245); // Red
-        } else if (eventName.contains("PLACE")) {
-            return eventColors.getOrDefault("PLACE", 0x57F287); // Green
-        } else if (eventName.contains("STACK")) {
-            return eventColors.getOrDefault("STACK", 0xFEE75C); // Yellow
-        }
-        
         return eventColors.getOrDefault("DEFAULT", 0x5865F2); // Default blurple
     }
     
