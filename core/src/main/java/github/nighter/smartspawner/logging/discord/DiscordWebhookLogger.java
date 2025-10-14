@@ -3,7 +3,6 @@ package github.nighter.smartspawner.logging.discord;
 import github.nighter.smartspawner.Scheduler;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.logging.SpawnerLogEntry;
-import org.bukkit.Bukkit;
 
 import java.io.IOException;
 import java.io.OutputStream;

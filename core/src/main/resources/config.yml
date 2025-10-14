@@ -327,7 +327,7 @@ logging:
     # Discord Embed Configuration
     embed:
       # Embed title (supports placeholders)
-      title: "SmartSpawner Log - {event_type}"
+      title: "SmartSpawner Log - {description}"
       
       # Embed description (supports placeholders)
       # Available placeholders: {description}, {event_type}, {player}, {world}, {x}, {y}, {z}, {location}, {entity}, {time}
@@ -356,10 +356,10 @@ logging:
       # These fields are added in addition to the automatic fields (Player, Location, Entity Type, Metadata)
       fields:
         # Example custom field:
-        # - name: "Server"
-        #   value: "Production"
-        #   inline: true
-        # 
-        # - name: "Action Time"
-        #   value: "{time}"
-        #   inline: false
+#         - name: "Server"
+#           value: "Production"
+#           inline: true
+#
+#         - name: "Action Time"
+#           value: "{time}"
+#           inline: false
