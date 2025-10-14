@@ -3,8 +3,10 @@ package github.nighter.smartspawner.hooks.protections.api;
 import com.bgsoftware.superiorskyblock.api.SuperiorSkyblockAPI;
 import com.bgsoftware.superiorskyblock.api.events.IslandDisbandEvent;
 import com.bgsoftware.superiorskyblock.api.island.Island;
+import com.bgsoftware.superiorskyblock.api.island.IslandChunkFlags;
 import com.bgsoftware.superiorskyblock.api.island.IslandPrivilege;
 
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import github.nighter.smartspawner.SmartSpawner;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import org.bukkit.*;
@@ -70,9 +72,9 @@ public class SuperiorSkyblock2 implements Listener {
     public void onIslandDisband(IslandDisbandEvent event) {
         if(event.isCancelled() || event.getIsland() == null) return;
         Island island = event.getIsland();
-        for(World.Environment environment : World.Environment.values()) {
+        for(Dimension dimension : Dimension.values()) {
             try {
-                island.getAllChunksAsync(environment, true, true, chunk -> {
+                island.getAllChunksAsync(dimension, IslandChunkFlags.ONLY_PROTECTED | IslandChunkFlags.NO_EMPTY_CHUNKS, chunk -> {
                     for (BlockState state : chunk.getTileEntities(block -> block.getType() == Material.SPAWNER, false)) {
                         SpawnerData spawner = SmartSpawner.getInstance().getSpawnerManager().getSpawnerByLocation(state.getBlock().getLocation());
                         if (spawner == null) continue;
