@@ -59,7 +59,8 @@ public class SpawnerFileHandler {
     }
 
     private void startSaveTask() {
-        long intervalTicks = plugin.getTimeFromConfig("data_saving.interval", "5m");
+        // Hardcoded 5-minute interval (5 * 60 * 20 = 6000 ticks)
+        long intervalTicks = 6000L;
 
         if (saveTask != null) {
             saveTask.cancel();

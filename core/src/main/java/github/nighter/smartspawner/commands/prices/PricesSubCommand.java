@@ -24,7 +24,7 @@ public class PricesSubCommand extends BaseSubCommand {
 
     @Override
     public String getPermission() {
-        return "smartspawner.prices";
+        return "smartspawner.command.prices";
     }
 
     @Override

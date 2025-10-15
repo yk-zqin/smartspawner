@@ -48,37 +48,78 @@ softdepend:
 commands:
   smartspawner:
     description: Main command for SmartSpawner plugin
-    usage: /smartspawner [reload|give|list|hologram|prices] [args...]
+    usage: /smartspawner [reload|give|list|hologram|prices|clear] [args...]
     aliases: [ ss, spawner ]
-    permission: smartspawner.admin
+    permission: smartspawner.command.use
     permission-message: "You don't have permission to use SmartSpawner commands!"
 
 permissions:
-  # Admin permissions
-  smartspawner.admin:
+  # Main command permission
+  smartspawner.command.use:
     description: Allow access to all SmartSpawner commands
     default: op
 
   # Subcommand permissions
-  smartspawner.reload:
+  smartspawner.command.reload:
     description: Permission to reload SmartSpawner plugin
     default: op
 
-  smartspawner.give:
+  smartspawner.command.give:
     description: Allow giving spawners to yourself
     default: op
 
-  smartspawner.list:
+  smartspawner.command.list:
     description: Allow viewing list of spawners and teleporting to them
     default: op
 
-  smartspawner.hologram:
+  smartspawner.command.hologram:
     description: Allow toggling hologram for spawners
     default: op
 
-  smartspawner.prices:
+  smartspawner.command.prices:
     description: Allow viewing sell prices of spawner items
     default: true
+
+  smartspawner.command.clear:
+    description: Allow clearing holograms and ghost spawners
+    default: op
+
+  # Legacy permissions (for backwards compatibility)
+  smartspawner.admin:
+    description: Legacy permission for SmartSpawner commands
+    default: op
+    children:
+      smartspawner.command.use: true
+
+  smartspawner.reload:
+    description: Legacy permission for reload command
+    default: op
+    children:
+      smartspawner.command.reload: true
+
+  smartspawner.give:
+    description: Legacy permission for give command
+    default: op
+    children:
+      smartspawner.command.give: true
+
+  smartspawner.list:
+    description: Legacy permission for list command
+    default: op
+    children:
+      smartspawner.command.list: true
+
+  smartspawner.hologram:
+    description: Legacy permission for hologram command
+    default: op
+    children:
+      smartspawner.command.hologram: true
+
+  smartspawner.prices:
+    description: Legacy permission for prices command
+    default: true
+    children:
+      smartspawner.command.prices: true
 
   # Feature permissions
   smartspawner.changetype:

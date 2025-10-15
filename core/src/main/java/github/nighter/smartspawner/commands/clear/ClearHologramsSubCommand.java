@@ -1,4 +1,4 @@
-package github.nighter.smartspawner.commands.hologram;
+package github.nighter.smartspawner.commands.clear;
 
 import com.mojang.brigadier.context.CommandContext;
 import github.nighter.smartspawner.SmartSpawner;
@@ -9,20 +9,20 @@ import org.bukkit.command.CommandSender;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public class HologramClearSubCommand extends BaseSubCommand {
+public class ClearHologramsSubCommand extends BaseSubCommand {
 
-    public HologramClearSubCommand(SmartSpawner plugin) {
+    public ClearHologramsSubCommand(SmartSpawner plugin) {
         super(plugin);
     }
 
     @Override
     public String getName() {
-        return "clear";
+        return "holograms";
     }
 
     @Override
     public String getPermission() {
-        return "smartspawner.command.hologram";
+        return "smartspawner.command.clear";
     }
 
     @Override

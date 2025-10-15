@@ -3,6 +3,7 @@ package github.nighter.smartspawner.commands;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import github.nighter.smartspawner.SmartSpawner;
+import github.nighter.smartspawner.commands.clear.ClearSubCommand;
 import github.nighter.smartspawner.commands.give.GiveSubCommand;
 import github.nighter.smartspawner.commands.hologram.HologramSubCommand;
 import github.nighter.smartspawner.commands.list.ListSubCommand;
@@ -35,7 +36,8 @@ public class MainCommand {
                 new GiveSubCommand(plugin),
                 new ListSubCommand(plugin),
                 new HologramSubCommand(plugin),
-                new PricesSubCommand(plugin)
+                new PricesSubCommand(plugin),
+                new ClearSubCommand(plugin)
         );
     }
 
@@ -68,11 +70,11 @@ public class MainCommand {
 
             // For players, check the base permission
             if (sender instanceof Player player) {
-                return player.hasPermission("smartspawner.admin") || player.isOp();
+                return player.hasPermission("smartspawner.command.use") || player.isOp();
             }
 
             // Allow other command senders (like command blocks) if they have permission
-            return sender.hasPermission("smartspawner.admin");
+            return sender.hasPermission("smartspawner.command.use");
         });
 
         // Add all subcommands to the builder

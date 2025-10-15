@@ -26,7 +26,7 @@ public class ReloadSubCommand extends BaseSubCommand {
 
     @Override
     public String getPermission() {
-        return "smartspawner.reload";
+        return "smartspawner.command.reload";
     }
 
     @Override

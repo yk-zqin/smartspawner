@@ -28,12 +28,12 @@ public class SpawnerRangeChecker {
         this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
         this.spawnerTasks = new ConcurrentHashMap<>();
         this.executor = Executors.newSingleThreadExecutor();
-        this.checkGhostSpawnersOnApproach = plugin.getConfig().getBoolean("ghost_spawners.remove_on_approach", false);
+        this.checkGhostSpawnersOnApproach = false; // Disabled by default, use command to clear
         initializeRangeCheckTask();
     }
 
     public void reload() {
-        this.checkGhostSpawnersOnApproach = plugin.getConfig().getBoolean("ghost_spawners.remove_on_approach", false);
+        this.checkGhostSpawnersOnApproach = false; // Always disabled
     }
 
     private void initializeRangeCheckTask() {

@@ -50,7 +50,7 @@ public class ListSubCommand extends BaseSubCommand {
 
     @Override
     public String getPermission() {
-        return "smartspawner.list";
+        return "smartspawner.command.list";
     }
 
     @Override
