@@ -72,17 +72,19 @@ public class SpawnerMenuUI {
 
     public void openSpawnerMenu(Player player, SpawnerData spawner, boolean refresh) {
         // Fire SpawnerOpenGUI API event
-        SpawnerOpenGUIEvent openEvent = new SpawnerOpenGUIEvent(
-                player,
-                spawner.getSpawnerLocation(),
-                spawner.getEntityType(),
-                spawner.getStackSize(),
-                refresh
-        );
-        Bukkit.getPluginManager().callEvent(openEvent);
-        
-        if (openEvent.isCancelled()) {
-            return;
+        if(SpawnerOpenGUIEvent.getHandlerList().getRegisteredListeners().length != 0) {
+            SpawnerOpenGUIEvent openEvent = new SpawnerOpenGUIEvent(
+                    player,
+                    spawner.getSpawnerLocation(),
+                    spawner.getEntityType(),
+                    spawner.getStackSize(),
+                    refresh
+            );
+            Bukkit.getPluginManager().callEvent(openEvent);
+
+            if (openEvent.isCancelled()) {
+                return;
+            }
         }
 
         Inventory menu = createMenu(spawner);

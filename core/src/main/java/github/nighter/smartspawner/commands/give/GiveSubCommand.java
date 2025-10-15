@@ -120,7 +120,7 @@ public class GiveSubCommand extends BaseSubCommand {
 
             // Validate mob type (case insensitive check)
             if (!supportedMobs.contains(mobType.toUpperCase())) {
-                plugin.getMessageService().sendMessage(sender, "command_give_invalid_mob");
+                plugin.getMessageService().sendMessage(sender, "command_give_invalid_mob_type");
                 return 0;
             }
 

@@ -95,10 +95,6 @@ public class SpawnerClickManager implements Listener {
         // Prevent default interaction
         event.setCancelled(true);
 
-        if (!spawner.getSpawnerActive()) {
-            handleInactiveSpawnerInteraction(player, block, spawner, heldItem, itemType);
-        }
-
         // Process spawner interaction
         handleSpawnerInteraction(player, block, heldItem, itemType, spawner);
     }
@@ -170,35 +166,6 @@ public class SpawnerClickManager implements Listener {
             spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(false), spawner, heldItem);
             return;
         }
-
-        // Handle spawner stacking
-        if (itemType == Material.SPAWNER) {
-            spawnerStackHandler.handleSpawnerStacking(player, block, spawner, heldItem);
-            return;
-        }
-
-        // Open spawner menu if not using special items
-        openSpawnerMenu(player, spawner);
-    }
-
-    private void handleInactiveSpawnerInteraction(Player player, Block block, SpawnerData spawner, ItemStack heldItem, Material itemType) {
-
-        // Check permission on claimed land
-        if (!CheckOpenMenu.CanPlayerOpenMenu(player, block.getLocation())) {
-            messageService.sendMessage(player, "spawner_protected");
-            return;
-        }
-
-        // Handle spawn egg usage
-        if (isSpawnEgg(itemType)) {
-            spawnEggHandler.handleSpawnEggUse(player, (CreatureSpawner) block.getState(false), spawner, heldItem);
-            return;
-        }
-
-        // Activate the spawner
-        spawner.setSpawnerActive(true);
-        spawnerManager.queueSpawnerForSaving(spawner.getSpawnerId());
-        messageService.sendMessage(player, "spawner_activated");
 
         // Handle spawner stacking
         if (itemType == Material.SPAWNER) {
