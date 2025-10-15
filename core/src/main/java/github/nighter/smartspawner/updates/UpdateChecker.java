@@ -325,7 +325,7 @@ public class UpdateChecker implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasPermission("smartspawner.admin")) {
+        if (player.isOp()) {
             UUID playerId = player.getUniqueId();
             LocalDate today = LocalDate.now();
 
