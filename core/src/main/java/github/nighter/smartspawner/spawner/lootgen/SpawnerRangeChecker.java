@@ -6,6 +6,7 @@ import github.nighter.smartspawner.spawner.properties.SpawnerManager;
 import github.nighter.smartspawner.spawner.properties.SpawnerData;
 import github.nighter.smartspawner.Scheduler;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -19,8 +20,8 @@ public class SpawnerRangeChecker {
     private final SpawnerManager spawnerManager;
     private final SpawnerLootGenerator spawnerLootGenerator;
     private final Map<String, Scheduler.Task> spawnerTasks;
-    private boolean checkGhostSpawnersOnApproach;
     private final ExecutorService executor;
+    private final Object spawnerStateLock = new Object();
 
     public SpawnerRangeChecker(SmartSpawner plugin) {
         this.plugin = plugin;
@@ -28,12 +29,7 @@ public class SpawnerRangeChecker {
         this.spawnerLootGenerator = plugin.getSpawnerLootGenerator();
         this.spawnerTasks = new ConcurrentHashMap<>();
         this.executor = Executors.newSingleThreadExecutor();
-        this.checkGhostSpawnersOnApproach = false; // Disabled by default, use command to clear
         initializeRangeCheckTask();
-    }
-
-    public void reload() {
-        this.checkGhostSpawnersOnApproach = false; // Always disabled
     }
 
     private void initializeRangeCheckTask() {
@@ -55,10 +51,16 @@ public class SpawnerRangeChecker {
             for (int i = 0; i < spawnersPlayerFound.length; i++) {
                 final boolean shouldStop = !spawnersPlayerFound[i];
                 final SpawnerData sd = allSpawners.get(i);
+                final String spawnerId = sd.getSpawnerId();
 
                 if (sd.getSpawnerStop().get() != shouldStop) {
                     // Only use the scheduler here
                     Scheduler.runLocationTask(sd.getSpawnerLocation(), () -> {
+                        if (!isSpawnerValid(sd)) {
+                            // plugin.debug("Skipping state change for removed spawner: " + spawnerId);
+                            cleanupRemovedSpawner(spawnerId);
+                            return;
+                        }
                         sd.getSpawnerStop().set(shouldStop);
                         handleSpawnerStateChange(sd, shouldStop);
                     });
@@ -67,19 +69,42 @@ public class SpawnerRangeChecker {
         });
     }
 
-    private void handleSpawnerStateChange(SpawnerData spawner, boolean shouldStop) {
-        if (checkGhostSpawnersOnApproach) {
-            boolean isGhost = spawnerManager.isGhostSpawner(spawner);
-            if (isGhost) {
-                plugin.debug("Ghost spawner detected during status update: " + spawner.getSpawnerId());
-                spawnerManager.removeGhostSpawner(spawner.getSpawnerId());
-                return; // Skip further processing
-            }
+    private boolean isSpawnerValid(SpawnerData spawner) {
+        // Check 1: Still in manager?
+        SpawnerData current = spawnerManager.getSpawnerById(spawner.getSpawnerId());
+        if (current == null) {
+            return false;
         }
-        if (!shouldStop) {
-            activateSpawner(spawner);
-        } else {
-            deactivateSpawner(spawner);
+
+        // Check 2: Same instance? (prevents processing stale copies)
+        if (current != spawner) {
+            return false;
+        }
+
+        // Check 3: Location still valid?
+        Location loc = spawner.getSpawnerLocation();
+        return loc != null && loc.getWorld() != null;
+    }
+
+    private void cleanupRemovedSpawner(String spawnerId) {
+        Scheduler.Task task = spawnerTasks.remove(spawnerId);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    private void handleSpawnerStateChange(SpawnerData spawner, boolean shouldStop) {
+        if (spawnerManager.isGhostSpawner(spawner)) {
+            spawnerManager.removeGhostSpawner(spawner.getSpawnerId());
+            return;
+        }
+
+        synchronized (spawnerStateLock) {
+            if (!shouldStop) {
+                activateSpawner(spawner);
+            } else {
+                deactivateSpawner(spawner);
+            }
         }
 
         // Force GUI update when spawner state changes
@@ -132,5 +157,13 @@ public class SpawnerRangeChecker {
         spawnerTasks.clear();
 
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 }

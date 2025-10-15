@@ -73,7 +73,6 @@ public class ReloadSubCommand extends BaseSubCommand {
             // Reload factory AFTER its dependencies (loot registry, language manager)
             plugin.getSpawnerItemFactory().reload();
             plugin.getSpawnerManager().reloadAllHolograms();
-            plugin.getRangeChecker().reload();
             plugin.reload();
             plugin.getChunkSpawnerLimiter().reloadConfig();
 
