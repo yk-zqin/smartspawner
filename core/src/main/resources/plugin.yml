@@ -56,7 +56,7 @@ commands:
 permissions:
   # Main command permission
   smartspawner.command.use:
-    description: Allow access to all SmartSpawner commands
+    description: Allow access to SmartSpawner commands
     default: op
 
   # Subcommand permissions

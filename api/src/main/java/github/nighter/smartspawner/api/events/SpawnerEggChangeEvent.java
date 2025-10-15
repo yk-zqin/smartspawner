@@ -1,5 +1,6 @@
 package github.nighter.smartspawner.api.events;
 
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -9,7 +10,9 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 public class SpawnerEggChangeEvent extends Event implements Cancellable {
+    @Getter
     private final Player player;
+    @Getter
     private final Location location;
     private final EntityType oldEggEntityType, newEggEntityType;
     private boolean cancelled = false;
@@ -29,14 +32,6 @@ public class SpawnerEggChangeEvent extends Event implements Cancellable {
         this.location = location;
         this.oldEggEntityType = oldEggEntityType;
         this.newEggEntityType = newEggEntityType;
-    }
-
-    public Player getPlayer() {
-        return player;
-    }
-
-    public Location getLocation() {
-        return location;
     }
 
     /**
