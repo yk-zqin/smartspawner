@@ -41,7 +41,7 @@ public class GiveSubCommand extends BaseSubCommand {
 
     @Override
     public String getPermission() {
-        return "smartspawner.give";
+        return "smartspawner.command.give";
     }
 
     @Override

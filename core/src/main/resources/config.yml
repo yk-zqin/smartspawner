@@ -211,29 +211,6 @@ particle:
   spawner_generate_loot: true   # Show effects when items are generated
 
 #---------------------------------------------------
-#                 Data Management
-#---------------------------------------------------
-# Controls how and when spawner data is saved
-data_saving:
-  # Periodic auto-save interval
-  interval: 5m          # Time between saves (see time format guide above)
-
-  # Save spawner data on server shutdown
-  save_on_shutdown: true
-
-# Ghost spawners are error spawners that exist in the world but no longer have a physical spawner block
-# This can happen due to server crashes, chunk corruption, or other issues
-# These settings control how ghost spawners are handled and removed
-ghost_spawners:
-  # Remove ghost spawners when server starts up
-  # Only checks spawners in loaded chunks
-  remove_on_startup: true
-
-  # Remove ghost spawners when players approach them
-  # This checks when players enter spawner range
-  remove_on_approach: false
-
-#---------------------------------------------------
 #              Spawner Action Logging
 #---------------------------------------------------
 # Comprehensive logging system for tracking spawner interactions and events
