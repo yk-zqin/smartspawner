@@ -255,6 +255,30 @@ command_hologram_disabled:
   message: "&#f8f8ffʜᴏʟᴏɢʀᴀᴍ &#e05252đã ᴛắᴛ &#f8f8ffᴄʜᴏ ᴛấᴛ ᴄả ꜱᴘᴀᴡɴᴇʀ"
   sound: block.note_block.bass
 
+command_hologram_cleared:
+  message: "&#37eb9ađã xóᴀ &#f8f8ffᴛấᴛ ᴄả ʜᴏʟᴏɢʀᴀᴍ ᴛʜàɴʜ ᴄôɴɢ"
+  sound: entity.experience_orb.pickup
+
+command_hologram_clear_error:
+  message: "&#ff5252ᴋʜôɴɢ ᴛʜể xóᴀ ʜᴏʟᴏɢʀᴀᴍ"
+  sound: block.note_block.pling
+
+# Clear command messages
+clear_command_usage:
+  message: "&#f8f8ffᴄáᴄʜ ᴅùɴɢ: &#3498db/ss clear <holograms|ghost_spawners>"
+
+command_ghost_spawner_check_start:
+  message: "&#f8f8ffđᴀɴɢ ᴋɪểᴍ ᴛʀᴀ ꜱᴘᴀᴡɴᴇʀ ʙóɴɢ ᴍᴀ..."
+  sound: block.note_block.hat
+
+command_ghost_spawner_cleared:
+  message: "&#37eb9ađã xóᴀ &#f8f8ff%count% &#f8f8ffꜱᴘᴀᴡɴᴇʀ ʙóɴɢ ᴍᴀ ᴛʜàɴʜ ᴄôɴɢ"
+  sound: entity.experience_orb.pickup
+
+command_ghost_spawner_none_found:
+  message: "&#37eb9aᴋʜôɴɢ ᴛìᴍ ᴛʜấʏ ꜱᴘᴀᴡɴᴇʀ ʙóɴɢ ᴍᴀ"
+  sound: entity.experience_orb.pickup
+
 # Prices command messages
 prices_not_available:
   message: "&#ff5252ᴛíɴʜ ɴăɴɢ ʙáɴ ʜàɴɢ ᴋʜôɴɢ ᴄó sẵɴ. ᴠᴜɪ ʟòɴɢ ᴄấᴜ ʜìɴʜ ᴄàɪ đặᴛ ᴋɪɴʜ ᴛế."
