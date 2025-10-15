@@ -25,6 +25,7 @@ public class NaturalSpawnerListener implements Listener {
 
         if (smartSpawner != null) {
             event.setCancelled(true);
+            event.setShouldAbortSpawn(true);
         } else {
             // This is a natural spawner - check if natural spawning is allowed
             if (!plugin.getConfig().getBoolean("natural_spawner.spawn_mobs", true)) {
