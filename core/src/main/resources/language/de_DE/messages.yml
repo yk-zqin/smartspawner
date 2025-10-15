@@ -260,6 +260,22 @@ command_hologram_clear_error:
   message: "&#ff5252ꜰᴇʜʟᴇʀ ʙᴇɪᴍ ʟᴏ̈ꜱᴄʜᴇɴ ᴅᴇʀ ʜᴏʟᴏɢʀᴀᴍᴍᴇ"
   sound: block.note_block.pling
 
+# Clear command messages
+clear_command_usage:
+  message: "&#f8f8ffᴠᴇʀᴡᴇɴᴅᴜɴɢ: &#3498db/ss clear <holograms|ghost_spawners>"
+
+command_ghost_spawner_check_start:
+  message: "&#f8f8ffᴘʀᴜ̈ꜰᴜɴɢ ᴀᴜꜰ ɢᴇɪꜱᴛᴇʀ-ꜱᴘᴀᴡɴᴇʀ..."
+  sound: block.note_block.hat
+
+command_ghost_spawner_cleared:
+  message: "&#37eb9aᴇʀꜰᴏʟɢʀᴇɪᴄʜ &#f8f8ff%count% &#f8f8ffɢᴇɪꜱᴛᴇʀ-ꜱᴘᴀᴡɴᴇʀ ᴇɴᴛꜰᴇʀɴᴛ"
+  sound: entity.experience_orb.pickup
+
+command_ghost_spawner_none_found:
+  message: "&#37eb9aᴋᴇɪɴᴇ ɢᴇɪꜱᴛᴇʀ-ꜱᴘᴀᴡɴᴇʀ ɢᴇꜰᴜɴᴅᴇɴ"
+  sound: entity.experience_orb.pickup
+
 # Prices command messagess
 prices_not_available:
   message: "&#ff5252ᴠᴇʀᴋᴀᴜꜰ ɪɴᴛᴇɢʀᴀᴛɪᴏɴ ɪꜱᴛ ɴɪᴄʜᴛ ᴠᴇʀꜰᴜ̈ɢʙᴀʀ. ʙɪᴛᴛᴇ ᴇᴄᴏɴᴏᴍʏ ᴇɪɴꜱᴛᴇʟʟᴜɴɢᴇɴ ᴋᴏɴꜰɪɢᴜʀɪᴇʀᴇɴ."

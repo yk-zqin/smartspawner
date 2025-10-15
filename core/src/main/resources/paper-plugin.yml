@@ -139,29 +139,41 @@ dependencies:
 
 # Permissions
 permissions:
-  # Admin permissions
-  smartspawner.admin:
-    description: "Allow access to all SmartSpawner commands"
+  # Main command permission
+  smartspawner.command.use:
+    description: "Allow access to SmartSpawner commands"
     default: op
 
   # Subcommand permissions
-  smartspawner.reload:
+  smartspawner.command.reload:
     description: "Permission to reload SmartSpawner plugin"
     default: op
 
-  smartspawner.give:
+  smartspawner.command.give:
     description: "Allow giving spawners to yourself"
     default: op
 
-  smartspawner.list:
+  smartspawner.command.list:
     description: "Allow viewing list of spawners and teleporting to them"
     default: op
 
-  smartspawner.hologram:
+  smartspawner.command.hologram:
     description: "Allow toggling hologram for spawners"
     default: op
 
+  smartspawner.command.prices:
+    description: "Allow viewing sell prices of spawner items"
+    default: true
+
+  smartspawner.command.clear:
+    description: "Allow clearing holograms and ghost spawners"
+    default: op
+
   # Feature permissions
+  smartspawner.admin:
+    description: "Admin permission for update notifications and advanced features"
+    default: op
+
   smartspawner.changetype:
     description: "Allow changing spawner type with spawn egg"
     default: op
