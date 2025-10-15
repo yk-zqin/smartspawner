@@ -244,10 +244,37 @@ public class SpawnerManager {
     }
 
     public void cleanupAllSpawners() {
+        // First, remove all holograms synchronously before clearing data
+        removeAllHolograms();
+        
         spawners.clear();
         locationIndex.clear();
         worldIndex.clear();
         confirmedGhostSpawners.clear();
+    }
+    
+    public void removeAllHolograms() {
+        plugin.getLogger().info("Removing all spawner holograms...");
+        int removed = 0;
+        
+        for (SpawnerData spawner : spawners.values()) {
+            try {
+                spawner.removeHologram();
+                removed++;
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error removing hologram for spawner " + 
+                    spawner.getSpawnerId() + ": " + e.getMessage());
+            }
+        }
+        
+        // Give the scheduler time to process all removal tasks
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        plugin.getLogger().info("Removed " + removed + " spawner holograms");
     }
 
     public int getTotalSpawners() {
