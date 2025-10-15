@@ -118,14 +118,14 @@ public class SpawnerHologram {
         replacements.put("%used_slots%", languageManager.formatNumber(currentItems));
         replacements.put("%max_slots%", languageManager.formatNumber(maxSlots));
         
-        // Calculate and add formatted percentage placeholders
+        // Calculate and add percentage placeholders
         double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
         String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
-        replacements.put("%formatted_storage%", formattedPercentStorage);
+        replacements.put("%percentage_storage%", formattedPercentStorage);
         
         double percentExpDecimal = maxExp > 0 ? ((double) currentExp / maxExp) * 100 : 0;
         String formattedPercentExp = String.format("%.1f", percentExpDecimal);
-        replacements.put("%formatted_exp%", formattedPercentExp);
+        replacements.put("%percentage_exp%", formattedPercentExp);
 
         String hologramText = languageManager.getHologramText();
 
