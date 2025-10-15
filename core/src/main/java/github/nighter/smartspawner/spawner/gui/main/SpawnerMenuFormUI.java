@@ -278,7 +278,7 @@ public class SpawnerMenuFormUI {
         SimpleForm form = SimpleForm.builder()
                 .title(title)
                 .content(spawnerInfo)
-                .button(backButtonText, FormImage.Type.URL, "https://i.pinimg.com/736x/ff/52/52/ff5252ff5252ff5252ff5252ff5252ff.jpg")
+                .button(backButtonText)
                 .closedOrInvalidResultHandler(() -> {
                 })
                 .validResultHandler(response -> {

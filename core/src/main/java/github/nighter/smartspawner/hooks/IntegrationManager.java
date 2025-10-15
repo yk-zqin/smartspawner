@@ -75,12 +75,8 @@ public class IntegrationManager {
         }, true);
 
         hasTowny = checkPlugin("Towny", () -> {
-            try {
-                Class.forName("com.palmergames.bukkit.towny.TownyAPI");
-                return com.palmergames.bukkit.towny.TownyAPI.getInstance() != null;
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
+            Plugin townyPlugin = Bukkit.getPluginManager().getPlugin("Towny");
+            return townyPlugin != null && townyPlugin.isEnabled();
         }, true);
 
         hasSuperiorSkyblock2 = checkPlugin("SuperiorSkyblock2", () -> {

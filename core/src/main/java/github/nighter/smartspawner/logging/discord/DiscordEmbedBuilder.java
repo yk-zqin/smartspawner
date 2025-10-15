@@ -66,6 +66,7 @@ public class DiscordEmbedBuilder {
         // Main description
         String mainDesc = replacePlaceholders(config.getEmbedDescription(), placeholders);
         desc.append(mainDesc);
+        desc.append("\n\n");
 
         // Player info (if exists)
         if (entry.getPlayerName() != null) {
