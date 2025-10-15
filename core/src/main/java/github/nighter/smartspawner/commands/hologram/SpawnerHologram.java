@@ -86,6 +86,8 @@ public class SpawnerHologram {
                     // Add custom name for identification
                     td.setCustomName(uniqueIdentifier);
                     td.setCustomNameVisible(false);
+                    // Set persistent to false to prevent hologram from being saved and potentially getting stuck
+                    td.setPersistent(false);
                 });
 
                 textDisplay.set(display);
@@ -115,6 +117,15 @@ public class SpawnerHologram {
         replacements.put("%max_exp%", languageManager.formatNumber(maxExp));
         replacements.put("%used_slots%", languageManager.formatNumber(currentItems));
         replacements.put("%max_slots%", languageManager.formatNumber(maxSlots));
+        
+        // Calculate and add percentage placeholders
+        double percentStorageDecimal = maxSlots > 0 ? ((double) currentItems / maxSlots) * 100 : 0;
+        String formattedPercentStorage = String.format("%.1f", percentStorageDecimal);
+        replacements.put("%percentage_storage%", formattedPercentStorage);
+        
+        double percentExpDecimal = maxExp > 0 ? ((double) currentExp / maxExp) * 100 : 0;
+        String formattedPercentExp = String.format("%.1f", percentExpDecimal);
+        replacements.put("%percentage_exp%", formattedPercentExp);
 
         String hologramText = languageManager.getHologramText();
 

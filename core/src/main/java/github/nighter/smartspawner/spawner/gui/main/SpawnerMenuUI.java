@@ -347,7 +347,7 @@ public class SpawnerMenuUI {
         // Storage information
         placeholders.put("current_items", String.valueOf(currentItems));
         placeholders.put("max_items", languageManager.formatNumber(maxSlots));
-        placeholders.put("formatted_storage", formattedPercentStorage);
+        placeholders.put("percentage_storage", formattedPercentStorage);
 
         // Experience information
         String formattedCurrentExp = languageManager.formatNumber(currentExp);
@@ -357,7 +357,7 @@ public class SpawnerMenuUI {
         placeholders.put("max_exp", formattedMaxExp);
         placeholders.put("raw_current_exp", String.valueOf(currentExp));
         placeholders.put("raw_max_exp", String.valueOf(maxExp));
-        placeholders.put("formatted_exp", formattedPercentExp);
+        placeholders.put("percentage_exp", formattedPercentExp);
 
         // Total sell price information
         double totalSellPrice = spawner.getAccumulatedSellValue();

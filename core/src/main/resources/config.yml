@@ -187,6 +187,8 @@ hologram:
   # %max_exp% - Maximum XP capacity
   # %used_slots% - Used inventory slots
   # %max_slots% - Total inventory slots
+  # %percentage_storage% - Storage usage as percentage (e.g., "75.5" for 75.5% full)
+  # %percentage_exp% - Experience storage as percentage (e.g., "50.0" for 50.0% full)
   text:
     - '[&#f8f8ff%stack_size%] &#7b68ee%ᴇɴᴛɪᴛʏ% ꜱᴘᴀᴡɴᴇʀ'
     - '&#ab7afd• &#e6e6faxᴘ: &#37eb9a%current_exp%&#f8f8ff/&#37eb9a%max_exp%'
