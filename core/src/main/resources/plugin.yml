@@ -85,6 +85,10 @@ permissions:
     default: op
 
   # Feature permissions
+  smartspawner.admin:
+    description: Admin permission for update notifications and advanced features
+    default: op
+
   smartspawner.changetype:
     description: Allow changing spawner type with spawn egg
     default: op
