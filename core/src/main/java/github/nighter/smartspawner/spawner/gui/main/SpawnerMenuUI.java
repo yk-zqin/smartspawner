@@ -365,6 +365,11 @@ public class SpawnerMenuUI {
         double totalSellPrice = spawner.getAccumulatedSellValue();
         placeholders.put("total_sell_price", languageManager.formatNumber(totalSellPrice));
 
+        // Calculate and add timer value to avoid showing %time% placeholder
+        // This prevents the brief flicker when the item is recreated (e.g., after sell/claim exp)
+        String timerValue = plugin.getSpawnerGuiViewManager().calculateTimerDisplay(spawner);
+        placeholders.put("time", timerValue);
+
         // Set display name with the specified placeholders
         spawnerMeta.setDisplayName(languageManager.getGuiItemName("spawner_info_item.name", placeholders));
 
