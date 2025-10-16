@@ -117,7 +117,7 @@ public class SpawnerData {
     private void initializeDefaults() {
         this.spawnerExp = 0;
         this.spawnerActive = true;
-        this.spawnerStop = new AtomicBoolean(false);
+        this.spawnerStop = new AtomicBoolean(true);
         this.isAtCapacity = false;
         this.stackSize = 1;
         this.lastSpawnTime = System.currentTimeMillis();
