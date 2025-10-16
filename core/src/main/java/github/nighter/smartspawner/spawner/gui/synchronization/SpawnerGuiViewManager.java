@@ -188,6 +188,34 @@ public class SpawnerGuiViewManager implements Listener {
     }
 
     /**
+     * Calculate the timer display value for a spawner.
+     * This is used when creating GUI items to avoid showing the %time% placeholder.
+     *
+     * @param spawner The spawner to calculate the timer for
+     * @return The formatted timer string (e.g., "01:30", "Inactive", or "Full")
+     */
+    public String calculateTimerDisplay(SpawnerData spawner) {
+        // Skip timer calculation if GUI doesn't use timer placeholders
+        if (!isTimerPlaceholdersEnabled()) {
+            return "";
+        }
+
+        // Check if spawner is at capacity first
+        if (spawner.getIsAtCapacity()) {
+            return cachedFullText;
+        }
+
+        // Calculate time until next spawn
+        long timeUntilNextSpawn = calculateTimeUntilNextSpawn(spawner);
+        
+        if (timeUntilNextSpawn == -1) {
+            return cachedInactiveText;
+        }
+        
+        return formatTime(timeUntilNextSpawn);
+    }
+
+    /**
      * Re-check timer placeholder usage after configuration reload.
      * This should be called after the language manager reloads to detect
      * changes in GUI configuration that add or remove timer displays.
