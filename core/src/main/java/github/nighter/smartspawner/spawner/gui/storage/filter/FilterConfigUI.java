@@ -248,14 +248,6 @@ public class FilterConfigUI implements Listener {
      * Returns to the spawner storage UI
      */
     private void returnToStorage(Player player, SpawnerData spawner) {
-        // Validate that the spawner still exists before allowing navigation
-        if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-            // Spawner no longer exists, close the inventory and prevent navigation
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.5f);
-            player.closeInventory();
-            return;
-        }
-
         // Return to storage menu
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.0f);
         player.closeInventory();

@@ -94,11 +94,6 @@ public class SpawnerRangeChecker {
     }
 
     private void handleSpawnerStateChange(SpawnerData spawner, boolean shouldStop) {
-        if (spawnerManager.isGhostSpawner(spawner)) {
-            spawnerManager.removeGhostSpawner(spawner.getSpawnerId());
-            return;
-        }
-
         synchronized (spawnerStateLock) {
             if (!shouldStop) {
                 activateSpawner(spawner);
