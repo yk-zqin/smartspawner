@@ -331,6 +331,10 @@ public class SpawnerStorageUI {
     private ItemStack createSellButton(SpawnerData spawner, Material material) {
         // Create placeholders for total sell price
         Map<String, String> placeholders = new HashMap<>();
+        // Check if sell value needs recalculation before displaying
+        if (spawner.isSellValueDirty()) {
+            spawner.recalculateSellValue();
+        }
         double totalSellPrice = spawner.getAccumulatedSellValue();
         placeholders.put("total_sell_price", languageManager.formatNumber(totalSellPrice));
         
