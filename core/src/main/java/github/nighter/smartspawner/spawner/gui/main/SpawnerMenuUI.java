@@ -362,6 +362,10 @@ public class SpawnerMenuUI {
         placeholders.put("percentage_exp", formattedPercentExp);
 
         // Total sell price information
+        // Check if sell value needs recalculation before displaying
+        if (spawner.isSellValueDirty()) {
+            spawner.recalculateSellValue();
+        }
         double totalSellPrice = spawner.getAccumulatedSellValue();
         placeholders.put("total_sell_price", languageManager.formatNumber(totalSellPrice));
 
