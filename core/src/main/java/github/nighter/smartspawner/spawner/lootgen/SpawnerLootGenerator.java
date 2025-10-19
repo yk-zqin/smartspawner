@@ -125,14 +125,13 @@ public class SpawnerLootGenerator {
                 return; // Skip generation if both exp and inventory are full
             }
 
-            // Update spawn time immediately
-            spawner.setLastSpawnTime(currentTime);
-
             // Important: Store the current values we need for async processing
             final EntityType entityType = spawner.getEntityType();
             final int minMobs = spawner.getMinMobs();
             final int maxMobs = spawner.getMaxMobs();
             final String spawnerId = spawner.getSpawnerId();
+            // Store currentTime to update lastSpawnTime after successful loot addition
+            final long spawnTime = currentTime;
 
             // Run heavy calculations async and batch updates using the Scheduler
             Scheduler.runTaskAsync(() -> {
@@ -196,6 +195,10 @@ public class SpawnerLootGenerator {
                         if (!changed) {
                             return;
                         }
+
+                        // Update spawn time only after successful loot addition
+                        // This prevents skipped spawns when the lock fails
+                        spawner.setLastSpawnTime(spawnTime);
 
                         // Check if spawner is now at capacity and update status if needed
                         spawner.updateCapacityStatus();
