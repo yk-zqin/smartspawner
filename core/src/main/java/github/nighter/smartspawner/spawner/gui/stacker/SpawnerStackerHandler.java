@@ -275,12 +275,6 @@ public class SpawnerStackerHandler implements Listener {
     }
 
     private void handleStackDecrease(Player player, SpawnerData spawner, int removeAmount) {
-        // Check if the spawner block still exists to prevent ghost spawner duplication
-        if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-            messageService.sendMessage(player, "spawner_invalid");
-            return;
-        }
-
         int currentSize = spawner.getStackSize();
 
         // Check if trying to go below 1 - fast path
