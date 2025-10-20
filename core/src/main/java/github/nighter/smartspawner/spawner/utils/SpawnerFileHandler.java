@@ -134,8 +134,7 @@ public class SpawnerFileHandler {
                     }
                 }
 
-                // After saving, schedule async ghost spawner check
-                scheduleGhostSpawnerCheck();
+                // Automatic ghost spawner check removed - use /ss clear ghost_spawners command instead
             } catch (Exception e) {
                 plugin.getLogger().severe("Error during flush: " + e.getMessage());
                 e.printStackTrace();
@@ -150,31 +149,6 @@ public class SpawnerFileHandler {
                 isSaving = false;
             }
         });
-    }
-
-    /**
-     * Schedules a check for ghost spawners on region threads.
-     * This runs after data is saved to ensure spawner data integrity.
-     * Each spawner is checked on its own region thread for Folia compatibility.
-     */
-    private void scheduleGhostSpawnerCheck() {
-        plugin.debug("Scheduling ghost spawner check after save");
-        
-        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-
-        // Check each spawner on its location thread for Folia compatibility
-        for (SpawnerData spawner : allSpawners) {
-            Location loc = spawner.getSpawnerLocation();
-            if (loc != null && loc.getWorld() != null) {
-                // Schedule check on the region thread for this location
-                Scheduler.runLocationTask(loc, () -> {
-                    if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-                        plugin.debug("Found ghost spawner " + spawner.getSpawnerId() + " during scheduled check");
-                        plugin.getSpawnerManager().removeGhostSpawner(spawner.getSpawnerId());
-                    }
-                });
-            }
-        }
     }
 
     private boolean saveSpawnerBatch(Map<String, SpawnerData> spawners) {
