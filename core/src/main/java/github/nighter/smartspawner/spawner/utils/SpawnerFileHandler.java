@@ -153,33 +153,28 @@ public class SpawnerFileHandler {
     }
 
     /**
-     * Schedules an async check for ghost spawners without blocking the main thread.
+     * Schedules a check for ghost spawners on region threads.
      * This runs after data is saved to ensure spawner data integrity.
+     * Each spawner is checked on its own region thread for Folia compatibility.
      */
     private void scheduleGhostSpawnerCheck() {
         plugin.debug("Scheduling ghost spawner check after save");
         
-        // Run async check to avoid blocking
-        Scheduler.runTaskAsync(() -> {
-            List<String> ghostSpawnerIds = new ArrayList<>();
-            List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
+        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
 
-            // Check each spawner asynchronously
-            for (SpawnerData spawner : allSpawners) {
-                if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-                    ghostSpawnerIds.add(spawner.getSpawnerId());
-                }
+        // Check each spawner on its location thread for Folia compatibility
+        for (SpawnerData spawner : allSpawners) {
+            Location loc = spawner.getSpawnerLocation();
+            if (loc != null && loc.getWorld() != null) {
+                // Schedule check on the region thread for this location
+                Scheduler.runLocationTask(loc, () -> {
+                    if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
+                        plugin.debug("Found ghost spawner " + spawner.getSpawnerId() + " during scheduled check");
+                        plugin.getSpawnerManager().removeGhostSpawner(spawner.getSpawnerId());
+                    }
+                });
             }
-
-            // If ghost spawners found, remove them
-            if (!ghostSpawnerIds.isEmpty()) {
-                plugin.debug("Found " + ghostSpawnerIds.size() + " ghost spawners during scheduled check");
-                
-                for (String spawnerId : ghostSpawnerIds) {
-                    plugin.getSpawnerManager().removeGhostSpawner(spawnerId);
-                }
-            }
-        });
+        }
     }
 
     private boolean saveSpawnerBatch(Map<String, SpawnerData> spawners) {
