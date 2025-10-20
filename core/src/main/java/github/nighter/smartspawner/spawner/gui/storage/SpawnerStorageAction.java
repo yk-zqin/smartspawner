@@ -450,8 +450,11 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void updateInventoryTitle(Player player, Inventory inventory, SpawnerData spawner, int page, int totalPages) {
-        String baseTitle = languageManager.getGuiTitle("gui_title_storage");
-        String newTitle = baseTitle + " - [" + page + "/" + totalPages + "]";
+        // Use placeholder-based title format for consistency
+        String newTitle = languageManager.getGuiTitle("gui_title_storage", Map.of(
+            "current_page", String.valueOf(page),
+            "total_pages", String.valueOf(totalPages)
+        ));
 
         try {
             player.getOpenInventory().setTitle(newTitle);
@@ -683,8 +686,22 @@ public class SpawnerStorageAction implements Listener {
 
         if (result.anyItemMoved) {
             int newTotalPages = calculateTotalPages(spawner);
-
+            int currentPage = holder.getCurrentPage();
+            
+            // Clamp current page to valid range (e.g., if on page 6 but only 5 pages remain)
+            int adjustedPage = Math.max(1, Math.min(currentPage, newTotalPages));
+            
+            // Update holder with new total pages and adjusted current page
             holder.setTotalPages(newTotalPages);
+            if (adjustedPage != currentPage) {
+                holder.setCurrentPage(adjustedPage);
+                // Refresh display to show the correct page content
+                SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
+                lootManager.updateDisplay(sourceInventory, spawner, adjustedPage, newTotalPages);
+            }
+            
+            // Update the inventory title to reflect new page count
+            updateInventoryTitle(player, sourceInventory, spawner, adjustedPage, newTotalPages);
 
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 

@@ -87,6 +87,9 @@ public class SpawnerGuiViewManager implements Listener {
 
     // Timer placeholder detection - cache whether GUI uses timer placeholders
     private volatile Boolean hasTimerPlaceholders = null;
+    
+    // Cache for storage title format to avoid repeated language lookups
+    private String cachedStorageTitleFormat = null;
 
     // Static class to hold viewer info more efficiently
     private static class SpawnerViewerInfo {
@@ -134,6 +137,9 @@ public class SpawnerGuiViewManager implements Listener {
         // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
+        
+        // Cache storage title format for performance
+        this.cachedStorageTitleFormat = languageManager.getGuiTitle("gui_title_storage");
 
         // Detect if timer placeholders are used in GUI configuration
         checkTimerPlaceholderUsage();
@@ -970,31 +976,40 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void processStorageUpdateDirect(Player viewer, Inventory inventory, SpawnerData spawner,
                                            StoragePageHolder holder, int oldTotalPages, int newTotalPages) {
-        // Check if we need a new inventory
-        boolean pagesChanged = oldTotalPages != newTotalPages;
+        // Early exit if pages haven't changed and current page is valid
         int currentPage = holder.getCurrentPage();
+        boolean pagesChanged = oldTotalPages != newTotalPages;
+        
+        if (!pagesChanged) {
+            // Just update contents of current inventory - no title update needed
+            spawnerStorageUI.updateDisplay(inventory, spawner, currentPage, newTotalPages);
+            viewer.updateInventory();
+            return;
+        }
+        
+        // Determine if current page is still valid
         boolean needsNewInventory = false;
         int targetPage = currentPage;
-
-        // Determine if we need a new inventory
+        
         if (currentPage > newTotalPages) {
-            // if current page is out of bounds, set to last page
+            // Current page is out of bounds, set to last page
             targetPage = newTotalPages;
             holder.setCurrentPage(targetPage);
             needsNewInventory = true;
-        } else if (pagesChanged) {
-            // If total pages changed but current page is still valid, update current page
+        } else {
+            // Pages changed but current page is still valid, just update title
             needsNewInventory = true;
         }
 
         if (needsNewInventory) {
             try {
-                // Update inventory title and contents
-                String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + targetPage + "/" + newTotalPages + "]";
+                // Update inventory title and contents using placeholder-based format
+                String newTitle = getStorageTitle(targetPage, newTotalPages);
                 viewer.getOpenInventory().setTitle(newTitle);
                 spawnerStorageUI.updateDisplay(inventory, spawner, targetPage, newTotalPages);
             } catch (Exception e) {
                 // Fall back to creating a new inventory
+                // Note: createInventory now handles title formatting internally
                 Inventory newInv = spawnerStorageUI.createInventory(
                         spawner,
                         languageManager.getGuiTitle("gui_title_storage"),
@@ -1013,6 +1028,32 @@ public class SpawnerGuiViewManager implements Listener {
 
     private int calculateTotalPages(int totalItems) {
         return totalItems <= 0 ? 1 : (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
+    }
+
+    /**
+     * Gets the formatted title for storage GUI with page information.
+     * Uses cached title format pattern for performance since this is called frequently.
+     * 
+     * @param page Current page number
+     * @param totalPages Total number of pages
+     * @return Formatted title with page information
+     */
+    private String getStorageTitle(int page, int totalPages) {
+        // Cache the title format pattern to avoid repeated language lookups
+        if (cachedStorageTitleFormat == null) {
+            cachedStorageTitleFormat = languageManager.getGuiTitle("gui_title_storage");
+        }
+        
+        // Fast path: if the format doesn't contain placeholders, return as-is
+        if (!cachedStorageTitleFormat.contains("%current_page%") && !cachedStorageTitleFormat.contains("%total_pages%")) {
+            return cachedStorageTitleFormat;
+        }
+        
+        // Use placeholder replacement pattern similar to PricesGUI
+        return languageManager.getGuiTitle("gui_title_storage", Map.of(
+            "current_page", String.valueOf(page),
+            "total_pages", String.valueOf(totalPages)
+        ));
     }
 
     public void updateSpawnerMenuGui(Player player, SpawnerData spawner, boolean forceUpdate) {

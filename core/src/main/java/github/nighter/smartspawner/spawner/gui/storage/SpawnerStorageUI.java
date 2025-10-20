@@ -37,6 +37,9 @@ public class SpawnerStorageUI {
 
     // Cache expiry time reduced for more responsive updates
     private static final int MAX_CACHE_SIZE = 100;
+    
+    // Cache for title format to avoid repeated language lookups
+    private String cachedStorageTitleFormat = null;
 
     // Cleanup task to remove stale entries from caches
     private Task cleanupTask;
@@ -63,6 +66,7 @@ public class SpawnerStorageUI {
         navigationButtonCache.clear();
         pageIndicatorCache.clear();
         staticButtons.clear();
+        cachedStorageTitleFormat = null;
 
         // Reinitialize static buttons
         initializeStaticButtons();
@@ -125,6 +129,27 @@ public class SpawnerStorageUI {
         // to show the current total sell price
     }
 
+    /**
+     * Gets the formatted title for storage GUI with page information.
+     * Uses cached title format pattern for performance.
+     * 
+     * @param page Current page number
+     * @param totalPages Total number of pages
+     * @return Formatted title with page information
+     */
+    private String getStorageTitle(int page, int totalPages) {
+        // Cache the title format pattern (not the filled title)
+        if (cachedStorageTitleFormat == null) {
+            cachedStorageTitleFormat = languageManager.getGuiTitle("gui_title_storage");
+        }
+        
+        // Use placeholder replacement pattern similar to PricesGUI
+        return languageManager.getGuiTitle("gui_title_storage", Map.of(
+            "current_page", String.valueOf(page),
+            "total_pages", String.valueOf(totalPages)
+        ));
+    }
+
     public Inventory createInventory(SpawnerData spawner, String title, int page, int totalPages) {
         // Get total pages efficiently
         if (totalPages == -1) {
@@ -134,11 +159,11 @@ public class SpawnerStorageUI {
         // Clamp page number to valid range
         page = Math.max(1, Math.min(page, totalPages));
 
-        // Create inventory with title including page info
+        // Create inventory with title including page info using placeholder-based format
         Inventory pageInv = Bukkit.createInventory(
                 new StoragePageHolder(spawner, page, totalPages),
                 INVENTORY_SIZE,
-                title + " - [" + page + "/" + totalPages + "]"
+                getStorageTitle(page, totalPages)
         );
 
         // Cache inventory reference in holder for better performance
@@ -419,6 +444,7 @@ public class SpawnerStorageUI {
     public void cleanup() {
         navigationButtonCache.clear();
         pageIndicatorCache.clear();
+        cachedStorageTitleFormat = null;
 
         // Cancel scheduled tasks
         cancelTasks();
