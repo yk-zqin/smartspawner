@@ -137,6 +137,9 @@ public class SpawnerGuiViewManager implements Listener {
         // Cache status text messages for timer display
         this.cachedInactiveText = languageManager.getGuiItemName("spawner_info_item.lore_inactive");
         this.cachedFullText = languageManager.getGuiItemName("spawner_info_item.lore_full");
+        
+        // Cache storage title format for performance
+        this.cachedStorageTitleFormat = languageManager.getGuiTitle("gui_title_storage");
 
         // Detect if timer placeholders are used in GUI configuration
         checkTimerPlaceholderUsage();
@@ -973,20 +976,28 @@ public class SpawnerGuiViewManager implements Listener {
 
     private void processStorageUpdateDirect(Player viewer, Inventory inventory, SpawnerData spawner,
                                            StoragePageHolder holder, int oldTotalPages, int newTotalPages) {
-        // Check if we need a new inventory
-        boolean pagesChanged = oldTotalPages != newTotalPages;
+        // Early exit if pages haven't changed and current page is valid
         int currentPage = holder.getCurrentPage();
+        boolean pagesChanged = oldTotalPages != newTotalPages;
+        
+        if (!pagesChanged) {
+            // Just update contents of current inventory - no title update needed
+            spawnerStorageUI.updateDisplay(inventory, spawner, currentPage, newTotalPages);
+            viewer.updateInventory();
+            return;
+        }
+        
+        // Determine if current page is still valid
         boolean needsNewInventory = false;
         int targetPage = currentPage;
-
-        // Determine if we need a new inventory
+        
         if (currentPage > newTotalPages) {
-            // if current page is out of bounds, set to last page
+            // Current page is out of bounds, set to last page
             targetPage = newTotalPages;
             holder.setCurrentPage(targetPage);
             needsNewInventory = true;
-        } else if (pagesChanged) {
-            // If total pages changed but current page is still valid, update current page
+        } else {
+            // Pages changed but current page is still valid, just update title
             needsNewInventory = true;
         }
 
@@ -1028,6 +1039,16 @@ public class SpawnerGuiViewManager implements Listener {
      * @return Formatted title with page information
      */
     private String getStorageTitle(int page, int totalPages) {
+        // Cache the title format pattern to avoid repeated language lookups
+        if (cachedStorageTitleFormat == null) {
+            cachedStorageTitleFormat = languageManager.getGuiTitle("gui_title_storage");
+        }
+        
+        // Fast path: if the format doesn't contain placeholders, return as-is
+        if (!cachedStorageTitleFormat.contains("%current_page%") && !cachedStorageTitleFormat.contains("%total_pages%")) {
+            return cachedStorageTitleFormat;
+        }
+        
         // Use placeholder replacement pattern similar to PricesGUI
         return languageManager.getGuiTitle("gui_title_storage", Map.of(
             "current_page", String.valueOf(page),

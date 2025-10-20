@@ -686,8 +686,13 @@ public class SpawnerStorageAction implements Listener {
 
         if (result.anyItemMoved) {
             int newTotalPages = calculateTotalPages(spawner);
-
+            int currentPage = holder.getCurrentPage();
+            
+            // Update holder with new total pages
             holder.setTotalPages(newTotalPages);
+            
+            // Update the inventory title to reflect new page count
+            updateInventoryTitle(player, sourceInventory, spawner, currentPage, newTotalPages);
 
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
