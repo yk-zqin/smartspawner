@@ -688,11 +688,20 @@ public class SpawnerStorageAction implements Listener {
             int newTotalPages = calculateTotalPages(spawner);
             int currentPage = holder.getCurrentPage();
             
-            // Update holder with new total pages
+            // Clamp current page to valid range (e.g., if on page 6 but only 5 pages remain)
+            int adjustedPage = Math.max(1, Math.min(currentPage, newTotalPages));
+            
+            // Update holder with new total pages and adjusted current page
             holder.setTotalPages(newTotalPages);
+            if (adjustedPage != currentPage) {
+                holder.setCurrentPage(adjustedPage);
+                // Refresh display to show the correct page content
+                SpawnerStorageUI lootManager = plugin.getSpawnerStorageUI();
+                lootManager.updateDisplay(sourceInventory, spawner, adjustedPage, newTotalPages);
+            }
             
             // Update the inventory title to reflect new page count
-            updateInventoryTitle(player, sourceInventory, spawner, currentPage, newTotalPages);
+            updateInventoryTitle(player, sourceInventory, spawner, adjustedPage, newTotalPages);
 
             spawnerGuiViewManager.updateSpawnerMenuViewers(spawner);
 
