@@ -134,8 +134,7 @@ public class SpawnerFileHandler {
                     }
                 }
 
-                // After saving, schedule async ghost spawner check
-                scheduleGhostSpawnerCheck();
+                // Automatic ghost spawner check removed - use /ss clear ghost_spawners command instead
             } catch (Exception e) {
                 plugin.getLogger().severe("Error during flush: " + e.getMessage());
                 e.printStackTrace();
@@ -148,36 +147,6 @@ public class SpawnerFileHandler {
                 }
             } finally {
                 isSaving = false;
-            }
-        });
-    }
-
-    /**
-     * Schedules an async check for ghost spawners without blocking the main thread.
-     * This runs after data is saved to ensure spawner data integrity.
-     */
-    private void scheduleGhostSpawnerCheck() {
-        plugin.debug("Scheduling ghost spawner check after save");
-        
-        // Run async check to avoid blocking
-        Scheduler.runTaskAsync(() -> {
-            List<String> ghostSpawnerIds = new ArrayList<>();
-            List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-
-            // Check each spawner asynchronously
-            for (SpawnerData spawner : allSpawners) {
-                if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-                    ghostSpawnerIds.add(spawner.getSpawnerId());
-                }
-            }
-
-            // If ghost spawners found, remove them
-            if (!ghostSpawnerIds.isEmpty()) {
-                plugin.debug("Found " + ghostSpawnerIds.size() + " ghost spawners during scheduled check");
-                
-                for (String spawnerId : ghostSpawnerIds) {
-                    plugin.getSpawnerManager().removeGhostSpawner(spawnerId);
-                }
             }
         });
     }

@@ -11,6 +11,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @NullMarked
 public class ClearGhostSpawnersSubCommand extends BaseSubCommand {
@@ -41,34 +42,36 @@ public class ClearGhostSpawnersSubCommand extends BaseSubCommand {
         // Notify that the check is starting
         plugin.getMessageService().sendMessage(sender, "command_ghost_spawner_check_start");
 
-        // Run the check asynchronously
-        Scheduler.runTaskAsync(() -> {
-            List<String> ghostSpawnerIds = new ArrayList<>();
-            List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
-
-            // Check each spawner
-            for (SpawnerData spawner : allSpawners) {
-                if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
-                    ghostSpawnerIds.add(spawner.getSpawnerId());
-                }
+        // Get all spawners first
+        List<SpawnerData> allSpawners = plugin.getSpawnerManager().getAllSpawners();
+        
+        // Track how many spawners are being checked using thread-safe counter
+        final AtomicInteger removedCount = new AtomicInteger(0);
+        final int totalSpawners = allSpawners.size();
+        
+        // Check each spawner on its location thread for Folia compatibility
+        for (SpawnerData spawner : allSpawners) {
+            org.bukkit.Location loc = spawner.getSpawnerLocation();
+            if (loc != null && loc.getWorld() != null) {
+                Scheduler.runLocationTask(loc, () -> {
+                    if (plugin.getSpawnerManager().isGhostSpawner(spawner)) {
+                        plugin.getSpawnerManager().removeGhostSpawner(spawner.getSpawnerId());
+                        removedCount.incrementAndGet();
+                    }
+                });
             }
-
-            // Remove all ghost spawners found
-            int removedCount = ghostSpawnerIds.size();
-            for (String spawnerId : ghostSpawnerIds) {
-                plugin.getSpawnerManager().removeGhostSpawner(spawnerId);
+        }
+        
+        // Schedule a delayed message to report results (give time for checks to complete)
+        Scheduler.runTaskLater(() -> {
+            int count = removedCount.get();
+            if (count > 0) {
+                plugin.getMessageService().sendMessage(sender, "command_ghost_spawner_cleared", 
+                    java.util.Map.of("count", String.valueOf(count)));
+            } else {
+                plugin.getMessageService().sendMessage(sender, "command_ghost_spawner_none_found");
             }
-
-            // Send result message back on main thread
-            Scheduler.runTask(() -> {
-                if (removedCount > 0) {
-                    plugin.getMessageService().sendMessage(sender, "command_ghost_spawner_cleared", 
-                        java.util.Map.of("count", String.valueOf(removedCount)));
-                } else {
-                    plugin.getMessageService().sendMessage(sender, "command_ghost_spawner_none_found");
-                }
-            });
-        });
+        }, 100L); // Wait 5 seconds (100 ticks) for checks to complete
 
         return 1;
     }

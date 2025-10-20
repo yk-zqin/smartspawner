@@ -172,11 +172,14 @@ public class SpawnerManager {
         Location loc = spawner.getSpawnerLocation();
         if (loc == null || loc.getWorld() == null) return true;
 
-        // Only check loaded chunks
-        if (!loc.getChunk().isLoaded()) {
+        // Only check loaded chunks - use thread-safe method for Folia compatibility
+        int chunkX = loc.getBlockX() >> 4;
+        int chunkZ = loc.getBlockZ() >> 4;
+        if (!loc.getWorld().isChunkLoaded(chunkX, chunkZ)) {
             return false; // Can't confirm, assume valid
         }
 
+        // Note: This method should only be called from region threads for Folia compatibility
         return loc.getBlock().getType() != Material.SPAWNER;
     }
 
