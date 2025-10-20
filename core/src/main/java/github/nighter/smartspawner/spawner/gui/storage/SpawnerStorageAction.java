@@ -450,8 +450,11 @@ public class SpawnerStorageAction implements Listener {
     }
 
     private void updateInventoryTitle(Player player, Inventory inventory, SpawnerData spawner, int page, int totalPages) {
-        String baseTitle = languageManager.getGuiTitle("gui_title_storage");
-        String newTitle = baseTitle + " - [" + page + "/" + totalPages + "]";
+        // Use placeholder-based title format for consistency
+        String newTitle = languageManager.getGuiTitle("gui_title_storage", Map.of(
+            "current_page", String.valueOf(page),
+            "total_pages", String.valueOf(totalPages)
+        ));
 
         try {
             player.getOpenInventory().setTitle(newTitle);

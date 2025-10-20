@@ -87,6 +87,9 @@ public class SpawnerGuiViewManager implements Listener {
 
     // Timer placeholder detection - cache whether GUI uses timer placeholders
     private volatile Boolean hasTimerPlaceholders = null;
+    
+    // Cache for storage title format to avoid repeated language lookups
+    private String cachedStorageTitleFormat = null;
 
     // Static class to hold viewer info more efficiently
     private static class SpawnerViewerInfo {
@@ -989,12 +992,13 @@ public class SpawnerGuiViewManager implements Listener {
 
         if (needsNewInventory) {
             try {
-                // Update inventory title and contents
-                String newTitle = languageManager.getGuiTitle("gui_title_storage") + " - [" + targetPage + "/" + newTotalPages + "]";
+                // Update inventory title and contents using placeholder-based format
+                String newTitle = getStorageTitle(targetPage, newTotalPages);
                 viewer.getOpenInventory().setTitle(newTitle);
                 spawnerStorageUI.updateDisplay(inventory, spawner, targetPage, newTotalPages);
             } catch (Exception e) {
                 // Fall back to creating a new inventory
+                // Note: createInventory now handles title formatting internally
                 Inventory newInv = spawnerStorageUI.createInventory(
                         spawner,
                         languageManager.getGuiTitle("gui_title_storage"),
@@ -1013,6 +1017,22 @@ public class SpawnerGuiViewManager implements Listener {
 
     private int calculateTotalPages(int totalItems) {
         return totalItems <= 0 ? 1 : (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
+    }
+
+    /**
+     * Gets the formatted title for storage GUI with page information.
+     * Uses cached title format pattern for performance since this is called frequently.
+     * 
+     * @param page Current page number
+     * @param totalPages Total number of pages
+     * @return Formatted title with page information
+     */
+    private String getStorageTitle(int page, int totalPages) {
+        // Use placeholder replacement pattern similar to PricesGUI
+        return languageManager.getGuiTitle("gui_title_storage", Map.of(
+            "current_page", String.valueOf(page),
+            "total_pages", String.valueOf(totalPages)
+        ));
     }
 
     public void updateSpawnerMenuGui(Player player, SpawnerData spawner, boolean forceUpdate) {

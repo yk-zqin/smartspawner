@@ -134,7 +134,10 @@ button_add:
 # ---------------------------------------------------
 #             Spawner Storage GUI
 # ---------------------------------------------------
-gui_title_storage: '&#545454ᴋʜᴏ ꜱᴘᴀᴡɴᴇʀ'
+# Available placeholders:
+# {current_page} - The current page number
+# {total_pages} - Total number of pages
+gui_title_storage: '&#545454ᴋʜᴏ ꜱᴘᴀᴡɴᴇʀ - [{current_page}/{total_pages}]'
 
 navigation_button_previous:
   name: '&#37eb9aᴛʀᴀɴɢ ᴛʀướᴄ'
