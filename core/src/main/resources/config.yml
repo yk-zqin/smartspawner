@@ -10,7 +10,7 @@
 # 4. Set language to your custom folder name
 
 #---------------------------------------------------
-#               Language Settings
+#             - Language Settings
 #---------------------------------------------------
 # Language setting (available: en_US, vi_VN, de_DE, DonutSMP)
 language: en_US
@@ -22,7 +22,7 @@ gui_layout: default
 debug: false
 
 #---------------------------------------------------
-#             Core Spawner Properties
+#           - Core Spawner Properties
 #---------------------------------------------------
 # These settings control the fundamental behavior of all spawners
 spawner_properties:
@@ -43,7 +43,7 @@ spawner_properties:
     protect_from_explosions: true   # Protect spawner blocks from explosion
 
 #---------------------------------------------------
-#           Spawner Breaking Mechanics
+#         - Spawner Breaking Mechanics
 #---------------------------------------------------
 # Controls how players can break and collect spawners
 spawner_break:
@@ -68,7 +68,7 @@ spawner_break:
     level: 1            # Minimum level of Silk Touch required
 
 #---------------------------------------------------
-#               Spawner Limitations
+#             - Spawner Limitations
 #---------------------------------------------------
 spawner_limits:
   # Maximum number of spawners (including stacks) allowed per chunk
@@ -78,7 +78,7 @@ spawner_limits:
   max_per_chunk: -1
 
 #---------------------------------------------------
-#           Natural/Vanilla Spawner Settings
+#         - Natural/Vanilla Spawner Settings
 #---------------------------------------------------
 # Controls behavior of naturally generated dungeon spawners
 natural_spawner:
@@ -96,7 +96,7 @@ natural_spawner:
   protect_from_explosions: false
 
 #---------------------------------------------------
-#                Economy Settings
+#              - Economy Settings
 #---------------------------------------------------
 # Economy Configuration for selling items from spawners inventory
 custom_economy:
@@ -107,7 +107,7 @@ custom_economy:
   # Supported types: VAULT, COINSENGINE (more will be added in the future)
   currency: VAULT
 
-  # Specifies the name of the currency used by COINSENGINE
+  # - Specifies the name of the currency used by COINSENGINE
   # This setting is only required when using COINSENGINE as the economy currency
   coinsengine_currency: coins
 
@@ -154,7 +154,7 @@ custom_economy:
     default_price: 1.0
 
 #---------------------------------------------------
-#              Item Collection System
+#            - Item Collection System
 #---------------------------------------------------
 # Configuration for automated item collection
 hopper:
@@ -163,7 +163,7 @@ hopper:
   stack_per_transfer: 5 # Number of item stacks transferred in one operation (max 5)
 
 #---------------------------------------------------
-#              Bedrock Player Support
+#            - Bedrock Player Support
 #---------------------------------------------------
 # Configuration for Bedrock Edition player support via Floodgate
 bedrock_support:
@@ -173,13 +173,13 @@ bedrock_support:
   enable_formui: true
 
 #---------------------------------------------------
-#                 Visual Effects
+#               - Visual Effects
 #---------------------------------------------------
 # Configure visual indicators and effects for spawners
 hologram:
   enabled: false        # Show floating text above spawners
 
-  # Hologram Text Display (supports color codes)
+  # - Hologram Text Display (supports color codes)
   # Available placeholders:
   # %entity% - Type of mob
   # %stack_size% - Number of stacked spawners
@@ -211,7 +211,7 @@ particle:
   spawner_generate_loot: true   # Show effects when items are generated
 
 #---------------------------------------------------
-#              Spawner Action Logging
+#            - Spawner Action Logging
 #---------------------------------------------------
 # Comprehensive logging system for tracking spawner interactions and events
 # Provides audit trail and debugging capabilities with minimal performance impact
@@ -276,7 +276,7 @@ logging:
     - COMMAND_EXECUTE_CONSOLE
     - COMMAND_EXECUTE_RCON
   
-  # Discord Webhook Integration
+  # - Discord Webhook Integration
   # Send beautiful formatted log messages to Discord with rich embeds
   discord:
     # Enable/disable Discord webhook logging
@@ -315,7 +315,7 @@ logging:
       # Embed footer text
       footer: "SmartSpawner • {time}"
 
-      # Individual embed colors for each event type (hexadecimal without #)
+      # - Individual embed colors for each event type (hexadecimal without #)
       # You can customize any event color below
       colors:
         # Command Events - Blue Shades
