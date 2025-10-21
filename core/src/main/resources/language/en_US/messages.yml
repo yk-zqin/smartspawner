@@ -25,10 +25,7 @@
 #   - All components are optional - you can use any combination as needed
 #   - The "message" field is not required and can be omitted if you only want other components
 
-# ------------------------------------------------------
-#                  Messages Prefix
-# ------------------------------------------------------
-prefix: "&8[&#3498dbSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"
+prefix: "&8[&#3498dbSᴍᴀʀᴛSᴘᴀᴡɴᴇʀ&8] &r"     # Messages Prefix
 
 # ------------------------------------------------------
 #             Spawner - Player Interaction
